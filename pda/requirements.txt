@@ -1,0 +1,5 @@
+streamlit
+pandas
+langchain-community
+langchain-core
+requests
