@@ -1,7 +1,7 @@
 ## 开源工具
 
 ### 文档解析与网络爬虫
-1. jina-ai/reader: Convert any URL to an LLM-friendly input with a simple prefix https://r. jina. ai/
+1. jina-ai/reader: Convert any URL to an LLM-friendly input with a simple prefix https://r.jina.ai/
 
 2. VinciGit00/Scrapegraph-ai: Python scraper based on AI
 
@@ -96,7 +96,7 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 - LM Studio - Discover, download, and run local LLMs
 - Turn your computer into an AI computer - Jan
 4. 大模型评测与API榜单
-- [主题日报◉AI开发者必备〖LLM选购指南〗](https://mp. weixin. qq. com/s/AJKztsDtnNfF1-DH5K8x9g)
+- [主题日报◉AI开发者必备〖LLM选购指南〗](https://mp.weixin.qq.com/s/AJKztsDtnNfF1-DH5K8x9g)
 
 - 2024-06-06提供，API调用接口价格
 ![2024-06-06提供API调用接口价格](/resources/asserts/2024-06-06提供API调用接口价格. png)
