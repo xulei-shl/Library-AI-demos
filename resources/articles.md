@@ -2,6 +2,10 @@
 
 1. 赵鑫, 李军毅, 周昆, 唐天一, 文继荣. 大语言模型，https://llmbook-zh.github.io/，2024.
 2. Huang K, Mo F, Li H, et al. A Survey on Large Language Models with Multilingualism: Recent Advances and New Frontiers[J]. arXiv, 2024.
+3. Minaee S, Mikolov T, Nikzad N, et al. Large Language Models: A Survey[J]. arXiv, 2024.
+  - 全面介绍了大型语言模型（LLMs）的发展历程、架构、训练方法、应用场景以及存在的挑战和未来研究方向。
+  - 特别是LLMs 在使用时可能遇到的问题，如记忆缺失、随机性、信息陈旧、模型规模庞大以及幻觉现象等。为了克服这些限制，文章提出了一系列提升 LLMs 能力的方法：
+    - 提示词工程、RAG、使用工具、智能体
 
 ## 提示词
 1. Pranab Sahoo, Ayush Kumar Singh, Sriparna Saha, Vinija Jain, Samrat Mondal, Aman Chadha (2024).A Systematic Survey of Prompt Engineering in Large Language Models: Techniques and Applications
