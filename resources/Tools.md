@@ -87,19 +87,29 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 
 
 ### 大模型API
-1. 主流大模型API
-- 
-2. 第三方API代理
-- 
-3. 本地大模型
-- ollama/ollama: Get up and running with Llama 3, Mistral, Gemma, and other large language models. 
-- LM Studio - Discover, download, and run local LLMs
-- Turn your computer into an AI computer - Jan
-4. 大模型评测与API榜单
+
+1. 大模型 API 价格
 - [主题日报◉AI开发者必备〖LLM选购指南〗](https://mp.weixin.qq.com/s/AJKztsDtnNfF1-DH5K8x9g)
 
 - 2024-06-06提供，API调用接口价格
 ![2024-06-06提供API调用接口价格](/resources/asserts/2024-06-06提供API调用接口价格. png)
+
+- [2024.6 W2 商用LLM API进展简评](https://mp.weixin.qq.com/s/ov5KofVw_5xpGx6JwvvVlA)
+
+2. 第三方API代理
+
+
+3. 本地大模型
+- ollama/ollama: Get up and running with Llama 3, Mistral, Gemma, and other large language models. 
+- LM Studio - Discover, download, and run local LLMs
+- Turn your computer into an AI computer - Jan
+
+4. 大模型评测榜单
+
+- [LMSYS Chatbot Arena](https://chat.lmsys.org/)
+- [Open LLM Leaderboard](https://open-llm-leaderboard-open-llm-leaderboard.hf.space/?__theme=light)
+- [OpenCompass司南 - 评测榜单](https://rank.opencompass.org.cn/home)
+- [SuperCLUE](https://www.superclueai.com/)
 
 ### 其他
 1. LLM 结构化输出
