@@ -1,4 +1,4 @@
-## 开源工具
+## 大模型类工具
 
 ### 文档解析与网络爬虫
 1. jina-ai/reader: Convert any URL to an LLM-friendly input with a simple prefix https://r.jina.ai/
@@ -115,3 +115,19 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 1. LLM 结构化输出
 - jxnl/instructor: structured outputs for llms
 2. 
+
+
+## 其他大模型工具平台（MaaS）
+
+1. [魔搭社区](https://modelscope.cn/models?page=1&type=nlp)
+    - [StructBERT情感分类-中文-通用-base](https://modelscope.cn/models/iic/nlp_structbert_sentiment-classification_chinese-base/summary)
+    - [RaNER命名实体识别-中文-通用领域-base](https://modelscope.cn/models/iic/nlp_raner_named-entity-recognition_chinese-base-generic/summary)
+    - [OFA文字识别-中文-手写体-base](https://modelscope.cn/models/iic/ofa_ocr-recognition_handwriting_base_zh/summary)
+    - [OFA文字识别-中文-印刷体-base](https://modelscope.cn/models/iic/ofa_ocr-recognition_document_base_zh/summary)
+    - [yayi-uie信息抽取](https://www.modelscope.cn/models/wenge-research/yayi-uie/summary)
+
+2. [百度智能云](https://cloud.baidu.com/)
+   - [百度千帆大模型平台](https://qianfan.cloud.baidu.com/)
+   - [飞桨AI Studio](https://aistudio.baidu.com/modelsoverview)
+   - [文字识别_通用场景文字识别-百度AI开放平台](https://cloud.baidu.com/product/ocr_general)
+3. [火山方舟-火山引擎](https://www.volcengine.com/product/ark)
