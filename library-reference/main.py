@@ -7,6 +7,7 @@ import items_support
 import sys
 import os
 from dotenv import load_dotenv
+import paper_suggest
 
 load_dotenv()
 
@@ -54,7 +55,9 @@ def process_query(category, user_input, default_llm_config=llm_configs["lingyi"]
         '数据库咨询': database_support.query_database_api,
         '馆藏图书报刊查询': items_support.extract_bookinfo,
         '日常业务咨询': general_services.general_response,
+        '学术文献查询': lambda user_input, llm_config: paper_suggest.get_paper_recommendations(user_input, llm_configs),
         '其他': general_services.general_response,
+
     }
 
     print(f"--------------------------------------------")
@@ -67,7 +70,7 @@ def process_query(category, user_input, default_llm_config=llm_configs["lingyi"]
         return func(user_input, llm_config)
 
 if __name__ == "__main__":
-    user_input = """18世纪历史学资料可以查询哪些数据库？"""
+    user_input = """有没有“大模型对图书馆业务可能的影响”相关资料"""
 
     # 情感分析
     sentiment_analysis_result = sentiment_analysis.sentiment_analysis(user_input, llm_configs["glm"])
