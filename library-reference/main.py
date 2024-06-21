@@ -70,7 +70,7 @@ def process_query(category, user_input, default_llm_config=llm_configs["lingyi"]
         return func(user_input, llm_config)
 
 if __name__ == "__main__":
-    user_input = """有没有“大模型对图书馆业务可能的影响”相关资料"""
+    user_input = """SWOT分析报告和一些商业/市场的分析报告你知道去上图的哪个数据库能找到么？"""
 
     # 情感分析
     sentiment_analysis_result = sentiment_analysis.sentiment_analysis(user_input, llm_configs["glm"])
