@@ -40,3 +40,9 @@
   - CNKI失败，则检索 Google Scholar
   - 根据检索到的文献和读者问题，利用 GLM 生成回答
   - 最终返回答案和检索文献列表
+
+
+## 致谢
+
+1. [JessyTsu1/google_scholar_spider: 谷歌学术爬虫，根据搜索词汇总信息表格并保存](https://github.com/JessyTsu1/google_scholar_spider)
+2. [Dramwig/CNKI-spider: 基于selenium包，爬取知网关键字检索的论文信息的Python脚本](https://github.com/Dramwig/CNKI-spider)
