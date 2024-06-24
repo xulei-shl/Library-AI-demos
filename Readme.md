@@ -43,7 +43,7 @@ DONE pda
 
 ### 图书馆讲座视频增强描述
 
-TODO
+DONE video_summarizer_and_metadata
 
 ### 特藏资源元数据生成
 
