@@ -9,8 +9,8 @@
 
    - 视频转音频
 
-2. 音频文本提取
-   - 使用ModelScople的[Paraformer语音识别-中文-通用-16k-离线-large-长音频版](https://modelscope.cn/models/iic/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
+2. ModelScople的[Paraformer语音识别-中文-通用-16k-离线-large-长音频版](https://modelscope.cn/models/iic/speech_paraformer-large-vad-punc_asr_nat-zh-cn-16k-common-vocab8404-pytorch)
+   - 使音频文本提取
 3. 智谱 glm-4-air API 
    - 转录文本优化
    - 文本总结
