@@ -2,8 +2,9 @@ import os
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
+from prompts import TEMPLATES
 
-def social_media_writer(folder_path, llm_configs):
+def social_media_writer(folder_path, llm_configs, template_key):
     def process_subfolder(subfolder_path):
         introduction_path = os.path.join(subfolder_path, '介绍.md')
         insight_report_path = os.path.join(subfolder_path, '最终洞察报告.md')
@@ -22,23 +23,7 @@ def social_media_writer(folder_path, llm_configs):
                 base_url=llm_configs["glmweb"].get("api_base")
             )
 
-            system_template = """
-            # 角色
-            你是一个小红书爆款写作专家。你的任务是结合提供的介绍和洞察报告，生成适合社交媒体传播的内容。
-
-            ## 技能
-            ### 技能 1：内容整合
-            - 将介绍和洞察报告的内容整合，提取关键信息和吸引人的点。
-
-            ### 技能 2：创意写作
-            - 根据整合的信息，创作出吸引人的社交媒体帖子。
-
-            ## 输出要求
-            - 确保内容忠实于原始材料，同时具有吸引力和创意。
-            - 【重要】输出内容应适合社交媒体传播，简洁且富有吸引力。
-            - 每一个段落含有适当的emoji表情，文末有合适的tag标签
-
-            """
+            system_template = TEMPLATES.get(template_key, TEMPLATES["xhs"])
 
             human_message = f"\n\n## 介绍内容：\n{introduction_content}\n\n## 洞察报告内容：\n{insight_content}"
 

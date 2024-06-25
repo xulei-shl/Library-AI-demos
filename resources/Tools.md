@@ -83,6 +83,7 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 
 4. 其他：
 - 飞书多维表+机器人
+  - [Mr-KID-github/Dify-FeiShu-bot: 开发ing，将Dify接入飞书机器人](https://github.com/Mr-KID-github/Dify-FeiShu-bot)
 - 腾讯微搭
 
 
