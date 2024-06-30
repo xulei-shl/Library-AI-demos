@@ -45,6 +45,10 @@ DONE pda
 
 DONE video_summarizer_and_metadata
 
+### CNKI 定题文献追踪与AIBot
+
+DOING topic_tracking
+
 ### 特藏资源元数据生成
 
 TODO
