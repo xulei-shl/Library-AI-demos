@@ -1,6 +1,9 @@
 ## 大模型类工具
 
 ### 文档解析与网络爬虫
+> [爬虫开源项目推荐](https://x.com/shao__meng/status/1802944900956373395)
+>
+
 1. jina-ai/reader: Convert any URL to an LLM-friendly input with a simple prefix https://r.jina.ai/
 
 2. VinciGit00/Scrapegraph-ai: Python scraper based on AI
@@ -9,13 +12,21 @@
 
 4. mendableai/firecrawl: 🔥 Turn entire websites into LLM-ready markdown or structured data. Scrape, crawl, search and extract with a single API. 
 
-5. Unstructured-IO/unstructured: Open source libraries and APIs to build custom preprocessing pipelines for labeling, training, or production machine learning pipelines. 
+5. [thinkany-ai/rag-search: RAG Search API](https://github.com/thinkany-ai/rag-search)
+   
+6. Unstructured-IO/unstructured: Open source libraries and APIs to build custom preprocessing pipelines for labeling, training, or production machine learning pipelines. 
 
-6. Filimoa/open-parse: Improved file parsing for LLM’s
+7. Filimoa/open-parse: Improved file parsing for LLM’s
 
-7. VikParuchuri/marker: Convert PDF to markdown quickly with high accuracy
+8. VikParuchuri/marker: Convert PDF to markdown quickly with high accuracy
 
-8. PaddlePaddle/PaddleOCR: Awesome multilingual OCR toolkits based on PaddlePaddle (practical ultra lightweight OCR system
+9.  PaddlePaddle/PaddleOCR: Awesome multilingual OCR toolkits based on PaddlePaddle (practical ultra lightweight OCR system
+10. [adithya-s-k/omniparse: Ingest, parse, and optimize any data format ➡️ from documents to multimedia ➡️ for enhanced compatibility with GenAI frameworks](https://github.com/adithya-s-k/omniparse?tab=readme-ov-file)
+    
+11. [katanaml/sparrow: Data processing with ML and LLM](https://github.com/katanaml/sparrow)
+   - Sparrow 是一个开源解决方案，用于从各种文档和图片中高效地提取和处理数据。它支持处理表单、发票、收据等非结构化数据源。Sparrow 具有模块化架构，提供独立的服务和管道，针对稳健性能进行了优化。通过插件化架构，可以轻松集成和运行数据提取管道，使用工具和框架如 LlamaIndex、Haystack 或 Unstructured。Sparrow 通过 Ollama 或 Apple MLX 实现本地 LLM 数据提取管道。
+
+
 
 ### 开发框架
 1. LangChain
@@ -59,6 +70,7 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 1. Flowise
 
 2. Dify
+   - [Dify飞书知识库](https://xinzhiaigc.feishu.cn/wiki/I1fVw0HkyiK2e6kCEx2cgydhntc)
 
 3. FastGPT
 
@@ -69,9 +81,9 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 6. Zapier Central
 - Zapier Central’s Chrome extension is one of the most underrated AI tools right now. 
 
-7. comfyanonymous/ComfyUI: The most powerful and modular stable diffusion GUI, api and backend with a graph/nodes interface. 
+1. comfyanonymous/ComfyUI: The most powerful and modular stable diffusion GUI, api and backend with a graph/nodes interface. 
 
-8. 其他
+2. 其他
 - n8n
 
 ### RPA、低代码平台
@@ -114,9 +126,11 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 
 ### 其他
 1. LLM 结构化输出
-- jxnl/instructor: structured outputs for llms
-2. 
-
+   
+   - jxnl/instructor: structured outputs for llms
+  
+2. [Github中高星的AI类仓库](https://airtable.com/app0UKsRSCA7YJhgu/shrqkqcrzRkYrLbpd/tblFlIWxOaM8HY3Kp?viewControls=on)
+3. [开源大模型下载器](https://github.com/Richasy/Rodel.Downloader/blob/master/README.zh-CN.md)
 
 ## 其他大模型工具平台（MaaS）
 

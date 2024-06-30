@@ -5,3 +5,7 @@
 提取的字段信息，可修改源码中的 `class Person(BaseModel)`部分
 
 规范性操作可以参考上图人名本体词表进行信息提取。此处demo仅作可行性测试
+
+## TODO
+
+- [numind/NuExtract-large · Hugging Face](https://huggingface.co/numind/NuExtract-large)，本地微调模型测试
