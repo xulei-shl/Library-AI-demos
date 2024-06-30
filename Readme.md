@@ -49,6 +49,10 @@ DONE video_summarizer_and_metadata
 
 DOING topic_tracking
 
+### 文献预警报告撰写专家
+
+TODO
+
 ### 特藏资源元数据生成
 
 TODO
