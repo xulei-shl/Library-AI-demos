@@ -67,4 +67,4 @@ TODO
 
 ### 图书馆会议信息爬取
 
-DONE
+DONE lib_conference_spider
