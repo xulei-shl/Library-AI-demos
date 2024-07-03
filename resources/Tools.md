@@ -126,11 +126,12 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 
 ### 其他
 1. LLM 结构化输出
-   
+
    - jxnl/instructor: structured outputs for llms
-  
+
 2. [Github中高星的AI类仓库](https://airtable.com/app0UKsRSCA7YJhgu/shrqkqcrzRkYrLbpd/tblFlIWxOaM8HY3Kp?viewControls=on)
 3. [开源大模型下载器](https://github.com/Richasy/Rodel.Downloader/blob/master/README.zh-CN.md)
+4. [提示词管理与评估-agenta](https://github.com/Agenta-AI/agenta)
 
 ## 其他大模型工具平台（MaaS）
 

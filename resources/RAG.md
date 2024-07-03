@@ -30,4 +30,14 @@
 
 3. [LLM应用架构 -- AI 工程化](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzA5MTIxNTY4MQ==&action=getalbum&album_id=3070790072247058439&subscene=&sessionid=svr_eabbfae5579&enterid=1718693540&from_msgid=2461141557&from_itemidx=1&count=3&nolastread=1#wechat_redirect)
 
-3. 
+   
+## 案例
+
+1. [emarco177/langgaph-course](https://github.com/emarco177/langgaph-course)
+   
+   - 使用 LangGraph 实现高级 RAG 控制流
+   - Corrective-RAG (CRAG)：在检索到的文档上进行自我评分，并在需要时使用网络搜索作为备选方案
+   - Self-RAG：在生成内容上进行自我评分，以识别和减少幻觉
+   - Adaptive RAG：根据查询的复杂性来路由查询
+  
+2. 
