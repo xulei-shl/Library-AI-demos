@@ -1,0 +1,9 @@
+requests
+beautifulsoup4
+pandas
+deepl
+langchain-community
+langchain-core
+python-dotenv
+selenium
+webdriver-manager

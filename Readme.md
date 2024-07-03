@@ -53,6 +53,18 @@ DOING topic_tracking
 
 TODO
 
+### 书目推荐 ChatBot
+
+TODO
+
 ### 特藏资源元数据生成
 
 TODO
+
+---
+
+> 以下是非图书馆业务场景
+
+### 图书馆会议信息爬取
+
+DONE
