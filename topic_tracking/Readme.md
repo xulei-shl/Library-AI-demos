@@ -23,6 +23,8 @@
 2. RAG 的稍微优化
 3. 如果获取到论文 PDF ，可以考虑使用 [whitead/paper-qa](https://github.com/whitead/paper-qa)项目搭建基于本地文档库的 QA 机器人
    - [PaperQA - YouTube](https://www.youtube.com/watch?v=-o5_HMBq5ys)
+4. Qdrant 最新的混合算法 [BM42](https://qdrant.tech/articles/bm42/)
+   
 
 ## 预警
 

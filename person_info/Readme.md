@@ -8,4 +8,6 @@
 
 ## TODO
 
-- [numind/NuExtract-large · Hugging Face](https://huggingface.co/numind/NuExtract-large)，本地微调模型测试
+1. 本地微调模型测试
+   - [numind/NuExtract-large · Hugging Face](https://huggingface.co/numind/NuExtract-large)
+   - [wenge-research/YAYI-UIE: 雅意信息抽取大模型)](https://github.com/wenge-research/YAYI-UIE)
