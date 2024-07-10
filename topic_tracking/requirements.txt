@@ -1,0 +1,5 @@
+streamlit
+pandas
+datetime
+selenium
+concurrent.futures

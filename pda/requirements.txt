@@ -1,5 +1,8 @@
 streamlit
 pandas
+langchain
 langchain-community
 langchain-core
 requests
+pydantic
+python-dotenv

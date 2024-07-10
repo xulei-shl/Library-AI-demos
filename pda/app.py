@@ -7,6 +7,7 @@ from process_excel import process_excel_files
 from json_excel import save_to_excel
 from datetime import date
 from dotenv import load_dotenv
+from baidu_token import load_access_token
 
 load_dotenv()  # 加载 .env 文件
 
@@ -44,7 +45,7 @@ def main():
 
     # 添加按钮用于生成文件夹路径
     if st.button("生成路径"):
-        parent_folder = r'E:\scripts\AI-demo\pda-git'  # 修改为你的文件夹路径
+        parent_folder = r'\\10.1.20.106\public'  # 修改为你的文件夹路径
         generated_folder_path = check_folder_exists(parent_folder)
         generated_path.text(generated_folder_path)
 
@@ -58,8 +59,9 @@ def main():
         SCREENSHOT_FOLDER_PATH = os.path.join(BASE_PATH, 'screenshot')
 
         # 从环境变量中获取 access_token 和 api_key
-        ocr_access_token = os.getenv("ACCESS_TOKEN")
-        llm_api_key = os.getenv("API_KEY")
+        #ocr_access_token = os.getenv("ACCESS_TOKEN")
+        ocr_access_token = load_access_token()
+        llm_api_key = os.getenv("GLM_API_KEY")
 
         # OCR配置
         handwriting_ocr_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting"
