@@ -25,3 +25,7 @@
 ## 致谢
 
 1. [jianchang512/zh_recogn](https://github.com/jianchang512/zh_recogn)
+
+## TODO？
+
+1. 根据转录文本撰写 SEO 友好的博客文章？[Agent101：将YouTube视频转化为SE0友好的文章](https://fw7qiozbnjr.feishu.cn/wiki/WiAnwBMXRip9orkYv54c7v5Zncr)

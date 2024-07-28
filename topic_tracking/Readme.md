@@ -24,6 +24,11 @@
 3. 如果获取到论文 PDF ，可以考虑使用 [whitead/paper-qa](https://github.com/whitead/paper-qa)项目搭建基于本地文档库的 QA 机器人
    - [PaperQA - YouTube](https://www.youtube.com/watch?v=-o5_HMBq5ys)
 4. Qdrant 最新的混合算法 [BM42](https://qdrant.tech/articles/bm42/)
+5. RSS订阅文章总结
+   - [ginobefun/BestBlogs: 基于 Dify Workflow 的文章智能分析实践](https://github.com/ginobefun/BestBlogs/tree/main)
+   - [Dify 教程案例分享：RSS 自动摘要 (summary) & 自动发送邮件(Email) Newsletter - YouTube](https://www.youtube.com/watch?v=g8ZHnQxfv4w)
+   - RSS订阅与全文都是单独模块处理存储在数据库或者多维表格，然后通过Dify Workflow API触发流程
+   - 
    
 
 ## 预警

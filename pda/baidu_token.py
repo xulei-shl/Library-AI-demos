@@ -60,3 +60,4 @@ def load_access_token():
 #测试
 if __name__ == '__main__':
     load_access_token()
+    print(get_access_token())

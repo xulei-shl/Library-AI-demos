@@ -14,16 +14,18 @@
 
 5. [thinkany-ai/rag-search: RAG Search API](https://github.com/thinkany-ai/rag-search)
    
-6. Unstructured-IO/unstructured: Open source libraries and APIs to build custom preprocessing pipelines for labeling, training, or production machine learning pipelines. 
+6. [Crawlee for Python · Fast, reliable crawlers.](https://crawlee.dev/python/)
+   
+7. Unstructured-IO/unstructured: Open source libraries and APIs to build custom preprocessing pipelines for labeling, training, or production machine learning pipelines. 
 
-7. Filimoa/open-parse: Improved file parsing for LLM’s
+8. Filimoa/open-parse: Improved file parsing for LLM’s
 
-8. VikParuchuri/marker: Convert PDF to markdown quickly with high accuracy
+9.  VikParuchuri/marker: Convert PDF to markdown quickly with high accuracy
 
-9.  PaddlePaddle/PaddleOCR: Awesome multilingual OCR toolkits based on PaddlePaddle (practical ultra lightweight OCR system
-10. [adithya-s-k/omniparse: Ingest, parse, and optimize any data format ➡️ from documents to multimedia ➡️ for enhanced compatibility with GenAI frameworks](https://github.com/adithya-s-k/omniparse?tab=readme-ov-file)
+10. PaddlePaddle/PaddleOCR: Awesome multilingual OCR toolkits based on PaddlePaddle (practical ultra lightweight OCR system
+11. [adithya-s-k/omniparse: Ingest, parse, and optimize any data format ➡️ from documents to multimedia ➡️ for enhanced compatibility with GenAI frameworks](https://github.com/adithya-s-k/omniparse?tab=readme-ov-file)
     
-11. [katanaml/sparrow: Data processing with ML and LLM](https://github.com/katanaml/sparrow)
+12. [katanaml/sparrow: Data processing with ML and LLM](https://github.com/katanaml/sparrow)
    - Sparrow 是一个开源解决方案，用于从各种文档和图片中高效地提取和处理数据。它支持处理表单、发票、收据等非结构化数据源。Sparrow 具有模块化架构，提供独立的服务和管道，针对稳健性能进行了优化。通过插件化架构，可以轻松集成和运行数据提取管道，使用工具和框架如 LlamaIndex、Haystack 或 Unstructured。Sparrow 通过 Ollama 或 Apple MLX 实现本地 LLM 数据提取管道。
 
 
