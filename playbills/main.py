@@ -21,10 +21,10 @@ access_token = load_access_token()
 logger = setup_logger(r'E:\scripts\jiemudan\logs')
 
 # 1 调用 OCR 处理函数
-# process_images(image_folder, ocr_url, access_token, logger)
+process_images(image_folder, ocr_url, access_token, logger)
 
 # 2 集合演出元数据提取
-#festivals_metadata(image_folder, logger)
+festivals_metadata(image_folder, logger)
 
 # 3 演出节目清单信息提取
 # 3.1 纯节目清单预处理
