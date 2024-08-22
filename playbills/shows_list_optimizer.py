@@ -53,7 +53,7 @@ def optimize_shows_list(result, logger, prompt_key):
 
     result, output_token_count = llm.send_request(base_url, api_key, model_name, combined_prompt, logger, response_format={'type': 'json_object'})
     
-    return result, token_count, output_token_count
+    return result, model_name, token_count, output_token_count
 
 # 测试函数
 # if __name__ == "__main__":

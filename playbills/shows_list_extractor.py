@@ -82,7 +82,7 @@ def get_shows(md_file_path, logger, performing_event):
        any(act.get('individualPerformances', []) for act in result_json.get('sectionsOrActs', []) if any(item.get('castDescription') for item in act.get('individualPerformances', []) if item.get('castDescription') is not None)):
         print(f"\n----------------开始演职人员格式化----------------------------\n")
         logger.info(f"开始演职人员格式化")
-        optimized_result, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
+        optimized_result, model_name, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
             json_content, logger, prompt_key="add_spaces_user_prompt"
         )
         json_content = extract_json_content(optimized_result)
@@ -158,7 +158,7 @@ def process_single_event(event, shows_list, md_file_path, logger):
         
         combined_prompt = f"### 集合演出信息：\n{json.dumps(event, ensure_ascii=False)}\n\n### 演出节目名：\n{show_name}\n\n### 原始的OCR文本：\n{md_content}"
         
-        optimized_result, input_tokens, output_tokens = shows_list_optimizer.optimize_shows_list(
+        optimized_result, model_name, input_tokens, output_tokens = shows_list_optimizer.optimize_shows_list(
             combined_prompt, logger, prompt_key="single_shows_to_festivals_user_prompt"
         )
         
@@ -183,7 +183,7 @@ def process_single_event(event, shows_list, md_file_path, logger):
     event['performingEvent']['individualPerformances'] = {
         'content': processed_performances,
         'metadata': {
-            "model_name": "deepseek-chat",
+            "model_name": model_name,
             "timestamp": datetime.now().isoformat()
         }
     }
@@ -217,7 +217,7 @@ def process_multi_events(events, shows_list, md_file_path, logger):
         
         combined_prompt = f"### 集合演出信息：\n{json.dumps(events, ensure_ascii=False)}\n\n### 演出节目名：\n{show_name}\n\n### 原始的OCR文本：\n{md_content}"
         
-        optimized_result, input_tokens, output_tokens = shows_list_optimizer.optimize_shows_list(
+        optimized_result, model_name, input_tokens, output_tokens = shows_list_optimizer.optimize_shows_list(
             combined_prompt, logger, prompt_key="shows_to_festivals_user_prompt"
         )
         
@@ -262,7 +262,7 @@ def process_multi_events(events, shows_list, md_file_path, logger):
         event['performingEvent']['individualPerformances'] = {
             'content': event['performingEvent'].get('individualPerformances', []),
             'metadata': {
-                "model_name": "deepseek-chat",  # 假设使用deepseek-chat模型
+                "model_name": model_name,  # 假设使用deepseek-chat模型
                 "timestamp": datetime.now().isoformat()
             }
         }
