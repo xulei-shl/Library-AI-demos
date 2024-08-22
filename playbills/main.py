@@ -6,6 +6,7 @@ from shows_list_extractor import structured_shows_list
 from shows_list_processor import pre_shows_list
 from shows_list_reprocessor import replace_texts
 from casts_list_extractor import process_casts_list
+from casts_list_optimizer import optimize_casts
 
 # 第一步 OCR，OCR结果LLM整理
 
@@ -36,10 +37,10 @@ logger = setup_logger(r'E:\scripts\jiemudan\logs')
 
 
 # 4 演职人员清单信息提取
-process_casts_list(image_folder, logger)
+#process_casts_list(image_folder, logger)
 
-
-# Excel结果的一些后处理
+# 5 3.1节目清单中演职人员castDescription结构化
+optimize_casts(image_folder, logger)
 
 replace_texts(image_folder)
 

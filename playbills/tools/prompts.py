@@ -847,6 +847,52 @@ user_prompts = {
     ---
 
     原始文本如下：
+    """,
+
+    "cast_description_optimizer_prompt": """
+    ## 任务说明
+
+    这是一段节目演出图片中ocr提取的节目演职人员信息。内容类型：
+    （1）角色扮演说明：节目演出人员与扮演的节目角色
+    （2）演出职责说明：演出人员与职责。包括但不限于乐器演奏、演唱、伴舞、表演等。
+
+    请根据【内容类型】，按照如下规则提取json格式。
+    【重要！！！】直接输出最终的json结果，不要给出任何解释或说明。
+
+    （1）角色扮演说明。则提取规则：
+        ```
+        {
+            "rolePlayDescriptions": [
+                {
+                "actorName": "Actor 1",
+                "characterName": "Character 1"
+                },
+                {
+                "actorName": "Actor 2",
+                "characterName": "Character 2"
+                }
+            ]
+        }
+        ```
+
+    （2）演出职责说明，提取规则：
+    ```
+    {
+    "performanceResponsibilities": [
+            {
+                "performerName": "",
+                "responsibility": ""
+            },
+            {
+                "performerName": "",
+                "responsibility": ""
+            }
+        ]
+    }
+    ```
+    ---
+    提取原内容如下：
+
     """
 
 }
