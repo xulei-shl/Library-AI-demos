@@ -20,7 +20,6 @@
 5. 点击"开始处理"按钮，程序会处理图像文件并将结果保存到 Excel 文件中。
 6. 处理完成后，您可以在生成的文件夹中找到 Excel 文件。
 
-## 注意事项
-- 程序会自动创建每日文件夹，因此请确保您有权限访问指定的父文件夹。
-- 如果出现任何错误，程序会将错误信息记录到日志文件中。
-- 请确保您的 Baidu OCR API 和大模型 API 密钥正确配置。
+## TODO
+- OCR后处理纠错：[shibing624/pycorrector: pycorrector is a toolkit for text error correction. 文本纠错，实现了Kenlm，T5，MacBERT，ChatGLM3，LLaMA等模型应用在纠错场景，开箱即用。](https://github.com/shibing624/pycorrector)
+- 

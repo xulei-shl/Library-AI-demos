@@ -104,12 +104,16 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 ### 大模型API
 
 1. 大模型 API 价格
+- [国内外AI大语言模型API价格对比 | AI排行榜 - AIGCRank.cn](https://aigcrank.cn/llmprice)
+
 - [主题日报◉AI开发者必备〖LLM选购指南〗](https://mp.weixin.qq.com/s/AJKztsDtnNfF1-DH5K8x9g)
 
 - 2024-06-06提供，API调用接口价格
 ![2024-06-06提供API调用接口价格](/resources/asserts/2024-06-06提供API调用接口价格.png)
 
 - [2024.6 W2 商用LLM API进展简评](https://mp.weixin.qq.com/s/ov5KofVw_5xpGx6JwvvVlA)
+
+  
 
 2. 第三方API代理
 
