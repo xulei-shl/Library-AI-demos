@@ -57,9 +57,9 @@ TODO
 
 TODO
 
-### 特藏资源元数据生成
+### 特藏资源（节目单）实体提取 playbills
 
-TODO
+DONE 
 
 ---
 
