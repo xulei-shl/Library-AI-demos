@@ -9,6 +9,7 @@ import tools.prompts as prompts
 import shows_list_optimizer
 import json
 import re
+from tools.llm_json_extractor import extract_json_content
 
 # 已合并到 shows_list_extractor.py
 
@@ -25,13 +26,6 @@ def get_env_vars():
         "Doubao_API_KEY": os.getenv("Doubao_API_KEY")
     }
     return env_vars
-
-def extract_json_content(result):
-    if '```json' in result:
-        json_start = result.find('```json') + len('```json')
-        json_end = result.find('```', json_start)
-        return result[json_start:json_end].strip()
-    return result
 
 def select_model(token_count, env_vars):
     if token_count <= 32768:

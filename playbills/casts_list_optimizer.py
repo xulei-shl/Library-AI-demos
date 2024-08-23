@@ -3,13 +3,7 @@ import json
 import pandas as pd
 from datetime import datetime
 import shows_list_optimizer
-
-def extract_json_content(result):
-    if '```json' in result:
-        json_start = result.find('```json') + len('```json')
-        json_end = result.find('```', json_start)
-        return result[json_start:json_end].strip()
-    return result
+from tools.llm_json_extractor import extract_json_content
 
 def process_cast_description(cast_description, logger):
     if cast_description is None or cast_description == "":
@@ -25,13 +19,14 @@ def process_cast_description(cast_description, logger):
         return result_json, input_tokens, output_tokens
     except json.JSONDecodeError:
         print(f"JSON解析失败: {json_content}")
-        return [], input_tokens, output_tokens
+        result_json = {"castDescription": {"description": cast_description}}
+
+    return result_json, input_tokens, output_tokens
 
 def process_performance_works(performance_works, logger):
     total_input_tokens = 0
     total_output_tokens = 0
     
-
     print(f"\n开始结构化演职人员描述...\n")
     logger.info(f"开始结构化演职人员描述...\n")
 
@@ -41,15 +36,15 @@ def process_performance_works(performance_works, logger):
                 work['castDescription'] = []
             else:
                 result, input_tokens, output_tokens = process_cast_description(work['castDescription'], logger)
-                if 'performanceResponsibilities' in result:
+                if isinstance(work['castDescription'], dict) and 'description' in work['castDescription']:
                     work['castDescription'] = {
-                        'description': work['castDescription'],
-                        'performanceResponsibilities': result['performanceResponsibilities']
+                        'description': work['castDescription']['description'],
+                        'performanceResponsibilities': result.get('performanceResponsibilities', [])
                     }
-                elif 'rolePlayDescriptions' in result:
+                elif isinstance(work['castDescription'], str):
                     work['castDescription'] = {
                         'description': work['castDescription'],
-                        'rolePlayDescriptions': result['rolePlayDescriptions']
+                        'performanceResponsibilities': result.get('performanceResponsibilities', [])
                     }
                 total_input_tokens += input_tokens
                 total_output_tokens += output_tokens

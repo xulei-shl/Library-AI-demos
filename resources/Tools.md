@@ -23,7 +23,12 @@
 9.  VikParuchuri/marker: Convert PDF to markdown quickly with high accuracy
 
 10. PaddlePaddle/PaddleOCR: Awesome multilingual OCR toolkits based on PaddlePaddle (practical ultra lightweight OCR system
+    1.  [Dicklesworthstone/llm_aided_ocr: Enhance Tesseract OCR output for scanned PDFs by applying Large Language Model (LLM) corrections.](https://github.com/Dicklesworthstone/llm_aided_ocr)
+    2.  [shibing624/pycorrector: pycorrector is a toolkit for text error correction. 文本纠错，实现了Kenlm，T5，MacBERT，ChatGLM3，LLaMA等模型应用在纠错场景，开箱即用。](https://github.com/shibing624/pycorrector)
+
+
 11. [adithya-s-k/omniparse: Ingest, parse, and optimize any data format ➡️ from documents to multimedia ➡️ for enhanced compatibility with GenAI frameworks](https://github.com/adithya-s-k/omniparse?tab=readme-ov-file)
+
     
 12. [katanaml/sparrow: Data processing with ML and LLM](https://github.com/katanaml/sparrow)
    - Sparrow 是一个开源解决方案，用于从各种文档和图片中高效地提取和处理数据。它支持处理表单、发票、收据等非结构化数据源。Sparrow 具有模块化架构，提供独立的服务和管道，针对稳健性能进行了优化。通过插件化架构，可以轻松集成和运行数据提取管道，使用工具和框架如 LlamaIndex、Haystack 或 Unstructured。Sparrow 通过 Ollama 或 Apple MLX 实现本地 LLM 数据提取管道。

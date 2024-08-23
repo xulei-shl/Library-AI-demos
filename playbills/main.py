@@ -42,7 +42,8 @@ logger = setup_logger(r'E:\scripts\jiemudan\logs')
 # 5 3.1节目清单中演职人员castDescription结构化
 optimize_casts(image_folder, logger)
 
-replace_texts(image_folder)
+# Excel 数据处理
+# replace_texts(image_folder)
 
 
 

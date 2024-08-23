@@ -4,15 +4,10 @@ from datetime import datetime
 from dotenv import load_dotenv
 import shows_list_optimizer
 import json
+from tools.llm_json_extractor import extract_json_content
+
 
 load_dotenv()
-
-def extract_json_content(result):
-    if '```json' in result:
-        json_start = result.find('```json') + len('```json')
-        json_end = result.find('```', json_start)
-        return result[json_start:json_end].strip()
-    return result
 
 def process_file(file_path, logger, prompt_key, total_token_count, total_output_token_count):
     with open(file_path, "r", encoding="utf-8") as file:
@@ -58,7 +53,7 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
         logger.info(f"是否是节目单信息列表判断结果: {processed_result}")
 
         # 解析 JSON 格式的返回结果
-        json_content = result[result.find('```json') + 7:result.find('```', result.find('```json') + 7)].strip() if '```json' in result else result
+        json_content = extract_json_content(result)
         processed_result_json = json.loads(json_content)
         judgment_result = processed_result_json.get("result", "")
 
@@ -79,8 +74,8 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
             # 继续传递原始的 result
             pass
 
-    json_content = result[result.find('```json') + 7:result.find('```', result.find('```json') + 7)].strip() if '```json' in result else result
-    
+    json_content = extract_json_content(result)
+
     # 移除了对 is_multiple_events 的判断，现在对所有情况都进行演职人员格式化
     data = json.loads(json_content)
   #新版是传递一个个json节点组处理，而非整个json，效果不好
@@ -134,7 +129,7 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
         logger.info(f"演职人员格式化优化结果: {processed_result}")
         result = processed_result
 
-    json_content = result[result.find('```json') + 7:result.find('```', result.find('```json') + 7)].strip() if '```json' in result else result
+    json_content = extract_json_content(result)
     return json_content, total_token_count, total_output_token_count
 
 # 新版是传递一个个json节点组处理，而非整个json。但判断不准确

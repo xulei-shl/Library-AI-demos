@@ -3,15 +3,12 @@ import json
 import pandas as pd
 from datetime import datetime
 import shows_list_optimizer
+from tools.llm_json_extractor import extract_json_content
 
-def extract_json_content(result):
-    if '```json' in result:
-        json_start = result.find('```json') + len('```json')
-        json_end = result.find('```', json_start)
-        return result[json_start:json_end].strip()
-    return result
 
 def optimize_name(name, logger):
+    print(f"\n开始优化名字: {name}")
+    logger.info(f"开始优化名字: {name}")
     optimized_result, model_name, input_tokens, output_tokens = shows_list_optimizer.optimize_shows_list(
         name, logger, prompt_key="name_optimizer_prompt"
     )

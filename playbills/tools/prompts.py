@@ -856,40 +856,34 @@ user_prompts = {
     （1）角色扮演说明：节目演出人员与扮演的节目角色
     （2）演出职责说明：演出人员与职责。包括但不限于乐器演奏、演唱、伴舞、表演等。
 
-    请根据【内容类型】，按照如下规则提取json格式。
-    【重要！！！】直接输出最终的json结果，不要给出任何解释或说明。
+    - 请根据【内容类型】，提取json数据。
+    - 【重要！！！】直接输出最终的json结果，不要给出任何解释或说明。
+    - 【重要！！！】`responsibility`，`characterName`没有提取到时，请返回 `null`。
 
-    （1）角色扮演说明。则提取规则：
-        ```
-        {
-            "rolePlayDescriptions": [
-                {
-                "actorName": "Actor 1",
-                "characterName": "Character 1"
-                },
-                {
-                "actorName": "Actor 2",
-                "characterName": "Character 2"
-                }
-            ]
-        }
-        ```
+    ## 输出样例
 
-    （2）演出职责说明，提取规则：
     ```
     {
-    "performanceResponsibilities": [
+        "performanceResponsibilities": [
             {
-                "performerName": "",
-                "responsibility": ""
+            "performerName": "performer 1",
+            "responsibility": "",
+            "characterName": "Character 1"
             },
             {
-                "performerName": "",
-                "responsibility": ""
+            "performerName": "performer 1",
+            "responsibility": "",
+            "characterName": "Character 1"
             }
         ]
     }
     ```
+    
+    字段说明：
+    - performerName：表演者姓名；
+    - responsibility：表演者职责；
+    - characterName：表演者扮演角色名称。
+
     ---
     提取原内容如下：
 
