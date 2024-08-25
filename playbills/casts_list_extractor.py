@@ -19,7 +19,8 @@ def optimize_name(name, logger):
         result_json = json.loads(json_content)
         return result_json.get("result", name), input_tokens, output_tokens
     except json.JSONDecodeError:
-        print(f"JSON解析失败: {json_content}")
+        print(f"\nJSON解析失败: {json_content}")
+        logger.error(f"JSON解析失败: {json_content}")
         return name, input_tokens, output_tokens
 
 def split_casts(performing_events):
@@ -60,7 +61,7 @@ def process_casts_list(image_folder, logger):
 
     for i, row in df.iterrows():
         file_name = row['文件名']
-        performing_events = json.loads(row['演出节目单']) if isinstance(row['演出节目单'], str) else row['演出节目单']
+        performing_events = json.loads(row['演出事件与作品']) if isinstance(row['演出事件与作品'], str) else row['演出事件与作品']
 
         print(f"\n处理文件: {file_name}, Excel行: {i+1}")
 

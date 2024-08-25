@@ -18,7 +18,8 @@ def process_cast_description(cast_description, logger):
         result_json = json.loads(json_content)
         return result_json, input_tokens, output_tokens
     except json.JSONDecodeError:
-        print(f"JSON解析失败: {json_content}")
+        print(f"\nJSON解析失败: {json_content}")
+        logger.info(f"JSON解析失败: {json_content}")
         result_json = {"castDescription": {"description": cast_description}}
 
     return result_json, input_tokens, output_tokens

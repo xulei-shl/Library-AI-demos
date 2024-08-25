@@ -72,8 +72,8 @@ def get_shows(md_file_path, logger, performing_event):
     print(f"\n提取的演出节目信息: \n{json_content}")
 
     result_json = json.loads(json_content)
-    if any(item.get('castDescription') for item in result_json.get('individualPerformances', []) if item.get('castDescription') is not None) or \
-       any(act.get('individualPerformances', []) for act in result_json.get('sectionsOrActs', []) if any(item.get('castDescription') for item in act.get('individualPerformances', []) if item.get('castDescription') is not None)):
+    if any(item.get('castDescription') for item in result_json.get('performanceWorks', []) if item.get('castDescription') is not None) or \
+       any(act.get('performanceWorks', []) for act in result_json.get('sectionsOrActs', []) if any(item.get('castDescription') for item in act.get('performanceWorks', []) if item.get('castDescription') is not None)):
         print(f"\n----------------开始演职人员格式化----------------------------\n")
         logger.info(f"开始演职人员格式化")
         optimized_result, model_name, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
@@ -114,12 +114,12 @@ def process_event(event, md_file_path, logger):
                 'metadata': result_json.get('metadata', {})
             }
             print("更新了sectionsOrActs")
-        elif 'individualPerformances' in result_json:
-            event['performingEvent']['individualPerformances'] = {
-                'content': result_json['individualPerformances'],
+        elif 'performanceWorks' in result_json:
+            event['performingEvent']['performanceWorks'] = {
+                'content': result_json['performanceWorks'],
                 'metadata': result_json.get('metadata', {})
             }
-            print("更新了individualPerformances")
+            print("更新了performanceWorks")
         
         event['performingEvent']['metadata'] = original_metadata
 
@@ -133,19 +133,19 @@ def process_single_event(event, shows_list, md_file_path, logger):
     try:
         shows = json.loads(shows_list)
     except json.JSONDecodeError:
-        logger.error(f"无法解析节目清单列表: {shows_list}")
-        print(f"错误: 无法解析节目清单列表: {shows_list}")
+        logger.error(f"无法解析演出作品: {shows_list}")
+        print(f"错误: 无法解析演出作品: {shows_list}")
         return None, 0, 0
 
     total_input_tokens = 0
     total_output_tokens = 0
 
-    logger.info(f"总共有 {len(shows['individualPerformances'])} 个节目需要处理")
-    print(f"总共有 {len(shows['individualPerformances'])} 个节目需要处理")
+    logger.info(f"总共有 {len(shows['performanceWorks'])} 个节目需要处理")
+    print(f"总共有 {len(shows['performanceWorks'])} 个节目需要处理")
 
     processed_performances = []
 
-    for index, show in enumerate(shows['individualPerformances'], 1):
+    for index, show in enumerate(shows['performanceWorks'], 1):
         show_name = show['name']
         logger.info(f"处理第 {index} 个节目: {show_name}")
         print(f"处理第 {index} 个节目: {show_name}")
@@ -170,11 +170,15 @@ def process_single_event(event, shows_list, md_file_path, logger):
             except json.JSONDecodeError:
                 logger.warning(f"无法解析节目 '{show_name}' 的返回结果")
                 print(f"警告: 无法解析节目 '{show_name}' 的返回结果")
+                show['sectionsOrActs'] = None
+                processed_performances.append(show)
         else:
             logger.warning(f"无法在返回结果中找到JSON格式的数据，节目: '{show_name}'")
             print(f"警告: 无法在返回结果中找到JSON格式的数据，节目: '{show_name}'")
+            show['sectionsOrActs'] = None
+            processed_performances.append(show)
 
-    event['performingEvent']['individualPerformances'] = {
+    event['performingEvent']['performanceWorks'] = {
         'content': processed_performances,
         'metadata': {
             "model_name": model_name,
@@ -194,17 +198,17 @@ def process_multi_events(events, shows_list, md_file_path, logger):
     try:
         shows = json.loads(shows_list)
     except json.JSONDecodeError:
-        logger.error(f"无法解析节目清单列表: {shows_list}")
-        print(f"错误: 无法解析节目清单列表: {shows_list}")
+        logger.error(f"无法解析演出作品: {shows_list}")
+        print(f"错误: 无法解析演出作品: {shows_list}")
         return None, 0, 0
     
     total_input_tokens = 0
     total_output_tokens = 0
 
-    logger.info(f"总共有 {len(shows['individualPerformances'])} 个节目需要处理")
-    print(f"总共有 {len(shows['individualPerformances'])} 个节目需要处理")
+    logger.info(f"总共有 {len(shows['performanceWorks'])} 个节目需要处理")
+    print(f"总共有 {len(shows['performanceWorks'])} 个节目需要处理")
 
-    for index, show in enumerate(shows['individualPerformances'], 1):
+    for index, show in enumerate(shows['performanceWorks'], 1):
         show_name = show['name']
         logger.info(f"处理第 {index} 个节目: {show_name}")
         print(f"处理第 {index} 个节目: {show_name}")
@@ -218,7 +222,17 @@ def process_multi_events(events, shows_list, md_file_path, logger):
         total_input_tokens += input_tokens
         total_output_tokens += output_tokens
 
-        json_match = re.search(r'\{.*\}', optimized_result, re.DOTALL)
+        # 将第一次调用的结果添加到新的 combined_prompt 中
+        combined_prompt_2 = f"{combined_prompt}\n\n### 第一次判断结果：\n{optimized_result}"
+        
+        optimized_result_2, model_name_2, input_tokens_2, output_tokens_2 = shows_list_optimizer.optimize_shows_list(
+            combined_prompt_2, logger, prompt_key="shows_to_festivals_judge_user_prompt"
+        )
+        
+        total_input_tokens += input_tokens_2
+        total_output_tokens += output_tokens_2
+
+        json_match = re.search(r'\{.*\}', optimized_result_2, re.DOTALL)
         if json_match:
             json_str = json_match.group(0)
             try:
@@ -239,12 +253,12 @@ def process_multi_events(events, shows_list, md_file_path, logger):
             print(f"节目 '{show_name}' 匹配到事件: {matched_event_name}")
             for event in events:
                 if event['performingEvent']['name'] == matched_event_name:
-                    if 'individualPerformances' not in event['performingEvent']:
-                        event['performingEvent']['individualPerformances'] = []
+                    if 'performanceWorks' not in event['performingEvent']:
+                        event['performingEvent']['performanceWorks'] = []
                     
                     show['sectionsOrActs'] = sections_or_acts
                     
-                    event['performingEvent']['individualPerformances'].append(show)
+                    event['performingEvent']['performanceWorks'].append(show)
                     logger.info(f"已将节目 '{show_name}' 添加到事件 '{matched_event_name}'")
                     print(f"已将节目 '{show_name}' 添加到事件 '{matched_event_name}'")
                     break
@@ -253,10 +267,10 @@ def process_multi_events(events, shows_list, md_file_path, logger):
             print(f"警告: 无法为节目 '{show_name}' 找到匹配的事件")
 
     for event in events:
-        event['performingEvent']['individualPerformances'] = {
-            'content': event['performingEvent'].get('individualPerformances', []),
+        event['performingEvent']['performanceWorks'] = {
+            'content': event['performingEvent'].get('performanceWorks', []),
             'metadata': {
-                "model_name": model_name,  # 假设使用deepseek-chat模型
+                "model_name": model_name,
                 "timestamp": datetime.now().isoformat()
             }
         }
@@ -275,7 +289,7 @@ def structured_shows_list(image_folder, logger):
     print(f"读取Excel文件: {excel_file_path}")
     df = pd.read_excel(excel_file_path)
 
-    new_columns = ['输入token-总2', '输出token-总2', '演出节目单']
+    new_columns = ['输入token-总2', '输出token-总2', '演出事件与作品']
     for col in new_columns:
         if col not in df.columns:
             df[col] = pd.NA
@@ -285,29 +299,29 @@ def structured_shows_list(image_folder, logger):
     for i, row in df.iterrows():
         file_name = row['文件名']
         performing_events = json.loads(row['演出事件']) if isinstance(row['演出事件'], str) else row['演出事件']
-        shows_list = row['节目清单列表']
+        shows_list = row['演出作品']
 
         print(f"\n处理文件: {file_name}, Excel行: {i+1}")
 
         try:
             shows_list_json = json.loads(shows_list)
-            if shows_list_json == {"individualPerformances": []}:
-                df.loc[i, '演出节目单'] = row['演出事件']
+            if shows_list_json == {"performanceWorks": []}:
+                df.loc[i, '演出事件与作品'] = row['演出事件']
                 df.loc[i, '输入token-总2'] = row['输入token-总1']
                 df.loc[i, '输出token-总2'] = row['输出token-总1']
-                logger.info(f"{file_name}，Excel 第 {i+1} 行跳过处理，直接复制演出事件到演出节目单")
-                print(f"{file_name}，Excel 第 {i+1} 行跳过处理，直接复制演出事件到演出节目单")
+                logger.info(f"{file_name}，Excel 第 {i+1} 行跳过处理，直接复制演出事件到演出事件与作品")
+                print(f"{file_name}，Excel 第 {i+1} 行跳过处理，直接复制演出事件到演出事件与作品")
                 df.to_excel(excel_file_path, index=False)
                 print(f"Excel文件已更新: {excel_file_path}")
                 processed_files += 1
                 continue
-            elif pd.notna(row['演出节目单']):
+            elif pd.notna(row['演出事件与作品']):
                 logger.info(f"{file_name}，Excel 第 {i+1} 行跳过处理")
                 print(f"{file_name}，Excel 第 {i+1} 行跳过处理")
                 continue
         except json.JSONDecodeError:
-            logger.warning(f"无法解析节目清单列表: {shows_list}")
-            print(f"警告: 无法解析节目清单列表: {shows_list}")
+            logger.warning(f"无法解析演出作品: {shows_list}")
+            print(f"警告: 无法解析演出作品: {shows_list}")
             continue
 
         performing_events = [performing_events] if not isinstance(performing_events, list) else performing_events
@@ -330,7 +344,7 @@ def structured_shows_list(image_folder, logger):
 
         df.loc[i, '输入token-总2'] = df.loc[i, '输入token-总1'] + input_tokens
         df.loc[i, '输出token-总2'] = df.loc[i, '输出token-总1'] + output_tokens
-        df.loc[i, '演出节目单'] = json.dumps(result, ensure_ascii=False)
+        df.loc[i, '演出事件与作品'] = json.dumps(result, ensure_ascii=False)
         
         print(f"更新Excel: 输入token-总2={df.loc[i, '输入token-总2']}, 输出token-总2={df.loc[i, '输出token-总2']}")
         df.to_excel(excel_file_path, index=False)

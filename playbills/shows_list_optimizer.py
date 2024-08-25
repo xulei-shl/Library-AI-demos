@@ -6,6 +6,7 @@ import tools.llm_requestion as llm
 import tools.prompts as prompts
 
 
+
 # 加载 .env 文件中的环境变量
 load_dotenv()
 
@@ -21,6 +22,7 @@ def optimize_shows_list(result, logger, prompt_key):
 
     print(f"\n--------------------------------------------\n")
     print(f"Token数量: {token_count}")
+
     logger.info(f"Tokens数量：{token_count}")
     logger.info(f"开始提取节目单信息")
 
@@ -43,7 +45,7 @@ def optimize_shows_list(result, logger, prompt_key):
         model_name = "ep-20240814153435-rmdkh"
     else:
         print(f"\n-----------------------------------------------\n")
-        print("文本的token数量超过了128k模型的限制")        
+        print("文本的token数量超过了128k模型的限制")
         logger.info("文本的token数量超过了128k模型的限制")
         return None, token_count, 0
     

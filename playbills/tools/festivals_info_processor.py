@@ -1,6 +1,7 @@
 from tools.festivals_info_extractor import get_description
 import json
 
+# `演出事件`各个实体的`description` null时，再次LLM提取
 def process_item(item, md_file_path, logger):
     def add_description_with_metadata(target, name, key):
         formatted_name = f"{name}（{key}）"

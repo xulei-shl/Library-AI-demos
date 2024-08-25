@@ -220,7 +220,7 @@ system_prompts = {
 
     ```
     {
-        "individualPerformances": [
+        "performanceWorks": [
             {
                 "name": "Individual Performance Name 1",
                 "castDescription": "Cast member description string",
@@ -310,7 +310,7 @@ system_prompts = {
             {
                 "name": "Section or Act Name 1",
                 "description": "A detailed description of an Section or Act Name 1",
-                "individualPerformances": [
+                "performanceWorks": [
                     {
                         "name": "Individual Performance Name 1",
                         "castDescription": "Cast member description string",
@@ -327,7 +327,7 @@ system_prompts = {
             {
                 "name": "Section or Act Name 2",
                 "description": "A detailed description of an Section or Act Name 2",
-                "individualPerformances": [
+                "performanceWorks": [
                     {
                         "name": "Individual Performance Name 1",
                         "castDescription": "Cast member description string",
@@ -357,7 +357,7 @@ system_prompts = {
     ```
     [{"performingEvent": 
     {
-        "individualPerformances": [
+        "performanceWorks": [
             {
                 "name": "Individual Performance Name",
                 "castDescription": "Cast member description string",
@@ -450,7 +450,7 @@ user_prompts = {
 
     ```
     {
-        "individualPerformances": [
+        "performanceWorks": [
             {
                 "name": "Individual Performance Name",
                 "castDescription": "Cast member description string",
@@ -470,7 +470,7 @@ user_prompts = {
 
     ```
         {
-        "individualPerformances": []
+        "performanceWorks": []
         }
     ```
 
@@ -533,7 +533,7 @@ user_prompts = {
         原始文本如下：
         ```
         {
-            "individualPerformances": [
+            "performanceWorks": [
                 {
                     "name": "Individual Performance Name",
                     "castDescription": "Cast member description string",
@@ -552,7 +552,7 @@ user_prompts = {
         输出结果如下：
         ```
         {
-            "individualPerformances": [
+            "performanceWorks": [
                 {
                     "name": "Individual Performance Name",
                     "castDescription": "Cast member description string",
@@ -628,9 +628,9 @@ user_prompts = {
     ## 目标与任务
     - 首先，请根据用户提供的集合演出名称，分析其所属的图片和坐标信息。
     - 根据分析得到的图片以及对应的坐标信息，判断此场集合演出是否包括【章节或半场演出】、【单个演出节目】
-    - 如果判断有【章节或半场演出】，则返回：{"sectionsOrActs": "yes", "individualPerformances": "yes"}
-    - 如果判断没有【章节或半场演出】，再判断是否有【单个演出节目】。如果有，则返回：{"sectionsOrActs": "no", "individualPerformances": "yes"}
-    - 如果判断没有【章节或半场演出】，再判断是否有【单个演出节目】。如果没有，则返回：{"sectionsOrActs": "no", "individualPerformances": "no"}
+    - 如果判断有【章节或半场演出】，则返回：{"sectionsOrActs": "yes", "performanceWorks": "yes"}
+    - 如果判断没有【章节或半场演出】，再判断是否有【单个演出节目】。如果有，则返回：{"sectionsOrActs": "no", "performanceWorks": "yes"}
+    - 如果判断没有【章节或半场演出】，再判断是否有【单个演出节目】。如果没有，则返回：{"sectionsOrActs": "no", "performanceWorks": "no"}
 
     ## 限制与约束
     - 【重要！！！】严格按照要求输出json格式的结果
@@ -701,6 +701,63 @@ user_prompts = {
     ---
 
     """,
+
+    "shows_to_festivals_judge_user_prompt": """
+    ## 任务与目标
+
+    请审核之前提取的演出信息结果，评估是否存在错误，然后根据原始规则重新进行提取，并返回json格式结果。
+
+    【重要！！！】审核和重新提取后，请按照输出示例输出json格式结果，不要给出任何多余的内容。
+    【注意！！！】重新提取时，仍需遵循相邻原则，即根据OCR原文的markdown格式（属于同一个H1）和文本垂直和水平坐标（top和left）判断集合演出和演出节目信息的从属关系。
+
+    ## 审核步骤
+    1. 检查之前提取的结果是否符合演出节目的分级说明。
+    2. 评估performingEvent和sectionsOrActs的关系是否正确。
+    3. 确认是否有遗漏或错误分类的情况。
+
+    ## 演出节目的分级说明
+
+    从演出的规模和结构来定义:
+
+    (a) 集合演出:
+    - 是一场完整的演出活动
+    - 通常包含多个不同的表演节目或艺术形式
+    - 可能持续数小时，甚至跨越一整天或多天
+    - 例如:音乐节、艺术节、晚会等
+
+    (b) 章节或半场演出:
+    - 是一场较大演出中的一个部分
+    - 通常有特定的主题或风格
+    - 例如:音乐会的上半场、戏剧的某一幕、舞蹈表演的某一组曲
+
+    (c) 单个演出节目:
+    - 是最小的表演单位
+    - 通常只包含一个特定的表演内容
+    - 例如:一首歌曲、一个舞蹈、一个魔术表演、一个小品等
+
+    这三个类别是从大到小的层级关系：集合演出可能包含多个章节或半场演出，而每个章节或半场演出又可能包含多个单个演出节目。
+
+    ## 重新提取规则
+    1. 仔细审视原始OCR文本。
+    2. 根据分级说明重新判断演出节目的归属。
+    3. 确保遵循相邻原则进行判断。
+
+    ## 输出json格式如下：
+
+    ### 判断有属于某个章节或半场演出
+    ```
+    {"performingEvent": "XXXXXX", "sectionsOrActs": "XXXXX"}
+    ```
+
+    ### 无法判断或者不属于某个章节或半场演出
+
+    ```
+    {"performingEvent": "XXXXXX", "sectionsOrActs": null}
+
+    ```
+    ---
+
+    """,    
 
     "single_shows_to_festivals_user_prompt": """
     ## 任务与目标
@@ -886,6 +943,41 @@ user_prompts = {
 
     ---
     提取原内容如下：
+
+    """,
+
+    "event_type_user_prompt": """
+    ## 任务与目标
+    请根据提供的演出事件的json数据，从以下词表中判读断这个演出事件的类型。
+
+    ## 判断原则
+    - 主要是根据演出事件的表演节目、演出描述等信息进行综合判断。
+    - 【注意！！！】不能仅仅根据演出节目的名称，或直接从名称中的关键词判断。
+
+    ## 词表
+    - 戏剧演出
+    - 戏曲演出
+    - 演唱会
+    - 音乐节
+    - 音乐剧演出
+    - 音乐会
+    - 舞蹈演出
+    - 话剧演出
+
+    ## 输出样例
+    输出json样例如下：
+
+    ```
+    {"type": ""}
+    ```
+    ## 限制与约束
+    - 请直接输出结果json格式数据，不要给出任何解释或说明。
+    - 只能从候选词中选择一个。
+
+    请一步步思考，一步步完成任务。
+    ---
+
+    演出事件信息如下：
 
     """
 

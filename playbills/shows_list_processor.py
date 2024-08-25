@@ -13,7 +13,7 @@ def process_file(file_path, logger, prompt_key, total_token_count, total_output_
     with open(file_path, "r", encoding="utf-8") as file:
         md_content = file.read()
 
-    result, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
+    result, model_name, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
         md_content, logger, prompt_key=prompt_key
     )
     total_token_count += token_count
@@ -26,23 +26,23 @@ def process_file(file_path, logger, prompt_key, total_token_count, total_output_
     return result, total_token_count, total_output_token_count
 
 def merging_shows_list(result, logger, total_token_count, total_output_token_count):
-    processed_result, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
+    processed_result, model_name, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
         result, logger, prompt_key="merging_shows_list_user_prompt"
     )
     total_token_count += token_count
     total_output_token_count += output_token_count
 
-    print(f"\n----------------多事件演出节目单合并整理----------------------------\n")
+    print(f"\n----------------多事件演出作品合并整理----------------------------\n")
     print(processed_result)
-    logger.info(f"多事件演出节目单合并整理: {processed_result}")
+    logger.info(f"多事件演出作品合并整理: {processed_result}")
 
     return processed_result, total_token_count, total_output_token_count
 
 
 def preprocess_shows_list(result, logger, total_token_count, total_output_token_count):
     print(f"\n----------------开始判断是否是节目单明细----------------------------\n")
-    if result != '{"individualPerformances": []}':
-        processed_result, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
+    if result != '{"performanceWorks": []}':
+        processed_result, model_name, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
             result, logger, prompt_key="shows_list_judgment_user_prompt"
         )
         total_token_count += token_count
@@ -58,7 +58,7 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
         judgment_result = processed_result_json.get("result", "")
 
         if judgment_result == "部分是":
-            processed_result, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
+            processed_result, model_name, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
                 result, logger, prompt_key="shows_list_extractor_user_prompt"
             )
             total_token_count += token_count
@@ -68,7 +68,7 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
             logger.info(f"部分节目单明细提取结果: {processed_result}")
             result = processed_result
         elif judgment_result == "否":
-            result = '{"individualPerformances": []}'
+            result = '{"performanceWorks": []}'
             return result, total_token_count, total_output_token_count
         elif judgment_result == "是":
             # 继续传递原始的 result
@@ -79,16 +79,16 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
     # 移除了对 is_multiple_events 的判断，现在对所有情况都进行演职人员格式化
     data = json.loads(json_content)
   #新版是传递一个个json节点组处理，而非整个json，效果不好
-    # if any(item.get('castDescription') for item in data.get('individualPerformances', []) if item.get('castDescription') is not None):
+    # if any(item.get('castDescription') for item in data.get('performanceWorks', []) if item.get('castDescription') is not None):
     #     print(f"\n----------------开始演职人员格式化----------------------------\n")
     #     logger.info("开始演职人员格式化")
         
-    #     # Process each performance in the individualPerformances list
-    #     for i, performance in enumerate(data['individualPerformances']):
+    #     # Process each performance in the performanceWorks list
+    #     for i, performance in enumerate(data['performanceWorks']):
     #         # Only process performances with a castDescription
     #         if performance.get('castDescription'):
     #             # Convert the single performance to JSON string
-    #             performance_json = json.dumps({'individualPerformances': [performance]})
+    #             performance_json = json.dumps({'performanceWorks': [performance]})
                 
     #             print(f"\n----------------处理第 {i+1} 个演出----------------------------\n")
     #             logger.info(f"处理第 {i+1} 个演出")
@@ -102,12 +102,12 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
                 
     #             # Parse the processed result and update the original data
     #             processed_data = json.loads(processed_result)
-    #             if processed_data['individualPerformances']:
-    #                 data['individualPerformances'][i] = processed_data['individualPerformances'][0]
+    #             if processed_data['performanceWorks']:
+    #                 data['performanceWorks'][i] = processed_data['performanceWorks'][0]
                 
     #             print(f"\n----------------第 {i+1} 个演出处理结果----------------------------\n")
-    #             print(json.dumps(data['individualPerformances'][i], ensure_ascii=False, indent=2))
-    #             logger.info(f"第 {i+1} 个演出处理结果: {json.dumps(data['individualPerformances'][i], ensure_ascii=False)}")
+    #             print(json.dumps(data['performanceWorks'][i], ensure_ascii=False, indent=2))
+    #             logger.info(f"第 {i+1} 个演出处理结果: {json.dumps(data['performanceWorks'][i], ensure_ascii=False)}")
     # else:
     #     print(f"\n----------------没有需要格式化的演职人员信息----------------------------\n")
     #     logger.info("没有需要格式化的演职人员信息")
@@ -117,9 +117,9 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
     
     # return final_result, total_token_count, total_output_token_count
 
-    if any(item.get('castDescription') for item in data.get('individualPerformances', []) if item.get('castDescription') is not None):
+    if any(item.get('castDescription') for item in data.get('performanceWorks', []) if item.get('castDescription') is not None):
         print(f"\n----------------开始演职人员格式化----------------------------\n")
-        processed_result, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
+        processed_result, model_name, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
             result, logger, prompt_key="add_spaces_user_prompt"
         )
         total_token_count += token_count
@@ -134,7 +134,7 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
 
 # 新版是传递一个个json节点组处理，而非整个json。但判断不准确
 def preprocess_shows_list_new(result, logger, total_token_count, total_output_token_count):
-    if result == '{"individualPerformances": []}':
+    if result == '{"performanceWorks": []}':
         return result, total_token_count, total_output_token_count
 
     try:
@@ -144,13 +144,13 @@ def preprocess_shows_list_new(result, logger, total_token_count, total_output_to
         print(f"\n错误: 无法解析JSON: {result}\n")
         return result, total_token_count, total_output_token_count
 
-    performances = data.get('individualPerformances', [])
+    performances = data.get('performanceWorks', [])
     updated_performances = []
 
     print(f"\n----------------开始判断是否是节目单明细----------------------------\n")
     for performance in performances:
         performance_json = json.dumps(performance)
-        processed_result, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
+        processed_result, model_name, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
             performance_json, logger, prompt_key="shows_list_judgment_user_prompt"
         )
         total_token_count += token_count
@@ -167,14 +167,14 @@ def preprocess_shows_list_new(result, logger, total_token_count, total_output_to
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON in judgment result: {processed_result}")
 
-    data['individualPerformances'] = updated_performances
+    data['performanceWorks'] = updated_performances
 
-    if any(item.get('castDescription') for item in data.get('individualPerformances', []) if item.get('castDescription') is not None):
+    if any(item.get('castDescription') for item in data.get('performanceWorks', []) if item.get('castDescription') is not None):
         print(f"\n----------------开始演职人员格式化----------------------------\n")
-        for i, performance in enumerate(data['individualPerformances']):
+        for i, performance in enumerate(data['performanceWorks']):
             if performance.get('castDescription'):
                 performance_json = json.dumps(performance)
-                processed_result, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
+                processed_result, model_name, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
                     performance_json, logger, prompt_key="add_spaces_user_prompt"
                 )
                 total_token_count += token_count
@@ -182,7 +182,7 @@ def preprocess_shows_list_new(result, logger, total_token_count, total_output_to
                 
                 try:
                     updated_performance = json.loads(processed_result)
-                    data['individualPerformances'][i] = updated_performance
+                    data['performanceWorks'][i] = updated_performance
                 except json.JSONDecodeError:
                     logger.error(f"Invalid JSON in formatted result: {processed_result}")
 
@@ -207,7 +207,7 @@ def pre_shows_list(image_folder, logger):
         return
 
     # 检查并创建必要的列
-    required_columns = ['文件名', '演出事件', '节目清单列表', '输入token', '输出token']
+    required_columns = ['文件名', '演出事件', '演出作品', '输入token', '输出token']
     for col in required_columns:
         if col not in df.columns:
             df[col] = ''
@@ -220,7 +220,7 @@ def pre_shows_list(image_folder, logger):
 
         print(f"\n----------------开始节目单提取的预处理----------------------------\n")
 
-        if '节目清单列表' in df.columns and pd.notna(row['节目清单列表']):
+        if '演出作品' in df.columns and pd.notna(row['演出作品']):
             print(f"{file_name}，Excel 第 {i+1} 行已经处理过，跳过")
             logger.info(f"{file_name}，Excel 第 {i+1} 行已经处理过，跳过")
             continue
@@ -238,8 +238,8 @@ def pre_shows_list(image_folder, logger):
         total_token_count = total_output_token_count = 0
 
         if is_multiple_events:
-            print(f"处理多事件演出节目单")
-            logger.info(f"处理多事件演出节目单")
+            print(f"处理多事件演出作品")
+            logger.info(f"处理多事件演出作品")
             print(f"\n----------------开始第一次的节目单提取--------------\n")
             logger.info(f"开始第一次的节目单提取")
             result1, total_token_count, total_output_token_count = process_file(ocr_file_path, logger, "shows_list_stepone_prompt", total_token_count, total_output_token_count)
@@ -252,8 +252,8 @@ def pre_shows_list(image_folder, logger):
             merged_result, total_token_count, total_output_token_count = merging_shows_list(merged_result, logger, total_token_count, total_output_token_count)
 
         else:
-            print(f"处理单个事件演出节目单")
-            logger.info(f"处理单个事件演出节目单")
+            print(f"处理单个事件演出作品")
+            logger.info(f"处理单个事件演出作品")
             merged_result, total_token_count, total_output_token_count = process_file(ocr_file_path, logger, "shows_list_stepone_prompt", total_token_count, total_output_token_count)
 
         merged_result = extract_json_content(merged_result)
@@ -261,7 +261,7 @@ def pre_shows_list(image_folder, logger):
 
         df.at[i, '输入token-总1'] = row['输入token'] + total_token_count
         df.at[i, '输出token-总1'] = row['输出token'] + total_output_token_count
-        df.at[i, '节目清单列表'] = extract_json_content(final_result)
+        df.at[i, '演出作品'] = extract_json_content(final_result)
 
         df.to_excel(excel_file_path, index=False)
         print(f"已保存文件 {file_name} 的处理结果到 Excel")

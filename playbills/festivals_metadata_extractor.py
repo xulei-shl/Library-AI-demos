@@ -5,6 +5,8 @@ import tools.prompts as prompts
 from tools.metadata_extractor import extract_metadata
 import json
 import tools.festivals_info_processor as json_processor
+from tools.llm_json_extractor import extract_json_content
+
 
 def festivals_metadata(image_folder, logger):
     output_folder = os.path.join(image_folder, 'output')
@@ -61,12 +63,7 @@ def festivals_metadata(image_folder, logger):
                 total_output_token_count += output_token_count  # 累加输出 token 数量
 
                 # 检查 result 中是否包含 ```json 字符串
-                if '```json' in result:
-                    json_start = result.find('```json') + len('```json')
-                    json_end = result.find('```', json_start)
-                    json_content = result[json_start:json_end].strip()
-                else:
-                    json_content = result
+                json_content = extract_json_content(result)
 
                 print(f"\n文件 {filename} 的处理结果:\n")
                 print(json_content)
