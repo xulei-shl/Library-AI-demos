@@ -32,6 +32,7 @@
     
 12. [katanaml/sparrow: Data processing with ML and LLM](https://github.com/katanaml/sparrow)
    - Sparrow 是一个开源解决方案，用于从各种文档和图片中高效地提取和处理数据。它支持处理表单、发票、收据等非结构化数据源。Sparrow 具有模块化架构，提供独立的服务和管道，针对稳健性能进行了优化。通过插件化架构，可以轻松集成和运行数据提取管道，使用工具和框架如 LlamaIndex、Haystack 或 Unstructured。Sparrow 通过 Ollama 或 Apple MLX 实现本地 LLM 数据提取管道。
+13. [opendatalab/MinerU: A one-stop, open-source, high-quality data extraction tool, supports PDF/webpage/e-book extraction.一站式开源高质量数据提取工具，支持PDF/网页/多格式电子书提取。](https://github.com/opendatalab/MinerU)
 
 
 
@@ -45,8 +46,10 @@
 4. CrewAI
 
 5. Phidata
+6. [ComposioHQ/composio: Composio equips agents with well-crafted tools empowering them to tackle complex tasks](https://github.com/ComposioHQ/composio)
+   1. 为 AI 智能体提供一个包含 100 多种工具的工具集，支持多种不同类别的工具，包括软件、操作系统、浏览器、搜索和软件工程等领域
 
-6. 其他
+7. 其他
 - Bisheng
 - MetaGPT
 - Agently
@@ -58,6 +61,7 @@
 - gptscript-ai/gptscript: Natural Language Programming
 
 ### 开源AI搜索
+
 1. nashsu/FreeAskInternet
 2. developersdigest/llm-answer-engine: Build a Perplexity-Inspired Answer Engine Using Next. js, Groq, Mixtral, Langchain, OpenAI, Brave & Serper
 3. ItzCrazyKns/Perplexica: Perplexica is an AI-powered search engine. It is an Open source alternative to Perplexity AI
@@ -69,6 +73,7 @@
 - leptonai/search_with_lepton: Building a quick conversation-based search demo with Lepton AI. 
   
 ### 工作流与自动化
+
 1. Skyvern-AI/skyvern: Automate browser-based workflows with LLMs and Computer Vision
 Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览器自动化解决方案，用于替代传统的、依赖于 DOM 解析和 XPath 的自动化脚本，实现更鲁棒的网页交互自动化。
 2. 
@@ -118,7 +123,7 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 
 - [2024.6 W2 商用LLM API进展简评](https://mp.weixin.qq.com/s/ov5KofVw_5xpGx6JwvvVlA)
 
-  
+- [Top Free AI APIs in 2024 | Free AI Hunter](https://www.freeaihunter.com/?ref=jk)  
 
 2. 第三方API代理
 
@@ -137,12 +142,19 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 
 ### 其他
 1. LLM 结构化输出
+   - [#structured generation with llm](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzkwNjUyODgzMQ==&action=getalbum&album_id=3550331959002284032&subscene=&sessionid=svr_a59bdbd8f6c&enterid=1724567500&from_msgid=2247484191&from_itemidx=1&count=3&nolastread=1#wechat_redirect)
 
    - jxnl/instructor: structured outputs for llms
+   - [outlines-dev/outlines: Structured Text Generation](https://github.com/outlines-dev/outlines)
+   - [PrefectHQ/marvin: ✨ Build AI interfaces that spark joy](https://github.com/prefecthq/marvin)
+   - [Mirascope/mirascope: LLM abstractions that aren't obstructions](https://github.com/Mirascope/mirascope)
+   - [guardrails-ai/guardrails: Adding guardrails to large language models.](https://github.com/guardrails-ai/guardrails)
+   - [eyurtsev/kor: LLM(😽)](https://github.com/eyurtsev/kor)
 
 2. [Github中高星的AI类仓库](https://airtable.com/app0UKsRSCA7YJhgu/shrqkqcrzRkYrLbpd/tblFlIWxOaM8HY3Kp?viewControls=on)
 3. [开源大模型下载器](https://github.com/Richasy/Rodel.Downloader/blob/master/README.zh-CN.md)
 4. [提示词管理与评估-agenta](https://github.com/Agenta-AI/agenta)
+5. [WangRongsheng/awesome-LLM-resourses: 🧑‍🚀 全世界最好的中文LLM资料总结](https://github.com/WangRongsheng/awesome-LLM-resourses?tab=readme-ov-file)
 
 ## 其他大模型工具平台（MaaS）
 

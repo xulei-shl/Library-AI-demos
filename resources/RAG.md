@@ -29,6 +29,30 @@
      - Rerank 精排
 
 3. [LLM应用架构 -- AI 工程化](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzA5MTIxNTY4MQ==&action=getalbum&album_id=3070790072247058439&subscene=&sessionid=svr_eabbfae5579&enterid=1718693540&from_msgid=2461141557&from_itemidx=1&count=3&nolastread=1#wechat_redirect)
+4. [15 Advanced RAG Techniques | WillowTree](https://www.willowtreeapps.com/guides/advanced-rag-techniques)
+  - 预检索和数据索引技术：
+      - 使用 LLM 增加信息密度
+      - 应用分层索引检索
+      - 使用假设问题索引改善检索对称性
+      - 使用 LLM 删除数据索引中的重复信息
+      - 测试和优化分块策略
+  - 检索技术
+    - 使用 LLM 优化搜索查询
+    - 使用假设文档嵌入 (HyDE) 解决查询-文档不对称问题
+    - 实现查询路由或 RAG 决策模式
+  - 检索后技术
+    - 使用 reranking 优先处理搜索结果
+    - 使用上下文提示压缩优化搜索结果
+    - 使用校正 RAG 对检索到的文档进行评分和过滤
+  - 生成技术
+     - 使用思维链提示调整噪音
+     - 使用 Self-RAG 使系统具有自反性
+     - 通过微调忽略不相关上下文
+     - 使用自然语言推理使 LLM 对不相关上下文具有鲁棒性
+  - 其他潜在改进
+    - 微调嵌入模型：通过调整嵌入模型来优化性能
+    - 使用 GraphRAG：将知识图谱引入 RAG 系统
+    - 使用长上下文 LLM：如 Gemini 1.5 或 GPT-4 128k，以替代传统的分块和检索方法
 
    
 ## 案例
@@ -40,4 +64,5 @@
    - Self-RAG：在生成内容上进行自我评分，以识别和减少幻觉
    - Adaptive RAG：根据查询的复杂性来路由查询
   
-2. 
+2. [NirDiamant/RAG_Techniques: This repository showcases various advanced techniques for Retrieval-Augmented Generation (RAG) systems. RAG systems combine information retrieval with generative models to provide accurate and contextually rich responses.](https://github.com/NirDiamant/RAG_Techniques)
+   1. 专注于展示和提供多种高级的检索增强生成（RAG）技术。详细介绍了二十多种 RAG 技术，包括简单 RAG、语境丰富技术、多方面过滤、融合检索、智能重新排名等。每种技术都有其概述和实施步骤
