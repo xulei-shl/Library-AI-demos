@@ -26,8 +26,8 @@ logger = setup_logger(r'E:\scripts\jiemudan\logs')
 # 1 调用 OCR 处理函数
 # process_images(image_folder, ocr_url, access_token, logger)
 
-# # 2 演出事件元数据提取
-# festivals_metadata(image_folder, logger)
+# 2 演出事件元数据提取
+festivals_metadata(image_folder, logger)
 
 # 3 演出作品提取
 # 3.1 演出作品预处理
