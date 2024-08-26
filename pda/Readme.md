@@ -21,5 +21,6 @@
 6. 处理完成后，您可以在生成的文件夹中找到 Excel 文件。
 
 ## TODO
-- OCR后处理纠错：[shibing624/pycorrector: pycorrector is a toolkit for text error correction. 文本纠错，实现了Kenlm，T5，MacBERT，ChatGLM3，LLaMA等模型应用在纠错场景，开箱即用。](https://github.com/shibing624/pycorrector)
-- 
+- OCR后处理纠错：
+  - [shibing624/pycorrector: pycorrector is a toolkit for text error correction. 文本纠错，实现了Kenlm，T5，MacBERT，ChatGLM3，LLaMA等模型应用在纠错场景，开箱即用。](https://github.com/shibing624/pycorrector)
+  - [Dicklesworthstone/llm_aided_ocr: Enhance Tesseract OCR output for scanned PDFs by applying Large Language Model (LLM) corrections.](https://github.com/Dicklesworthstone/llm_aided_ocr)
