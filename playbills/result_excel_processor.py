@@ -11,8 +11,8 @@ def replace_texts(image_folder):
     # 读取Excel文件
     df = pd.read_excel(excel_file_path)
 
-    # 替换 "performanceWorks" 为 "performanceWorks"
-    df.replace('performanceWorks', 'performanceWorks', inplace=True)
+    # 替换 "null" 为 null
+    df.replace('null', None, inplace=True)
 
     # 保存修改后的Excel文件
     df.to_excel(excel_file_path, index=False)

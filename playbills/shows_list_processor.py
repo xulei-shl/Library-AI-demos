@@ -40,7 +40,7 @@ def merging_shows_list(result, logger, total_token_count, total_output_token_cou
 
 
 def preprocess_shows_list(result, logger, total_token_count, total_output_token_count):
-    print(f"\n----------------开始判断是否是节目单明细----------------------------\n")
+    print(f"\n----------------开始判断是否是演出作品----------------------------\n")
     if result != '{"performanceWorks": []}':
         processed_result, model_name, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
             result, logger, prompt_key="shows_list_judgment_user_prompt"
@@ -48,9 +48,9 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
         total_token_count += token_count
         total_output_token_count += output_token_count
         
-        print(f"\n----------------是否是节目单明细----------------------------\n")
+        print(f"\n----------------是否是演出作品----------------------------\n")
         print(processed_result)
-        logger.info(f"是否是节目单信息列表判断结果: {processed_result}")
+        logger.info(f"是否是演出作品判断结果: {processed_result}")
 
         # 解析 JSON 格式的返回结果
         json_content = extract_json_content(result)
@@ -76,46 +76,8 @@ def preprocess_shows_list(result, logger, total_token_count, total_output_token_
 
     json_content = extract_json_content(result)
 
-    # 移除了对 is_multiple_events 的判断，现在对所有情况都进行演职人员格式化
-    data = json.loads(json_content)
-  #新版是传递一个个json节点组处理，而非整个json，效果不好
-    # if any(item.get('castDescription') for item in data.get('performanceWorks', []) if item.get('castDescription') is not None):
-    #     print(f"\n----------------开始演职人员格式化----------------------------\n")
-    #     logger.info("开始演职人员格式化")
-        
-    #     # Process each performance in the performanceWorks list
-    #     for i, performance in enumerate(data['performanceWorks']):
-    #         # Only process performances with a castDescription
-    #         if performance.get('castDescription'):
-    #             # Convert the single performance to JSON string
-    #             performance_json = json.dumps({'performanceWorks': [performance]})
-                
-    #             print(f"\n----------------处理第 {i+1} 个演出----------------------------\n")
-    #             logger.info(f"处理第 {i+1} 个演出")
-                
-    #             # Process the single performance
-    #             processed_result, token_count, output_token_count = shows_list_optimizer.optimize_shows_list(
-    #                 performance_json, logger, prompt_key="add_spaces_user_prompt"
-    #             )
-    #             total_token_count += token_count
-    #             total_output_token_count += output_token_count
-                
-    #             # Parse the processed result and update the original data
-    #             processed_data = json.loads(processed_result)
-    #             if processed_data['performanceWorks']:
-    #                 data['performanceWorks'][i] = processed_data['performanceWorks'][0]
-                
-    #             print(f"\n----------------第 {i+1} 个演出处理结果----------------------------\n")
-    #             print(json.dumps(data['performanceWorks'][i], ensure_ascii=False, indent=2))
-    #             logger.info(f"第 {i+1} 个演出处理结果: {json.dumps(data['performanceWorks'][i], ensure_ascii=False)}")
-    # else:
-    #     print(f"\n----------------没有需要格式化的演职人员信息----------------------------\n")
-    #     logger.info("没有需要格式化的演职人员信息")
 
-    # # Convert the final result back to JSON string
-    # final_result = json.dumps(data, ensure_ascii=False, indent=2)
-    
-    # return final_result, total_token_count, total_output_token_count
+    data = json.loads(json_content)
 
     if any(item.get('castDescription') for item in data.get('performanceWorks', []) if item.get('castDescription') is not None):
         print(f"\n----------------开始演职人员格式化----------------------------\n")
@@ -227,6 +189,7 @@ def pre_shows_list(image_folder, logger):
 
         performing_events = json.loads(performing_events) if isinstance(performing_events, str) else performing_events
         performing_events = [performing_events] if not isinstance(performing_events, list) else performing_events
+
         is_multiple_events = len(performing_events) > 1
 
         ocr_file_path = os.path.join(output_folder, f'{file_name}_ocr_1_final_result.md')

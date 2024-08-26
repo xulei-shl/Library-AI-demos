@@ -222,8 +222,13 @@ def process_multi_events(events, shows_list, md_file_path, logger):
         total_input_tokens += input_tokens
         total_output_tokens += output_tokens
 
+        # 使用不同的MD文件路径
+        md_file_path_2 = md_file_path.replace('_ocr_1_final_result.md', '_md_final_result.md')
+        with open(md_file_path_2, "r", encoding="utf-8") as file:
+            md_content_2 = file.read()
+
         # 将第一次调用的结果添加到新的 combined_prompt 中
-        combined_prompt_2 = f"{combined_prompt}\n\n### 第一次判断结果：\n{optimized_result}"
+        combined_prompt_2 = f"### 集合演出信息：\n{json.dumps(events, ensure_ascii=False)}\n\n### 演出节目名：\n{show_name}\n\n### 原始的OCR文本：\n{md_content_2}\n\n### 第一次判断结果：\n{optimized_result}"
         
         optimized_result_2, model_name_2, input_tokens_2, output_tokens_2 = shows_list_optimizer.optimize_shows_list(
             combined_prompt_2, logger, prompt_key="shows_to_festivals_judge_user_prompt"
