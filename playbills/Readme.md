@@ -11,3 +11,10 @@
    1. [MoA示例项目代码](https://github.com/Shubhamsaboo/awesome-llm-apps/blob/main/mixture_of_agents/mixture-of-agents.py)
    2. [skapadia3214/groq-moa: Mixture of Agents using Groq](https://github.com/skapadia3214/groq-moa)
 3. [Let Me Speak Freely? A Study on the Impact of Format Restrictions on Performance of Large Language Models](https://arxiv.org/abs/2408.02442)研究表明在某些情况下，输出格式限制会降低大模型的推理能力，而且JSON最严重。后续，某些环节是否可以先用 CoT 等提示技术让大模型用自然语言返回结果，然后再用小模型进行结构化数据抽取。
+
+
+## 其他
+
+做了一个超简单的JSON数据查看编辑工具
+
+![](https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/20240828083123.png)
