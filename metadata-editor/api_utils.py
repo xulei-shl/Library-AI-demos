@@ -1,7 +1,12 @@
+import os
+from dotenv import load_dotenv
 import requests
 
-API_KEY = "sk-tlshpwtcuxxqqcuuauiahlmfhfwfyncyyxvlkgbqpypaehfb"
-BASE_URL = "https://api.siliconflow.cn/v1/chat/completions"
+# Load environment variables from .env file
+load_dotenv()
+
+API_KEY = os.getenv("siliconflow_API_KEY")
+BASE_URL = os.getenv("siliconflow_API_URL")
 model = "THUDM/glm-4-9b-chat"
 
 def call_api(text):
@@ -22,10 +27,11 @@ def call_api(text):
     print(result)
     return result
 def get_person_uri(fname):
-    url = "http://data1.library.sh.cn/persons/data"
+    url = os.getenv("SHL_Person_API")
+    key = os.getenv("SHL_Person_URL")
     params = {
         "fname": fname,
-        "key": "b0ba31b119f11c9d2bbe045d1cca4f3844d19f82",
+        "key": key,
         "pageth": 1,
         "pageSize": 10
     }
