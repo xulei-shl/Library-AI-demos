@@ -57,10 +57,13 @@ TODO
 
 TODO
 
-### 特藏资源（节目单）实体提取 playbills
+### 特藏资源（节目单）实体提取
 
-DONE 
+DONE  playbills
 
+### AI 元数据编辑器
+
+DOING
 ---
 
 > 以下是非图书馆业务场景
