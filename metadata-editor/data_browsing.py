@@ -209,7 +209,7 @@ def browse_data_page():
             st.session_state.settings = load_settings()
 
     # 添加搜索功能
-    search_query = st.text_input("", key="search_query", placeholder="请输入搜索演出事件关键词")
+    search_query = st.text_input("", key="search_query", placeholder="请输入演出事件关键词")
 
     if search_query:
         search_results = search_data(search_query)
