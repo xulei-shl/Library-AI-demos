@@ -8,7 +8,6 @@ from casts_list_extractor import process_casts_list
 from casts_list_optimizer import optimize_casts
 from event_type import process_performing_events
 from result_excel_processor import replace_texts
-from excel2json import excel2json
 
 
 
@@ -51,9 +50,6 @@ logger = setup_logger(r'E:\scripts\jiemudan\logs')
 
 # # Excel 数据处理
 # replace_texts(image_folder)
-
-# 提取最终结果到json文件
-excel2json(image_folder)
 
 
 
