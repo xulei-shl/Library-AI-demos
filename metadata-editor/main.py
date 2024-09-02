@@ -74,7 +74,7 @@ prompts_file_path = os.path.join(base_dir, 'jsondata', 'prompts.json')
 
 # Sidebar for navigation
 st.sidebar.title("实体编辑DEMO")
-page = st.sidebar.radio("选择页面", ["数据加载", "数据浏览", "事件类型词表", "实体关系词表", "大模型管理", "提示词管理", "知识库管理"])
+page = st.sidebar.radio("选择页面", ["数据加载", "实体编辑", "事件类型词表", "实体关系词表", "大模型管理", "提示词管理", "知识库管理"])
 
 
 if page == "数据加载":
@@ -85,7 +85,7 @@ if page == "数据加载":
         st.success("数据已重新加载")
         st.rerun()
     display_data_info()
-elif page == "数据浏览":
+elif page == "实体编辑":
     data_browsing.browse_data_page()
 elif page == "事件类型词表":
     settings_page(db_path)
