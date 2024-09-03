@@ -9,6 +9,7 @@ from tools.prompts_manager import load_prompts
 from tools.knowledge_manager import load_knowledge_bases
 from tools.models_manager import load_models
 import os
+import copy
 
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -266,7 +267,7 @@ def browse_data_page():
         with col_left:
             if st.button("💾 保存更改", use_container_width=True):
                 save_changes(st.session_state.current_index, st.session_state.flattened_data[st.session_state.current_index][2])
-                st.success("更改已保存！")
+                st.success("更改已永久保存！")
         with col_right:
             json_data = json.dumps(st.session_state.data, ensure_ascii=False, indent=4)
             st.download_button(
@@ -374,10 +375,36 @@ def update_field(index, i, field, value, original_value=None):
     else:
         st.session_state[f'casts_{index}'][i][field] = value
 
+# 可以直接复用的函数
 def add_relatedTo_callback(key: str):
-    st.session_state[key].insert(0, {"type": "", "type": ""})
+    st.session_state[key].insert(0, {"type": "", "uri": ""})
+
 def delete_relatedTo_callback(key: str, idx: int):
     st.session_state[key].pop(idx)
+
+def add_related_entity(key: str, entity_index: int):
+    entity = st.session_state[key][entity_index]
+    if 'relatedTo' not in entity:
+        entity['relatedTo'] = []
+    default_type = st.session_state.settings.get('groups_relationship', [{'label': '未指定'}])[0]['label']
+    entity['relatedTo'].append({"type": default_type, "uri": ""})
+
+def delete_entity_relatedTo(key: str, entity_index: int, relatedTo_index: int):
+    st.session_state[key][entity_index]['relatedTo'].pop(relatedTo_index)
+
+def delete_entity(key: str, entity_index: int):
+    st.session_state[key].pop(entity_index)
+
+def update_entities(index: int, entity_type: str):
+    key = f'{entity_type}_{index}'
+    if key in st.session_state:
+        st.session_state.flattened_data[index][2][entity_type] = copy.deepcopy(st.session_state[key])
+        st.success(f"{ENTITY_TYPE_NAMES[entity_type]}数据已更新，请点击【保存更改】按钮以永久保存。")
+    else:
+        st.error(f"没有找到要更新的{ENTITY_TYPE_NAMES[entity_type]}数据。")
+
+def entity_on_change(entity_type: str):
+    update_entities(st.session_state.current_index, entity_type)
 
 def initialize_session_state(index: int, current_data: Dict[str, Any]):
     # Define all top-level keys that need initialization
@@ -419,39 +446,307 @@ def initialize_session_state(index: int, current_data: Dict[str, Any]):
     for entity_list, entity_name in nested_entities:
         entity_list_key = f'{entity_list}_{index}'
         if entity_list_key not in st.session_state:
-            st.session_state[entity_list_key] = current_data.get(entity_list, [])
-        for i, _ in enumerate(st.session_state[entity_list_key]):
-            related_key = f'{entity_name}_relatedTo_{index}_{i}'
-            if related_key not in st.session_state:
-                st.session_state[related_key] = []
+            entities = current_data.get(entity_list, [])
+            # 确保每个实体都有 relatedTo 字段，并且是一个列表
+            for entity in entities:
+                if 'relatedTo' not in entity:
+                    entity['relatedTo'] = []
+                elif not isinstance(entity['relatedTo'], list):
+                    entity['relatedTo'] = [entity['relatedTo']] if entity['relatedTo'] else []
+            st.session_state[entity_list_key] = entities
 
-    # Initialize performer related keys
-    works_key = f'works_{index}'
-    if works_key in st.session_state:
-        for i, work in enumerate(st.session_state[works_key]):
-            cast = work.get('castDescription', {})
-            if isinstance(cast, dict):
-                responsibilities = cast.get('performanceResponsibilities', [])
-            elif isinstance(cast, list):
-                responsibilities = cast
-            else:
-                responsibilities = [cast] if cast else []
+    # 移除单独的 relatedTo session state 键的初始化
+    # 因为现在 relatedTo 是每个实体对象的一个属性
 
-            for j, _ in enumerate(responsibilities):
-                performer_key = f'performer_relatedTo_{index}_{i}_{j}'
-                if performer_key not in st.session_state:
-                    st.session_state[performer_key] = []
-
-    # Ensure all initialized keys are lists
+    # 确保所有初始化的键都是列表（如果需要的话）
     for key in st.session_state:
-        if key.startswith(('work_relatedTo_', 'party_relatedTo_', 'troupe_relatedTo_', 'cast_relatedTo_', 'performer_relatedTo_')):
+        if key.endswith(('_works', '_involved_parties', '_troupes', '_casts')):
             if not isinstance(st.session_state[key], list):
                 st.session_state[key] = []
 
+
+ENTITY_TYPE_NAMES = {
+    'involvedParties': '参与团体',
+    'performingTroupes': '演出团体',
+    'casts': '演职人员'
+}
+
+def render_entities(index, entity_type, entities, relationship_types):
+    entity_name = ENTITY_TYPE_NAMES[entity_type]
+    for i, entity in enumerate(entities):
+        st.markdown(f"""
+        <div style="text-align: center; background-color: #ACA7C2BE; padding: 9px; border-radius: 4px;">
+            <strong> >>> {entity_name} {i+1} <<< </strong>
+        </div>
+        """, unsafe_allow_html=True)
+        cols = st.columns([3, 3, 1])
+        with cols[0]:
+            entity['name'] = st.text_input("姓名" if entity_type == 'casts' else "名称", value=entity.get('name', ''), key=f"{entity_type}_name_{index}_{i}_{st.session_state.get('render_key', 0)}")
+        with cols[1]:
+            entity['role'] = st.text_input("角色", value=entity.get('role', ''), key=f"{entity_type}_role_{index}_{i}_{st.session_state.get('render_key', 0)}")
+        with cols[2]:
+            if st.button("🗑️", key=f"delete_{entity_type}_{index}_{i}_{st.session_state.get('render_key', 0)}"):
+                delete_entity(f'{entity_type}_{index}', i)
+                st.session_state['render_key'] = st.session_state.get('render_key', 0) + 1
+                return True
+        
+        # 添加 description 字段
+        entity['description'] = st.text_area("描述", value=entity.get('description', ''), key=f"{entity_type}_description_{index}_{i}_{st.session_state.get('render_key', 0)}")
+        
+        if render_related_entities(index, entity_type, i, entity, relationship_types):
+            return True
+        
+        st.markdown("---")
+    return False
+
+def render_related_entities(index, entity_type, entity_index, entity, relationship_types):
+    related_entity_name = "人员相关实体" if entity_type == 'casts' else "团体相关实体"
+    st.markdown(f"**🤝 {related_entity_name}**")
+
+    if 'relatedTo' not in entity:
+        entity['relatedTo'] = []
+
+    if st.button(f"➕ 添加{related_entity_name}", key=f"add_{entity_type}_relatedTo_{index}_{entity_index}_{st.session_state.get('render_key', 0)}"):
+        add_related_entity(f'{entity_type}_{index}', entity_index)
+        st.session_state['render_key'] = st.session_state.get('render_key', 0) + 1
+        return True
+
+    for j, relatedTo in enumerate(entity['relatedTo']):
+        cols = st.columns([3, 3, 1])
+        with cols[0]:
+            current_type = relatedTo.get('type', '')
+            type_index = relationship_types.index(current_type) if current_type in relationship_types else 0
+            new_type = st.selectbox("类型", relationship_types, index=type_index, key=f"{entity_type}_relatedTo_type_{index}_{entity_index}_{j}_{st.session_state.get('render_key', 0)}")
+        
+        with cols[1]:
+            new_uri = st.text_input("URI", value=relatedTo.get('uri', ''), key=f"{entity_type}_relatedTo_uri_{index}_{entity_index}_{j}_{st.session_state.get('render_key', 0)}")
+        
+        entity['relatedTo'][j] = {"type": new_type, "uri": new_uri}
+
+        with cols[2]:
+            if st.button("🗑️", key=f"delete_{entity_type}_relatedTo_{index}_{entity_index}_{j}_{st.session_state.get('render_key', 0)}"):
+                delete_entity_relatedTo(f'{entity_type}_{index}', entity_index, j)
+                st.session_state['render_key'] = st.session_state.get('render_key', 0) + 1
+                return True
+        st.markdown("---")
+    return False
+
+
+def display_entity_section(index, entity_type, current_data):
+    entity_name = ENTITY_TYPE_NAMES[entity_type]
+    relationship_type = 'persons_relationship' if entity_type == 'casts' else 'groups_relationship'
+    relationship_types = [item['label'] for item in st.session_state.settings.get(relationship_type, [])]
+    
+    if not relationship_types:
+        relationship_types = ['未指定']
+
+    if f'{entity_type}_{index}' not in st.session_state:
+        st.session_state[f'{entity_type}_{index}'] = copy.deepcopy(current_data.get(entity_type, []))
+
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button(f"➕ 添加{entity_name}", key=f"add_{entity_type}_{index}"):
+            st.session_state[f'{entity_type}_{index}'].append({"name": "", "role": "", "description": "", "relatedTo": []})
+    with col2:
+        if st.button(f"🔄 更新{entity_name}", key=f"update_{entity_type}_{index}"):
+            update_entities(index, entity_type)
+
+    entities_container = st.empty()
+    
+    def render():
+        with entities_container.container():
+            if render_entities(index, entity_type, st.session_state[f'{entity_type}_{index}'], relationship_types):
+                render()
+
+    render()
+
+def handle_related_entities(index, key, entity_type, relationship_types):
+    st.markdown(f"**🤝 {entity_type}相关实体**")
+    
+    if f'{key}_{index}' not in st.session_state:
+        st.session_state[f'{key}_{index}'] = []
+
+    st.button(f"➕ 添加{entity_type}相关实体", key=f"add_{key}_{index}", on_click=add_relatedTo_callback, args=(f'{key}_{index}',))
+
+    for i, relatedTo in enumerate(st.session_state[f'{key}_{index}']):
+        st.markdown(f"---\n{entity_type}相关实体 {i+1}")
+        cols = st.columns([3, 3, 1])
+        with cols[0]:
+            current_type = relatedTo.get('type', '')
+            if current_type not in relationship_types:
+                current_type = relationship_types[0]
+            type_index = relationship_types.index(current_type)
+            relatedTo['type'] = st.selectbox("类型", relationship_types, index=type_index, key=f"{key}_type_{index}_{i}")
+        with cols[1]:
+            relatedTo['uri'] = st.text_input("URI", value=relatedTo.get('uri', ''), key=f"{key}_uri_{index}_{i}")
+        with cols[2]:
+            st.button("🗑️", key=f"delete_{key}_{index}_{i}", on_click=delete_relatedTo_callback, args=(f'{key}_{index}', i))
+
+    st.markdown("---")
+
+#演出作品处理
+def render_work_related_entities(index, work_index, work, relationship_types, render_key):
+    st.markdown("**🤝 作品相关实体**")
+    
+    if 'relatedTo' not in work:
+        work['relatedTo'] = []
+
+    def add_work_related_entity():
+        work['relatedTo'].append({"type": relationship_types[0], "uri": ""})
+
+    st.button(f"➕ 添加作品相关实体", key=f"add_work_relatedTo_{index}_{work_index}_{render_key}", on_click=add_work_related_entity)
+
+    for j, relatedTo in enumerate(work['relatedTo']):
+        cols = st.columns([3, 3, 1])
+        with cols[0]:
+            current_type = relatedTo.get('type', '')
+            type_index = relationship_types.index(current_type) if current_type in relationship_types else 0
+            new_type = st.selectbox("类型", relationship_types, index=type_index, key=f"work_relatedTo_type_{index}_{work_index}_{j}_{render_key}")
+        
+        with cols[1]:
+            new_uri = st.text_input("URI", value=relatedTo.get('uri', ''), key=f"work_relatedTo_uri_{index}_{work_index}_{j}_{render_key}")
+        
+        work['relatedTo'][j] = {"type": new_type, "uri": new_uri}
+
+        with cols[2]:
+            def delete_work_related_entity(j=j):
+                work['relatedTo'].pop(j)
+
+            st.button("🗑️", key=f"delete_work_relatedTo_{index}_{work_index}_{j}_{render_key}", on_click=delete_work_related_entity)
+
+def render_performer_related_entities(index, work_index, performer_index, performer, relationship_types, render_key):
+    st.markdown("**🤝 人员相关实体**")
+    
+    if 'relatedTo' not in performer:
+        performer['relatedTo'] = []
+
+    def add_performer_related_entity():
+        performer['relatedTo'].append({"type": relationship_types[0], "uri": ""})
+
+    st.button(f"➕ 添加人员相关实体", key=f"add_performer_relatedTo_{index}_{work_index}_{performer_index}_{render_key}", on_click=add_performer_related_entity)
+
+    for j, relatedTo in enumerate(performer['relatedTo']):
+        cols = st.columns([3, 3, 1])
+        with cols[0]:
+            current_type = relatedTo.get('type', '')
+            type_index = relationship_types.index(current_type) if current_type in relationship_types else 0
+            new_type = st.selectbox("类型", relationship_types, index=type_index, key=f"performer_relatedTo_type_{index}_{work_index}_{performer_index}_{j}_{render_key}")
+        
+        with cols[1]:
+            new_uri = st.text_input("URI", value=relatedTo.get('uri', ''), key=f"performer_relatedTo_uri_{index}_{work_index}_{performer_index}_{j}_{render_key}")
+        
+        performer['relatedTo'][j] = {"type": new_type, "uri": new_uri}
+
+        with cols[2]:
+            def delete_performer_related_entity(j=j):
+                performer['relatedTo'].pop(j)
+
+            st.button("🗑️", key=f"delete_performer_relatedTo_{index}_{work_index}_{performer_index}_{j}_{render_key}", on_click=delete_performer_related_entity)
+
+def render_works(index, works, work_relationship_types, person_relationship_types):
+    render_key = st.session_state.get('render_key', 0)
+    for i, work in enumerate(works):
+        col1, col2 = st.columns([11, 1])
+        with col1:
+            work_expanded = st.checkbox(f"展开作品 {i+1}: {work.get('name', '')}", key=f"work_expanded_{index}_{i}_{render_key}")
+        with col2:
+            def delete_work(i=i):
+                works.pop(i)
+
+            st.button("🗑️", key=f"delete_work_{index}_{i}_{render_key}", on_click=delete_work)
+        if work_expanded:
+            work['name'] = st.text_input("名称", value=work.get('name', ''), key=f"work_name_{index}_{i}_{render_key}")
+            work['description'] = st.text_area("描述", value=work.get('description', ''), key=f"work_description_{index}_{i}_{render_key}")
+            work['sectionsOrActs'] = st.text_input("段落/幕", value=work.get('sectionsOrActs', ''), key=f"work_sections_{index}_{i}_{render_key}")
+            
+            render_work_related_entities(index, i, work, work_relationship_types, render_key)
+            
+            st.markdown("---")
+            
+            cast = work.get('castDescription', {}) if isinstance(work.get('castDescription'), dict) else {}
+            cast['description'] = st.text_area("演员描述", value=cast.get('description', ''), key=f"work_cast_{index}_{i}_{render_key}")
+            st.markdown("---")
+            st.write("演出职责:")
+
+            def add_performance_responsibility():
+                if 'performanceResponsibilities' not in cast:
+                    cast['performanceResponsibilities'] = []
+                cast['performanceResponsibilities'].append({"performerName": "", "responsibility": "", "characterName": "", "relatedTo": []})
+
+            st.button("➕ 添加演出职责", key=f"add_resp_{index}_{i}_{render_key}", on_click=add_performance_responsibility)
+            
+            for j, resp in enumerate(cast.get('performanceResponsibilities', [])):
+                cols = st.columns([3, 3, 3, 1])
+                with cols[0]:
+                    resp['performerName'] = st.text_input("演员姓名", value=resp.get('performerName', ''), key=f"performer_name_{index}_{i}_{j}_{render_key}")
+                with cols[1]:
+                    resp['responsibility'] = st.text_input("职责", value=resp.get('responsibility', ''), key=f"performer_resp_{index}_{i}_{j}_{render_key}")
+                with cols[2]:
+                    resp['characterName'] = st.text_input("角色名称", value=resp.get('characterName', ''), key=f"performer_char_{index}_{i}_{j}_{render_key}")
+                with cols[3]:
+                    def delete_performance_responsibility(j=j):
+                        cast['performanceResponsibilities'].pop(j)
+
+                    st.button("🗑️", key=f"delete_resp_{index}_{i}_{j}_{render_key}", on_click=delete_performance_responsibility)
+                
+                render_performer_related_entities(index, i, j, resp, person_relationship_types, render_key)
+                
+                st.markdown("---")
+            
+            work['castDescription'] = cast
+        st.markdown("---")
+
+
+
+def display_works_section(index, current_data):
+    work_relationship_types = [item['label'] for item in st.session_state.settings.get('works_relationship', [])]
+    person_relationship_types = [item['label'] for item in st.session_state.settings.get('persons_relationship', [])]
+    
+    if not work_relationship_types:
+        work_relationship_types = ['未指定']
+    if not person_relationship_types:
+        person_relationship_types = ['未指定']
+
+    if f'works_{index}' not in st.session_state:
+        st.session_state[f'works_{index}'] = copy.deepcopy(current_data.get('works', []))
+
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("➕ 添加演出作品", key=f"add_work_{index}"):
+            st.session_state[f'works_{index}'].append({"name": "", "description": "", "sectionsOrActs": "", "relatedTo": [], "castDescription": {"description": "", "performanceResponsibilities": []}})
+    with col2:
+        if st.button("🔄 更新演出作品", key=f"update_works_{index}"):
+            update_works(index)
+
+    works_container = st.empty()
+    
+    def render():
+        with works_container.container():
+            if render_works(index, st.session_state[f'works_{index}'], work_relationship_types, person_relationship_types):
+                render()
+
+    render()
+
+def update_works(index: int):
+    if f'works_{index}' in st.session_state:
+        st.session_state.flattened_data[index][2]['works'] = copy.deepcopy(st.session_state[f'works_{index}'])
+        st.success("演出作品数据已更新，请点击【保存更改】按钮以永久保存。")
+    else:
+        st.error("没有找到要更新的演出作品数据。")
+
 def display_form(index: int):
+    # 检查 flattened_data 是否存在
+    if 'flattened_data' not in st.session_state:
+        st.error("数据未正确加载，请刷新页面。")
+        return
+
+    # 检查索引是否有效
     if 0 <= index < len(st.session_state.flattened_data):
         data_index, sub_index, current_data = st.session_state.flattened_data[index]
         initialize_session_state(index, current_data)
+    else:
+        st.error("无效的数据索引。")
+        return
     # 基本信息
     with st.expander("📌 演出事件", expanded=False):
         st.text_input("名称", value=current_data.get('name', ''), key=f"name_{index}")
@@ -464,34 +759,8 @@ def display_form(index: int):
         event_type_index = event_types.index(current_event_type) if current_event_type in event_types else 0
         selected_event_type = st.selectbox("活动类型", event_types, index=event_type_index, key=f"event_type_{index}")
         
-
-        st.markdown("**🤝 演出事件相关实体**")
         relationship_types = [item['label'] for item in st.session_state.settings.get('events_relationship', [])]
-        if not relationship_types:
-            relationship_types = ['未指定']
-
-        if 'relatedTo' not in st.session_state:
-            st.session_state['relatedTo'] = []
-
-        if st.button("➕ 添加相关实体", key=f"add_relatedTo_main"):
-            add_relatedTo_callback('relatedTo')
-            st.rerun()  # Rerun the app to reflect the changes immediately
-
-        for i, relatedTo in enumerate(st.session_state['relatedTo']):
-            st.markdown(f"---\n相关实体 {i+1}")
-            cols = st.columns([3, 3, 1])
-            with cols[0]:
-                current_type = relatedTo.get('type', '')
-                if current_type not in relationship_types:
-                    current_type = relationship_types[0]
-                type_index = relationship_types.index(current_type)
-                relatedTo['type'] = st.selectbox("类型", relationship_types, index=type_index, key=f"relatedTo_type_main_{i}")
-            with cols[1]:
-                relatedTo['uri'] = st.text_input("URI", value=relatedTo.get('uri', ''), key=f"relatedTo_uri_main_{i}")
-            with cols[2]:
-                if st.button("🗑️", key=f"delete_relatedTo_main_{i}"):
-                    delete_relatedTo_callback('relatedTo', i)
-                    st.rerun()  # Rerun the app to reflect the changes immediately
+        handle_related_entities(index, 'relatedTo', '演出事件', relationship_types)
 
         st.markdown("---")
 
@@ -501,124 +770,26 @@ def display_form(index: int):
         st.text_input("场地", value=location.get('venue', ''), key=f"venue_{index}")
         st.text_area("描述", value=location.get('description', ''), key=f"location_description_{index}")
         st.text_input("地址", value=location.get('address', ''), key=f"address_{index}")
-        # Add button to add new relatedTo
-        st.markdown("**🤝 场地相关实体**")
-        if st.button("➕ 添加相关实体", key=f"add_location_relatedTo_{index}"):
-            add_relatedTo_callback(f'location_relatedTo_{index}')
-            st.rerun()
+        
+        # 从数据库获取 architectures_relationship 词表
+        architecture_relationship_types = [item['label'] for item in st.session_state.settings.get('architectures_relationship', [])]
+        handle_related_entities(index, 'location_relatedTo', '场地', architecture_relationship_types)
 
-        for i, relatedTo in enumerate(st.session_state.get(f'location_relatedTo_{index}', [])):
-            st.markdown(f"---\n相关实体 {i+1}")
-            cols = st.columns([3, 3, 1])
-            with cols[0]:
-                relatedTo['type'] = st.text_input("类型", value=relatedTo.get('type', ''), key=f"location_relatedTo_type_{index}_{i}")
-            with cols[1]:
-                relatedTo['uri'] = st.text_input("URI", value=relatedTo.get('uri', ''), key=f"location_relatedTo_uri_{index}_{i}")
-            with cols[2]:
-                if st.button("🗑️", key=f"delete_location_relatedTo_{index}_{i}"):
-                    delete_relatedTo_callback(f'location_relatedTo_{index}', i)
-            st.markdown("---")
-
-        st.markdown("---")
 
     # 相关方
     with st.expander("👥 参与团体", expanded=False):
-        st.button("➕ ", key=f"add_party_{index}", on_click=add_item_callback, args=(f'involved_parties_{index}',))
-        for i, party in enumerate(st.session_state[f'involved_parties_{index}']):
-            st.markdown(f"##### 参与团体 {i+1}")
-            cols = st.columns([3, 3, 1])
-            with cols[0]:
-                party['name'] = st.text_input("名称", value=party.get('name', ''), key=f"party_name_{index}_{i}")
-            with cols[1]:
-                party['role'] = st.text_input("角色", value=party.get('role', ''), key=f"party_role_{index}_{i}")
-            with cols[2]:
-                st.button("🗑️", key=f"delete_party_{index}_{i}", on_click=delete_item_callback, args=(f'involved_parties_{index}', i))
-            # Add button to add new relatedTo
-            st.markdown("**🤝 团体相关实体**")
-            if st.button("➕ 添加相关实体", key=f"add_party_relatedTo_{index}_{i}"):
-                add_relatedTo_callback(f'party_relatedTo_{index}_{i}')
-
-            for j, relatedTo in enumerate(st.session_state.get(f'party_relatedTo_{index}_{i}', [])):
-                unique_id = str(uuid.uuid4())  # Generate a unique identifier
-                st.markdown(f"---\n相关实体 {j+1}")
-                cols = st.columns([3, 3, 1])
-                with cols[0]:
-                    relatedTo['type'] = st.text_input("类型", value=relatedTo.get('type', ''), key=f"party_relatedTo_type_{index}_{i}_{j}_{unique_id}")
-                with cols[1]:
-                    relatedTo['uri'] = st.text_input("URI", value=relatedTo.get('uri', ''), key=f"party_relatedTo_uri_{index}_{i}_{j}_{unique_id}")
-                with cols[2]:
-                    if st.button("🗑️", key=f"delete_party_relatedTo_{index}_{i}_{j}_{unique_id}"):
-                        delete_relatedTo_callback(f'party_relatedTo_{index}_{i}', j)
-                        st.rerun()  # 重新运行以更新显示
-            st.markdown("---")
-
+        display_entity_section(index, 'involvedParties', current_data)
 
     # 演出团体
     with st.expander("🎭 演出团体", expanded=False):
-        st.button("➕ ", key=f"add_troupe_{index}", on_click=add_item_callback, args=(f'troupes_{index}',))
-        for i, troupe in enumerate(st.session_state[f'troupes_{index}']):
-            cols = st.columns([3, 3, 1])
-            with cols[0]:
-                troupe['name'] = st.text_input("名称", value=troupe.get('name', ''), key=f"troupe_name_{index}_{i}")
-            with cols[1]:
-                troupe['role'] = st.text_input("角色", value=troupe.get('role', ''), key=f"troupe_role_{index}_{i}")
-            with cols[2]:
-                st.button("🗑️", key=f"delete_troupe_{index}_{i}", on_click=delete_item_callback, args=(f'troupes_{index}', i))
-            # Add button to add new relatedTo
-            st.markdown("**🤝 团体相关实体**")
-            st.markdown("---")
+        display_entity_section(index, 'performingTroupes', current_data)
     
     # 演出作品
     with st.expander("🎬 演出作品", expanded=False):
-        st.button("➕ ", key=f"add_work_{index}", on_click=add_work_callback, args=(f'works_{index}',))
-        for i, work in enumerate(st.session_state[f'works_{index}']):
-            col1, col2 = st.columns([11, 1])
-            with col1:
-                work_expanded = st.checkbox(f"展开作品 {i+1}: {work.get('name', '')}", key=f"work_expanded_{index}_{i}")
-            with col2:
-                st.button("🗑️", key=f"delete_work_{index}_{i}", on_click=delete_item_callback, args=(f'works_{index}', i))
-            if work_expanded:
-                work['name'] = st.text_input("名称", value=work.get('name', ''), key=f"work_name_{index}_{i}")
-                work['description'] = st.text_area("描述", value=work.get('description', ''), key=f"work_description_{index}_{i}")
-                work['sectionsOrActs'] = st.text_input("段落/幕", value=work.get('sectionsOrActs', ''), key=f"work_sections_{index}_{i}")
-                # Add button to add new relatedTo
-                st.markdown("**🤝 作品相关实体**")
-                st.markdown("---")
-                
-                cast = work.get('castDescription', {}) if isinstance(work.get('castDescription'), dict) else {}
-                cast['description'] = st.text_area("演员描述", value=cast.get('description', ''), key=f"work_cast_{index}_{i}")
-                st.markdown("---")
-                st.write("演出职责:")
-                st.button("➕ ", key=f"add_resp_{index}_{i}", on_click=add_responsibility_callback, args=(f'works_{index}', i))
-                for j, resp in enumerate(cast.get('performanceResponsibilities', [])):
-                    cols = st.columns([3, 3, 3])
-                    with cols[0]:
-                        resp['performerName'] = st.text_input("演员姓名", value=resp.get('performerName', ''), key=f"performer_name_{index}_{i}_{j}")
-                    with cols[1]:
-                        resp['responsibility'] = st.text_input("职责", value=resp.get('responsibility', ''), key=f"performer_resp_{index}_{i}_{j}")
-                    with cols[2]:
-                        resp['characterName'] = st.text_input("角色名称", value=resp.get('characterName', ''), key=f"performer_char_{index}_{i}_{j}")
-                    cols2 = st.columns([3, 1])
-                    with cols2[0]:
-                        # Add button to add new relatedTo
-                        st.markdown("**🤝 人员相关实体**")
-                    st.markdown("---")
-            st.markdown("---")
+        display_works_section(index, current_data)
     # 演出阵容
     with st.expander("👨‍👩‍👧‍👦 演职人员", expanded=False):
-        st.button("➕ ", key=f"add_cast_{index}", on_click=add_item_callback, args=(f'casts_{index}',))
-        for i, cast in enumerate(st.session_state[f'casts_{index}']):
-            cols = st.columns([3, 3, 1])
-            with cols[0]:
-                cast['name'] = st.text_input("姓名", value=cast.get('name', ''), key=f"cast_name_{index}_{i}")
-            with cols[1]:
-                cast['role'] = st.text_input("角色", value=cast.get('role', ''), key=f"cast_role_{index}_{i}")
-            with cols[2]:
-                st.button("🗑️", key=f"delete_cast_{index}_{i}", on_click=delete_item_callback, args=(f'casts_{index}', i))
-            # Add button to add new relatedTo
-            st.markdown("**🤝 人员相关实体**")
-
-            st.markdown("---")
+        display_entity_section(index, 'casts', current_data)
 
     # 演出季
     with st.expander("🗓️ 演出季", expanded=False):
@@ -633,18 +804,22 @@ def display_form(index: int):
         
         st.text_input("时间", value=season.get('time', ''), key=f"season_time_{index}")
         # Add button to add new relatedTo
-        st.markdown("**🤝 演出相关实体**")
-        st.markdown("---")
+        
+        relationship_types = [item['label'] for item in st.session_state.settings.get('events_relationship', [])]
+        handle_related_entities(index, 'season_relatedTo', '演出季', relationship_types)
+
 
         season_location = season.get('location', {})
         st.markdown("**📍 演出季地点信息**")
         st.text_input("场地", value=season_location.get('venue', ''), key=f"season_venue_{index}")
         st.text_area("描述", value=season_location.get('description', ''), key=f"season_location_description_{index}")
         st.text_input("地址", value=season_location.get('address', ''), key=f"season_address_{index}")
-        # Add button to add new relatedTo
-        st.markdown("**🤝 场地相关实体**")
+        
+        # 从数据库获取 architectures_relationship 词表
+        architecture_relationship_types = [item['label'] for item in st.session_state.settings.get('architectures_relationship', [])]
+        handle_related_entities(index, 'season_location_relatedTo', '演出季场地', architecture_relationship_types)
 
-
+    # 相关材料
     with st.expander("📎 相关材料", expanded=False):
         has_materials = current_data.get('hasMaterials', {})
         
@@ -655,10 +830,11 @@ def display_form(index: int):
         selected_material_type = st.selectbox("材料类型", material_types, index=material_type_index, key=f"materials_type_{index}")
         
         st.text_input("材料链接ID", value=has_materials.get('linkID', ''), key=f"materials_linkID_{index}")
-        # Add button to add new relatedTo
-        st.markdown("**🤝 材料相关实体**")
+        
+        # 从数据库获取 materials_relationship 词表
+        material_relationship_types = [item['label'] for item in st.session_state.settings.get('materials_relationship', [])]
+        handle_related_entities(index, 'materials_relatedTo', '材料', material_relationship_types)
 
-        st.markdown("---")
 
 def navigate_data(direction: int):
     if 'search_results' in st.session_state and st.session_state.search_results:
@@ -677,31 +853,30 @@ def save_changes(index, current_data):
         st.error("Data ID missing, cannot save to database!")
         return
 
-    # 更新 current_data 中的值
+    # Update current_data with session state values
     current_data['name'] = st.session_state.get(f"name_{index}", "")
     current_data['time'] = st.session_state.get(f"time_{index}", "")
     current_data['description'] = st.session_state.get(f"description_{index}", "")
-    current_data['relatedTo'] = st.session_state.get(f"relatedTo_{index}", [])  # 主节点的 relatedTo
+    current_data['relatedTo'] = st.session_state.get(f'relatedTo_{index}', [])
     
-    # 更新 eventType
+    # Update eventType
     if 'eventType' not in current_data:
         current_data['eventType'] = {}
     current_data['eventType']['type'] = st.session_state.get(f"event_type_{index}", "")
     
-    # 更新地点信息
+    # Update location information
     if 'location' not in current_data:
         current_data['location'] = {}
     current_data['location']['venue'] = st.session_state.get(f"venue_{index}", "")
     current_data['location']['description'] = st.session_state.get(f"location_description_{index}", "")
     current_data['location']['address'] = st.session_state.get(f"address_{index}", "")
-    current_data['location']['relatedTo'] = st.session_state.get(f"location_relatedTo_{index}", [])  # 地点的 relatedTo
-    
-    # 更新相关方
-    current_data['involvedParties'] = st.session_state[f'involved_parties_{index}']
-    
-    # 更新演出团体
-    current_data['performingTroupes'] = st.session_state[f'troupes_{index}']
-    
+    current_data['location']['relatedTo'] = st.session_state.get(f"location_relatedTo_{index}", [])
+      
+    # 更新相关方、演出团体
+    for entity_type in ['involvedParties', 'performingTroupes']:
+        if f'{entity_type}_{index}' in st.session_state:
+            current_data[entity_type] = copy.deepcopy(st.session_state[f'{entity_type}_{index}'])
+   
     # 更新演出作品
     if 'performanceWorks' not in current_data:
         current_data['performanceWorks'] = {'content': []}
@@ -737,17 +912,15 @@ def save_changes(index, current_data):
     # Display data ID
     # st.info(f"Saving changes for Data ID: {current_data['id']}")
 
-    # Update session state data
+    # 更新会话状态数据
     data_index, sub_index, _ = st.session_state.flattened_data[index]
     st.session_state.data[data_index]['performingEvent'] = current_data
     
-    # Save to database
+    # 保存到数据库
     db_path = 'E:\\scripts\\jiemudan\\2\\output\\database\\database.db'
     data_id = current_data['id']
-    # st.success("\n--------------------------------\n")
-    # st.success(data_id)
     
-    # Update main_table and version_history
+    # 更新 main_table 和 version_history
     save_to_db(db_path, st.session_state.data[data_index], data_id)
     
     st.success("数据已成功保存到数据库！")
