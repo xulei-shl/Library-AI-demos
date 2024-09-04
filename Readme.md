@@ -63,7 +63,8 @@ DONE  playbills
 
 ### AI 元数据编辑器
 
-DOING
+DONE metadata-editor
+
 ---
 
 > 以下是非图书馆业务场景
