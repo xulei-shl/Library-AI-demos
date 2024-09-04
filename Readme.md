@@ -47,7 +47,7 @@ DONE video_summarizer_and_metadata
 
 ### CNKI 定题文献追踪与AIBot
 
-DOING topic_tracking
+DONE topic_tracking
 
 ### 文献预警报告撰写专家
 
