@@ -475,8 +475,10 @@ def render_entities(index, entity_type, entities, relationship_types):
     entity_name = ENTITY_TYPE_NAMES[entity_type]
     for i, entity in enumerate(entities):
         st.markdown(f"""
-        <div style="text-align: center; background-color: #ACA7C2BE; padding: 9px; border-radius: 4px;">
-            <strong> >>> {entity_name} {i+1} <<< </strong>
+        <div style="display: flex; justify-content: center;">
+            <div style="text-align: center; background-color: #FFC7D642; padding: 9px; border-radius: 20px; width: 600px;">
+                <strong> >>> {entity_name} {i+1} <<< </strong>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         cols = st.columns([3, 3, 1])
