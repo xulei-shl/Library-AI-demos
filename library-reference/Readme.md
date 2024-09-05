@@ -53,4 +53,8 @@
 1. [Building a multi-agent concierge system — LlamaIndex, Data Framework for LLM Applications](https://www.llamaindex.ai/blog/building-a-multi-agent-concierge-system)
    
    - 提出了一个由多个智能体组成的系统，每个智能体负责处理特定的任务，同时还有一个 “前台” 智能体用于引导用户到正确的智能体。该系统包括四个基础的 “任务” 智能体和三个 “元” 智能体。基础智能体包括股票查询、用户认证、账户余额查询和资金转账。元智能体包括前台智能体、编排智能体和继续智能体。编排智能体负责根据用户当前的任务选择下一个应该运行的智能体，而继续智能体则负责在任务完成后链接智能体，以便在没有进一步用户输入的情况下完成任务。全局状态用于跟踪用户和当前状态，并在所有智能体之间共享。
-2. 
+
+
+## 其他补充
+
+1. 类似demo项目：[Claude Customer Support Agent](https://github.com/anthropics/anthropic-quickstarts/tree/main/customer-support-agent)
