@@ -29,3 +29,4 @@
 ## TODO？
 
 1. 根据转录文本撰写 SEO 友好的博客文章？[Agent101：将YouTube视频转化为SE0友好的文章](https://fw7qiozbnjr.feishu.cn/wiki/WiAnwBMXRip9orkYv54c7v5Zncr)
+2. [【莱森】Dify AI 教程｜Dify 一键生成多尺寸运营封面与跨平台文案_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Kx4ae8Eyz/?vd_source=1d3b1df26617554772f26729180cff38)

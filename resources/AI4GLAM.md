@@ -32,3 +32,4 @@
 9. [Developer Center / APIs | 开放图书馆](https://openlibrary.org/developers/api)
 10. [public-apis/public-apis: A collective list of free APIs](https://github.com/public-apis/public-apis?tab=readme-ov-file#books)
 11. [public-api-lists/public-api-lists: A collective list of free APIs for use in software and web development 🚀](https://github.com/public-api-lists/public-api-lists?tab=readme-ov-file#books)
+12. [Free Public APIs](https://www.freepublicapis.com/)

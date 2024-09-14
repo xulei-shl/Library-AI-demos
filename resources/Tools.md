@@ -1,10 +1,13 @@
 ## 大模型类工具
 
+👍 [Open Source LLM Tools](https://huyenchip.com/llama-police)
+
 ### 文档解析与网络爬虫
 > [爬虫开源项目推荐](https://x.com/shao__meng/status/1802944900956373395)
 >
 
 1. jina-ai/reader: Convert any URL to an LLM-friendly input with a simple prefix https://r.jina.ai/
+   1. [jinaai/reader-lm-1.5b · Hugging Face](https://huggingface.co/jinaai/reader-lm-1.5b)
 
 2. VinciGit00/Scrapegraph-ai: Python scraper based on AI
 
@@ -38,6 +41,7 @@
 
 ### 开发框架
 1. LangChain
+   1. [langchain-ai/langchain-academy，Introduction to LangGraph](https://github.com/langchain-ai/langchain-academy)
 
 2. LlamaIndex
 
@@ -143,6 +147,9 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 ### 其他
 1. LLM 结构化输出
    - [#structured generation with llm](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzkwNjUyODgzMQ==&action=getalbum&album_id=3550331959002284032&subscene=&sessionid=svr_a59bdbd8f6c&enterid=1724567500&from_msgid=2247484191&from_itemidx=1&count=3&nolastread=1#wechat_redirect)
+
+   - [Every Way To Get Structured Output From LLMs](https://www.boundaryml.com/blog/structured-output-from-llms)
+     - [BoundaryML/baml: BAML is a templating language to write typed LLM functions. Check out the promptfiddle.com playground](https://github.com/boundaryml/baml)
 
    - jxnl/instructor: structured outputs for llms
    - [outlines-dev/outlines: Structured Text Generation](https://github.com/outlines-dev/outlines)
