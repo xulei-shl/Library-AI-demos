@@ -90,3 +90,4 @@
   
 2. [NirDiamant/RAG_Techniques: This repository showcases various advanced techniques for Retrieval-Augmented Generation (RAG) systems. RAG systems combine information retrieval with generative models to provide accurate and contextually rich responses.](https://github.com/NirDiamant/RAG_Techniques)
    1. 专注于展示和提供多种高级的检索增强生成（RAG）技术。详细介绍了二十多种 RAG 技术，包括简单 RAG、语境丰富技术、多方面过滤、融合检索、智能重新排名等。每种技术都有其概述和实施步骤
+3. [cohere-ai/notebooks: Code examples and jupyter notebooks for the Cohere Platform](https://github.com/cohere-ai/notebooks)
