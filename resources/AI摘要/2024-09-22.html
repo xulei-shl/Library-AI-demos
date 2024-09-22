@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI每日摘要 - SVG卡片</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Source+Han+Serif:wght@400;700&family=Source+Han+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #8E9AAF;
+            --secondary-color: #CBC0D3;
+            --accent-color: #EFD3D7;
+            --background-color: #DFDDD9;
+            --text-color: #5B5B5B;
+            --light-text-color: #8C8C8C;
+            --divider-color: #D1CBC3;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            flex-direction: column; /* 调整布局为垂直方向 */
+        }
+        .card-container {
+            width: 400px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+        }
+        .card {
+            width: 400px;
+            height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease;
+        }
+        .header {
+            color: #F2EDE9;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        h1 {
+            font-family: 'Source Han Sans', serif;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #888888;
+        }
+        .content {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        .keywords {
+            font-size: 16px;
+            color: var(--light-text-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--divider-color);
+            margin: 20px 0;
+        }
+        .summary {
+            background-image: linear-gradient(to right, #E0B0B0 4px, transparent 4px);
+            background-position: 0 0;
+            background-repeat: no-repeat;
+            padding-left: 20px;
+        }
+        .summary::before {
+            content: none;
+        }
+        .background-text {
+            position: absolute;
+            font-size: 150px;
+            color: rgba(182, 181, 167, 0.15);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+        .arrow-button {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px); /* 虚化透明背景 */
+        }
+        .arrow-button:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .arrow-button.left {
+            left: 20px;
+        }
+        .arrow-button.right {
+            right: 20px;
+        }
+        .date {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--light-text-color);
+        }
+        .more-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .more-link:hover {
+            color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container">
+<div class="card" id="card1" style="background-color: #E0EAE4;">
+    <div class="header" style="background-color: #A8DADC;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">How Our GraphRAG Reveals the Hidden Relationships of Jon Snow and the Mother of Dragons | by InfiniFlow | Sep, 2024 | Medium</div>
+        <div class="keywords">
+            #知识图谱 #RAG
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>GraphRAG技术揭示了《权力的游戏》中琼恩·雪诺和龙母之间隐藏的关系。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年9月22日</div>
+</div><div class="card" id="card1" style="background-color: #E8F4EC;">
+    <div class="header" style="background-color: #A8DADC;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">aws-samples/claude-prompt-generator</div>
+        <div class="keywords">
+            #提示词工程
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>GitHub上的aws-samples/claude-prompt-generator项目是一个专注于生成提示词（prompts）的工具，旨在帮助用户更有效地与AI进行交互。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年9月22日</div>
+</div><div class="card" id="card1" style="background-color: #E0EBE4;">
+    <div class="header" style="background-color: #A7C957;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">Mastering RAG Chunking Techniques for Enhanced Document Processing</div>
+        <div class="keywords">
+            #RAG #文档分割
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>本文介绍了RAG（Retrieval-Augmented Generation）技术在文档处理中的应用，特别是如何通过分块（chunking）技术来增强文档处理的效率和准确性。RAG技术是一种结合了检索和生成的AI技术，用于提高文档处理的效率。分块技术通过将文档分割成更小的部分来处理，可以提高处理速度和准确性。文章详细解释了RAG技术如何通过分块技术来优化文档处理流程。RAG技术能够有效地结合检索和生成，提升文档处理的性能，分块技术是提高文档处理效率的关键，RAG技术在文档处理领域的应用前景广阔。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年9月22日</div>
+</div><div class="card" id="card1" style="background-color: #E5F9E0;">
+    <div class="header" style="background-color: #A3E4D7;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">基于MinerU的PDF解析API</div>
+        <div class="keywords">
+            #RAG #文档解析
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>GoMate是一个基于MinerU的PDF解析API，支持一键启动，自带模型权重，支持GPU加速，提供高效准确的PDF解析服务。它具备删除页眉页脚、多栏文本输出、保留文档结构、提取图像和表格、识别公式和表格、自动OCR识别、支持CPU和GPU环境、跨平台兼容等功能。使用`LayoutLMv3`、`YOLOv8`、`UniMERNet`、`StructEqTable`和`PaddleOCR`等技术实现文档内容的高质量提取。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年9月22日</div>
+</div><div class="card" id="card1" style="background-color: #E0EAE4;">
+    <div class="header" style="background-color: #A8DADC;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">张俊林：OpenAI o1的价值意义及强化学习的Scaling Law</div>
+        <div class="keywords">
+            #OpenAI #LLM
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>张俊林在文章中讨论了OpenAI o1模型的价值意义，并分析了强化学习在大模型发展中的作用，特别是强化学习中的Scaling Law。他认为o1是大模型发展中的重要进步，其逻辑推理能力的提升对大模型的未来发展至关重要。文章还探讨了大模型的发展方向，以及如何通过强化学习进一步提升模型能力。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年9月22日</div>
+</div><div class="card" id="card1" style="background-color: #E0EAE4;">
+    <div class="header" style="background-color: #A8DADC;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">提示工程师是最短命的职业吗？提示工程已经死了吗？</div>
+        <div class="keywords">
+            #提示词工程
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>随着AI技术的发展，特别是OpenAI新推理模型o1 preview的发布，提示工程的重要性受到质疑。文章探讨了提示工程的两大核心部分：技巧和指令，并指出尽管模型能力增强，提示工程仍将长期存在并发挥价值。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年9月22日</div>
+</div><div class="card" id="card1" style="background-color: #E0EAE4;">
+    <div class="header" style="background-color: #A8DADC;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">o1发布后，信息量最大的圆桌对话：杨植麟、姜大昕、朱军探讨大模型技术路径</div>
+        <div class="keywords">
+            #LLM
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>在o1发布后，杨植麟、姜大昕、朱军三位AI领域专家进行了一场圆桌对话，深入探讨了AI技术的发展、大模型技术路径、以及未来AI技术和应用的可能走向。他们讨论了AI领域过去两年的加速发展、o1模型的发布对行业的影响、强化学习新范式对算力和数据的新要求、AI应用层创业的策略，以及未来18个月AI技术和应用的发展路径。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年9月22日</div>
+</div><div class="card" id="card1" style="background-color: #E0EAE4;">
+    <div class="header" style="background-color: #A7C7E7;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">InfoQ 2024年趋势报告：人工智能、机器学习和数据工程</div>
+        <div class="keywords">
+            #LLM 
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>InfoQ 2024年趋势报告深入分析了人工智能、机器学习和数据工程领域的新兴技术趋势，强调了大语言模型、小语言模型、AI 驱动硬件和安全性等关键技术的发展。报告指出，大语言模型、小语言模型、AI 驱动硬件和安全性是当前技术发展的关键领域。同时，报告也探讨了AI智能体、LangOps和LLMOps等新兴概念，以及它们在实际应用中的价值。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年9月22日</div>
+</div><div class="card" id="card1" style="background-color: #E0EAE4;">
+    <div class="header" style="background-color: #A8DADC;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">QueryGPT - Natural Language to SQL using Generative AI | Uber Blog</div>
+        <div class="keywords">
+            #AI #SQL #自然语言处理
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>Uber 技术团队开发了 QueryGPT，一种基于生成式人工智能的模型，能够将自然语言查询转换为 SQL 语句。这项技术通过理解复杂的查询需求，自动生成准确的 SQL 代码，从而减少了数据分析师和工程师在数据查询上的时间和错误。QueryGPT 的开发背景、关键技术点、实际应用案例以及对未来数据查询方式的潜在影响都在文章中进行了详细阐述。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年9月22日</div>
+</div>       
+
+        <button class="arrow-button left" onclick="prevCard()"><</button>
+        <button class="arrow-button right" onclick="nextCard()">></button>
+    </div>
+    <br>
+    <div class="author" style="font-style: italic; text-align: center; color: #8C8C8C;">
+        @XuLei<br>
+        by n8n & DeepSeek & Feishu
+    </div>
+    <a href="https://73y4g09684.vicp.fun/explore" class="more-link">更多可见：AI摘要</a>
+    <script>
+        const cards = document.querySelectorAll('.card');
+        let currentIndex = 0;
+
+        function showCard(index) {
+            cards.forEach((card, i) => {
+                card.style.transform = `translateX(${(i - index) * 100}%)`;
+            });
+        }
+
+        function prevCard() {
+            currentIndex = Math.max(0, currentIndex - 1);
+            showCard(currentIndex);
+        }
+
+        function nextCard() {
+            currentIndex = Math.min(cards.length - 1, currentIndex + 1);
+            showCard(currentIndex);
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowLeft') {
+                prevCard();
+            } else if (event.key === 'ArrowRight') {
+                nextCard();
+            }
+        });
+
+        showCard(currentIndex);
+    </script>
+</body>
+</html>

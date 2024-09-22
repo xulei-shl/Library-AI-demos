@@ -36,6 +36,8 @@
 12. [katanaml/sparrow: Data processing with ML and LLM](https://github.com/katanaml/sparrow)
    - Sparrow 是一个开源解决方案，用于从各种文档和图片中高效地提取和处理数据。它支持处理表单、发票、收据等非结构化数据源。Sparrow 具有模块化架构，提供独立的服务和管道，针对稳健性能进行了优化。通过插件化架构，可以轻松集成和运行数据提取管道，使用工具和框架如 LlamaIndex、Haystack 或 Unstructured。Sparrow 通过 Ollama 或 Apple MLX 实现本地 LLM 数据提取管道。
 13. [opendatalab/MinerU: A one-stop, open-source, high-quality data extraction tool, supports PDF/webpage/e-book extraction.一站式开源高质量数据提取工具，支持PDF/网页/多格式电子书提取。](https://github.com/opendatalab/MinerU)
+14. [gomate-community/GoMate: GoMate：RAG Framework within Reliable input,Trusted output](https://github.com/gomate-community/GoMate)
+    1.  GoMate框架的设计核心在于其高度的可配置性和模块化，使得用户可以根据具体需求灵活调整和优化各个组件，
 
 
 
@@ -119,6 +121,7 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 
 1. 大模型 API 价格
 - [国内外AI大语言模型API价格对比 | AI排行榜 - AIGCRank.cn](https://aigcrank.cn/llmprice)
+- [LYi 林哥的大模型野榜](https://lyihub.com/)
 
 - [主题日报◉AI开发者必备〖LLM选购指南〗](https://mp.weixin.qq.com/s/AJKztsDtnNfF1-DH5K8x9g)
 
