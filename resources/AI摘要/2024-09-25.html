@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI每日摘要 - SVG卡片</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Source+Han+Serif:wght@400;700&family=Source+Han+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #8E9AAF;
+            --secondary-color: #CBC0D3;
+            --accent-color: #EFD3D7;
+            --background-color: #DFDDD9;
+            --text-color: #5B5B5B;
+            --light-text-color: #8C8C8C;
+            --divider-color: #D1CBC3;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            flex-direction: column; /* 调整布局为垂直方向 */
+        }
+        .card-container {
+            width: 400px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+        }
+        .card {
+            width: 400px;
+            height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease;
+        }
+        .header {
+            color: #F2EDE9;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        h1 {
+            font-family: 'Source Han Sans', serif;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #888888;
+        }
+        .content {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        .keywords {
+            font-size: 16px;
+            color: var(--light-text-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--divider-color);
+            margin: 20px 0;
+        }
+        .summary {
+            background-image: linear-gradient(to right, #E0B0B0 4px, transparent 4px);
+            background-position: 0 0;
+            background-repeat: no-repeat;
+            padding-left: 20px;
+        }
+        .summary::before {
+            content: none;
+        }
+        .background-text {
+            position: absolute;
+            font-size: 150px;
+            color: rgba(182, 181, 167, 0.15);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+        .arrow-button {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px); /* 虚化透明背景 */
+        }
+        .arrow-button:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .arrow-button.left {
+            left: 20px;
+        }
+        .arrow-button.right {
+            right: 20px;
+        }
+        .date {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--light-text-color);
+        }
+        .more-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .more-link:hover {
+            color: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container">
+<div class="card" id="card1" style="background-color: #E0EAE4;">
+    <div class="header" style="background-color: #A2B29F;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">Home-Cooked Software and Barefoot Developers</div>
+        <div class="keywords">
+            #AI #技术民主化
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>文章探讨了语言模型如何显著改变软件开发的速度、便捷性和可访问性。作者提出了一个大胆的理论，认为我们正处于本地化、个性化软件和新型开发者——“赤脚开发者”的黄金时代前夕。文章通过视频和幻灯片的形式，展示了这一理论的背景、论据和潜在影响。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年09月25日</div>
+</div><div class="card" id="card1" style="background-color: #E0EAE4;">
+    <div class="header" style="background-color: #A2D2FF;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">PDF2Audio是一个将PDF文档转换为音频文件的AI应用案例。</div>
+        <div class="keywords">
+            #AI #AI应用案例
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>PDF2Audio是由MIT的Lamm实验室开发的一个开源项目，它利用人工智能技术将PDF文档中的文字内容转换成音频文件，使得视觉信息可以被听觉感知，为视障人士或需要在移动中获取信息的用户提供了便利。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年09月25日</div>
+</div><div class="card" id="card1" style="background-color: #E0EAE4;">
+    <div class="header" style="background-color: #A2C7B5;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">快手B端商业化技术探索：基于LLM构建智能RAG与Agent平台</div>
+        <div class="keywords">
+            #RAG #AI应用案例 #智能体
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>快手技术团队针对B端商业化业务场景，探索并构建了基于大型语言模型（LLM）的智能RAG（Retrieval-Augmented Generation）与Agent技术平台。该平台旨在通过检索、增强与生成三大环节的紧密协作，提高信息处理效率与质量，同时具备高度自主性与交互能力。文章详细阐述了快手在大模型技术浪潮中的战略选择、技术平台的构建、RAG技术链路、Agent技术链路以及面临的挑战和解决方案，展示了其在实际业务中的应用价值和潜在的商业效益。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年09月25日</div>
+</div><div class="card" id="card1" style="background-color: #E0F7FA;">
+    <div class="header" style="background-color: #80CBC4;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">The Intelligence Age</div>
+        <div class="keywords">
+            #AI
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>文章讨论了人工智能的快速发展及其对社会进步的推动作用。作者认为，尽管人类的能力并非由于基因变化而增强，但社会基础设施的智能化使我们能够完成前人认为不可能的任务。人工智能将作为工具帮助我们解决难题，推动人类进步。未来，每个人都能通过个人AI团队实现更多成就，享受个性化教育和更好的医疗保健。作者强调，尽管存在挑战，但AI的积极影响是巨大的，我们应该努力最大化其益处，同时最小化其潜在的负面影响。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年09月25日</div>
+</div>       
+
+        <button class="arrow-button left" onclick="prevCard()"><</button>
+        <button class="arrow-button right" onclick="nextCard()">></button>
+    </div>
+    <br>
+    <div class="author" style="font-style: italic; text-align: center; color: #8C8C8C;">
+        @XuLei<br>
+        by n8n & DeepSeek & Feishu
+    </div>
+    <a href="https://73y4g09684.vicp.fun/explore" class="more-link">更多可见：AI摘要</a>
+    <script>
+        const cards = document.querySelectorAll('.card');
+        let currentIndex = 0;
+
+        function showCard(index) {
+            cards.forEach((card, i) => {
+                card.style.transform = `translateX(${(i - index) * 100}%)`;
+            });
+        }
+
+        function prevCard() {
+            currentIndex = Math.max(0, currentIndex - 1);
+            showCard(currentIndex);
+        }
+
+        function nextCard() {
+            currentIndex = Math.min(cards.length - 1, currentIndex + 1);
+            showCard(currentIndex);
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowLeft') {
+                prevCard();
+            } else if (event.key === 'ArrowRight') {
+                nextCard();
+            }
+        });
+
+        showCard(currentIndex);
+    </script>
+</body>
+</html>
