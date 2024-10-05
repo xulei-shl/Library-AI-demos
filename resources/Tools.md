@@ -22,10 +22,12 @@
 7. Unstructured-IO/unstructured: Open source libraries and APIs to build custom preprocessing pipelines for labeling, training, or production machine learning pipelines. 
 
 8. Filimoa/open-parse: Improved file parsing for LLM’s
+9. [Sinaptik-AI/panda-etl: No-code ETL and data pipelines with AI and NLP](https://github.com/Sinaptik-AI/panda-etl?tab=readme-ov-file)
+   1.  PandaETL是一个开源的无代码ETL工具，旨在从各种文档类型中提取和解析数据，包括PDF、电子邮件、网站、音频文件等。
 
-9.  VikParuchuri/marker: Convert PDF to markdown quickly with high accuracy
+10. VikParuchuri/marker: Convert PDF to markdown quickly with high accuracy
 
-10. PaddlePaddle/PaddleOCR: Awesome multilingual OCR toolkits based on PaddlePaddle (practical ultra lightweight OCR system
+11. PaddlePaddle/PaddleOCR: Awesome multilingual OCR toolkits based on PaddlePaddle (practical ultra lightweight OCR system
     1.  [Dicklesworthstone/llm_aided_ocr: Enhance Tesseract OCR output for scanned PDFs by applying Large Language Model (LLM) corrections.](https://github.com/Dicklesworthstone/llm_aided_ocr)
     2.  [shibing624/pycorrector: pycorrector is a toolkit for text error correction. 文本纠错，实现了Kenlm，T5，MacBERT，ChatGLM3，LLaMA等模型应用在纠错场景，开箱即用。](https://github.com/shibing624/pycorrector)
 
