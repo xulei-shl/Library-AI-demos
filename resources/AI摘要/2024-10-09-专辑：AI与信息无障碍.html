@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI每日摘要 - SVG卡片</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Source+Han+Serif:wght@400;700&family=Source+Han+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #8E9AAF;
+            --secondary-color: #CBC0D3;
+            --accent-color: #EFD3D7;
+            --background-color: #DFDDD9;
+            --text-color: #5B5B5B;
+            --light-text-color: #8C8C8C;
+            --divider-color: #D1CBC3;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            flex-direction: column;
+        }
+        .card-container {
+            width: 400px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+        }
+        .card {
+            width: 400px;
+            height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease;
+        }
+        .header {
+            color: #F2EDE9;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        h1 {
+            font-family: 'Source Han Sans', serif;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #888888;
+        }
+        .header:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        .content {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        .keywords {
+            font-size: 16px;
+            color: var(--light-text-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--divider-color);
+            margin: 20px 0;
+        }
+        .summary {
+            background-image: linear-gradient(to right, #E0B0B0 4px, transparent 4px);
+            background-position: 0 0;
+            background-repeat: no-repeat;
+            padding-left: 20px;
+        }
+        .summary::before {
+            content: none;
+        }
+        .background-text {
+            position: absolute;
+            font-size: 150px;
+            color: rgba(182, 181, 167, 0.15);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+        .arrow-button {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .arrow-button:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .arrow-button.left {
+            left: 20px;
+        }
+        .arrow-button.right {
+            right: 20px;
+        }
+        .date {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--light-text-color);
+        }
+        .link-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .more-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .more-link:hover {
+            color: var(--secondary-color);
+        }
+        /* 名片样式 */
+        .card-content {
+            padding: 250px 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Ensure content starts from the top */
+            align-items: flex-start; /* Left-align content */
+            flex-grow: 1;
+            margin-top: 0; /* Remove any top margin */
+        }
+        .name {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2a2a2a;
+            letter-spacing: 1px;
+        }
+        .job-title {
+            font-size: 20px;
+            font-weight: 300;
+            color: #4a4a4a;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+        .contact {
+            font-size: 16px;
+            color: #5a5a5a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .contact::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        .contact.phone::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 0 0-1.02.24l-2.2 2.2a15.045 15.045 0 0 1-6.59-6.59l2.2-2.21a.96.96 0 0 0 .25-1A11.36 11.36 0 0 1 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1zM19 12h2a9 9 0 0 0-9-9v2c3.87 0 7 3.13 7 7zm-4 0h2c0-2.76-2.24-5-5-5v2c1.66 0 3 1.34 3 3z'/%3E%3C/svg%3E");
+        }
+        .contact.email::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+        }
+        .contact.website::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z'/%3E%3C/svg%3E");
+        }
+        .book-effect {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #8da5c4, #b0c4de);
+            clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+        .card:hover .book-effect {
+            width: 220px;
+            height: 220px;
+            opacity: 0.2;
+        }
+        .logo {
+            position: absolute;
+            top: 330px;
+            left: 30px; /* Changed from right to left */
+            max-width: 330px;
+            max-height: 330px;
+            width: auto;
+            height: auto;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        .logo:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container">
+        <div class="card" id="card1" style="background-color: #E8F5E9;">
+            <div class="header" style="background-color: #A5D6A7;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">视障女孩在旅行 - “师傅”、盲杖、无障碍、AI技术和不冒犯的相处</div>
+                <div class="keywords">
+                    #AI #信息无障碍 #播客
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本期旅行节目通过盲人旅行者的视角，展现了北京蔡家胡同的独特体验，包括盲杖敲击地面的声音和导航的读屏声，让听众以全新的听觉方式体验旅行。节目还分享了特殊教育领域专家的故事，他们探讨了教育和职业发展中的挑战与希望，强调了无障碍资源的重要性。此外，节目通过吴师傅和周师傅的分享，展示了旅行如何成为个人成长和探索未知世界的方式，同时也强调了科技在帮助视障者独立旅行中的作用。节目最后，通过分享无障碍旅游的挑战和期待，以及在文化场所体验的差异，进一步讨论了社会对残障人士旅行的支持和理解需求。整体上，节目通过多种视角展现了旅行的多样性和包容性。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-09</div>
+            <div class="book-effect"></div>        
+        </div>
+        
+        <div class="card" id="card1" style="background-color: #E0EAE4;">
+            <div class="header" style="background-color: #A2C5AC;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">2024TADC | Gert-Jan：数字化无障碍的规模化，如何构建并跟踪您公司对无障碍化的影响</div>
+                <div class="keywords">
+                    #信息无障碍
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本文是关于2024年第六届科技无障碍发展大会（2024TADC）上，Skyscanner首席无障碍工程师Gert-Jan Vercauteren的分享。文章详细介绍了Skyscanner如何规模化地开展数字无障碍工作，包括无障碍的定义、重要性、实施策略和成熟度模型（DAMM）。Gert-Jan强调了数字无障碍的五个关键方面：设计、内容、键盘操作、屏幕阅读器支持和放大功能，并分享了Skyscanner如何通过愿景、领导力、流程、能力和采购五个维度来推进无障碍化。此外，还介绍了如何通过培训、用户测试和内部倡导者网络来提升员工的无障碍意识和技能。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-09</div>
+            <div class="book-effect"></div>
+        </div>
+        
+        <div class="card" id="card1" style="background-color: #E0EBE8;">
+            <div class="header" style="background-color: #88A4A2;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">2024TADC | 谢伟钦：有AI无碍，科技照亮美好未来</div>
+                <div class="keywords">
+                    #AI #信息无障碍
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>在2024年科技无障碍发展大会（2024TADC）上，vivo AI解决方案中心总监谢伟钦发表了题为“有AI无碍，科技照亮美好未来”的演讲。他介绍了vivo在无障碍技术领域的工作和成果，包括利用AI技术帮助听障和视障人士的多项产品。谢伟钦强调了AI作为感官能力延伸的重要性，并展示了vivo听说、无障碍通话、声音识别等产品。特别提到了中文手语识别解决方案和视觉辅助产品vivo看见，这些产品通过AI技术帮助用户更好地感知环境和完成任务。他还介绍了vivo看见的升级版，即多模态大模型的视觉辅助产品，它能够提供更详尽的信息和智能对话。谢伟钦呼吁行业合作伙伴共同打造无障碍行业生态，并宣布将vivo的AI能力向所有开发者开放。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-09</div>
+            <div class="book-effect"></div>
+        </div>
+        
+        <div class="card" id="card1" style="background-color: #F2E8CF;">
+            <div class="header" style="background-color: #D4A5A5;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">为什么微信读书排行榜大多数是视障伙伴？</div>
+                <div class="keywords">
+                    #信息无障碍
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>文章探讨了微信读书排行榜中视障用户占多数的原因，从媒介消费习惯、信息获取方式、阅读习惯和数字鸿沟四个方面进行了分析。视障用户由于媒介选择受限，更倾向于使用微信读书等文字转语音技术成熟的平台进行阅读。同时，文章指出，尽管技术进步为视障人士提供了更多阅读机会，但数字鸿沟依然存在，信息获取方式的差异可能导致记忆和理解上的不平等。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-09</div>
+            <div class="book-effect"></div>
+        </div>
+        
+        <div class="card" id="card1" style="background-color: #E0EAE4;">
+            <div class="header" style="background-color: #A2C4C9;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">数据新闻 | 阅见光明：看见阅读障碍里的视障群体</div>
+                <div class="keywords">
+                    #信息无障碍
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>视障群体面临阅读障碍，但通过技术创新和政策支持，无障碍阅读体验正逐步改善，为视障人士带来平等获取信息的机会。文章深入探讨了视障群体在阅读方面所面临的挑战，分析了现有的无障碍阅读技术及其效果，并展望了《马拉喀什条约》在中国生效后对无障碍出版事业的积极影响。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-09</div>
+            <div class="book-effect"></div>
+        </div>
+        
+        <div class="card" id="card1" style="background-color: #E0EAE4;">
+            <div class="header" style="background-color: #A2C0A6;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">2024TADC | 2024可及信息无障碍优秀案例结果公布（附《案例汇编》下载方式）</div>
+                <div class="keywords">
+                    #信息无障碍
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>2024年4月，在中国老龄产业协会和全国无障碍环境建设智库的指导下，深圳市信息无障碍研究会联合多家机构发起了“2024可及信息无障碍优秀案例征集活动”。活动旨在征集全国范围内的信息无障碍相关产品、技术、服务等项目案例，并邀请专业评审团队进行评选。最终，8项案例在成果影响力、技术突破、形式创新以及特殊贡献四大类别中脱颖而出。这些案例不仅展示了信息无障碍领域的最新进展，也为未来的无障碍工作提供了宝贵的参考和启发。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-09</div>
+            <div class="book-effect"></div>
+        </div>
+        
+        <div class="card" id="card1" style="background-color: #E0EBE4;">
+            <div class="header" style="background-color: #A1C7A9;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">别让无障碍冷却下来</div>
+                <div class="keywords">
+                    #信息无障碍
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>文章《别让无障碍冷却下来》由腾讯用户研究与体验设计部撰写，强调了信息无障碍的重要性和普遍性。信息无障碍指通过技术手段弥补身体或环境差异，使所有人平等获取和使用信息。文章通过实例展示了视障人士在日常生活中使用手机的困难，以及无障碍设计在提升用户体验方面的潜力。文章还讨论了无障碍设计的现状，包括政府和企业在推动无障碍方面的努力，以及面临的挑战。作者呼吁业界重视无障碍设计，将其作为产品开发不可或缺的一部分，并分享了一些无障碍设计的最佳实践。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-09</div>
+            <div class="book-effect"></div>
+        </div>
+        
+        <div class="card" id="card1" style="background-color: #E8F5E9;">
+            <div class="header" style="background-color: #A5D6A7;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Impacts of Artificial Intelligence (AI) on Web Accessibility</div>
+                <div class="keywords">
+                    #AI #信息无障碍
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>AI技术通过自动生成字幕、语音识别、图像识别和手语翻译等手段，极大提升了网络资源的无障碍访问性，但准确性和过度依赖仍是挑战。本文探讨了人工智能（AI）对网络无障碍访问性的影响，包括机器学习、自然语言处理和计算机视觉在提升无障碍访问性方面的作用，以及准确性问题和对技术的过度依赖的挑战。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-09</div>
+            <div class="book-effect"></div>
+        </div>
+        
+        <div class="card" id="card3">
+            <img class="logo" src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/logo_shl.jpg" alt="Logo">
+            <div class="book-effect"></div>
+        </div>
+
+
+<button class="arrow-button left" onclick="prevCard()" style="display: none;"><</button>
+<button class="arrow-button right" onclick="nextCard()" style="display: none;">></button>
+</div>
+<br>
+<div class="author" style="font-style: italic; text-align: center; color: #8C8C8C;">
+@XuLei<br>
+by n8n & DeepSeek & Feishu
+</div>
+<div class="link-container">
+<a href="https://73y4g09684.vicp.fun/explore" class="more-link">更多可见：AI 摘要</a>
+<a href="https://ma19hv4fupk.feishu.cn/wiki/HizGwFT49id5d0ktvhdcWnYXnFg?from=from_copylink" class="more-link">飞书知识库</a>
+<a href="https://github.com/xulei-shl/Library-AI-demos" class="more-link">Github 仓库</a>
+</div>
+<script>
+const cards = document.querySelectorAll('.card');
+let currentIndex = 0;
+
+function showCard(index) {
+    cards.forEach((card, i) => {
+        card.style.transform = `translateX(${(i - index) * 100}%)`;
+    });
+
+    // 显示或隐藏按钮
+    const prevButton = document.querySelector('.arrow-button.left');
+    const nextButton = document.querySelector('.arrow-button.right');
+    if (index === 0) {
+        prevButton.style.display = 'none';
+    } else {
+        prevButton.style.display = 'flex';
+    }
+    if (index === cards.length - 1) {
+        nextButton.style.display = 'none';
+    } else {
+        nextButton.style.display = 'flex';
+    }
+}
+
+function prevCard() {
+    currentIndex = Math.max(0, currentIndex - 1);
+    showCard(currentIndex);
+}
+
+function nextCard() {
+    currentIndex = Math.min(cards.length - 1, currentIndex + 1);
+    showCard(currentIndex);
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft') {
+        prevCard();
+    } else if (event.key === 'ArrowRight') {
+        nextCard();
+    }
+});
+
+showCard(currentIndex);
+</script>
+</body>
+</html>
