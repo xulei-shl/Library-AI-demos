@@ -151,6 +151,8 @@ Skyvern-AI/skyvern 仓库提供了一个基于 LLMs 和计算机视觉的浏览�
 
 ### 其他
 1. LLM 结构化输出
+   - [imaurer/awesome-llm-json: Resource list for generating JSON using LLMs via function calling, tools, CFG. Libraries, Models, Notebooks, etc.](https://github.com/imaurer/awesome-llm-json)
+     - 大模型json结构化输出的awesome仓库
    - [#structured generation with llm](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzkwNjUyODgzMQ==&action=getalbum&album_id=3550331959002284032&subscene=&sessionid=svr_a59bdbd8f6c&enterid=1724567500&from_msgid=2247484191&from_itemidx=1&count=3&nolastread=1#wechat_redirect)
 
    - [Every Way To Get Structured Output From LLMs](https://www.boundaryml.com/blog/structured-output-from-llms)

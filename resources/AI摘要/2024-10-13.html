@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI每日摘要 - SVG卡片</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Source+Han+Serif:wght@400;700&family=Source+Han+Sans:wght@300;400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #8E9AAF;
+            --secondary-color: #CBC0D3;
+            --accent-color: #EFD3D7;
+            --background-color: #DFDDD9;
+            --text-color: #5B5B5B;
+            --light-text-color: #8C8C8C;
+            --divider-color: #D1CBC3;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            flex-direction: column;
+        }
+
+        .card-container {
+            width: 400px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card {
+            width: 400px;
+            height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease;
+        }
+
+        .header {
+            color: #F2EDE9;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-family: 'Source Han Sans', serif;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #888888;
+        }
+
+        .header:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .content {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .keywords {
+            font-size: 16px;
+            color: var(--light-text-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--divider-color);
+            margin: 20px 0;
+        }
+
+        .summary {
+            background-image: linear-gradient(to right, #E0B0B0 4px, transparent 4px);
+            background-position: 0 0;
+            background-repeat: no-repeat;
+            padding-left: 20px;
+        }
+
+        .summary::before {
+            content: none;
+        }
+
+        .background-text {
+            position: absolute;
+            font-size: 150px;
+            color: rgba(182, 181, 167, 0.15);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+
+        .arrow-button {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .arrow-button:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .arrow-button.left {
+            left: 20px;
+        }
+
+        .arrow-button.right {
+            right: 20px;
+        }
+
+        .date {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--light-text-color);
+        }
+
+        .link-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .more-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .more-link:hover {
+            color: var(--secondary-color);
+        }
+
+        /* 名片样式 */
+        .card-content {
+            padding: 250px 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            /* Ensure content starts from the top */
+            align-items: flex-start;
+            /* Left-align content */
+            flex-grow: 1;
+            margin-top: 0;
+            /* Remove any top margin */
+        }
+
+        .name {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2a2a2a;
+            letter-spacing: 1px;
+        }
+
+        .job-title {
+            font-size: 20px;
+            font-weight: 300;
+            color: #4a4a4a;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+
+        .contact {
+            font-size: 16px;
+            color: #5a5a5a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .contact::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .contact.phone::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 0 0-1.02.24l-2.2 2.2a15.045 15.045 0 0 1-6.59-6.59l2.2-2.21a.96.96 0 0 0 .25-1A11.36 11.36 0 0 1 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1zM19 12h2a9 9 0 0 0-9-9v2c3.87 0 7 3.13 7 7zm-4 0h2c0-2.76-2.24-5-5-5v2c1.66 0 3 1.34 3 3z'/%3E%3C/svg%3E");
+        }
+
+        .contact.email::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+        }
+
+        .contact.website::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z'/%3E%3C/svg%3E");
+        }
+
+        .book-effect {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #8da5c4, #b0c4de);
+            clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover .book-effect {
+            width: 220px;
+            height: 220px;
+            opacity: 0.2;
+        }
+
+        .logo {
+            position: absolute;
+            top: 330px;
+            left: 30px;
+            /* Changed from right to left */
+            max-width: 330px;
+            max-height: 330px;
+            width: auto;
+            height: auto;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card-container">
+        <div class="card" id="card1" style="background-color: #E0EAE4;">
+            <div class="header" style="background-color: #A8DADC;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Framework for building, orchestrating and deploying multi-agent systems：OpenAI Swarm
+                </div>
+                <div class="keywords">
+                    #智能体
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>Swarm是由OpenAI
+                        Solutions团队管理的一个实验性框架，它专注于构建、编排和部署多智能体系统。这个框架的目标是为开发者提供一个平台，以便他们能够更容易地创建和协调多个智能体，这些智能体可以是软件机器人或自动化程序，它们能够协同工作以解决复杂问题。Swarm的设计理念是利用多智能体系统的优势，通过分布式决策和协作来提高系统的效率和适应性。该框架还可能包含一些实验性的功能，旨在探索多智能体系统在不同领域的应用潜力。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-13</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0EFE7;">
+            <div class="header" style="background-color: #C1D7CF;">
+                <h1>AI应用案例</h1>
+            </div>
+            <div class="content">
+                <div class="title">AI会议纪要分析应用：MeetingMind</div>
+                <div class="keywords">
+                    #AI #会议效率
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>MeetingMind是一款由misbahsy开发的AI会议纪要分析应用，采用NextJS、Langflow、Groq和OpenAI技术构建。该应用旨在通过自动化技术提高会议记录的效率，减少人工整理会议纪要的时间，同时确保信息的准确性和完整性。核心技术包括自然语言处理和机器学习，用于理解和总结会议中的讨论点，为参与者提供有价值的洞察。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-13</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0EAE4;">
+            <div class="header" style="background-color: #A8DADC;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Resource list for generating JSON using LLMs via function calling, tools, CFG.
+                    Libraries, Models, Notebooks, etc.</div>
+                <div class="keywords">
+                    #工具
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>GitHub上的`imaurer/awesome-llm-json`项目是一个专注于使用大型语言模型（LLM）生成JSON格式数据的资源列表。该项目旨在为开发者、产品经理和技术人员提供一个全面的资源集合，包括但不限于函数调用、工具、配置文件（CFG）、库、模型、笔记本等，以促进LLM在JSON生成领域的应用和研究。通过这些资源，用户可以更深入地理解LLM在处理结构化数据时的潜力和挑战，以及如何将这些模型集成到现有的开发流程中。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-13</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0EBEA;">
+            <div class="header" style="background-color: #87A2FB;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Generative AI's Act o1: The Reasoning Era Begins</div>
+                <div class="keywords">
+                    #AI
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>OpenAI o1 发布标志着Generative AI领域从快速响应的“思考快”阶段，过渡到推理时的“思考慢”阶段。文章回顾了Generative
+                        AI市场两年来的发展，预测了未来趋势，并重点介绍了OpenAI的o1模型，这是首个具备真正通用推理能力的模型，通过推理时的计算实现了显著的架构改进。文章还探讨了这一进步对AI市场的创始人、现有软件公司以及投资者的意义，并讨论了新一代的“杀手级应用”。此外，文章还分析了从系统1到系统2思维的转变，以及推理时计算的新扩展法则，预示着从大规模预训练集群向推理云环境的转变。最后，文章讨论了AI应用层的机遇，以及如何通过服务即软件的模式，将劳动力转化为软件，打开数万亿美元的服务市场。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-13</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0EAE4;">
+            <div class="header" style="background-color: #A2C7B8;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Anthropic CEO 万字长文-预测强人工智能的积极未来</div>
+                <div class="keywords">
+                    #AI
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>Anthropic CEO Dario Amodei 预测强人工智能将在未来5-10年内带来革命性变革，涉及生物学、神经科学、经济发展和治理等多个领域，为人类带来前所未有的积极影响。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-13</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E6F4F1;">
+            <div class="header" style="background-color: #8DB6CD;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">重生之我在大厂做 AI+教育的 18 个月 对谈高途 AI 产品负责人封诚</div>        
+                <div class="keywords">
+                    #播客 #个性化服务
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>封城分享了AI在教育行业的应用，包括前端获客、转化和教学服务交付等环节，强调了AI在提高效率方面的潜 力。尽管AI在教育领域的应用尚无法实现彻底的颠覆，但已在提高效率方面发挥作用。同时，他也指出获客方面的挑战，包括流量问题和可持续性问题。讨论还触及了利用AI保持内容更新速度和个性化以帮助企业获得竞争优势的可能，以及AI在提高销售转化率、优化业务流程、个性化服务等方面的应用。同时，讨论强调了在教育中AI无法完全取代教师，因为教育的本质涉及情感交流和个性化指导。最后，对于对AI加教育或AI感兴趣的创业者，建议选择确定性高的项目，解决无推广兴趣、长期留存和商业化闭环等问题，以确保可持续发展。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-13</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card3">
+            <img class="logo" src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/logo_shl.jpg"
+                alt="Logo">
+            <div class="book-effect"></div>
+        </div>
+
+        <button class="arrow-button left" onclick="prevCard()" style="display: none;"><</button>
+                <button class="arrow-button right" onclick="nextCard()" style="display: none;">></button>
+    </div>
+    <br>
+    <div class="author" style="font-style: italic; text-align: center; color: #8C8C8C;">
+        @XuLei<br>
+        by n8n & DeepSeek & Feishu
+    </div>
+    <div class="link-container">
+        <a href="https://73y4g09684.vicp.fun/explore" class="more-link">更多可见：AI 摘要</a>
+        <a href="https://ma19hv4fupk.feishu.cn/wiki/HizGwFT49id5d0ktvhdcWnYXnFg?from=from_copylink"
+            class="more-link">飞书知识库</a>
+        <a href="https://github.com/xulei-shl/Library-AI-demos" class="more-link">Github 仓库</a>
+    </div>
+    <script>
+        const cards = document.querySelectorAll('.card');
+        let currentIndex = 0;
+
+        function showCard(index) {
+            cards.forEach((card, i) => {
+                card.style.transform = `translateX(${(i - index) * 100}%)`;
+            });
+
+            // 显示或隐藏按钮
+            const prevButton = document.querySelector('.arrow-button.left');
+            const nextButton = document.querySelector('.arrow-button.right');
+            if (index === 0) {
+                prevButton.style.display = 'none';
+            } else {
+                prevButton.style.display = 'flex';
+            }
+            if (index === cards.length - 1) {
+                nextButton.style.display = 'none';
+            } else {
+                nextButton.style.display = 'flex';
+            }
+        }
+
+        function prevCard() {
+            currentIndex = Math.max(0, currentIndex - 1);
+            showCard(currentIndex);
+        }
+
+        function nextCard() {
+            currentIndex = Math.min(cards.length - 1, currentIndex + 1);
+            showCard(currentIndex);
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowLeft') {
+                prevCard();
+            } else if (event.key === 'ArrowRight') {
+                nextCard();
+            }
+        });
+
+        showCard(currentIndex);
+    </script>
+</body>
+
+</html>
