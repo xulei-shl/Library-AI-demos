@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI播客摘要 - SVG卡片</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Source+Han+Serif:wght@400;700&family=Source+Han+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #8E9AAF;
+            --secondary-color: #CBC0D3;
+            --accent-color: #EFD3D7;
+            --background-color: #DFDDD9;
+            --text-color: #5B5B5B;
+            --light-text-color: #8C8C8C;
+            --divider-color: #D1CBC3;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            flex-direction: column; /* 调整布局为垂直方向 */
+        }
+        .card-container {
+            width: 600px;
+            height: 800px;
+            position: relative;
+            overflow: hidden;
+        }
+        .card {
+            width: 600px;
+            height: 800px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease;
+        }
+        .header {
+            color: #F2EDE9;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        h1 {
+            font-family: 'Source Han Sans', serif;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #888888;
+        }
+        .content {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        .keywords {
+            font-size: 16px;
+            color: var(--light-text-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--divider-color);
+            margin: 20px 0;
+        }
+        .summary {
+            background-image: linear-gradient(to right, #E0B0B0 4px, transparent 4px);
+            background-position: 0 0;
+            background-repeat: no-repeat;
+            padding-left: 20px;
+        }
+        .summary::before {
+            content: none;
+        }
+        .background-text {
+            position: absolute;
+            font-size: 150px;
+            color: rgba(182, 181, 167, 0.15);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+        .arrow-button {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px); /* 虚化透明背景 */
+        }
+        .arrow-button:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .arrow-button.left {
+            left: 20px;
+        }
+        .arrow-button.right {
+            right: 20px;
+        }
+        .date {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--light-text-color);
+        }
+        .more-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .more-link:hover {
+            color: var(--secondary-color);
+        }
+        .book-effect {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #8da5c4, #b0c4de);
+            clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+        .card:hover .book-effect {
+            width: 220px;
+            height: 220px;
+            opacity: 0.2;
+        }        
+        .logo {
+            position: absolute;
+            top: 330px;
+            left: 30px; /* Changed from right to left */
+            max-width: 530px;
+            max-height: 530px;
+            width: auto;
+            height: auto;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        .logo:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container">
+<div class="card" id="card1" style="background-color: #E8EBE4;">
+    <div class="header" style="background-color: #A3B18A;">
+        <h1>AI播客摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">从Notebook LM到ChatGPT：生成式AI这一年，我们多么痛的领悟！ - 人民公园说AI</div>
+        <div class="keywords">
+            #AI应用
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>两位AI从业者讨论了当前AI技术在处理复杂智能任务上的局限性，强调了输入数据质量对输出结果的重要性。尽管AI在特定领域如学术研究辅助方面取得进展，但总体上，其表现受限于训练数据和算法，难以达到人类的智能水平。AI生成内容的局限性及在播客等应用中的实际效果和潜在问题也被提及，指出AI尚不能替代具有深度思维和内容创造能力的人类。讨论还涉及了与海外客户合作时遇到的问题，强调了客户对数据质量和标准操作流程的不适应，以及AI项目实施过程中的主要挑战，包括数据准备和清洗问题。此外，讨论指出了非技术背景人群与AI沟通的主要障碍、AI技术的快速发展和应用场景探索，以及AI在特定领域深入应用的可能。最后，讨论聚焦于AI技术的发展现状和未来方向，强调了AI在处理重复性工作中表现出的优势与局限性，以及其在全面自动化社会实现上的挑战。</p>
+        </div>
+    </div>
+    <div class="background-text">播客</div>
+    <div class="date">2024年10月16日</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E8E3E2;">
+    <div class="header" style="background-color: #D4C6B9;">
+        <h1>AI播客摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">让Agent从Chat走向Act -- 我在亚马逊云AI初创活动上的分享 - AGI产品经理手册（二姐）</div>
+        <div class="keywords">
+            #智能体
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>在亚马逊云的活动中，探讨了AI从单一聊天功能进化到能实际执行任务的趋势，强调了自驱动行为代理（act agent）在复杂任务处理中的优势，尽管当前准确率有限，但展示了自动化的新意义和未来应用潜力。讨论了提高Agent规划能力的方法，包括使用提示词优化和agent tuning微调，指出后者尤其适合中小模型，能显著提升规划能力并带来安全性和成本优势。强调了理解执行指令和Function Calling的重要性，通过微调技术研究模型大小与准确率的关系，指出小模型微调也能达到大模型性能。为了提高Function Callinge等特定领域的功能调用准确性，提出了创建人工数据、迭代优化的策略，预示着Agent在数据循环中的快速进化。整体上，强调了培养思考、执行能力及数据驱动模型的重要性，展望了深度学习改变软件定义方式的未来趋势。</p>
+        </div>
+    </div>
+    <div class="background-text">播客</div>
+    <div class="date">2024年10月16日</div>
+    <div class="book-effect"></div>
+</div>       
+
+<div class="card" id="card3">
+    <img class="logo" src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/logo_shl.jpg" alt="Logo">
+    <div class="book-effect"></div>
+</div>
+
+<button class="arrow-button left" onclick="prevCard()" style="display: none;"><</button>
+<button class="arrow-button right" onclick="nextCard()" style="display: none;">></button>
+</div>
+<br>
+<div class="author" style="font-style: italic; text-align: center; color: #8C8C8C;">
+@XuLei<br>
+by n8n & DeepSeek & Feishu
+</div>
+<div class="link-container">
+<a href="https://73y4g09684.vicp.fun/explore" class="more-link">更多可见：AI 摘要</a>
+<a href="https://ma19hv4fupk.feishu.cn/wiki/HizGwFT49id5d0ktvhdcWnYXnFg?from=from_copylink" class="more-link">飞书知识库</a>
+<a href="https://github.com/xulei-shl/Library-AI-demos" class="more-link">Github 仓库</a>
+</div>
+<script>
+const cards = document.querySelectorAll('.card');
+let currentIndex = 0;
+
+function showCard(index) {
+    cards.forEach((card, i) => {
+        card.style.transform = `translateX(${(i - index) * 100}%)`;
+    });
+
+    // 显示或隐藏按钮
+    const prevButton = document.querySelector('.arrow-button.left');
+    const nextButton = document.querySelector('.arrow-button.right');
+    if (index === 0) {
+        prevButton.style.display = 'none';
+    } else {
+        prevButton.style.display = 'flex';
+    }
+    if (index === cards.length - 1) {
+        nextButton.style.display = 'none';
+    } else {
+        nextButton.style.display = 'flex';
+    }
+}
+
+function prevCard() {
+    currentIndex = Math.max(0, currentIndex - 1);
+    showCard(currentIndex);
+}
+
+function nextCard() {
+    currentIndex = Math.min(cards.length - 1, currentIndex + 1);
+    showCard(currentIndex);
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft') {
+        prevCard();
+    } else if (event.key === 'ArrowRight') {
+        nextCard();
+    }
+});
+
+showCard(currentIndex);
+</script>
+</body>
+</html>
