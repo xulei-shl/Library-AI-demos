@@ -1,0 +1,49 @@
+<svg width="310" height="406" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .title {
+        font-family: '上图东观体';
+        font-size: 24px;
+        fill: #1e90ff;
+        text-anchor: middle;
+        }
+        .author {
+        font-family: '仓耳玉楷';
+        font-size: 17px;
+        fill: #4169e1;
+        text-anchor: middle;
+        }
+        .slogan {
+        font-family: '又又意宋';
+        font-size: 22px;
+        fill: #1e90ff;
+        text-anchor: middle;
+        }
+    </style>
+
+    <rect width="100%" height="100%" fill="#f0f8ff"/>
+
+    <text x="155" y="40" class="title">
+        <tspan x="155" dy="0">艺术不再擦肩而过</tspan>
+    </text>
+
+    <line x1="20" y1="90" x2="290" y2="90" stroke="#1e90ff" stroke-width="2"/> <!-- Adjusted y1 and y2 to 90 -->
+
+    <text x="155" y="120" class="author"> <!-- Adjusted y to 120 -->
+        <tspan x="155" dy="0">Tiger 著</tspan>
+    </text>
+
+    <g transform="translate(55, 200)"> <!-- Adjusted y-translation to 200 -->
+        <path d="M0,0 L50,100 L100,0 L150,100 L200,0" stroke="#4169e1" stroke-width="2" fill="none"/>
+        <circle cx="25" cy="50" r="20" fill="none" stroke="#1e90ff" stroke-width="2"/>
+        <circle cx="75" cy="50" r="20" fill="none" stroke="#1e90ff" stroke-width="2"/>
+        <circle cx="125" cy="50" r="20" fill="none" stroke="#1e90ff" stroke-width="2"/>
+        <circle cx="175" cy="50" r="20" fill="none" stroke="#1e90ff" stroke-width="2"/>
+        <line x1="0" y1="100" x2="200" y2="100" stroke="#4169e1" stroke-width="2"/>
+        <line x1="100" y1="0" x2="100" y2="100" stroke="#4169e1" stroke-width="2"/>
+    </g>
+
+    <text x="155" y="360" class="slogan"> <!-- Adjusted y to 360 -->
+        <tspan x="155" dy="0">穿越文化边界，</tspan>
+        <tspan x="155" dy="28">触摸艺术的灵魂</tspan>
+    </text>
+</svg>

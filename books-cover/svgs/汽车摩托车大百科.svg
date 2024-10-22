@@ -1,0 +1,46 @@
+<svg width="310" height="406" xmlns="http://www.w3.org/2000/svg">
+<style>
+    .title {
+    font-family: '上图东观体';
+    font-size: 24px;
+    fill: #ff4500;
+    text-anchor: middle;
+    }
+    .author {
+    font-family: '仓耳玉楷';
+    font-size: 17px;
+    fill: #daa520;
+    text-anchor: middle;
+    }
+    .slogan {
+    font-family: '又又意宋';
+    font-size: 22px;
+    fill: #ff4500;
+    text-anchor: middle;
+    }
+</style>
+
+<rect width="100%" height="100%" fill="#fffaf0"/>
+
+<text x="155" y="40" class="title">
+    <tspan x="155" dy="0">汽车摩托车大百科</tspan>
+</text>
+
+<line x1="20" y1="60" x2="290" y2="60" stroke="#ff4500" stroke-width="2"/>
+
+<text x="155" y="90" class="author">
+    <tspan x="155" dy="0">博识百科系列编委会编</tspan>
+</text>
+
+<g transform="translate(55, 140)">
+    <rect x="0" y="0" width="200" height="100" fill="none" stroke="#daa520" stroke-width="2"/>
+    <circle cx="50" cy="50" r="20" fill="none" stroke="#ff4500" stroke-width="2"/>
+    <circle cx="150" cy="50" r="20" fill="none" stroke="#ff4500" stroke-width="2"/>
+    <line x1="50" y1="50" x2="150" y2="50" stroke="#daa520" stroke-width="2"/>
+    <line x1="100" y1="0" x2="100" y2="100" stroke="#daa520" stroke-width="2"/>
+</g>
+
+<text x="155" y="300" class="slogan">
+    <tspan x="155" dy="0">轮转科技的时代印记</tspan>
+</text>
+</svg>

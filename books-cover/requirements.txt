@@ -1,0 +1,4 @@
+psycopg2
+python-dotenv
+langchain-openai
+langchain-core
