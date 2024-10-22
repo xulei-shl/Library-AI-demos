@@ -65,6 +65,10 @@ DONE  playbills
 
 DONE metadata-editor
 
+### 书籍封面生成
+
+DONE books-cover
+
 ---
 
 > 以下是非图书馆业务场景
