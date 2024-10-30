@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI每日摘要 - SVG卡片</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Source+Han+Serif:wght@400;700&family=Source+Han+Sans:wght@300;400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #8E9AAF;
+            --secondary-color: #CBC0D3;
+            --accent-color: #EFD3D7;
+            --background-color: #DFDDD9;
+            --text-color: #5B5B5B;
+            --light-text-color: #8C8C8C;
+            --divider-color: #D1CBC3;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            flex-direction: column;
+        }
+
+        .card-container {
+            width: 400px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card {
+            width: 400px;
+            height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease;
+        }
+
+        .header {
+            color: #F2EDE9;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-family: 'Source Han Sans', serif;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #888888;
+        }
+
+        .header:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .content {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .keywords {
+            font-size: 16px;
+            color: var(--light-text-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--divider-color);
+            margin: 20px 0;
+        }
+
+        .summary {
+            background-image: linear-gradient(to right, #E0B0B0 4px, transparent 4px);
+            background-position: 0 0;
+            background-repeat: no-repeat;
+            padding-left: 20px;
+        }
+
+        .summary::before {
+            content: none;
+        }
+
+        .background-text {
+            position: absolute;
+            font-size: 150px;
+            color: rgba(182, 181, 167, 0.15);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+
+        .arrow-button {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .arrow-button:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .arrow-button.left {
+            left: 20px;
+        }
+
+        .arrow-button.right {
+            right: 20px;
+        }
+
+        .date {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--light-text-color);
+        }
+
+        .link-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .more-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .more-link:hover {
+            color: var(--secondary-color);
+        }
+
+        /* 名片样式 */
+        .card-content {
+            padding: 250px 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            /* Ensure content starts from the top */
+            align-items: flex-start;
+            /* Left-align content */
+            flex-grow: 1;
+            margin-top: 0;
+            /* Remove any top margin */
+        }
+
+        .name {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2a2a2a;
+            letter-spacing: 1px;
+        }
+
+        .job-title {
+            font-size: 20px;
+            font-weight: 300;
+            color: #4a4a4a;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+
+        .contact {
+            font-size: 16px;
+            color: #5a5a5a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .contact::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .contact.phone::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 0 0-1.02.24l-2.2 2.2a15.045 15.045 0 0 1-6.59-6.59l2.2-2.21a.96.96 0 0 0 .25-1A11.36 11.36 0 0 1 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1zM19 12h2a9 9 0 0 0-9-9v2c3.87 0 7 3.13 7 7zm-4 0h2c0-2.76-2.24-5-5-5v2c1.66 0 3 1.34 3 3z'/%3E%3C/svg%3E");
+        }
+
+        .contact.email::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+        }
+
+        .contact.website::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z'/%3E%3C/svg%3E");
+        }
+
+        .book-effect {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #8da5c4, #b0c4de);
+            clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover .book-effect {
+            width: 220px;
+            height: 220px;
+            opacity: 0.2;
+        }
+
+        .logo {
+            position: absolute;
+            top: 330px;
+            left: 30px;
+            /* Changed from right to left */
+            max-width: 330px;
+            max-height: 330px;
+            width: auto;
+            height: auto;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card-container">
+        <div class="card" id="card1" style="background-color: #E0EFEA;">
+            <div class="header" style="background-color: #A7CDBD;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Designing AI Assistants That Workers Will Love to Use</div>
+                <div class="keywords">
+                    #AI应用
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>设计易于使用且能提高工作效率的AI助手，是企业在采用生成性人工智能（GenAI）技术时成功的关键。本文探讨了在企业中采用生成性人工智能（GenAI）技术时，如何设计出既直观又易于使用的AI助手。文章指出，尽管iPhone并非第一部触屏手机，但其出色的设计使其迅速取代了黑莓成为企业工作的首选设备。同样，GenAI的成功也取决于其易用性。AI助手能够解放员工于繁琐任务，同时提升研究、数据可视化、邮件撰写等工作的效率。文章强调了提高AI响应的准确性、设计透明的信息源链接、克服技术感知障碍、以及设计直观的用户交互界面的重要性。此外，文章还讨论了AI助手在视觉和语音交互方面的未来发展，以及与技术和终端用户的紧密合作对于确保AI解决方案的相关性和有效性的重要性。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-30</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0E7FF;">
+            <div class="header" style="background-color: #A78BFA;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Finding Optimal Breakpoints in Long Documents Using Small Language Models</div>
+                <div class="keywords">
+                    #文档解析 #文档分割
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>利用小型语言模型在长文档中寻找最优断点，以提高人类和大型语言模型的可读性。本文介绍了“晚分块”策略，训练了三个小型语言模型专注于分割长文档并保持语义连贯性。这些模型包括jinaai/text-seg-lm-qwen2-0.5b，可在Hugging
+                        Face平台上找到。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-30</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0EBE8;">
+            <div class="header" style="background-color: #A3C1AD;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Mastering Agents: LangGraph Vs Autogen Vs Crew AI - Galileo</div>
+                <div class="keywords">
+                    #智能体 #AI
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本文深入探讨了AI智能体在自动化复杂流程中的关键作用，并对比分析了三个主流框架：LangGraph、Autogen和Crew AI。文章首先定义了AI智能体的概念，并讨论了其在不同场景下的应用优势与局限性。随后，文章详细介绍了三个框架的特点、工具覆盖、记忆支持、结构化输出、文档质量、多智能体支持、缓存、重放、代码执行和人工干预等方面，并通过对比分析，为读者提供了选择合适框架的参考依据。文章最后强调了理解各框架关键特性的重要性，以帮助读者根据自身需求选择最合适的框架。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024年10月30日</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0F7FA;">
+            <div class="header" style="background-color: #80CBC4;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">端侧大模型浪潮奔涌而至：态势、影响与建议</div>
+                <div class="keywords">
+                    #LLM
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>端侧大模型技术正引领智能设备体验和产业生态的革命性重塑，其轻量化、实时性、保密性和经济性特点预示着AI技术的新浪潮。本文由腾讯研究院大模型研究小分队出品，深入探讨了端侧大模型的兴起背景、技术特点、应用场景以及对产业生态的影响。端侧大模型在智能手机、PC等终端设备上的应用正加速发展，其核心技术包括模型剪枝、知识蒸馏和量化技术，以实现在资源受限的设备上高效运行。端侧大模型因其实时性、保密性、经济性等优势，正成为未来技术发展的趋势。文章还分析了端侧大模型在手机领域的应用前景，预测了其对全球手机市场的影响，并探讨了国内外端侧大模型的发展态势，最后提出了对产业层面、数据隐私层面和竞争秩序层面的影响和建议。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024年10月30日</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0E7FF;">
+            <div class="header" style="background-color: #A7C7E7;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">大型语言模型反映其创造者的意识形态</div>
+                <div class="keywords">
+                    #LLM
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本文研究了大型语言模型（LLM）在不同语言和文化背景下的意识形态立场，揭示了LLM的行为如何反映其设计者和训练数据的世界观。研究发现，LLM的意识形态立场与其创造者的世界观相呼应，这对于LLM的监管和技术发展提出了挑战，并可能对政治工具化带来风险。文章强调了LLM作为信息守门人对社会民主过程和意识形态多样性的影响，并提出了对LLM进行监管和透明度增强的建议。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024年10月30日</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0ECE4;">
+            <div class="header" style="background-color: #A2D5F2;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Writes and Write-Nots</div>
+                <div class="keywords">
+                    #AI #写作技能 #思考
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>文章探讨了AI技术对写作技能的影响，预测未来社会将分为能够写作的“写手”和不能写作的“非写手”，并强调了写作与思考的紧密联系。Paul Graham撰写的这篇文章讨论了写作技能的重要性及其在未来可能面临的挑战。作者指出，写作是一项困难的技能，需要清晰的思考，而清晰的思考本身就是一项挑战。AI的出现改变了这一局面，减轻了人们写作的压力，使得人们可以依赖AI来完成写作任务。这将导致社会分化为能够写作的人和不能写作的人，而中间地带将消失。作者强调，写作不仅仅是一种技能，它是一种思考方式，是思考的一部分。因此，一个分为“写手”和“非写手”的世界，实际上是一个分为“思考者”和“非思考者”的世界，这是一个值得关注的问题。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024年10月30日</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0EFEB;">
+            <div class="header" style="background-color: #B0D1C9;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">沟通是构建大型语言模型（LLM）应用的关键</div>
+                <div class="keywords">
+                    #智能体 #提示工程
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本文深入探讨了在构建大型语言模型（LLM）应用时沟通的重要性。文章指出，新员工入职和构建智能体都需要清晰的沟通和适当的指导。作者强调，智能体的不可靠表现通常不是模型不够智能，而是因为没有正确传达上下文和指令。文章进一步讨论了提示工程的重要性、代码在智能体“认知架构”中的作用、为何需要智能体框架以及LangGraph作为最可控智能体框架的优势。最后，文章强调了构建智能体是一个多学科的努力，需要工程师和非技术专家的合作，并且用户体验（UI/UX）设计在促进人机交互中的重要性。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024年10月30日</div>
+            <div class="book-effect"></div>
+        </div>
+
+        <div class="card" id="card3">
+            <img class="logo" src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/logo_shl.jpg"
+                alt="Logo">
+            <div class="book-effect"></div>
+        </div>
+
+        <button class="arrow-button left" onclick="prevCard()" style="display: none;"><</button>
+                <button class="arrow-button right" onclick="nextCard()" style="display: none;">></button>
+    </div>
+    <br>
+    <div class="author" style="font-style: italic; text-align: center; color: #8C8C8C;">
+        @XuLei<br>
+        by n8n & DeepSeek & Feishu
+    </div>
+    <div class="link-container">
+        <a href="https://73y4g09684.vicp.fun/explore" class="more-link">更多可见：AI 摘要</a>
+        <a href="https://ma19hv4fupk.feishu.cn/wiki/HizGwFT49id5d0ktvhdcWnYXnFg?from=from_copylink"
+            class="more-link">飞书知识库</a>
+        <a href="https://github.com/xulei-shl/Library-AI-demos" class="more-link">Github 仓库</a>
+    </div>
+    <script>
+        const cards = document.querySelectorAll('.card');
+        let currentIndex = 0;
+
+        function showCard(index) {
+            cards.forEach((card, i) => {
+                card.style.transform = `translateX(${(i - index) * 100}%)`;
+            });
+
+            // 显示或隐藏按钮
+            const prevButton = document.querySelector('.arrow-button.left');
+            const nextButton = document.querySelector('.arrow-button.right');
+            if (index === 0) {
+                prevButton.style.display = 'none';
+            } else {
+                prevButton.style.display = 'flex';
+            }
+            if (index === cards.length - 1) {
+                nextButton.style.display = 'none';
+            } else {
+                nextButton.style.display = 'flex';
+            }
+        }
+
+        function prevCard() {
+            currentIndex = Math.max(0, currentIndex - 1);
+            showCard(currentIndex);
+        }
+
+        function nextCard() {
+            currentIndex = Math.min(cards.length - 1, currentIndex + 1);
+            showCard(currentIndex);
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowLeft') {
+                prevCard();
+            } else if (event.key === 'ArrowRight') {
+                nextCard();
+            }
+        });
+
+        showCard(currentIndex);
+    </script>
+</body>
+
+</html>

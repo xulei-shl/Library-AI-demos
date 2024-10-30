@@ -146,6 +146,11 @@
       - 预训练: 最高成本但控制力最强
       - RAG: 在成本、复杂性和表达能力间取得平衡
 
+
+## 视频教程
+1. [Advanced RAG: Dynamic Chunk/Document Retrieval (with LlamaCloud) - YouTube](https://www.youtube.com/watch?v=uFWHweuTCGE)
+   1. 动态分块
+2. 
    
 ## 案例
 
