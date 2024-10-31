@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI每日摘要 - SVG卡片</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Source+Han+Serif:wght@400;700&family=Source+Han+Sans:wght@300;400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #8E9AAF;
+            --secondary-color: #CBC0D3;
+            --accent-color: #EFD3D7;
+            --background-color: #DFDDD9;
+            --text-color: #5B5B5B;
+            --light-text-color: #8C8C8C;
+            --divider-color: #D1CBC3;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            flex-direction: column;
+        }
+
+        .card-container {
+            width: 400px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card {
+            width: 400px;
+            height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease;
+        }
+
+        .header {
+            color: #F2EDE9;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-family: 'Source Han Sans', serif;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #888888;
+        }
+
+        .header:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .content {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .keywords {
+            font-size: 16px;
+            color: var(--light-text-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--divider-color);
+            margin: 20px 0;
+        }
+
+        .summary {
+            background-image: linear-gradient(to right, #E0B0B0 4px, transparent 4px);
+            background-position: 0 0;
+            background-repeat: no-repeat;
+            padding-left: 20px;
+        }
+
+        .summary::before {
+            content: none;
+        }
+
+        .background-text {
+            position: absolute;
+            font-size: 150px;
+            color: rgba(182, 181, 167, 0.15);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+
+        .arrow-button {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .arrow-button:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .arrow-button.left {
+            left: 20px;
+        }
+
+        .arrow-button.right {
+            right: 20px;
+        }
+
+        .date {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--light-text-color);
+        }
+
+        .link-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .more-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .more-link:hover {
+            color: var(--secondary-color);
+        }
+
+        /* 名片样式 */
+        .card-content {
+            padding: 250px 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            /* Ensure content starts from the top */
+            align-items: flex-start;
+            /* Left-align content */
+            flex-grow: 1;
+            margin-top: 0;
+            /* Remove any top margin */
+        }
+
+        .name {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2a2a2a;
+            letter-spacing: 1px;
+        }
+
+        .job-title {
+            font-size: 20px;
+            font-weight: 300;
+            color: #4a4a4a;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+
+        .contact {
+            font-size: 16px;
+            color: #5a5a5a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .contact::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .contact.phone::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 0 0-1.02.24l-2.2 2.2a15.045 15.045 0 0 1-6.59-6.59l2.2-2.21a.96.96 0 0 0 .25-1A11.36 11.36 0 0 1 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1zM19 12h2a9 9 0 0 0-9-9v2c3.87 0 7 3.13 7 7zm-4 0h2c0-2.76-2.24-5-5-5v2c1.66 0 3 1.34 3 3z'/%3E%3C/svg%3E");
+        }
+
+        .contact.email::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+        }
+
+        .contact.website::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z'/%3E%3C/svg%3E");
+        }
+
+        .book-effect {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #8da5c4, #b0c4de);
+            clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover .book-effect {
+            width: 220px;
+            height: 220px;
+            opacity: 0.2;
+        }
+
+        .logo {
+            position: absolute;
+            top: 330px;
+            left: 30px;
+            /* Changed from right to left */
+            max-width: 330px;
+            max-height: 330px;
+            width: auto;
+            height: auto;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card-container">
+        <div class="card" id="card1" style="background-color: #E0E7FF;">
+            <div class="header" style="background-color: #C7D2FE;">
+                <h1>AI应用</h1>
+            </div>
+            <div class="content">
+                <div class="title">Creating RAG-Based Question-and-Answer LLM Workflows at NVIDIA</div>
+                <div class="keywords">
+                    #AI #RAG
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>NVIDIA通过结合检索增强生成（RAG）技术，开发了一种新型的问答型大型语言模型（LLM）工作流程，以提高内部运营效率并满足用户对多样化任务的需求。本文介绍了NVIDIA如何利用RAG技术构建问答型LLM工作流程，强调了用户对于集成网络搜索和摘要功能的需求，以及使用Perplexity的搜索API来满足这一需求。文章还分享了一个基本架构，该架构使用路由和多源RAG来构建一个能够回答广泛问题的聊天应用，并强调了LlamaIndex、NVIDIA
+                        NIM微服务和Chainlit在快速部署此应用中的作用。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-31</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #A8DADC;">
+            <div class="header" style="background-color: #457B9D;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">微服务的本质不是模块的拆分，而是组织架构的拆分 | 宝玉的分享</div>
+                <div class="keywords">
+                    #微服务 #组织架构 #康威定律
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>文章探讨了微服务架构在软件开发中的应用，强调其真正的价值在于促进组织结构的优化，而非仅仅为了技术层面上的模块拆分。作者指出，微服务架构的目的是使团队规模缩小，减少团队间的依赖和沟通成本，实现更高效的协作。文章批评了仅为微服务而微服务的做法，认为这会增加维护和沟通成本。理想的微服务架构应使得需求能在单个服务内解决，减少跨团队协作。如果多数需求需要跨多个微服务，可能意味着服务拆分不合理。文章最后建议考虑康威定律，即软件系统架构会反映团队的沟通结构，从而指导微服务架构的设计。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">微服务</div>
+            <div class="date">2024-10-31</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #BDD4DE;">
+            <div class="header" style="background-color: #87AFC7;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">You Want Modules, Not Microservices</div>
+                <div class="keywords">
+                    #模块化 #微服务
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>文章探讨了微服务架构的流行趋势及其局限性，指出微服务的一些所谓优势实际上与更早的技术如EJB和Oracle
+                        Tuxedo并无二致。作者强调，微服务的核心优势在于模块化，这是大多数编程语言自20世纪70年代以来的核心概念。文章还讨论了微服务在实际应用中面临的挑战，如分布式计算的误区，以及如何通过组织清晰度和减少团队依赖来优化架构。文章的核心观点是，微服务的真正价值在于促进组织清晰度和减少团队依赖，而不是技术本身。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-31</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #A8DADC;">
+            <div class="header" style="background-color: #457B9D;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">lumina-ai-inc/chunkr: Vision model based document ingestion</div>
+                <div class="keywords">
+                    #AI #文档解析
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>Chunkr是由Lumina AI
+                        Inc.开发的一个开源项目，旨在通过视觉模型来处理文档摄取任务。该项目利用深度学习技术，特别是计算机视觉领域的模型，来识别和处理文档中的各个部分，如表格、文本块和图像等。Chunkr的核心优势在于其能够自动分割文档内容，使得后续的处理和分析变得更加高效。这对于需要处理大量文档数据的开发者、产品经理和技术人员来说，是一个强大的工具，可以显著提高工作效率并减少手动处理文档的时间和成本。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024-10-31</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E8EDEB;">
+            <div class="header" style="background-color: #A9B7C0;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">相同的 LLM 在「不同 GPU 上」会产生不同输出？为什么？</div>
+                <div class="keywords">
+                    #LLM
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本文探讨了在不同GPU上运行相同的大语言模型（LLM）时，输出结果为何会有所不同。作者通过实验证明，即使在相同的开发环境和随机种子下，使用Nvidia Tesla T4和Nvidia A10G两种不同GPU时，Mistral-7b-v0.1模型对相同输入产生了不同的输出。差异的根源主要在于GPU的并行计算处理、硬件架构和模型量化等因素。随着输入提示词长度的增加，这种不一致性会被放大。文章强调了在多GPU环境下，模型输出的一致性问题，并提出了在不同GPU上进行模型扩展时需要注意的事项。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024年10月31日</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0EAE4;">
+            <div class="header" style="background-color: #A2D2FF;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Chunking for RAG: Maximize Enterprise Knowledge Retrieval</div>
+                <div class="keywords">
+                    #文档分割 #RAG
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本文由Kasim Patel撰写，发表于2024年10月30日，主要探讨了Chunking技术在RAG（Retrieval-Augmented Generation）模型中的重要性和应用。文章指出，Chunking是解锁企业知识库和成功实施RAG解决方案的关键技能。文章面向开发者、产品经理和技术人员，旨在帮助他们理解Chunking在RAG中的技术要点和实际应用价值。文章强调了Chunking技术对于提高企业知识检索效率的重要性，并探讨了如何克服与Chunking相关的常见挑战。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024年10月31日</div>
+            <div class="book-effect"></div>
+        </div>
+
+        <div class="card" id="card3">
+            <img class="logo" src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/logo_shl.jpg"
+                alt="Logo">
+            <div class="book-effect"></div>
+        </div>
+
+        <button class="arrow-button left" onclick="prevCard()" style="display: none;"><</button>
+                <button class="arrow-button right" onclick="nextCard()" style="display: none;">></button>
+    </div>
+    <br>
+    <div class="author" style="font-style: italic; text-align: center; color: #8C8C8C;">
+        @XuLei<br>
+        by n8n & DeepSeek & Feishu
+    </div>
+    <div class="link-container">
+        <a href="https://73y4g09684.vicp.fun/explore" class="more-link">更多可见：AI 摘要</a>
+        <a href="https://ma19hv4fupk.feishu.cn/wiki/HizGwFT49id5d0ktvhdcWnYXnFg?from=from_copylink"
+            class="more-link">飞书知识库</a>
+        <a href="https://github.com/xulei-shl/Library-AI-demos" class="more-link">Github 仓库</a>
+    </div>
+    <script>
+        const cards = document.querySelectorAll('.card');
+        let currentIndex = 0;
+
+        function showCard(index) {
+            cards.forEach((card, i) => {
+                card.style.transform = `translateX(${(i - index) * 100}%)`;
+            });
+
+            // 显示或隐藏按钮
+            const prevButton = document.querySelector('.arrow-button.left');
+            const nextButton = document.querySelector('.arrow-button.right');
+            if (index === 0) {
+                prevButton.style.display = 'none';
+            } else {
+                prevButton.style.display = 'flex';
+            }
+            if (index === cards.length - 1) {
+                nextButton.style.display = 'none';
+            } else {
+                nextButton.style.display = 'flex';
+            }
+        }
+
+        function prevCard() {
+            currentIndex = Math.max(0, currentIndex - 1);
+            showCard(currentIndex);
+        }
+
+        function nextCard() {
+            currentIndex = Math.min(cards.length - 1, currentIndex + 1);
+            showCard(currentIndex);
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowLeft') {
+                prevCard();
+            } else if (event.key === 'ArrowRight') {
+                nextCard();
+            }
+        });
+
+        showCard(currentIndex);
+    </script>
+</body>
+
+</html>
