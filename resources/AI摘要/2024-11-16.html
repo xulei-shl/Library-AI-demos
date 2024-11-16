@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI每日摘要 - SVG卡片</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Source+Han+Serif:wght@400;700&family=Source+Han+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #8E9AAF;
+            --secondary-color: #CBC0D3;
+            --accent-color: #EFD3D7;
+            --background-color: #DFDDD9;
+            --text-color: #5B5B5B;
+            --light-text-color: #8C8C8C;
+            --divider-color: #D1CBC3;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            flex-direction: column;
+        }
+        .card-container {
+            width: 400px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+        }
+        .card {
+            width: 400px;
+            height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease;
+        }
+        .header {
+            color: #F2EDE9;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        h1 {
+            font-family: 'Source Han Sans', serif;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #888888;
+        }
+        .header:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        .content {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        .keywords {
+            font-size: 16px;
+            color: var(--light-text-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--divider-color);
+            margin: 20px 0;
+        }
+        .summary {
+            background-image: linear-gradient(to right, #E0B0B0 4px, transparent 4px);
+            background-position: 0 0;
+            background-repeat: no-repeat;
+            padding-left: 20px;
+            font-size: 16px;
+        }
+        .summary::before {
+            content: none;
+        }
+        .background-text {
+            position: absolute;
+            font-size: 150px;
+            color: rgba(182, 181, 167, 0.15);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+        .arrow-button {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .arrow-button:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .arrow-button.left {
+            left: 20px;
+        }
+        .arrow-button.right {
+            right: 20px;
+        }
+        .date {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--light-text-color);
+        }
+        .link-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .more-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .more-link:hover {
+            color: var(--secondary-color);
+        }
+        /* 名片样式 */
+        .card-content {
+            padding: 250px 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Ensure content starts from the top */
+            align-items: flex-start; /* Left-align content */
+            flex-grow: 1;
+            margin-top: 0; /* Remove any top margin */
+        }
+        .name {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2a2a2a;
+            letter-spacing: 1px;
+        }
+        .job-title {
+            font-size: 20px;
+            font-weight: 300;
+            color: #4a4a4a;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+        .contact {
+            font-size: 16px;
+            color: #5a5a5a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .contact::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        .contact.phone::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 0 0-1.02.24l-2.2 2.2a15.045 15.045 0 0 1-6.59-6.59l2.2-2.21a.96.96 0 0 0 .25-1A11.36 11.36 0 0 1 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1zM19 12h2a9 9 0 0 0-9-9v2c3.87 0 7 3.13 7 7zm-4 0h2c0-2.76-2.24-5-5-5v2c1.66 0 3 1.34 3 3z'/%3E%3C/svg%3E");
+        }
+        .contact.email::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+        }
+        .contact.website::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z'/%3E%3C/svg%3E");
+        }
+        .book-effect {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #8da5c4, #b0c4de);
+            clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+        .card:hover .book-effect {
+            width: 220px;
+            height: 220px;
+            opacity: 0.2;
+        }
+        .logo {
+            position: absolute;
+            top: 330px;
+            left: 30px; /* Changed from right to left */
+            max-width: 330px;
+            max-height: 330px;
+            width: auto;
+            height: auto;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        .logo:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container"><div class="card" id="card1" style="background-color: #E0EBEA;">
+    <div class="header" style="background-color: #8DB3A0;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">研究：生成式AI如何影响劳动市场</div>
+        <div class="keywords">
+            #AI #劳动市场
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>文章深入探讨了生成式AI（Gen AI）对劳动力市场的影响，基于最新研究，分析了其在提高生产力、改变工作性质以及加剧不平等等方面的多重效应。Gen AI通过自动化和增强工作流程，显著提升了生产力，但同时也改变了工作的性质和所需的技能。研究指出，Gen AI在高技能和低技能工作中的应用存在差异，可能会加剧现有的不平等现象。此外，文章还讨论了Gen AI对不同行业和职业的潜在影响，以及政策制定者和企业在应对这些变化时所面临的挑战和机遇。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024-11-16</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E1F1E8;">
+    <div class="header" style="background-color: #77A6B6;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">Voice is (mostly) Bad UI | Shubham Jain</div>
+        <div class="keywords">
+            #AI应用
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>文章质疑了语音作为通用用户界面的可行性，认为其在表达抽象思维、处理复杂任务、保护隐私以及理解真实世界歧义等方面存在诸多问题。尽管电影如《她》给我们描绘了语音是终极用户界面的愿景，但现实中语音界面仍存在诸多问题。语音无法有效表达抽象思维，限制了其在写作、研究等需要深度思考领域的应用。语音在处理复杂任务时可能反而增加难度，比如叫车或点餐时需要确认多个细节。语音可能侵犯隐私，人们在公共场合或与他人在一起时可能不愿意使用语音进行操作。此外，用户界面可以帮助我们理解软件的局限性，而语音界面在这方面有所欠缺。最后，语音无法解决真实世界的歧义问题，可能在执行某些操作时出现误解。因此，作者认为即使AI在语音理解方面达到完美，我们也不太可能完全依赖语音界面。</p>
+        </div>
+    </div>
+    <div class="background-text">AI应用</div>
+    <div class="date">2024-11-16</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E8F5E9;">
+    <div class="header" style="background-color: #A5D6A7;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">Anthropic创始人访谈：不是因为Altman 与微软合作而离开OpenAI、Scaling Law不会撞墙、未来招聘将放缓-36氪</div>
+        <div class="keywords">
+            #AI 
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>Anthropic联合创始人兼CEO Dario Amodei在访谈中强调负责任地发展AI，并解释了他离开OpenAI的原因。他对Scaling Law的未来表示乐观，认为AI模型的扩展没有上限。此外，他透露公司未来招聘将放缓。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024-11-16</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E8F5E9;">
+    <div class="header" style="background-color: #A5D6A7;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">Demystifying AI Agents: A Guide for Beginners</div>
+        <div class="keywords">
+            #智能体 
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>本文是一篇面向初学者的指南，旨在揭开AI智能体的神秘面纱，通过介绍MongoDB在AI用例中的应用，帮助开发者、产品经理及技术人员快速理解AI智能体的核心内容、技术要点和应用价值。文章主要介绍了AI智能体的概念和应用，并重点阐述了MongoDB如何为AI用例提供支持，包括多云数据库、搜索体验、向量搜索和流数据处理等功能，以及丰富的开发资源和工具，如MongoDB Atlas、Compass、Drivers等。此外，文章还探讨了AI智能体在各个行业中的应用，并提供了解决方案库，帮助开发者快速启动项目。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024-11-16</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E0E7CC;">
+    <div class="header" style="background-color: #A8DADC;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">Cursor - The AI-first Code Editor</div>
+        <div class="keywords">
+            #Security #RAG
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>Cursor 作为一个以 AI 为先的代码编辑器，重点关注其在源代码和开发环境安全方面的努力。它包括基础设施安全、客户安全和隐私模式保障，以确保用户数据的安全性和隐私性。Cursor 依赖于 AWS、Fireworks、OpenAI、Anthropic 和 Google Cloud 等子处理器，并保证这些子处理器不会存储用户的代码数据。此外，Cursor 提供隐私模式，确保代码数据不会被存储，并提供账户删除功能，确保用户数据在账户删除后完全被移除。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024-11-16</div>
+    <div class="book-effect"></div>
+</div>
+
+<div class="card" id="card3">
+    <img class="logo" src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/logo_shl.jpg" alt="Logo">
+    <div class="book-effect"></div>
+</div>
+
+<button class="arrow-button left" onclick="prevCard()" style="display: none;"><</button>
+<button class="arrow-button right" onclick="nextCard()" style="display: none;">></button>
+</div>
+<br>
+<div class="author" style="font-style: italic; text-align: center; color: #8C8C8C;">
+@XuLei<br>
+by n8n & DeepSeek & Feishu
+</div>
+<div class="link-container">
+<a href="https://73y4g09684.vicp.fun/explore" class="more-link">更多可见：AI 摘要</a>
+<a href="https://ma19hv4fupk.feishu.cn/wiki/HizGwFT49id5d0ktvhdcWnYXnFg?from=from_copylink" class="more-link">飞书知识库</a>
+<a href="https://github.com/xulei-shl/Library-AI-demos" class="more-link">Github 仓库</a>
+</div>
+<script>
+const cards = document.querySelectorAll('.card');
+let currentIndex = 0;
+
+function showCard(index) {
+    cards.forEach((card, i) => {
+        card.style.transform = `translateX(${(i - index) * 100}%)`;
+    });
+
+    // 显示或隐藏按钮
+    const prevButton = document.querySelector('.arrow-button.left');
+    const nextButton = document.querySelector('.arrow-button.right');
+    if (index === 0) {
+        prevButton.style.display = 'none';
+    } else {
+        prevButton.style.display = 'flex';
+    }
+    if (index === cards.length - 1) {
+        nextButton.style.display = 'none';
+    } else {
+        nextButton.style.display = 'flex';
+    }
+}
+
+function prevCard() {
+    currentIndex = Math.max(0, currentIndex - 1);
+    showCard(currentIndex);
+}
+
+function nextCard() {
+    currentIndex = Math.min(cards.length - 1, currentIndex + 1);
+    showCard(currentIndex);
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft') {
+        prevCard();
+    } else if (event.key === 'ArrowRight') {
+        nextCard();
+    }
+});
+
+showCard(currentIndex);
+</script>
+</body>
+</html>
