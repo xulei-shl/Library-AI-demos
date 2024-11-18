@@ -69,6 +69,10 @@ DONE metadata-editor
 
 DONE books-cover
 
+### 悦读印记
+
+DONE ReadMark
+
 ---
 
 > 以下是非图书馆业务场景

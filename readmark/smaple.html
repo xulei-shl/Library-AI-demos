@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>读者画像卡</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap');
+
+body {
+    background-color: #f5f5f0;
+    font-family: 'Noto Serif SC', serif;
+}
+
+.card {
+    background: linear-gradient(135deg, #fff, #f5f5f0);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 25h70v5H15z' fill='%23f0f0e8' fill-opacity='0.4'/%3E%3C/svg%3E");
+    opacity: 0.1;
+}
+
+.section {
+    background-color: rgba(255, 255, 255, 0.8);
+    border-left: 4px solid #007acc;
+}
+
+.book-category {
+    background-color: rgba(0, 122, 204, 0.1);
+    border-radius: 8px;
+}
+
+.reading-progress {
+    height: 6px;
+    background: #ddd;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #007acc, #00bfff);
+    border-radius: 3px;
+}
+
+.book-tag {
+    background-color: #007acc;
+    color: #fff;
+}
+
+.reading-stats {
+    border-bottom: 2px solid rgba(0, 122, 204, 0.2);
+}
+
+.quote-box {
+    font-style: italic;
+    color: #007acc;
+    border-left: 3px solid #007acc;
+    padding-left: 1rem;
+}
+
+</style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-6">
+<div class="card w-full max-w-2xl rounded-3xl shadow-xl overflow-hidden">
+<div class="p-8">
+    <!-- 头部信息 -->
+    <div class="flex items-center mb-6">
+        <img src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/%E7%94%9F%E6%88%90%E6%9E%81%E7%AE%80%E9%A3%8E%E6%A0%BC%E5%A4%B4%E5%83%8F.png"
+            alt="Reader Avatar"
+            class="w-24 h-24 rounded-full border-4 border-white shadow-lg">
+        <div class="ml-6">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">许磊</h2>
+            <div class="flex items-center text-gray-600 mb-2">
+                <i class="fas fa-robot mr-2"></i>
+                科技探索者
+            </div>
+            <div class="reading-progress w-48">
+                <div class="progress-bar" style="width: 80%"></div>
+            </div>
+            <div class="text-sm text-gray-500 mt-1">
+                年度阅读进度 80%
+            </div>
+        </div>
+    </div>
+
+    <!-- 近期阅读主题 -->
+    <div class="section rounded-xl p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 flex items-center mb-4">
+            <i class="fas fa-hourglass-half mr-3 text-blue-600"></i>
+            近期阅读主题
+        </h3>
+        <p class="text-gray-700 leading-relaxed">
+            汽车与科技，人工智能与机器人流程自动化
+        </p>
+    </div>
+
+    <!-- 年度阅读概况 -->
+    <div class="section rounded-xl p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 flex items-center mb-4">
+            <i class="fas fa-trophy mr-3 text-blue-600"></i>
+            年度阅读成就
+        </h3>        
+        <div class="grid grid-cols-2 gap-4">
+            <div class="reading-stats p-3">
+                <div class="text-3xl font-bold text-blue-600">16</div>
+                <div class="text-sm text-gray-600">已读书籍</div>
+            </div>
+            <div class="reading-stats p-3">
+                <div class="text-3xl font-bold text-blue-600">4</div>
+                <div class="text-sm text-gray-600">在读书籍</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 阅读领域分布 -->
+    <div class="section rounded-xl p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 flex items-center mb-4">
+            <i class="fas fa-glasses mr-3 text-blue-600"></i>
+            擅长阅读领域
+        </h3>
+        <div class="grid grid-cols-1 gap-4">
+            <div class="book-category p-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-2">科技与人工智能</h4>
+                <div class="flex flex-wrap gap-2">
+                    <span class="book-tag px-3 py-1 rounded-full text-sm">ChatGPT</span>
+                    <span class="book-tag px-3 py-1 rounded-full text-sm">LangChain</span>
+                    <span class="book-tag px-3 py-1 rounded-full text-sm">Chatbot</span>
+                </div>
+            </div>
+            <div class="book-category p-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-2">汽车与摩托车</h4>
+                <div class="flex flex-wrap gap-2">
+                    <span class="book-tag px-3 py-1 rounded-full text-sm">汽车大百科</span>
+                    <span class="book-tag px-3 py-1 rounded-full text-sm">宝马</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部信息 -->
+    <div class="flex justify-between items-center border-t border-gray-200 pt-6">
+        <div class="quote-box">
+            <p class="text-lg">"科技驱动未来，知识改变命运"</p>
+        </div>
+        <div class="relative">
+            <img src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/my%20libraryurl.png"
+                alt="Reading Profile QR"
+                class="w-24 h-24 rounded-lg shadow-md qr-code-blue">
+        </div>
+    </div>
+</div>
+</div>
+</body>
+</html>
