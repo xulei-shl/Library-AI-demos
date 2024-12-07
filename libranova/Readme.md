@@ -1,8 +1,10 @@
 # 项目介绍
 借阅星空 - 图书借阅数据可视化
 
+
 ![](https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/1733540908723.png)
 
+![](./css/img/借阅可视化.gif)
 
 ## 数据预处理
 1. 一级主题匹配
