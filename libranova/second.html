@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>借阅星空 - 图书借阅数据可视化</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .breadcrumb {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 1000;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .breadcrumb a {
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .breadcrumb a:hover {
+            color: #4a9eff;
+        }
+        .breadcrumb span {
+            color: #fff;
+            margin: 0 8px;
+        }
+        .breadcrumb span.separator {
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div id="universe">
+        <div id="starfield"></div>
+        <div id="content">
+            <nav class="breadcrumb">
+                <a href="index.html">首页</a>
+                <span class="separator">></span>
+                <span id="current-topic"></span>
+            </nav>
+            <div id="search-container">
+                <input type="text" id="search-input" placeholder="搜索主题...">
+                <div id="search-icon">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            </div>
+            <h1 class="title">借阅星空</h1>
+            <div id="secondary-topic-title"></div>
+            <div id="secondary-visualization"></div>
+            <img id="logo-shl" src="./css/img/logo_shl.jpg" alt="Logo" />
+        </div>
+    </div>
+
+    <!-- 引入必要的库 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/starfield.js"></script>
+    <script src="js/dataLoader.js"></script>
+    <script src="js/secondary-visualization.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/secondary-main.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>借阅星空 - 图书借阅数据可视化</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="universe">
+        <div id="starfield"></div>
+        <div id="content">
+            <div id="search-container">
+                <input type="text" id="search-input" placeholder="搜索主题...">
+                <div id="search-icon">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            </div>
+            <h1 class="title">借阅星空</h1>
+            <div id="visualization"></div>
+            <img id="logo-shl" src="./css/img/logo_shl.jpg" alt="Logo" />
+        </div>
+    </div>
+
+    <!-- 引入必要的库 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/starfield.js"></script>
+    <script src="js/visualization.js"></script>
+    <script src="js/topic-navigation.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

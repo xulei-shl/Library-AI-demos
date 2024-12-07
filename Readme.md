@@ -69,9 +69,13 @@ DONE metadata-editor
 
 DONE books-cover
 
-### 悦读印记
+### 悦读印记 - 个人年度阅读卡片
 
 DONE ReadMark
+
+### 借阅星空 - 图书借阅数据可视化
+
+DONE libranova
 
 ---
 

@@ -1,0 +1,311 @@
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: '润植家如印奏章楷', sans-serif;
+    background-color: #000;
+    color: #fff;
+    overflow: hidden;
+}
+
+/* #universe {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+} */
+
+#universe {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    background: url('./img/wall2.jpg') no-repeat center center fixed;
+    background-size: cover;
+}
+
+#starfield {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+#content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.title {
+    position: fixed;
+    left: 45%;
+    bottom: 2rem;
+    font-size: 3.5rem;
+    font-family: '平方赖江湖飞扬体', 'STXingkai', cursive;
+    color: rgba(55, 85, 119, 0.8);
+    text-shadow: 
+        0 0 3px #a49e9e,
+        0 0 7px #f0f0f0,
+        0 0 10px #848080,
+        0 0 15px #cbc8c8;
+    z-index: 10;
+    /* 添加磨砂玻璃效果和背景 */
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 0.3rem 0.8rem;
+    border-radius: 10px;
+    box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.2),
+        0 8px 25px rgba(255, 255, 255, 0.1),
+        inset 0 0 15px rgba(255, 255, 255, 0.05);
+    /* 添加过渡效果 */
+    transition: all 0.3s ease;
+}
+
+.title:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.25),
+        0 12px 30px rgba(255, 255, 255, 0.15),
+        inset 0 0 20px rgba(255, 255, 255, 0.08);
+    text-shadow: 
+        0 0 4px #a49e9e,
+        0 0 8px #f0f0f0,
+        0 0 12px #848080,
+        0 0 18px #cbc8c8;
+}
+
+#visualization {
+    width: 90%;
+    height: 70vh;
+    position: relative;
+    border-radius: 10px;
+    overflow: visible;
+}
+
+#visualization svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+/* 节点样式 */
+.node {
+    cursor: pointer;
+}
+
+.node circle {
+    fill: rgba(255, 255, 255, 0.1);
+    stroke: rgba(255, 255, 255, 0.5);
+    fill-opacity: 0.7;
+    stroke-width: 2px;
+    transition: all 0.3s ease;
+}
+
+.node:hover circle {
+    fill: rgba(255, 255, 255, 0.2);
+    stroke: rgba(255, 255, 255, 0.8);
+}
+
+.node text {
+    font-size: 12px;
+    fill: #fff;
+    text-anchor: middle;
+    pointer-events: none;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
+
+/* 面包屑导航 */
+#breadcrumb {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+#breadcrumb span {
+    cursor: pointer;
+    margin: 0 5px;
+}
+
+#breadcrumb span:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* 搜索框样式 */
+#search-container {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    z-index: 1000;
+}
+
+#search-input {
+    width: 200px;
+    padding: 8px 35px 8px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+#search-input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    width: 250px;
+}
+
+#search-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+#search-icon:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+#search-icon svg {
+    display: block;
+}
+
+/* 搜索高亮动画 */
+@keyframes breathe {
+    0% {
+        filter: drop-shadow(0 0 5px rgba(255, 165, 0, 0.6));
+        transform: scale(1);
+    }
+    50% {
+        filter: drop-shadow(0 0 15px rgba(255, 140, 0, 0.9));
+        transform: scale(1.05);
+    }
+    100% {
+        filter: drop-shadow(0 0 5px rgba(255, 165, 0, 0.6));
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 5px rgba(255, 165, 0, 0.6));
+    }
+    50% {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 20px rgba(255, 140, 0, 1));
+    }
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 5px rgba(255, 165, 0, 0.6));
+    }
+}
+
+/* 音波动画效果 */
+@keyframes waveform {
+    0% {
+        stroke-dashoffset: 0;
+    }
+    100% {
+        stroke-dashoffset: -100;
+    }
+}
+
+/* 搜索高亮样式 */
+.node.search-highlight circle {
+    fill: rgba(48, 237, 19, 0.4) !important;
+    stroke: rgba(0, 255, 8, 0.9) !important;
+    stroke-width: 3px !important;
+    animation: breathe 2s infinite ease-in-out;
+    position: relative;
+}
+
+/* 添加音波效果 */
+.node.search-highlight::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
+    transform: translate(-50%, -50%);
+    background: 
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 140, 0, 0.6) 2px,
+            rgba(255, 140, 0, 0.6) 4px
+        );
+    mask: radial-gradient(circle at center, transparent 70%, black 71%, black 100%);
+    -webkit-mask: radial-gradient(circle at center, transparent 70%, black 71%, black 100%);
+    animation: waveform 2s linear infinite;
+    pointer-events: none;
+}
+
+.node.search-highlight.search-pulse circle {
+    animation: pulse 1s ease-out;
+}
+
+.node.search-highlight text {
+    fill: rgba(255, 255, 255, 1) !important;
+    font-weight: bold !important;
+    text-shadow: 0 0 5px rgba(255, 140, 0, 0.9) !important;
+}
+
+/* 搜索无结果时的输入框效果 */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+#search-input.no-results {
+    animation: shake 0.5s ease-in-out;
+    border-color: rgba(255, 100, 100, 0.5);
+}
+
+
+/* 右下角 Logo 样式 */
+#logo-shl {
+    position: fixed;
+    top: 2rem;
+    left: 2rem;
+    width: 350px; /* 设置图片的初始宽度 */
+    height: auto; /* 保持图片的宽高比 */
+    border-radius: 10px; /* 添加圆角 */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* 添加阴影 */
+    transition: all 0.3s ease; /* 添加过渡效果 */
+}
+
+/* #logo-shl:hover {
+    transform: scale(1.1); /* 悬浮时放大图片 
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15); /* 悬浮时增加阴影 
+} */
