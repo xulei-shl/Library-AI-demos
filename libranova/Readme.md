@@ -1,7 +1,7 @@
 # 项目介绍
 借阅星空 - 图书借阅数据可视化
 
-![1733540908723.png](https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/1733540908723.png)
+![](https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/1733540908723.png)
 
 
 ## 数据预处理
