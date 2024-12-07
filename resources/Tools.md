@@ -1,6 +1,8 @@
 ## 大模型类工具
 
 👍 [Open Source LLM Tools](https://huyenchip.com/llama-police)
+- [SylphAI-Inc/LLM-engineer-handbook: A curated list of Large Language Model resources, covering model training, serving, fine-tuning, and building LLM applications.](https://github.com/SylphAI-Inc/LLM-engineer-handbook)
+   - 包括大型语言模型框架和教程的集合，涵盖模型训练、服务、微调和构建LLM应用。
 
 ### 文档解析与网络爬虫
 > [爬虫开源项目推荐](https://x.com/shao__meng/status/1802944900956373395)

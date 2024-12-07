@@ -145,7 +145,8 @@
       - 微调: 可以改变模型行为但更新信息不便
       - 预训练: 最高成本但控制力最强
       - RAG: 在成本、复杂性和表达能力间取得平衡
-
+8. [bRAGAI/bRAG-langchain: Everything you need to know to build your own RAG application](https://github.com/bRAGAI/bRAG-langchain)
+  - 提供了构建自己的基于 RAG 的应用程序的全面指南，包括从基础到高级实现的详细教程和示例。这些指南涵盖了环境搭建、数据预处理、嵌入生成、向量存储、RAG 管道构建、多查询技术、自定义 RAG 流程、高级检索和重排等方面
 
 ## 视频教程
 1. [Advanced RAG: Dynamic Chunk/Document Retrieval (with LlamaCloud) - YouTube](https://www.youtube.com/watch?v=uFWHweuTCGE)
