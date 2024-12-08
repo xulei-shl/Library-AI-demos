@@ -6,6 +6,9 @@
 
 ![](https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/%E4%B9%A6%E9%A6%99%E6%B5%81%E5%B9%B4.gif)
 
+https://github.com/user-attachments/assets/27826c08-a5d1-43bb-af3b-c6803942bf31
+
+
 ## 数据处理
 
 `python process_data.py`
