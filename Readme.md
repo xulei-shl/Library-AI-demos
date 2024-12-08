@@ -77,6 +77,10 @@ DONE ReadMark
 
 DONE libranova
 
+### 书香流年 - 图书馆年度借阅TOP10可视化
+
+DONE bookbuzz
+
 ---
 
 > 以下是非图书馆业务场景
