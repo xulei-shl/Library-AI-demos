@@ -1,0 +1,254 @@
+/* 莫兰迪色系 */
+:root {
+    --color-1: #E6D5C1;
+    --color-2: #D4B8A5;
+    --color-3: #C1A99A;
+    --color-4: #A69B8D;
+    --color-5: #8B8178;
+    --bg-color: #2c3333;
+    --text-color: #E7F6F2;
+    --title-color: #b5baba;
+    --wave-color: rgba(231, 246, 242, 0.1);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--bg-color);
+}
+
+.background-waves {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%; /* Doubled width for seamless loop */
+    height: 100%;
+    animation: wave-animation 80s linear infinite; /* Much slower animation */
+}
+
+.wave:nth-child(2) {
+    opacity: 0.5;
+    animation: wave-animation 95s linear infinite;
+}
+
+.wave:nth-child(3) {
+    opacity: 0.3;
+    animation: wave-animation 110s linear infinite;
+}
+
+@keyframes wave-animation {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.bubble {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.bubble:hover {
+    filter: brightness(1.2);
+}
+
+.tooltip, .tooltip-secondary, .tooltip-tertiary {
+    position: absolute;
+    z-index: 9999; /* Ensure tooltip is on top of everything */
+    pointer-events: none; /* Allow interactions with elements underneath */
+    background-color: rgba(64, 72, 72, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(64, 72, 72, 0.2);
+    border-radius: 12px;
+    padding: 10px;
+    max-width: 400px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    color: #f0f4f4;
+    font-family: '润植家如印奏章楷', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+}
+
+.tooltip-secondary, .tooltip-tertiary {
+    max-width: 300px;
+}
+
+.tooltip-image-container {
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.tooltip-book-image {
+    width: 100px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);  /* Added subtle shadow to image */
+}
+
+.tooltip-text-container {
+    flex-grow: 1;
+    color: var(--wave-color);  /* Light text color for dark background */
+    font-size: 14px;
+    font-family: '润植家如印奏章楷', sans-serif;  /* Custom font */
+    font-weight: 300;  /* Lighter weight for better readability */
+}
+
+.tooltip-text-container strong {
+    font-weight: 500;  /* Slightly bolder for headings */
+    color: #ffffff;  /* Brighter color for strong text */
+}
+
+.tooltip-book-title {
+    color: var(--wave-color);
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.tooltip-book-title-value {
+    color: var(--text-color);
+    font-family: '又又意宋', sans-serif;
+    font-size: 1em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.visualization {
+    position: relative;
+    width: 90%;
+    height: 80%;
+    background-color: transparent;
+    z-index: 1;
+}
+
+.selected {
+    filter: brightness(1.2);
+    stroke: var(--text-color);
+    stroke-width: 2px;
+}
+
+.link {
+    stroke: rgba(150, 150, 150, 0.3);
+    stroke-width: 1px;
+    transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+.connection-line {
+    stroke: rgba(150, 150, 150, 0.3);
+    stroke-width: 1px;
+    transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+.highlight-link {
+    stroke: rgba(255, 165, 0, 0.8); /* Warm orange highlight color */
+    stroke-width: 3px;
+    transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+/* 右上角 Logo 样式 */
+#logo-shl {
+    position: fixed;
+    top: 2rem;
+    left: 5rem;
+    width: 250px;
+    height: auto;
+    z-index: 2;
+}
+
+/* Custom Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
+
+/* Page Title Styles */
+.page-title {
+    position: fixed;
+    bottom: 50px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: var(--title-color);
+    z-index: 10;
+}
+
+.title-line-1 {
+    font-family: '又又意宋', cursive;
+    font-size: 2.5rem;
+    font-weight: bold;
+    letter-spacing: 5px;
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.title-line-2 {
+    font-size: 1rem;
+    font-family: '润植家如印奏章楷', cursive;    
+    opacity: 0.8;
+    letter-spacing: 3px;
+}
+
+/* Page Title Animation */
+@keyframes gradualReveal {
+    0% {
+        opacity: 0;
+        clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        opacity: 1;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+}
+
+.page-title .title-line-1 span,
+.page-title .title-line-2 span {
+    position: relative;
+    display: inline-block; /* 确保每个字符单独占据空间 */
+    animation: gradualReveal 1s cubic-bezier(0.4, 0, 0.2, 1);
+    animation-fill-mode: both; /* 确保动画在页面加载后立即开始 */
+}
+
+/* 为每个字符设置不同的延迟 */
+.page-title .title-line-1 span:nth-child(1) { animation-delay: 1s; }
+.page-title .title-line-1 span:nth-child(2) { animation-delay: 1.9s; }
+.page-title .title-line-1 span:nth-child(3) { animation-delay: 2.8s; }
+.page-title .title-line-1 span:nth-child(4) { animation-delay: 3.1s; }
+
+.page-title .title-line-2 span:nth-child(1) { animation-delay: 1s; }
+.page-title .title-line-2 span:nth-child(2) { animation-delay: 1.2s; }
+.page-title .title-line-2 span:nth-child(3) { animation-delay: 1.4s; }
+.page-title .title-line-2 span:nth-child(4) { animation-delay: 1.6s; }
+.page-title .title-line-2 span:nth-child(5) { animation-delay: 1.8s; }
+.page-title .title-line-2 span:nth-child(6) { animation-delay: 2s; }
+.page-title .title-line-2 span:nth-child(7) { animation-delay: 2.2s; }
+.page-title .title-line-2 span:nth-child(8) { animation-delay: 2.4s; }
+.page-title .title-line-2 span:nth-child(9) { animation-delay: 2.6s; }
+.page-title .title-line-2 span:nth-child(10) { animation-delay: 2.8s; }
+.page-title .title-line-2 span:nth-child(11) { animation-delay: 3s; }
+.page-title .title-line-2 span:nth-child(12) { animation-delay: 3.2s; }

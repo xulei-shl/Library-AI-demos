@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书香流年 - 年度借阅 Top 10可视化</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .wave path {
+            fill: var(--wave-color);
+        }
+    </style>
+
+</head>
+<body>
+    <div class="background-waves">
+        <svg class="wave" viewBox="0 0 1440 320" preserveAspectRatio="none">
+            <path d="M0,160L48,181.3C96,203,192,245,288,234.7C384,224,480,160,576,149.3C672,139,768,181,864,197.3C960,213,1056,203,1152,170.7C1248,139,1344,85,1392,58.7L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        </svg>
+        <svg class="wave" viewBox="0 0 1440 320" preserveAspectRatio="none">
+            <path d="M0,128L48,138.7C96,149,192,171,288,165.3C384,160,480,128,576,128C672,128,768,160,864,165.3C960,171,1056,149,1152,133.3C1248,117,1344,107,1392,101.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        </svg>
+        <svg class="wave" viewBox="0 0 1440 320" preserveAspectRatio="none">
+            <path d="M0,96L48,106.7C96,117,192,139,288,133.3C384,128,480,96,576,96C672,96,768,128,864,133.3C960,139,1056,117,1152,101.3C1248,85,1344,75,1392,69.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        </svg>
+    </div>
+    <div class="container">
+        <div id="visualization" class="visualization"></div>
+    </div>
+    <img id="logo-shl" src="/css/img/logo_shl.jpg" alt="Logo" />
+    <div class="page-title">
+        <div class="title-line-1">
+            <span>书</span>
+            <span>香</span>
+            <span>流</span>
+            <span>年</span>
+        </div>
+        <div class="title-line-2">
+            <span>年</span>
+            <span>度</span>
+            <span>借</span>
+            <span>阅</span>
+            <span>T</span>
+            <span>O</span>
+            <span>P</span>
+            <span>1</span>
+            <span>0</span>
+            <span>可</span>
+            <span>视</span>
+            <span>化</span>
+        </div>
+    </div>
+    <script src="js/visualization.js"></script>
+</body>
+</html>
