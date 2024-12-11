@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书径指南 - LitWay Compass</title>
+    <link rel="stylesheet" href="src/styles.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <div class="version">LIBRARY OPEN AI DEMO WORKSHOP NEW MEDIA INTERACTIVE >>>>>></div>
+                <div class="demo-name">图书馆开放 AI Demo 工作坊</div>
+                <div class="code-scroll-container">
+                    <pre id="codeScroll"></pre>
+                </div>
+            </div>
+            <div class="header-right">
+                <h1 class="title">LITWAY COMPASS<br>CHAT<br>AI GENERATION</h1>
+                <div class="subtitle">DEEPSEEK & GLM API & FOLIO</div>
+                <h2 class="title chinese">实时<br>AI交互</h2>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="model-container" id="modelContainer">
+                <!-- 这里将显示粒子效果 -->
+            </div>
+            <div class="prompt">
+                <button class="material-icons prompt-icon">
+                    <img src="src/icons/card.png" alt="card">
+                </button>
+                <div class="prompt-text-container">
+                    <input type="text" class="prompt-input" placeholder="请输入您的读者卡号">
+                    <p class="prompt-text english">Please enter your reader card number</p>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <div class="inspiration">SHANGHAI LIBRARY | 上海图书馆 AI 需求小组</div>
+            <div class="copyright">Copyright 2024</div>
+        </footer>
+    </div>
+    <script src="src/scripts.js"></script>
+    <script type="module" src="src/particleText.js"></script>
+    <script type="module" src="src/readerInfo.js"></script>
+    <script type="module" src="src/readerAnalysis.js"></script>
+    <script type="module">
+        import ParticleText from './src/particleText.js';
+        
+        // 初始化粒子文本效果
+        window.particleText = new ParticleText('modelContainer', {
+            color: '#65B4C9', // 使用主题配色
+            fontSize: window.innerWidth * 0.06,
+            particleAmount: 6000
+        });
+        
+        // 设置初始文本
+        window.particleText.setText('你好，世界！');
+        
+        // 开始动画
+        window.particleText.animate();
+    </script>
+</body>
+</html>
