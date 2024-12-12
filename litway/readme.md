@@ -6,7 +6,10 @@ LitWay Compass 是一个面向图书馆用户的交互式 AI Demo，通过 AI �
 
 主要功能：根据读者的借阅历史，分析用户阅读倾向，给出阅读身份标签。并推荐相关图书
 
-![1733900003857.png](https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/1733900003857.png)
+<img src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/1733978970772.png" width="200" height="300">
+
+<img src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/1733979072278.png" width="200" height="300">
+
 
 https://github.com/user-attachments/assets/9ec9ca1a-c6f1-4605-94d9-cc0007996a86
 

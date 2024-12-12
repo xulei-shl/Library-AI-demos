@@ -26,6 +26,8 @@ body, html {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .header {
@@ -196,8 +198,6 @@ body, html {
     font-size: 12px;
 }
 
-
-
 /* 代码块容器样式 */
 .code-scroll-container {
     background-color: transparent; /* 背景色透明 */
@@ -234,4 +234,15 @@ body, html {
     to {
         transform: translateY(-100%);
     }
+}
+
+/* 动态背景样式 */
+.background {
+    position: absolute;
+    top: 95%; /* 居中 */
+    left: 77%; /* 居中 */
+    transform: translate(-50%, -50%); /* 居中 */
+    width: 100%;
+    height: 100%;
+    z-index: 0;
 }

@@ -6,8 +6,23 @@
     <title>书径指南 - LitWay Compass</title>
     <link rel="stylesheet" href="src/styles.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
 </head>
 <body>
+    <!-- 动态背景容器 -->
+    <div class="background" id="background"></div>
+
+    <!-- 主要内容容器 -->
     <div class="container">
         <header class="header">
             <div class="header-left">
@@ -44,6 +59,8 @@
             <div class="copyright">Copyright 2024</div>
         </footer>
     </div>
+
+    <!-- 脚本部分 -->
     <script src="src/scripts.js"></script>
     <script type="module" src="src/particleText.js"></script>
     <script type="module" src="src/readerInfo.js"></script>
@@ -64,5 +81,6 @@
         // 开始动画
         window.particleText.animate();
     </script>
+    <script src="src/backgroundAnimation.js"></script>
 </body>
 </html>
