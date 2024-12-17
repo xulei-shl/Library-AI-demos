@@ -21,7 +21,7 @@ async function analyzeReaderHistory(reader) {
 
         // 准备 GLM 请求数据
         const requestData = {
-            model: "glm-4",
+            model: "glm-4-flash",
             messages: [
                 {
                     role: "system",
