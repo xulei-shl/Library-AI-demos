@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>借阅热图</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="logo-container">
+        <img src="css/imgs/logo_shl.jpg" alt="图书馆 Logo" class="logo">
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1 class="page-title">借阅热图</h1>
+            <div class="legend">
+                <span>Less</span>
+                <div class="legend-colors">
+                    <div class="color-block level-1"></div>
+                    <div class="color-block level-2"></div>
+                    <div class="color-block level-3"></div>
+                    <div class="color-block level-4"></div>
+                    <div class="color-block level-5"></div>
+                    <div class="color-block level-6"></div>
+                    <div class="color-block level-7"></div>
+                    <div class="color-block level-8"></div>
+                </div>
+                <span>More</span>
+            </div>
+        </div>
+        
+        <div class="yearly-calendar">
+            <!-- 月份网格将通过JavaScript动态生成 -->
+        </div>
+
+        <div class="statistics">
+            <div class="stat-box">
+                <h3>总借阅量</h3>
+                <div class="stat-value" id="totalBorrows">0</div>
+            </div>
+            <div class="stat-box">
+                <h3>最高日借阅</h3>
+                <div class="stat-value" id="maxBorrows">0</div>
+                <div class="stat-label" id="maxDayName">-</div>
+            </div>
+            <div class="stat-box">
+                <h3>最低日借阅</h3>
+                <div class="stat-value" id="minBorrows">0</div>
+                <div class="stat-label" id="minDayName">-</div>
+            </div>
+            <div class="stat-box">
+                <h3>最高月借阅</h3>
+                <div class="stat-value" id="maxMonthBorrows">0</div>
+                <div class="stat-label" id="maxMonthName">-</div>
+            </div>
+            <div class="stat-box">
+                <h3>最低月借阅</h3>
+                <div class="stat-value" id="minMonthBorrows">0</div>
+                <div class="stat-label" id="minMonthName">-</div>
+            </div>
+        </div>
+    </div>
+    <script src="src/main.js"></script>
+</body>
+</html>

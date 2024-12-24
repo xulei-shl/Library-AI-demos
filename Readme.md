@@ -81,6 +81,10 @@ DONE libranova
 
 DONE bookbuzz
 
+### 借阅热图 - 年度借阅统计可视化
+
+DONE readingHeatwave
+
 ---
 
 > 以下是非图书馆业务场景

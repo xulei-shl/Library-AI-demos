@@ -1,0 +1,2559 @@
+{
+    "year": 2024,
+    "borrow_data": [
+        {
+            "date": "2024-01-01",
+            "borrow_count": 634,
+            "weekday": "周一",
+            "is_holiday": true,
+            "holiday_name": "元旦"
+        },
+        {
+            "date": "2024-01-02",
+            "borrow_count": 934,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-03",
+            "borrow_count": 1002,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-04",
+            "borrow_count": 1019,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-05",
+            "borrow_count": 900,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-06",
+            "borrow_count": 1730,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-07",
+            "borrow_count": 1458,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-08",
+            "borrow_count": 102,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-09",
+            "borrow_count": 1267,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-10",
+            "borrow_count": 1038,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-11",
+            "borrow_count": 955,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-12",
+            "borrow_count": 1078,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-13",
+            "borrow_count": 1594,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-14",
+            "borrow_count": 1481,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-16",
+            "borrow_count": 1435,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-17",
+            "borrow_count": 1139,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-18",
+            "borrow_count": 920,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-19",
+            "borrow_count": 808,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-20",
+            "borrow_count": 1496,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-21",
+            "borrow_count": 1529,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-22",
+            "borrow_count": 3,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-23",
+            "borrow_count": 1266,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-24",
+            "borrow_count": 997,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-25",
+            "borrow_count": 1054,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-26",
+            "borrow_count": 1133,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-27",
+            "borrow_count": 1695,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-28",
+            "borrow_count": 1835,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-30",
+            "borrow_count": 1172,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-01-31",
+            "borrow_count": 974,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-01",
+            "borrow_count": 963,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-02",
+            "borrow_count": 1096,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-03",
+            "borrow_count": 1547,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-04",
+            "borrow_count": 1028,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-05",
+            "borrow_count": 5,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-06",
+            "borrow_count": 1312,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-07",
+            "borrow_count": 1310,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-08",
+            "borrow_count": 1118,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-09",
+            "borrow_count": 478,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-10",
+            "borrow_count": 394,
+            "weekday": "周六",
+            "is_holiday": true,
+            "holiday_name": "春节"
+        },
+        {
+            "date": "2024-02-11",
+            "borrow_count": 517,
+            "weekday": "周日",
+            "is_holiday": true,
+            "holiday_name": "春节"
+        },
+        {
+            "date": "2024-02-12",
+            "borrow_count": 409,
+            "weekday": "周一",
+            "is_holiday": true,
+            "holiday_name": "春节"
+        },
+        {
+            "date": "2024-02-13",
+            "borrow_count": 871,
+            "weekday": "周二",
+            "is_holiday": true,
+            "holiday_name": "春节（观察日）"
+        },
+        {
+            "date": "2024-02-14",
+            "borrow_count": 753,
+            "weekday": "周三",
+            "is_holiday": true,
+            "holiday_name": "春节（观察日）"
+        },
+        {
+            "date": "2024-02-15",
+            "borrow_count": 752,
+            "weekday": "周四",
+            "is_holiday": true,
+            "holiday_name": "休息日（2024-02-04日起取代）"
+        },
+        {
+            "date": "2024-02-16",
+            "borrow_count": 1299,
+            "weekday": "周五",
+            "is_holiday": true,
+            "holiday_name": "休息日（2024-02-18日起取代）"
+        },
+        {
+            "date": "2024-02-17",
+            "borrow_count": 1378,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-18",
+            "borrow_count": 1354,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-20",
+            "borrow_count": 1250,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-21",
+            "borrow_count": 824,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-22",
+            "borrow_count": 918,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-23",
+            "borrow_count": 950,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-24",
+            "borrow_count": 1533,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-25",
+            "borrow_count": 1543,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-26",
+            "borrow_count": 18,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-27",
+            "borrow_count": 1455,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-28",
+            "borrow_count": 784,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-02-29",
+            "borrow_count": 739,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-01",
+            "borrow_count": 1289,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-02",
+            "borrow_count": 2006,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-03",
+            "borrow_count": 1706,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-04",
+            "borrow_count": 1,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-05",
+            "borrow_count": 1099,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-06",
+            "borrow_count": 1365,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-07",
+            "borrow_count": 1155,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-08",
+            "borrow_count": 1227,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-09",
+            "borrow_count": 1666,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-10",
+            "borrow_count": 1769,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-11",
+            "borrow_count": 77,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-12",
+            "borrow_count": 1370,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-13",
+            "borrow_count": 1233,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-14",
+            "borrow_count": 1093,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-15",
+            "borrow_count": 1160,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-16",
+            "borrow_count": 1634,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-17",
+            "borrow_count": 1617,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-18",
+            "borrow_count": 2,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-19",
+            "borrow_count": 1416,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-20",
+            "borrow_count": 971,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-21",
+            "borrow_count": 1177,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-22",
+            "borrow_count": 939,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-23",
+            "borrow_count": 1572,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-24",
+            "borrow_count": 1463,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-25",
+            "borrow_count": 5,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-26",
+            "borrow_count": 1279,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-27",
+            "borrow_count": 1035,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-28",
+            "borrow_count": 920,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-29",
+            "borrow_count": 1178,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-30",
+            "borrow_count": 1536,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-03-31",
+            "borrow_count": 1396,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-01",
+            "borrow_count": 1,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-02",
+            "borrow_count": 1288,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-03",
+            "borrow_count": 1182,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-04",
+            "borrow_count": 1122,
+            "weekday": "周四",
+            "is_holiday": true,
+            "holiday_name": "清明节"
+        },
+        {
+            "date": "2024-04-05",
+            "borrow_count": 1405,
+            "weekday": "周五",
+            "is_holiday": true,
+            "holiday_name": "休息日（2024-04-07日起取代）"
+        },
+        {
+            "date": "2024-04-06",
+            "borrow_count": 1324,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-07",
+            "borrow_count": 1091,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-08",
+            "borrow_count": 10,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-09",
+            "borrow_count": 1218,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-10",
+            "borrow_count": 1031,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-11",
+            "borrow_count": 1020,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-12",
+            "borrow_count": 794,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-13",
+            "borrow_count": 1669,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-14",
+            "borrow_count": 1410,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-15",
+            "borrow_count": 3,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-16",
+            "borrow_count": 1170,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-17",
+            "borrow_count": 664,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-18",
+            "borrow_count": 967,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-19",
+            "borrow_count": 953,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-20",
+            "borrow_count": 1789,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-21",
+            "borrow_count": 1802,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-22",
+            "borrow_count": 36,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-23",
+            "borrow_count": 1243,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-24",
+            "borrow_count": 1314,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-25",
+            "borrow_count": 1009,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-26",
+            "borrow_count": 936,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-27",
+            "borrow_count": 1795,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-28",
+            "borrow_count": 1130,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-29",
+            "borrow_count": 15,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-04-30",
+            "borrow_count": 1359,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-01",
+            "borrow_count": 886,
+            "weekday": "周三",
+            "is_holiday": true,
+            "holiday_name": "劳动节"
+        },
+        {
+            "date": "2024-05-02",
+            "borrow_count": 1145,
+            "weekday": "周四",
+            "is_holiday": true,
+            "holiday_name": "休息日（2024-04-28日起取代）"
+        },
+        {
+            "date": "2024-05-03",
+            "borrow_count": 1310,
+            "weekday": "周五",
+            "is_holiday": true,
+            "holiday_name": "休息日（2024-05-11日起取代）"
+        },
+        {
+            "date": "2024-05-04",
+            "borrow_count": 1421,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-05",
+            "borrow_count": 1449,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-06",
+            "borrow_count": 6,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-07",
+            "borrow_count": 1503,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-08",
+            "borrow_count": 1084,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-09",
+            "borrow_count": 1078,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-10",
+            "borrow_count": 1030,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-11",
+            "borrow_count": 1090,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-12",
+            "borrow_count": 1786,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-13",
+            "borrow_count": 15,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-14",
+            "borrow_count": 1288,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-15",
+            "borrow_count": 1025,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-16",
+            "borrow_count": 1022,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-17",
+            "borrow_count": 900,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-18",
+            "borrow_count": 1578,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-19",
+            "borrow_count": 1616,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-20",
+            "borrow_count": 3,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-21",
+            "borrow_count": 1184,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-22",
+            "borrow_count": 991,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-23",
+            "borrow_count": 972,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-24",
+            "borrow_count": 1015,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-25",
+            "borrow_count": 1609,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-26",
+            "borrow_count": 1380,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-27",
+            "borrow_count": 6,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-28",
+            "borrow_count": 1256,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-29",
+            "borrow_count": 969,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-30",
+            "borrow_count": 951,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-05-31",
+            "borrow_count": 840,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-01",
+            "borrow_count": 1433,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-02",
+            "borrow_count": 1448,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-03",
+            "borrow_count": 4,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-04",
+            "borrow_count": 1386,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-05",
+            "borrow_count": 890,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-06",
+            "borrow_count": 1018,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-07",
+            "borrow_count": 972,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-08",
+            "borrow_count": 1369,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-09",
+            "borrow_count": 1317,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-10",
+            "borrow_count": 706,
+            "weekday": "周一",
+            "is_holiday": true,
+            "holiday_name": "端午节"
+        },
+        {
+            "date": "2024-06-11",
+            "borrow_count": 976,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-12",
+            "borrow_count": 916,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-13",
+            "borrow_count": 932,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-14",
+            "borrow_count": 997,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-15",
+            "borrow_count": 1405,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-16",
+            "borrow_count": 1597,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-17",
+            "borrow_count": 8,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-18",
+            "borrow_count": 1469,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-19",
+            "borrow_count": 862,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-20",
+            "borrow_count": 845,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-21",
+            "borrow_count": 855,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-22",
+            "borrow_count": 1785,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-23",
+            "borrow_count": 1495,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-25",
+            "borrow_count": 1226,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-26",
+            "borrow_count": 750,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-27",
+            "borrow_count": 856,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-28",
+            "borrow_count": 1103,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-29",
+            "borrow_count": 1686,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-06-30",
+            "borrow_count": 1036,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-01",
+            "borrow_count": 4,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-02",
+            "borrow_count": 1279,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-03",
+            "borrow_count": 1039,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-04",
+            "borrow_count": 1044,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-05",
+            "borrow_count": 1066,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-06",
+            "borrow_count": 1575,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-07",
+            "borrow_count": 1581,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-08",
+            "borrow_count": 53,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-09",
+            "borrow_count": 1250,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-10",
+            "borrow_count": 954,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-11",
+            "borrow_count": 939,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-12",
+            "borrow_count": 923,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-13",
+            "borrow_count": 1487,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-14",
+            "borrow_count": 1674,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-15",
+            "borrow_count": 50,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-16",
+            "borrow_count": 1294,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-17",
+            "borrow_count": 1009,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-18",
+            "borrow_count": 1074,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-19",
+            "borrow_count": 1002,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-20",
+            "borrow_count": 1458,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-21",
+            "borrow_count": 1452,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-22",
+            "borrow_count": 79,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-23",
+            "borrow_count": 1374,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-24",
+            "borrow_count": 1241,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-25",
+            "borrow_count": 1031,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-26",
+            "borrow_count": 965,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-27",
+            "borrow_count": 1614,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-28",
+            "borrow_count": 1468,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-29",
+            "borrow_count": 57,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-30",
+            "borrow_count": 1057,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-07-31",
+            "borrow_count": 1115,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-01",
+            "borrow_count": 975,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-02",
+            "borrow_count": 854,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-03",
+            "borrow_count": 1295,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-04",
+            "borrow_count": 1403,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-05",
+            "borrow_count": 64,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-06",
+            "borrow_count": 1264,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-07",
+            "borrow_count": 1025,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-08",
+            "borrow_count": 912,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-09",
+            "borrow_count": 1078,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-10",
+            "borrow_count": 1488,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-11",
+            "borrow_count": 1326,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-12",
+            "borrow_count": 68,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-13",
+            "borrow_count": 1350,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-14",
+            "borrow_count": 1033,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-15",
+            "borrow_count": 1049,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-16",
+            "borrow_count": 990,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-17",
+            "borrow_count": 1591,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-18",
+            "borrow_count": 1358,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-19",
+            "borrow_count": 78,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-20",
+            "borrow_count": 1124,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-21",
+            "borrow_count": 936,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-22",
+            "borrow_count": 961,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-23",
+            "borrow_count": 1003,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-24",
+            "borrow_count": 1490,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-25",
+            "borrow_count": 1421,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-26",
+            "borrow_count": 58,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-27",
+            "borrow_count": 1043,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-28",
+            "borrow_count": 996,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-29",
+            "borrow_count": 952,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-30",
+            "borrow_count": 958,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-08-31",
+            "borrow_count": 1478,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-01",
+            "borrow_count": 1466,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-02",
+            "borrow_count": 45,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-03",
+            "borrow_count": 1095,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-04",
+            "borrow_count": 1044,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-05",
+            "borrow_count": 1129,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-06",
+            "borrow_count": 963,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-07",
+            "borrow_count": 1454,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-08",
+            "borrow_count": 1622,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-09",
+            "borrow_count": 72,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-10",
+            "borrow_count": 1005,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-11",
+            "borrow_count": 946,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-12",
+            "borrow_count": 1063,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-13",
+            "borrow_count": 949,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-14",
+            "borrow_count": 1208,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-15",
+            "borrow_count": 1286,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-16",
+            "borrow_count": 23,
+            "weekday": "周一",
+            "is_holiday": true,
+            "holiday_name": "休息日（2024-09-14日起取代）"
+        },
+        {
+            "date": "2024-09-17",
+            "borrow_count": 967,
+            "weekday": "周二",
+            "is_holiday": true,
+            "holiday_name": "中秋节"
+        },
+        {
+            "date": "2024-09-18",
+            "borrow_count": 988,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-19",
+            "borrow_count": 770,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-20",
+            "borrow_count": 500,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-21",
+            "borrow_count": 1625,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-22",
+            "borrow_count": 1636,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-23",
+            "borrow_count": 86,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-24",
+            "borrow_count": 1044,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-25",
+            "borrow_count": 939,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-26",
+            "borrow_count": 1104,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-27",
+            "borrow_count": 1009,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-28",
+            "borrow_count": 1516,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-29",
+            "borrow_count": 1249,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-09-30",
+            "borrow_count": 106,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-01",
+            "borrow_count": 771,
+            "weekday": "周二",
+            "is_holiday": true,
+            "holiday_name": "国庆节"
+        },
+        {
+            "date": "2024-10-02",
+            "borrow_count": 919,
+            "weekday": "周三",
+            "is_holiday": true,
+            "holiday_name": "国庆节"
+        },
+        {
+            "date": "2024-10-03",
+            "borrow_count": 794,
+            "weekday": "周四",
+            "is_holiday": true,
+            "holiday_name": "国庆节"
+        },
+        {
+            "date": "2024-10-04",
+            "borrow_count": 1237,
+            "weekday": "周五",
+            "is_holiday": true,
+            "holiday_name": "休息日（2024-09-29日起取代）"
+        },
+        {
+            "date": "2024-10-05",
+            "borrow_count": 1059,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-06",
+            "borrow_count": 977,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-07",
+            "borrow_count": 66,
+            "weekday": "周一",
+            "is_holiday": true,
+            "holiday_name": "休息日（2024-10-12日起取代）"
+        },
+        {
+            "date": "2024-10-08",
+            "borrow_count": 1241,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-09",
+            "borrow_count": 1131,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-10",
+            "borrow_count": 959,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-11",
+            "borrow_count": 961,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-12",
+            "borrow_count": 1148,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-13",
+            "borrow_count": 1777,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-14",
+            "borrow_count": 73,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-15",
+            "borrow_count": 1096,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-16",
+            "borrow_count": 842,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-17",
+            "borrow_count": 862,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-18",
+            "borrow_count": 1080,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-19",
+            "borrow_count": 1369,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-20",
+            "borrow_count": 1543,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-21",
+            "borrow_count": 78,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-22",
+            "borrow_count": 1253,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-23",
+            "borrow_count": 1051,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-24",
+            "borrow_count": 847,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-25",
+            "borrow_count": 986,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-26",
+            "borrow_count": 1281,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-27",
+            "borrow_count": 1226,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-28",
+            "borrow_count": 76,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-29",
+            "borrow_count": 1234,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-30",
+            "borrow_count": 974,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-10-31",
+            "borrow_count": 691,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-01",
+            "borrow_count": 205,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-02",
+            "borrow_count": 1567,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-03",
+            "borrow_count": 1553,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-04",
+            "borrow_count": 74,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-05",
+            "borrow_count": 1271,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-06",
+            "borrow_count": 1054,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-07",
+            "borrow_count": 966,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-08",
+            "borrow_count": 1008,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-09",
+            "borrow_count": 1398,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-10",
+            "borrow_count": 1390,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-11",
+            "borrow_count": 65,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-12",
+            "borrow_count": 1211,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-13",
+            "borrow_count": 913,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-14",
+            "borrow_count": 901,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-15",
+            "borrow_count": 817,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-16",
+            "borrow_count": 1381,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-17",
+            "borrow_count": 1347,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-18",
+            "borrow_count": 52,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-19",
+            "borrow_count": 1164,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-20",
+            "borrow_count": 1004,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-21",
+            "borrow_count": 1071,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-22",
+            "borrow_count": 983,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-23",
+            "borrow_count": 1388,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-24",
+            "borrow_count": 1406,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-25",
+            "borrow_count": 88,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-26",
+            "borrow_count": 993,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-27",
+            "borrow_count": 1016,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-28",
+            "borrow_count": 876,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-29",
+            "borrow_count": 937,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-11-30",
+            "borrow_count": 1419,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-01",
+            "borrow_count": 1330,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-02",
+            "borrow_count": 57,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-03",
+            "borrow_count": 1234,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-04",
+            "borrow_count": 1032,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-05",
+            "borrow_count": 927,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-06",
+            "borrow_count": 1035,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-07",
+            "borrow_count": 1371,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-08",
+            "borrow_count": 1348,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-09",
+            "borrow_count": 69,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-10",
+            "borrow_count": 1243,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-11",
+            "borrow_count": 943,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-12",
+            "borrow_count": 1016,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-13",
+            "borrow_count": 920,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-14",
+            "borrow_count": 1432,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-15",
+            "borrow_count": 1463,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-16",
+            "borrow_count": 117,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-17",
+            "borrow_count": 1251,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-18",
+            "borrow_count": 1094,
+            "weekday": "周三",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-19",
+            "borrow_count": 922,
+            "weekday": "周四",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-20",
+            "borrow_count": 989,
+            "weekday": "周五",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-21",
+            "borrow_count": 1346,
+            "weekday": "周六",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-22",
+            "borrow_count": 1358,
+            "weekday": "周日",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-23",
+            "borrow_count": 65,
+            "weekday": "周一",
+            "is_holiday": false,
+            "holiday_name": null
+        },
+        {
+            "date": "2024-12-24",
+            "borrow_count": 149,
+            "weekday": "周二",
+            "is_holiday": false,
+            "holiday_name": null
+        }
+    ],
+    "summary": {
+        "total_borrows": 364671,
+        "top_day": {
+            "date": "2024-03-02",
+            "borrow_count": 2006
+        },
+        "lowest_day": {
+            "date": "2024-11-01",
+            "borrow_count": 205
+        },
+        "monthly_summary": [
+            {
+                "month": "2024-01",
+                "borrow_count": 32648
+            },
+            {
+                "month": "2024-02",
+                "borrow_count": 26598
+            },
+            {
+                "month": "2024-03",
+                "borrow_count": 36356
+            },
+            {
+                "month": "2024-04",
+                "borrow_count": 30750
+            },
+            {
+                "month": "2024-05",
+                "borrow_count": 32408
+            },
+            {
+                "month": "2024-06",
+                "borrow_count": 31342
+            },
+            {
+                "month": "2024-07",
+                "borrow_count": 32208
+            },
+            {
+                "month": "2024-08",
+                "borrow_count": 31621
+            },
+            {
+                "month": "2024-09",
+                "borrow_count": 28909
+            },
+            {
+                "month": "2024-10",
+                "borrow_count": 29602
+            },
+            {
+                "month": "2024-11",
+                "borrow_count": 29518
+            },
+            {
+                "month": "2024-12",
+                "borrow_count": 22711
+            }
+        ],
+        "top_month": {
+            "month": "2024-03",
+            "borrow_count": 36356
+        },
+        "lowest_month": {
+            "month": "2024-12",
+            "borrow_count": 22711
+        }
+    }
+}
