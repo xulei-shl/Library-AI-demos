@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI每日摘要 - SVG卡片</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Source+Han+Serif:wght@400;700&family=Source+Han+Sans:wght@300;400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #8E9AAF;
+            --secondary-color: #CBC0D3;
+            --accent-color: #EFD3D7;
+            --background-color: #DFDDD9;
+            --text-color: #5B5B5B;
+            --light-text-color: #8C8C8C;
+            --divider-color: #D1CBC3;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            flex-direction: column;
+        }
+
+        .card-container {
+            width: 400px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card {
+            width: 400px;
+            height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease;
+        }
+
+        .header {
+            color: #F2EDE9;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-family: 'Source Han Sans', serif;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #888888;
+        }
+
+        .header:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .content {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .keywords {
+            font-size: 16px;
+            color: var(--light-text-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--divider-color);
+            margin: 20px 0;
+        }
+
+        .summary {
+            background-image: linear-gradient(to right, #E0B0B0 4px, transparent 4px);
+            background-position: 0 0;
+            background-repeat: no-repeat;
+            padding-left: 20px;
+            font-size: 16px;
+        }
+
+        .summary::before {
+            content: none;
+        }
+
+        .background-text {
+            position: absolute;
+            font-size: 150px;
+            color: rgba(182, 181, 167, 0.15);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+
+        .arrow-button {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .arrow-button:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .arrow-button.left {
+            left: 20px;
+        }
+
+        .arrow-button.right {
+            right: 20px;
+        }
+
+        .date {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--light-text-color);
+        }
+
+        .link-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .more-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .more-link:hover {
+            color: var(--secondary-color);
+        }
+
+        /* 名片样式 */
+        .card-content {
+            padding: 250px 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            /* Ensure content starts from the top */
+            align-items: flex-start;
+            /* Left-align content */
+            flex-grow: 1;
+            margin-top: 0;
+            /* Remove any top margin */
+        }
+
+        .name {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2a2a2a;
+            letter-spacing: 1px;
+        }
+
+        .job-title {
+            font-size: 20px;
+            font-weight: 300;
+            color: #4a4a4a;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+
+        .contact {
+            font-size: 16px;
+            color: #5a5a5a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .contact::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .contact.phone::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 0 0-1.02.24l-2.2 2.2a15.045 15.045 0 0 1-6.59-6.59l2.2-2.21a.96.96 0 0 0 .25-1A11.36 11.36 0 0 1 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1zM19 12h2a9 9 0 0 0-9-9v2c3.87 0 7 3.13 7 7zm-4 0h2c0-2.76-2.24-5-5-5v2c1.66 0 3 1.34 3 3z'/%3E%3C/svg%3E");
+        }
+
+        .contact.email::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+        }
+
+        .contact.website::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z'/%3E%3C/svg%3E");
+        }
+
+        .book-effect {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #8da5c4, #b0c4de);
+            clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover .book-effect {
+            width: 220px;
+            height: 220px;
+            opacity: 0.2;
+        }
+
+        .logo {
+            position: absolute;
+            top: 330px;
+            left: 30px;
+            /* Changed from right to left */
+            max-width: 330px;
+            max-height: 330px;
+            width: auto;
+            height: auto;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card-container">
+        <div class="card" id="card1" style="background-color: #e0dfc7;">
+            <div class="header" style="background-color: #e3dc77;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">AI-Native Applications: A Framework for Evaluating the Future of Enterprise Software
+                </div>
+                <div class="keywords">
+                    #AI #企业软件
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>AI-Native应用程序正成为企业软件的未来，本文提供了一个评估框架，帮助理解其核心特征和竞争影响，并探讨了设计、数据、领域专业知识和动态性等关键维度。AI-Native应用程序是指AI技术在其中扮演核心角色的应用，而不仅仅是附加功能。文章基于对市场趋势的观察和与AI技术领导者的讨论，提出了一个五维度框架来评估AI-Native应用程序：设计、数据、领域专业知识、动态性和分销。这些维度涵盖了从用户体验到数据管理，再到商业模式的各个方面。文章强调，随着AI技术的发展，企业需要在这些维度上进行创新，以建立可持续的竞争优势。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2025-02-04</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #deefda;">
+            <div class="header" style="background-color: #99c78f;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">The Rise and Evolution of RAG in 2024: A Year in Review</div>
+                <div class="keywords">
+                    #AI #RAG #知识库
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>2024年，检索增强生成（RAG）技术在AI领域迅速崛起，通过结合大语言模型和外部知识库，显著提升了生成内容的准确性和相关性，成为企业构建知识密集型应用的首选技术。本文回顾了RAG技术的发展历程，探讨了其在AI领域中的崛起和演变，并详细分析了RAG的核心原理及其在企业级应用中的广泛场景。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2024年12月</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #d8f4ed;">
+            <div class="header" style="background-color: #a1eed9;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">从提示工程到提示工艺</div>
+                <div class="keywords">
+                    #AI #提示词工程
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>文章首先介绍了提示工程的基本概念，即通过设计合适的提示词来引导AI模型生成期望的输出。然后，文章阐述了提示工程的发展历程，从最初的简单模板设计，到后来的多样化提示策略，再到现在的提示工艺。提示工艺不仅关注提示词本身，还考虑了上下文、模型特性和任务需求等多方面因素。文章强调了提示工程在AI模型性能优化中的重要作用，并提供了一些实用的提示设计技巧和案例研究。最后，文章讨论了提示工程的未来发展趋势，包括与模型训练的结合、自动化提示设计工具的出现等。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2025-02-04</div>
+            <div class="book-effect"></div>
+        </div>        
+        <div class="card" id="card1" style="background-color: #c5e3c4;">
+            <div class="header" style="background-color: #84da81;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">DeepSeek FAQ – Stratechery by Ben Thompson</div>
+                <div class="keywords">
+                    #AI #DeepSeek #R1 #V3
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本文深入分析了中国 AI 公司 DeepSeek 近期发布的 R1 和 V3 模型，以及它们对 AI 行业的影响。DeepSeek 通过创新的 MoE（混合专家）架构和
+                        MLA（多头潜在注意力）技术，大幅降低了模型的训练和推理成本。V3 模型仅花费 557.6 万美元进行训练，远低于行业预期。R1 模型则通过纯强化学习实现了与 OpenAI 的 o1
+                        相媲美的推理能力。这些突破不仅展示了中国在 AI 领域的实力，也对 Nvidia 和 OpenAI 等美国公司构成了挑战。文章还探讨了 AI
+                        模型的商品化趋势，以及它对大型科技公司和消费者的潜在影响。</p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2025-02-04</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #eae5f6;">
+            <div class="header" style="background-color: #c4b8e0;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">AI 代理已到来。接下来怎么办？</div>
+                <div class="keywords">
+                    #AI #智能体
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本文深入探讨了AI代理技术的发展现状与未来趋势。AI代理作为人工智能领域的前沿技术，已经在多个行业展现出巨大的应用潜力。文章首先阐述了AI代理的定义和特点，强调其自主决策和持续学习的能力。接着，文章分析了AI代理在医疗、金融、制造业等领域的应用案例，展示了其在提升效率、优化决策和改善用户体验方面的显著效果。同时，文章也指出了AI代理技术面临的挑战，如数据隐私、算法偏见和监管问题等。最后，文章对AI代理技术的未来发展进行了展望，提出了推动其可持续发展的建议。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2025-02-04</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #d2d9f7;">
+            <div class="header" style="background-color: #758cf3;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">Exploring Prompt Optimization</div>
+                <div class="keywords">
+                    #AI #提示词工程
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本文由 LangChain
+                        团队撰写，旨在为开发者提供关于提示词优化的全面指导。文章首先介绍了提示词在与大模型交互中的重要性，并解释了为何需要对其进行优化。随后，作者详细阐述了提示词优化的基本原则和常见技巧，包括明确指令、提供示例、控制长度等。此外，文章还探讨了如何利用自动化工具和评估方法来进一步提升提示词的效果。最后，作者强调了提示词优化是一个持续迭代的过程，需要不断尝试和调整以适应不同的应用场景。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2025-02-04</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #E0F7FA;">
+            <div class="header" style="background-color: #80DEEA;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">AI Voice Agents: 2025 Update</div>
+                <div class="keywords">
+                    #AI #语音助手
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>本文是Andreessen
+                        Horowitz对2025年AI语音助手的最新报告。文章指出，AI语音技术是AI应用公司最强大的解锁工具之一，它将人类最频繁、信息最密集的沟通形式——语音，首次变得“可编程”。对于企业而言，AI语音助手能够直接替代人工劳动，提供更廉价、快速和可靠的服务，甚至在许多情况下表现优于人类。对于消费者而言，语音可能成为人们与AI互动的主要方式，无论是作为永远可用的伴侣或教练，还是通过民主化服务，如语言学习，使以前无法访问的服务变得可访问。文章还讨论了AI语音技术的最新进展、市场趋势、投资机会和未来展望。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2025-02-04</div>
+            <div class="book-effect"></div>
+        </div>        
+        <div class="card" id="card1" style="background-color: #f4d9eb;">
+            <div class="header" style="background-color: #b187a3;">
+                <h1>AI摘要</h1>
+            </div>
+            <div class="content">
+                <div class="title">开发软件成本越来越低，但创意更值钱：AI 产品经理将炙手可热！</div>
+                <div class="keywords">
+                    #AI #产品经理
+                </div>
+                <div class="divider"></div>
+                <div class="summary">
+                    <p>文章讨论了随着AI技术的发展，软件开发（尤其是原型开发）的成本正在显著降低。这种变化将导致市场对“决定要构建什么”的人才需求增加，即对AI产品经理的需求增加。文章指出，AI产品管理作为一门学科，未来将有巨大的发展潜力。随着编码效率的提升，团队中产品管理和设计的工作量比例将提高。然而，目前AI产品管理领域存在人才短缺，尤其是既懂产品开发又懂AI的人才。文章还强调了AI产品经理需要具备的特定技能，包括AI技术能力、迭代式开发能力、数据相关技能、处理不确定性的能力以及持续学习的能力。最后，文章对AI产品管理的未来表示乐观，认为这是一个令人振奋的时代，我们应该共同创造有价值的事物。
+                    </p>
+                </div>
+            </div>
+            <div class="background-text">AI</div>
+            <div class="date">2025-02-04</div>
+            <div class="book-effect"></div>
+        </div>
+        <div class="card" id="card1" style="background-color: #C7E9E7;">
+        <div class="header" style="background-color: #A8D8D5;">
+            <h1>AI摘要</h1>
+        </div>
+        <div class="content">
+            <div class="title">喝点VC｜a16z华人合伙人：为让AI Agent成功，往往初期将应用于非常明确和受限的领域</div>
+            <div class="keywords">
+                #AI摘要 #智能体
+            </div>
+            <div class="divider"></div>
+            <div class="summary">
+                <p>文章中，Kimberly Tan对比了传统RPA（机器人过程自动化）与新一代AI Agent在处理企业重复性任务上的差异。传统RPA虽能完成80%的任务，但剩余20%的失败情况仍需人工介入，且对非结构化数据处理能力有限。而AI
+                    Agent，特别是结合大语言模型（LLMs）的智能自动化技术，能够更智能地处理复杂数据并收集上下文信息，从而实现更高效的自动化。</p>
+            </div>
+        </div>
+        <div class="background-text">AI</div>
+        <div class="date">2025-02-04</div>
+        <div class="book-effect"></div>
+    </div>
+
+    <div class="card" id="card1" style="background-color: #f9e2f7;">
+        <div class="header" style="background-color: #a3699d;">
+            <h1>AI摘要</h1>
+        </div>
+        <div class="content">
+            <div class="title">Building knowledge graph agents with LlamaIndex Workflows</div>
+            <div class="keywords">
+                #AI #知识图谱
+            </div>
+            <div class="divider"></div>
+            <div class="summary">
+                <p>本文介绍了如何使用 LlamaIndex Workflows 构建知识图谱代理，通过多步骤流程提高 text2cypher
+                    的准确性，并分享了实际应用中的挑战与解决方案。文章首先阐述了检索增强生成（RAG）框架的优势，并强调了将结构化数据（如知识图谱）集成到 RAG 应用中的重要性。作者特别提到了使用图数据库（如
+                    Neo4j）来增强 RAG 应用的能力。</p>
+            </div>
+        </div>
+        <div class="background-text">AI</div>
+        <div class="date">2025-02-04</div>
+        <div class="book-effect"></div>
+    </div>
+    <div class="card" id="card1" style="background-color: #E6E6FA;">
+        <div class="header" style="background-color: #c8b4f0;">
+            <h1>AI摘要</h1>
+        </div>
+        <div class="content">
+            <div class="title">开放式人工智能的四大自由</div>
+            <div class="keywords">
+                #AI #开放式人工智能
+            </div>
+            <div class="divider"></div>
+            <div class="summary">
+                <p>本文探讨了开放式人工智能的四大自由，即自由研究、自由共享、自由创造和自由竞争。文章首先阐述了开放式人工智能的背景和重要性，指出其在推动人工智能技术发展和应用方面的关键作用。然后，文章逐一解释了这四大自由的具体含义和影响。
+                </p>
+            </div>
+        </div>
+        <div class="background-text">AI</div>
+        <div class="date">2025-02-04</div>
+        <div class="book-effect"></div>
+    </div>
+
+    <div class="card" id="card3">
+        <img class="logo" src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/logo_shl.jpg" alt="Logo">
+        <div class="book-effect"></div>
+    </div>
+
+    <button class="arrow-button left" onclick="prevCard()" style="display: none;"><</button>
+            <button class="arrow-button right" onclick="nextCard()" style="display: none;">></button>
+            </div>
+            <br>
+            <div class="author" style="font-style: italic; text-align: center; color: #8C8C8C;">
+                @XuLei<br>
+                by n8n & DeepSeek & Feishu
+            </div>
+            <div class="link-container">
+                <a href="https://73y4g09684.vicp.fun/explore" class="more-link">更多可见：AI 摘要</a>
+                <a href="https://ma19hv4fupk.feishu.cn/wiki/HizGwFT49id5d0ktvhdcWnYXnFg?from=from_copylink"
+                    class="more-link">飞书知识库</a>
+                <a href="https://github.com/xulei-shl/Library-AI-demos" class="more-link">Github 仓库</a>
+            </div>
+            <script>
+                const cards = document.querySelectorAll('.card');
+                let currentIndex = 0;
+
+                function showCard(index) {
+                    cards.forEach((card, i) => {
+                        card.style.transform = `translateX(${(i - index) * 100}%)`;
+                    });
+
+                    // 显示或隐藏按钮
+                    const prevButton = document.querySelector('.arrow-button.left');
+                    const nextButton = document.querySelector('.arrow-button.right');
+                    if (index === 0) {
+                        prevButton.style.display = 'none';
+                    } else {
+                        prevButton.style.display = 'flex';
+                    }
+                    if (index === cards.length - 1) {
+                        nextButton.style.display = 'none';
+                    } else {
+                        nextButton.style.display = 'flex';
+                    }
+                }
+
+                function prevCard() {
+                    currentIndex = Math.max(0, currentIndex - 1);
+                    showCard(currentIndex);
+                }
+
+                function nextCard() {
+                    currentIndex = Math.min(cards.length - 1, currentIndex + 1);
+                    showCard(currentIndex);
+                }
+
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'ArrowLeft') {
+                        prevCard();
+                    } else if (event.key === 'ArrowRight') {
+                        nextCard();
+                    }
+                });
+
+                showCard(currentIndex);
+            </script>
+</body>
+
+</html>

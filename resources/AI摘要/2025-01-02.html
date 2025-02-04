@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI每日摘要 - SVG卡片</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&family=Source+Han+Serif:wght@400;700&family=Source+Han+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #8E9AAF;
+            --secondary-color: #CBC0D3;
+            --accent-color: #EFD3D7;
+            --background-color: #DFDDD9;
+            --text-color: #5B5B5B;
+            --light-text-color: #8C8C8C;
+            --divider-color: #D1CBC3;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-color);
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-color);
+            flex-direction: column;
+        }
+        .card-container {
+            width: 400px;
+            height: 700px;
+            position: relative;
+            overflow: hidden;
+        }
+        .card {
+            width: 400px;
+            height: 700px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease;
+        }
+        .header {
+            color: #F2EDE9;
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        h1 {
+            font-family: 'Source Han Sans', serif;
+            font-size: 36px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #888888;
+        }
+        .header:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        .content {
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        .keywords {
+            font-size: 16px;
+            color: var(--light-text-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--divider-color);
+            margin: 20px 0;
+        }
+        .summary {
+            background-image: linear-gradient(to right, #E0B0B0 4px, transparent 4px);
+            background-position: 0 0;
+            background-repeat: no-repeat;
+            padding-left: 20px;
+            font-size: 16px;
+        }
+        .summary::before {
+            content: none;
+        }
+        .background-text {
+            position: absolute;
+            font-size: 150px;
+            color: rgba(182, 181, 167, 0.15);
+            z-index: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+        }
+        .arrow-button {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .arrow-button:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .arrow-button.left {
+            left: 20px;
+        }
+        .arrow-button.right {
+            right: 20px;
+        }
+        .date {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--light-text-color);
+        }
+        .link-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .more-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .more-link:hover {
+            color: var(--secondary-color);
+        }
+        /* 名片样式 */
+        .card-content {
+            padding: 250px 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Ensure content starts from the top */
+            align-items: flex-start; /* Left-align content */
+            flex-grow: 1;
+            margin-top: 0; /* Remove any top margin */
+        }
+        .name {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #2a2a2a;
+            letter-spacing: 1px;
+        }
+        .job-title {
+            font-size: 20px;
+            font-weight: 300;
+            color: #4a4a4a;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+        .contact {
+            font-size: 16px;
+            color: #5a5a5a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .contact::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        .contact.phone::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 0 0-1.02.24l-2.2 2.2a15.045 15.045 0 0 1-6.59-6.59l2.2-2.21a.96.96 0 0 0 .25-1A11.36 11.36 0 0 1 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1zM19 12h2a9 9 0 0 0-9-9v2c3.87 0 7 3.13 7 7zm-4 0h2c0-2.76-2.24-5-5-5v2c1.66 0 3 1.34 3 3z'/%3E%3C/svg%3E");
+        }
+        .contact.email::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+        }
+        .contact.website::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235a5a5a'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z'/%3E%3C/svg%3E");
+        }
+        .book-effect {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #8da5c4, #b0c4de);
+            clip-path: polygon(100% 0, 0% 100%, 100% 100%);
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+        .card:hover .book-effect {
+            width: 220px;
+            height: 220px;
+            opacity: 0.2;
+        }
+        .logo {
+            position: absolute;
+            top: 330px;
+            left: 30px; /* Changed from right to left */
+            max-width: 330px;
+            max-height: 330px;
+            width: auto;
+            height: auto;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        .logo:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container"><div class="card" id="card1" style="background-color: #E0F7FA;">
+    <div class="header" style="background-color: #80DEEA;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">LLMs Are Like Dory From Finding Nemo</div>
+        <div class="keywords">
+            #AI
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>本文将大型语言模型（LLMs）比作电影《海底总动员》中的角色多莉，她以短期记忆丧失而闻名。作者指出，LLMs在处理长期任务时面临类似挑战，因为它们在每个时间步只能处理有限数量的标记（tokens），导致上下文丢失。然而，通过将任务分解为多个子任务并利用中间结果，LLMs可以克服这一限制。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年12月</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E0F7FA;">
+    <div class="header" style="background-color: #ba77af;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">AI (and machine learning, etc) with British Library collections - Digital scholarship blog</div>
+        <div class="keywords">
+            #AI应用案例
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>英国图书馆利用AI和机器学习技术丰富馆藏，提升可发现性和计算研究可用性，通过外部合作、内部实验和员工培训，实现从文本转录到语义变化检测的多方面应用。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年12月</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E0F7FA;">
+    <div class="header" style="background-color: #8eb873;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">从被动接收到主动参与：我的 AI 辅助学习方法论</div>
+        <div class="keywords">
+            #AI #辅助学习
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>本文探讨了在AI辅助学习中，如何从被动接收信息转变为主动参与学习，通过AI进行文献筛选和自主学习的结合，提升学习效率和深度。文章首先指出了在学术课程和研究中，AI工具被广泛使用于文献阅读和总结，但存在理解肤浅、细节缺失等问题。作者通过个人经验，强调了AI总结不能替代原文阅读，并提出了一种基于双重控制理论的方法论，利用AI进行文献筛选，然后进行自主学习。这种方法可以减轻认知负担，确保学习内容与目标高度相关，并结合前瞻性和反应性控制，提升学习效率和深度。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2025-01-02</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E0F7FA;">
+    <div class="header" style="background-color: #80eab9;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">How AI is unlocking ancient texts — and could rewrite history</div>
+        <div class="keywords">
+            #AI #古代文本 #历史研究
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>本文探讨了人工智能（AI）技术在古代文本研究中的应用和突破。AI技术，特别是人工神经网络，正在被用于解读古代文字，包括古希腊文、拉丁文以及中国的甲骨文等。这些技术不仅能够识别和翻译古代文字，还能填补缺失的字符，甚至解码已经消失的罕见语言。例如，一个名为Vesuvius Challenge的项目利用AI成功读取了被维苏威火山爆发碳化的古代卷轴，这些卷轴已有2000年的历史。AI技术的应用将为学者们提供前所未有的大量新文本数据，并可能改变我们对古代世界的理解。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2024年10月10日</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E0F7FA;">
+    <div class="header" style="background-color: #ead080;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">An Introduction to Vector Databases - Qdrant</div>
+        <div class="keywords">
+            #AI #向量数据库
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>本文深入介绍了向量数据库的概念、原理和应用。随着每天生成的海量非结构化数据（如图像、文本和音频）的增长，传统数据库在处理这些数据时面临挑战。向量数据库应运而生，它将非结构化数据转换为高维向量，通过索引、查询和检索这些向量，实现对数据的高效管理和分析。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2025-01-02</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E0F7FA;">
+    <div class="header" style="background-color: #c080ea;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">LLM驱动的GUI代理 470篇Paper综述：洞察人机交互演进范式</div>
+        <div class="keywords">
+            #AI #LLM #GUI
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>本文是一篇关于LLM（大语言模型）驱动的GUI（图形用户界面）代理的综述文章，通过分析470篇论文，深入探讨了这一领域的发展现状和未来趋势，为AI产品开发提供了深度洞察和前瞻性思考。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2025-01-02</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E0F7FA;">
+    <div class="header" style="background-color: #caea80;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">Retailers, Learn These 4 Lessons Before Making Your 2025 GenAI Investments</div>
+        <div class="keywords">
+            #AI #GenAI
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>零售商在2025年应优先考虑以客户为中心的GenAI战略，确保技术与业务需求匹配，并吸取以下4个教训：1. 确保业务-数据-AI协同；2. 采取渐进式方法；3. 创建安全第一的文化；4. 设计上保持同理心</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2025-01-02</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E3F2FD;">
+    <div class="header" style="background-color: #90CAF9;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">重塑自然语言编程，Agent 训练的核心探索</div>
+        <div class="keywords">
+            #AI #提示词
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>本文作者云中江树分享了对提示工程和智能体训练的深刻见解。首先，通过对比基础与优化后的提示词对AI输出的影响，强调了提示工程的重要性。随后，回顾了从模型微调到提示工程的范式转变，指出提示工程在资源消耗、灵活性和快速实现应用POC方面的优势。文章进一步探讨了提示工程与工作流、RAG、智能体等AI领域热门概念的关系，并构建了提示工程全景图，涵盖了小样本学习、上下文核心要素、基础模型设置等多个方面。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2025-01-02</div>
+    <div class="book-effect"></div>
+</div><div class="card" id="card1" style="background-color: #E0F7FA;">
+    <div class="header" style="background-color: #80DEEA;">
+        <h1>AI摘要</h1>
+    </div>
+    <div class="content">
+        <div class="title">GenAI in Action: Key Learnings and Strategies from a Year of Practical Implementation</div>
+        <div class="keywords">
+            #AI #生成性AI
+        </div>
+        <div class="divider"></div>
+        <div class="summary">
+            <p>《GenAI实战：一年实践应用中的关键经验与策略》一文分享了作者在生成性AI（GenAI）领域一年实践中的宝贵经验，包括技术选型、项目管理、团队协作等方面的策略，为开发者、产品经理和技术领导者提供了实用的指导。</p>
+        </div>
+    </div>
+    <div class="background-text">AI</div>
+    <div class="date">2025年1月</div>
+    <div class="book-effect"></div>
+</div>
+
+<div class="card" id="card3">
+    <img class="logo" src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/logo_shl.jpg" alt="Logo">
+    <div class="book-effect"></div>
+</div>
+
+<button class="arrow-button left" onclick="prevCard()" style="display: none;"><</button>
+<button class="arrow-button right" onclick="nextCard()" style="display: none;">></button>
+</div>
+<br>
+<div class="author" style="font-style: italic; text-align: center; color: #8C8C8C;">
+@XuLei<br>
+by n8n & DeepSeek & Feishu
+</div>
+<div class="link-container">
+<a href="https://73y4g09684.vicp.fun/explore" class="more-link">更多可见：AI 摘要</a>
+<a href="https://ma19hv4fupk.feishu.cn/wiki/HizGwFT49id5d0ktvhdcWnYXnFg?from=from_copylink" class="more-link">飞书知识库</a>
+<a href="https://github.com/xulei-shl/Library-AI-demos" class="more-link">Github 仓库</a>
+</div>
+<script>
+const cards = document.querySelectorAll('.card');
+let currentIndex = 0;
+
+function showCard(index) {
+    cards.forEach((card, i) => {
+        card.style.transform = `translateX(${(i - index) * 100}%)`;
+    });
+
+    // 显示或隐藏按钮
+    const prevButton = document.querySelector('.arrow-button.left');
+    const nextButton = document.querySelector('.arrow-button.right');
+    if (index === 0) {
+        prevButton.style.display = 'none';
+    } else {
+        prevButton.style.display = 'flex';
+    }
+    if (index === cards.length - 1) {
+        nextButton.style.display = 'none';
+    } else {
+        nextButton.style.display = 'flex';
+    }
+}
+
+function prevCard() {
+    currentIndex = Math.max(0, currentIndex - 1);
+    showCard(currentIndex);
+}
+
+function nextCard() {
+    currentIndex = Math.min(cards.length - 1, currentIndex + 1);
+    showCard(currentIndex);
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft') {
+        prevCard();
+    } else if (event.key === 'ArrowRight') {
+        nextCard();
+    }
+});
+
+showCard(currentIndex);
+</script>
+</body>
+</html>
