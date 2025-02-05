@@ -2,6 +2,8 @@
 
 悦读印记（ReadMark）
 
+![](https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/20250205153759.png)
+
 ## 项目自动化流程设计
 1. 根据读者信息获取到当年度的借阅数据详细
 
