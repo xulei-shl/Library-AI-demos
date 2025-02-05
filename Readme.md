@@ -81,6 +81,10 @@ DONE libranova
 
 DONE bookbuzz
 
+### 书径指南 - 读者交互式 AI Demo
+
+DONE litWay
+
 ### 借阅热图 - 年度借阅统计可视化
 
 DONE readingHeatwave
