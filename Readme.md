@@ -89,6 +89,11 @@ DONE litWay
 
 DONE readingHeatwave
 
+### 资源分享
+
+- /resources
+- [AI辩经](https://xulei.xlog.app/tag/AI%E8%BE%A9%E7%BB%8F)
+
 ---
 
 > 以下是非图书馆业务场景
