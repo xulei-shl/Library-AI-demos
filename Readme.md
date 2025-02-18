@@ -93,6 +93,7 @@ DONE readingHeatwave
 
 - /resources
 - [AI辩经](https://xulei.xlog.app/tag/AI%E8%BE%A9%E7%BB%8F)
+  - 与 AI 的头脑风暴
 
 ---
 
