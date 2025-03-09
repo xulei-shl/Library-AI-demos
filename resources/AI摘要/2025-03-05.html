@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI摘要日报</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #1F2935;
+            overflow: hidden;
+        }
+        .card-container {
+            position: relative;
+            width: 450px;
+            height: 950px;
+            perspective: 950px;
+            margin-top: 100px;
+        }
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 620px;
+            border-radius: 24px;
+            background-color: #000;
+            color: white;
+            padding: 20px;
+            cursor: grab;
+            transform-origin: center;
+            transition: transform 0.05s ease-out, opacity 0.2s ease;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 16px;
+        }
+        .card-subtitle {
+            font-size: 16px;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+        .card-description {
+            flex: 1;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            color: #e5e6ec;
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 16px 0;
+            overflow-y: auto;
+            max-height: 300px;
+            padding-right: 10px;
+            
+            /* WebKit scrollbar styles */
+            &::-webkit-scrollbar {
+                width: 6px;
+            }
+            &::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                margin: 5px 0;
+            }
+            &::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 10px;
+                transition: background 0.2s ease;
+            }
+            &::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
+            
+            /* Firefox scrollbar styles */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+            /* 添加Markdown渲染样式 */
+            h1, h2, h3, h4, h5, h6 {
+                color: white;
+                margin: 1em 0 0.5em 0;
+            }
+            
+            p {
+                margin: 0.5em 0;
+            }
+            
+            a {
+                color: #8aa892;
+                text-decoration: none;
+            }
+            
+            a:hover {
+                text-decoration: underline;
+            }
+            
+            code {
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 0.2em 0.4em;
+                border-radius: 3px;
+                font-family: monospace;
+            }
+            
+            pre {
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 1em;
+                border-radius: 8px;
+                overflow-x: auto;
+            }
+            
+            blockquote {
+                border-left: 4px solid rgba(255, 255, 255, 0.3);
+                padding-left: 1em;
+                margin: 1em 0;
+                color: rgba(255, 255, 255, 0.8);
+            }
+            
+            ul, ol {
+                padding-left: 1.5em;
+                margin: 0.5em 0;
+            }
+            
+            li {
+                margin: 0.25em 0;
+            }          
+        }
+        .card-footer {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
+            line-height: 1.4;
+            display: flex;
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+        }
+        .card-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .card-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        .card-shadow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 24px;
+            z-index: -1;
+            filter: blur(20px);
+            opacity: 0.6;
+            transform: translateY(10px) scale(0.95);
+        }
+        /* 新增底部文本样式 */
+        .footer-text {
+            position: fixed;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            z-index: 1000;
+            font-style: italic;
+            text-align: center; /* 新增：文本居中对齐 */
+            display: flex;      /* 新增：使用flex布局 */
+            flex-direction: column; /* 新增：垂直排列 */
+            align-items: center;   /* 新增：水平居中 */
+            justify-content: center; /* 新增：垂直居中 */
+        }      
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+</head>
+<body>
+    <div class="card-container" id="cardContainer"></div>
+    <div class="footer-text">
+        2025-03-05<br>
+        by n8n & DeepSeek & Feishu
+    </div>
+
+    <script>
+        const cardContainer = document.getElementById('cardContainer');
+        let cards = [];
+        let isDragging = false;
+        let startY = 0;
+        let startX = 0;  // Added startX variable
+        let currentY = 0;
+        let currentX = 0;  // Added currentX variable
+        let activeCard = null;
+        let cardCounter = 0;  // Track which card we're displaying
+
+        // Card data with different themes
+        const cardData = [
+        {
+    title: "AI摘要",
+    subtitle: "智能体的交互模式[译]",
+    description: "本文是LangChain博客关于智能体交互模式的系列文章，深入探讨了当前智能体交互设计的最新趋势。文章分为三部分：首先分析了**聊天模式**，包括流式和非流式聊天的优缺点。流式聊天提供实时反馈，增强用户信任，但现有平台支持有限；非流 式聊天更符合现有交流习惯，允许AI有更长的响应时间。其次，文章介绍了**后台智能体**的概念，强调其在扩展人类能力方面的潜力 ，并讨论了如何建立用户信任及整合人类输入。最后，文章探讨了**表格、生成式和协作式**三种新兴交互模式，这些模式在数据处理 、UI生成和人机协作方面展现出独特优势。文章为构建更有效、人性化的智能体应用提供了丰富的灵感和实践指导。",
+    Url: "https://www.ginonotes.com/posts/ux-for-agents",
+    color: "#2C3434",
+    iconColor: "#8aa892"
+},
+{
+    title: "AI摘要",
+    subtitle: "The Human Element: Using Research And Psychology To Elevate Data Storytelling — Smashing Magazine",     
+    description: "文章深入探讨了如何通过整合用户体验（UX）研究和心理学原理，提升数据故事叙述的影响力和说服力。作者Victor Yocco和Angelica Lo Duca提出了一个五步框架，为创建能与观众在认知和情感层面产生共鸣的数据故事提供了路线图。文章首先强调了数据故事叙述的重要性，它通过结合数据分析和叙事技巧，将复杂数据转化为有意义的洞察，驱动决策、影响行为并激发行动。有效 的数据故事叙述能够简化复杂信息，吸引观众并促使他们采取行动。文章提出了一个改进传统数据故事叙述模型的框架，强调了两个关 键要素：观众理解和心理学原理。通过深入了解观众的需求、认知方式和信息处理过程，并运用心理学原理来解释人类如何处理信息和 做出决策，数据故事叙述者可以创建更有效、更吸引人的叙述。该框架包括五个步骤：定义明确目标、进行UX研究以了解观众、分析和 选择相关数据、应用心理学原理（如计划行为理论）、以及打造平衡且有说服力的叙述。通过遵循这个框架，数据故事叙述者可以创建 出能够真正满足观众需求、引发思考和行动的叙述。",
+    Url: "https://www.smashingmagazine.com/2025/02/human-element-using-research-psychology-elevate-data-storytelling/",
+    color: "#575C4D",
+    iconColor: "#8aa892"
+},
+{
+    title: "AI摘要",
+    subtitle: "DeepSearch/DeepResearch 实施实用指南",
+    description: "本文深入探讨了 **DeepSearch** 和 **DeepResearch** 的实现原理与应用，为开发者和技术人员提供了全面的实 践指南。DeepSearch 通过迭代的搜索、阅读和推理循环，直至找到最佳答案，其核心在于多轮次的搜索与推理，显著提升了信息检索的准确性和深度。DeepResearch 在此基础上，构建了生成长研究报告的框架，通过系统化应用 DeepSearch 生成报告的各个部分，并进行整体连贯性优化。",
+    Url: "https://jina.ai/news/a-practical-guide-to-implementing-deepsearch-deepresearch/",
+    color: "#0D2C3E",
+    iconColor: "#8aa892"
+},
+        ];
+
+        // Initialize the first set of cards
+        function initCards() {
+            cardCounter = 0;
+            for (let i = 0; i < 100; i++) {
+                createCard(i);
+                cardCounter++;
+            }
+            positionCards();
+        }
+
+        // Create a single card
+        function createCard(index) {
+            const cardIndex = index % cardData.length;
+            const cardInfo = cardData[cardIndex];
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            // 直接使用预设的颜色
+            card.style.backgroundColor = cardInfo.color;
+            card.style.zIndex = 100 - index;
+            card.style.transform = `translateY(${index * -15}px) scale(${1 - index * 0.05})`;
+            card.style.opacity = 1 - (index * 0.1);
+
+            // Store the card's data index for reference
+            card.dataset.cardIndex = cardIndex;
+
+            // Create card shadow with matching color
+            const shadow = document.createElement('div');
+            shadow.className = 'card-shadow';
+            shadow.style.backgroundColor = cardInfo.color;
+            card.appendChild(shadow);
+
+            // Header with icons
+            const header = document.createElement('div');
+            header.className = 'card-header';
+
+            const leftIcon = document.createElement('div');
+            leftIcon.className = 'card-icon';
+            leftIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>';
+
+            const rightIcon = document.createElement('div');
+            rightIcon.className = 'card-icon';
+            rightIcon.style.backgroundColor = cardInfo.iconColor;
+            rightIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M7 17l9-9M17 17V8h-9"/></svg>';
+
+            header.appendChild(leftIcon);
+            header.appendChild(rightIcon);
+            card.appendChild(header);
+
+            // Title and subtitle
+            const title = document.createElement('div');
+            title.className = 'card-title';
+            title.innerHTML = `${cardInfo.title}<br><span class="card-subtitle">${cardInfo.subtitle}</span>`;
+            card.appendChild(title);
+
+            // Description container (replacing image container)
+            const descriptionContainer = document.createElement('div');
+            descriptionContainer.className = 'card-description';
+            descriptionContainer.innerHTML = marked.parse(cardInfo.description); // 使用marked解析markdown
+            card.appendChild(descriptionContainer);
+
+            // Button
+            const button = document.createElement('a'); // Changed from 'button' to 'a'
+            button.className = 'card-button';
+            button.href = cardInfo.Url; // Add the URL as href
+            button.target = "_blank"; // Open in new tab
+            button.innerHTML = '<span>原文链接</span>';
+            card.appendChild(button);
+
+            // Footer text
+            const footer = document.createElement('div');
+            footer.className = 'card-footer';
+            const githubLink = document.createElement('a');
+            githubLink.href = 'https://github.com/xulei-shl/Library-AI-demos';
+            githubLink.target = '_blank';
+            githubLink.style.color = 'inherit';
+            githubLink.style.textDecoration = 'none';
+            githubLink.style.display = 'flex';
+            githubLink.style.alignItems = 'center';
+            githubLink.style.gap = '4px';
+            
+            // Add text first
+            githubLink.appendChild(document.createTextNode('@XuLei'));
+            
+            // Add GitHub icon after text
+            const githubIcon = document.createElement('div');
+            githubIcon.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                </svg>
+            `;
+            githubLink.appendChild(githubIcon);
+            footer.appendChild(githubLink);
+            card.appendChild(footer);
+            // Add event listeners for drag
+            card.addEventListener('mousedown', startDrag);
+            card.addEventListener('touchstart', startDrag, { passive: false });
+
+            cards.push(card);
+            cardContainer.appendChild(card);
+
+            return card;
+        }
+
+        // Position cards with proper stacking and scaling
+        function positionCards() {
+            cards.forEach((card, index) => {
+                card.style.zIndex = 100 - index;
+                
+                // 增加X轴随机偏移范围
+                const randomX = index === 0 ? 0 : (Math.random() * 60 - 30); // 从-20到20
+                
+                // 增加Y轴随机偏移范围
+                const baseYOffset = index * -15;
+                const randomY = index === 0 ? 0 : (Math.random() * 20 - 10); // 从-5到5
+                
+                // 增加旋转角度范围
+                const randomRotation = index === 0 ? 0 : (Math.random() * 12 - 8); // 从-4到4
+                
+                // 增加缩放随机性
+                const baseScale = 1 - index * 0.05;
+                const randomScale = Math.random() * 0.02 - 0.01; // 轻微缩放变化
+                
+                // 应用变换
+                card.style.transform = `
+                    translate(${randomX}px, ${baseYOffset + randomY}px) 
+                    rotate(${randomRotation}deg) 
+                    scale(${baseScale + randomScale})
+                `;
+                
+                // 增加透明度随机性
+                const baseOpacity = 1 - (index * 0.1);
+                const randomOpacity = Math.random() * 0.05 - 0.025; // 轻微透明度变化
+                card.style.opacity = Math.max(0, Math.min(1, baseOpacity + randomOpacity));
+            });
+        }
+
+        // Start dragging a card
+        function startDrag(e) {
+            if (cards.length === 0) return;
+
+            e.preventDefault();
+            activeCard = this;
+            isDragging = true;
+
+            // Only allow dragging the top card
+            if (activeCard !== cards[0]) {
+                isDragging = false;
+                return;
+            }
+
+            startY = e.clientY || e.touches[0].clientY;
+            startX = e.clientX || e.touches[0].clientX;
+            currentY = startY;
+            currentX = startX;  // Initialize currentX
+
+            document.addEventListener('mousemove', dragCard);
+            document.addEventListener('touchmove', dragCard, { passive: false });
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        // Drag the card
+        function dragCard(e) {
+            if (!isDragging || !activeCard) return;
+
+            e.preventDefault();
+            currentY = e.clientY || e.touches[0].clientY;
+            currentX = e.clientX || e.touches[0].clientX;
+            const deltaY = currentY - startY;
+            const deltaX = currentX - startX;
+
+            // Allow dragging in any direction
+            const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const rotation = deltaX * 0.1;  // Simple rotation based on horizontal movement
+
+            activeCard.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(${rotation}deg)`;
+            activeCard.style.opacity = 1 - Math.min(delta / 500, 0.5);
+
+            // Adjust the other cards to start moving up with staggered effect
+            cards.slice(1).forEach((card, index) => {
+                const progress = Math.min(delta / 300, 1);
+                const targetY = Math.max(index * -15 + progress * 15, 0);
+                
+                // Add random staggering effect
+                const randomX = (Math.random() * 10 - 5) * (1 - progress); // Reduce randomness as cards move up
+                const randomY = (Math.random() * 5 - 2.5) * (1 - progress);
+                const randomRotation = (Math.random() * 3 - 1.5) * (1 - progress);
+                
+                const targetScale = 1 - (index + 1 - progress) * 0.05;
+                card.style.transform = `translate(${randomX}px, ${targetY + randomY}px) rotate(${randomRotation}deg) scale(${targetScale})`;
+                card.style.opacity = 1 - ((index + 1 - progress) * 0.1);
+            });
+        }
+
+        // Update stopDrag to reset cards with staggered positions
+        function stopDrag(e) {
+            if (!isDragging || !activeCard) return;
+
+            const deltaY = currentY - startY;
+            const deltaX = currentX - startX;
+            const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (delta > 150) {  // If dragged far enough, remove the card
+                removeTopCard();
+            } else {  // Otherwise snap back
+                activeCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                activeCard.style.transform = `translate(0, 0) rotate(0)`;
+                activeCard.style.opacity = '1';
+                
+                // Reset other cards with staggered effect
+                cards.slice(1).forEach((card, index) => {
+                    card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    
+                    // Create random offsets for natural look
+                    const randomX = (Math.random() * 15 - 7.5); // Random between -7.5 and 7.5
+                    const randomY = (Math.random() * 5 - 2.5);  // Small random Y variation
+                    const randomRotation = (Math.random() * 3 - 1.5); // Random slight rotation
+                    
+                    card.style.transform = `translate(${randomX}px, ${(index + 1) * -15 + randomY}px) rotate(${randomRotation}deg) scale(${1 - (index + 1) * 0.05})`;
+                    card.style.opacity = 1 - ((index + 1) * 0.1);
+                });
+                
+                setTimeout(() => {
+                    cards.forEach(card => {
+                        card.style.transition = 'transform 0.05s ease-out, opacity 0.2s ease';
+                    });
+                }, 300);
+            }
+
+            isDragging = false;
+            activeCard = null;
+
+            document.removeEventListener('mousemove', dragCard);
+            document.removeEventListener('touchmove', dragCard);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+
+        // Modify the removeTopCard function to maintain staggered look when adding new cards
+        function removeTopCard() {
+            if (cards.length === 0) return;
+            const removedCard = cards.shift();
+            removedCard.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
+            removedCard.style.transform = `translateY(${window.innerHeight}px)`;
+            removedCard.style.opacity = '0';
+            
+            // Create a new card and add it to the bottom of the stack
+            const nextCardIndex = cardCounter % cardData.length;
+            createCard(cards.length);
+            cardCounter = (cardCounter + 1) % cardData.length;
+            
+            // Reposition all cards with staggered animation
+            positionCards();
+            
+            // Remove the old card from DOM after animation
+            setTimeout(() => {
+                removedCard.remove();
+            }, 500);
+        }
+
+        // Initialize
+        initCards();
+
+        // Window resize handler
+        window.addEventListener('resize', positionCards);
+    </script>
+</body>
+</html>
