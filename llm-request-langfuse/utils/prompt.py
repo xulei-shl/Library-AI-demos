@@ -25,26 +25,55 @@ def get_system_prompt(
             - 'temperature': 采样温度
             - 'base_url': API基础URL
             - 'api_key': API密钥
-    
-    优先级逻辑:
-        1. 优先使用直接传入的system_prompt参数(如果提供)
-        2. 其次尝试从本地提示词获取(use_langfuse_prompt=False时)
-        3. 最后尝试从Langfuse获取(use_langfuse_prompt=True时)
-        4. 如果都未找到，返回的system_prompt为None
+            - 'prompt': Langfuse prompt对象(仅当use_langfuse_prompt=True时)
     """
     result = {
         'system_prompt': system_prompt,
         'model_name': None,
         'temperature': None,
         'base_url': None,
-        'api_key': None
+        'api_key': None,
+        'prompt': None  # 新增：存储Langfuse prompt对象
     }
     
     # 优先使用直接传入的提示词
     if system_prompt is not None:
         return result
         
-    # 尝试从本地提示词获取
+    # 尝试从Langfuse获取（如果启用）
+    if use_langfuse_prompt:
+        try:
+            langfuse = Langfuse()
+            prompt = langfuse.get_prompt(prompt_name)
+            result['prompt'] = prompt  # 保存完整的prompt对象用于追踪
+            result['system_prompt'] = prompt.compile()
+            
+            if hasattr(prompt, 'config') and prompt.config:
+                result.update({
+                    'model_name': prompt.config.get('model'),
+                    'temperature': prompt.config.get('temperature'),
+                    'base_url': prompt.config.get('base_url'),
+                    'api_key': prompt.config.get('api_key')
+                })
+                
+                print("\n=== 从Langfuse提示词获取模型配置 ===")
+                print(f"模型名称: {result['model_name']}")
+                print(f"采样温度: {result['temperature']}")
+                print(f"API地址: {result['base_url']}")
+                if result['api_key'] and len(result['api_key']) > 8:
+                    masked_key = f"{result['api_key'][:4]}...{result['api_key'][-4:]}"
+                    print(f"API密钥: {masked_key}")
+            
+            print("\n=== 使用Langfuse提示词 ===")
+            print(f"{result['system_prompt'][:50]}...")
+            return result
+            
+        except Exception as e:
+            print(f"\n=== Langfuse提示词获取失败，尝试使用本地提示词 ===")
+            print(f"错误: {str(e)}")
+            use_langfuse_prompt = False
+    
+    # 如果未启用Langfuse或Langfuse获取失败，尝试从本地提示词获取
     if not use_langfuse_prompt:
         try:
             for prompt in SYSTEM_PROMPTS:
@@ -59,34 +88,11 @@ def get_system_prompt(
                         })
                     print("\n=== 使用本地提示词 ===")
                     print(f"提示词名称: {prompt_name}")
-                    print(result['system_prompt'])
-                    break
+                    print(f"{result['system_prompt'][:50]}...")
+                    return result
+                    
         except Exception as e:
             print(f"\n=== 本地提示词加载失败 ===")
             print(f"错误: {str(e)}")
-    
-    # 如果本地没有找到或使用Langfuse，尝试从Langfuse获取
-    if result['system_prompt'] is None and use_langfuse_prompt:
-        prompt = Langfuse().get_prompt(prompt_name)
-        result['system_prompt'] = prompt.compile()
-        
-        if hasattr(prompt, 'config') and prompt.config:
-            result.update({
-                'model_name': prompt.config.get('model'),
-                'temperature': prompt.config.get('temperature'),
-                'base_url': prompt.config.get('base_url'),
-                'api_key': prompt.config.get('api_key')
-            })
-            
-            print("\n=== 从Langfuse提示词获取模型配置 ===")
-            print(f"模型名称: {result['model_name']}")
-            print(f"采样温度: {result['temperature']}")
-            print(f"API地址: {result['base_url']}")
-            if result['api_key'] and len(result['api_key']) > 8:
-                masked_key = f"{result['api_key'][:4]}...{result['api_key'][-4:]}"
-                print(f"API密钥: {masked_key}")
-        
-        print("\n=== 使用Langfuse提示词 ===")
-        print(result['system_prompt'])
     
     return result

@@ -156,6 +156,7 @@ def get_llm_response(
         use_langfuse_prompt=use_langfuse_prompt
     )
     
+    # 更新配置，保持原有优先级
     final_system_prompt = prompt_data['system_prompt']
     if prompt_data['model_name']:
         model_name = prompt_data['model_name']
@@ -179,8 +180,6 @@ def get_llm_response(
             
         # 增加请求信息日志
         print(f"\n=== 发送请求 ===")
-        print(f"模型: {model_name}")
-        print(f"温度: {temperature}")
         
         try:
             completion = client.chat.completions.create(
@@ -190,7 +189,7 @@ def get_llm_response(
                 temperature=temperature,
                 tags=tags if tags is not None else [],
                 metadata=metadata if metadata is not None else {},
-                langfuse_prompt=prompt_data.get('prompt') if use_langfuse_prompt else None
+                langfuse_prompt=prompt_data['prompt']  # 直接使用完整的prompt对象
             )
             # 添加成功日志
             print(f"\n=== 请求成功 ===")
