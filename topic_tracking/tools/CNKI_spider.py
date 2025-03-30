@@ -17,7 +17,7 @@ from tools.log_crawl import log_crawl_info
 
 
 def webserver():
-    # get直接返回，不再等待界面加载完成
+    # get 直接返回，不再等待界面加载完成
     desired_capabilities = DesiredCapabilities.EDGE
     desired_capabilities["pageLoadStrategy"] = "none"
 
@@ -25,7 +25,7 @@ def webserver():
     options = webdriver.EdgeOptions()
     # 设置浏览器不加载图片，提高速度
     options.add_argument("--headless")  # 添加无头模式选项
-    options.add_argument("--disable-gpu")  # 禁用GPU加速
+    options.add_argument("--disable-gpu")  # 禁用 GPU 加速
     options.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2})
 
     # 创建一个微软驱动器
@@ -40,12 +40,12 @@ def open_page(driver, keyword, start_year=None, end_year=None, st=None):
 
     # 修改属性，使下拉框显示
     opt = driver.find_element(By.CSS_SELECTOR, 'div.sort-list')  # 定位元素
-    driver.execute_script("arguments[0].setAttribute('style', 'display: block;')", opt)  # 执行 js 脚本进行属性的修改；arguments[0]代表第一个属性
+    driver.execute_script("arguments[0].setAttribute('style', 'display: block;')", opt)  # 执行 js 脚本进行属性的修改；arguments[0] 代表第一个属性
 
-    # 鼠标移动到下拉框中的[通讯作者]
+    # 鼠标移动到下拉框中的 [通讯作者]
     ActionChains(driver).move_to_element(driver.find_element(By.CSS_SELECTOR, 'li[data-val="RP"]')).perform()
 
-    # # 找到[关键词]选项并点击
+    # # 找到 [关键词] 选项并点击
     # WebDriverWait(driver, 100).until(
     #     EC.visibility_of_element_located((By.CSS_SELECTOR, 'li[data-val="KY"]'))).click()
 
@@ -54,20 +54,20 @@ def open_page(driver, keyword, start_year=None, end_year=None, st=None):
         EC.presence_of_element_located((By.XPATH, '''//*[@id="gradetxt"]/dd[1]/div[2]/input'''))
     ).send_keys(keyword)
 
-        # 如果传入了起止年份,则在出版年度输入框中输入
+        # 如果传入了起止年份，则在出版年度输入框中输入
     if start_year and end_year:
         start_year_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder='起始年']")))
         end_year_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder='结束年']")))
         start_year_input.send_keys(start_year)
         end_year_input.send_keys(end_year)
 
-    # 使用JavaScript勾选“北大核心”复选框
+    # 使用 JavaScript 勾选“北大核心”复选框
     hx_checkbox = WebDriverWait(driver, 100).until(
         EC.presence_of_element_located((By.XPATH, '''//label/input[@key="HX"]'''))
     )
     driver.execute_script("arguments[0].click();", hx_checkbox)
 
-    # 使用JavaScript勾选“CSSCI”复选框
+    # 使用 JavaScript 勾选“CSSCI”复选框
     cssci_checkbox = WebDriverWait(driver, 100).until(
         EC.presence_of_element_located((By.XPATH, '''//label/input[@key="CSI"]'''))
     )
@@ -94,9 +94,9 @@ def open_page(driver, keyword, start_year=None, end_year=None, st=None):
         res_unm = int(res_unm.replace(",", ''))
         page_unm = int(res_unm / 20) + 1
         if st:
-            st.info(f"共找到 {res_unm} 条结果, {page_unm} 页。")
+            st.info(f"共找到 {res_unm} 条结果，{page_unm} 页。")
         else:
-            print(f"共找到 {res_unm} 条结果, {page_unm} 页。")
+            print(f"共找到 {res_unm} 条结果，{page_unm} 页。")
         return res_unm
     except:
         raise NoResultsFoundException("没有检索结果")
@@ -150,10 +150,10 @@ def crawl_info(driver, count, term, file_path, st=None):
         title_list = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "fz14")))
         title_list[term - 1].click()
 
-        # 获取driver的句柄
+        # 获取 driver 的句柄
         n = driver.window_handles
 
-        # driver切换至最新生产的页面
+        # driver 切换至最新生产的页面
         driver.switch_to.window(n[-1])
         time.sleep(3)
 
@@ -167,7 +167,7 @@ def crawl_info(driver, count, term, file_path, st=None):
             pass
 
         # 获取作者单位
-        print('正在获取institute...')
+        print('正在获取 institute...')
         try:
             institute = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[2]/div[1]/div[3]/div/div/div[3]/div/h3[2]"))).text
         except:
@@ -176,7 +176,7 @@ def crawl_info(driver, count, term, file_path, st=None):
 
         # 获取摘要、关键词、专辑、专题
         # 获取摘要
-        print('正在获取abstract...')
+        print('正在获取 abstract...')
         try:
             abstract = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "abstract-text"))).text
         except:
@@ -184,7 +184,7 @@ def crawl_info(driver, count, term, file_path, st=None):
         print(abstract + '\n')
 
         # 获取关键词
-        print('正在获取keywords...')
+        print('正在获取 keywords...')
         try:
             keywords = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "keywords"))).text[:-1]
         except:
@@ -192,7 +192,7 @@ def crawl_info(driver, count, term, file_path, st=None):
         print(keywords + '\n')
 
         # 获取专辑
-        print('正在获取publication...')
+        print('正在获取 publication...')
         xpaths = [
             ("/html/body/div[2]/div[1]/div[3]/div/div/div[6]/ul/li[1]/span", "/html/body/div[2]/div[1]/div[3]/div/div/div[6]/ul/li[1]/p"),
             ("/html/body/div[2]/div[1]/div[3]/div/div/div[6]/ul/li[2]/span", "/html/body/div[2]/div[1]/div[3]/div/div/div[6]/ul/li[2]/p"),
@@ -207,7 +207,7 @@ def crawl_info(driver, count, term, file_path, st=None):
         print(publication + '\n')
 
         # 获取专题
-        print('正在获取topic...')
+        print('正在获取 topic...')
         xpaths = [
             ("/html/body/div[2]/div[1]/div[3]/div/div/div[6]/ul/li[2]/span", "/html/body/div[2]/div[1]/div[3]/div/div/div[6]/ul/li[2]/p"),
             ("/html/body/div[2]/div[1]/div[3]/div/div/div[6]/ul/li[3]/span", "/html/body/div[2]/div[1]/div[3]/div/div/div[6]/ul/li[3]/p"),
@@ -252,19 +252,19 @@ def crawl_info(driver, count, term, file_path, st=None):
         placeholder = st.empty()
         # 确保目录存在
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        # 追加写入CSV文件
+        # 追加写入 CSV 文件
         try:
             res.to_csv(file_path, mode='a', header=False, index=False, encoding='gbk')
             # if st:
             #     placeholder.info(f"第{count}条写入成功")
             # else:
-            #     print(f"第{count}条写入CSV成功")
-            print(f"第{count}条写入CSV成功")
+            #     print(f"第{count}条写入 CSV 成功")
+            print(f"第{count}条写入 CSV 成功")
         except Exception as e:
             if st:
-                placeholder.error(f'第{count}条写入失败: {str(e)}')
+                placeholder.error(f'第{count}条写入失败：{str(e)}')
             else:
-                print(f'第{count}条写入失败:', str(e))
+                print(f'第{count}条写入失败：', str(e))
             raise e
     except:
         print(f" 第{count} 条爬取失败\n")
@@ -272,7 +272,7 @@ def crawl_info(driver, count, term, file_path, st=None):
         raise e
 
     finally:
-        # 如果有多个窗口，关闭第二个窗口， 切换回主页
+        # 如果有多个窗口，关闭第二个窗口，切换回主页
         n2 = driver.window_handles
         if len(n2) > 1:
             driver.close()
@@ -352,7 +352,7 @@ def crawl(driver, papers_need, file_path):
     print(f"从第 {count} 条开始爬取\n")
 
     while count <= papers_need:
-        # 等待加载完全，休眠3S
+        # 等待加载完全，休眠 3S
         time.sleep(3)
 
         # 获取当前页面的条目数
@@ -361,7 +361,7 @@ def crawl(driver, papers_need, file_path):
 
         # 循环网页一页中的条目
         for i in range((count-1) % 20 + 1, items_on_page + 1):
-            print(f"\n### 正在爬取第 {count} 条(第{current_page}页第{i}条) #######################################\n")
+            print(f"\n### 正在爬取第 {count} 条 (第{current_page}页第{i}条) #######################################\n")
             crawl_info(driver, count, i, file_path, st)
             count += 1
             if count > papers_need:
@@ -382,7 +382,7 @@ def crawl(driver, papers_need, file_path):
 
 if __name__ == "__main__":
     # 这部分代码只在直接运行脚本时执行，不影响作为模块导入时的行为
-    selected_topic = "特藏建设 图书馆"
-    start_year = "2021"
-    end_year = "2024"
+    selected_topic = "大模型 图书馆"
+    start_year = "2025"
+    end_year = "2025"
     cnki_spider(selected_topic, start_year, end_year)

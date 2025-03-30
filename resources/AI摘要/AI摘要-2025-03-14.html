@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI摘要日报</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #1F2935;
+            overflow: hidden;
+        }
+        .card-container {
+            position: relative;
+            width: 450px;
+            height: 950px;
+            perspective: 950px;
+            margin-top: 100px;
+        }
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 620px;
+            border-radius: 24px;
+            background-color: #000;
+            color: white;
+            padding: 20px;
+            cursor: grab;
+            transform-origin: center;
+            transition: transform 0.05s ease-out, opacity 0.2s ease;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 16px;
+        }
+        .card-subtitle {
+            font-size: 16px;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+        .card-description {
+            flex: 1;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            color: #e5e6ec;
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 16px 0;
+            overflow-y: auto;
+            max-height: 300px;
+            padding-right: 10px;
+            
+            /* WebKit scrollbar styles */
+            &::-webkit-scrollbar {
+                width: 6px;
+            }
+            &::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                margin: 5px 0;
+            }
+            &::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 10px;
+                transition: background 0.2s ease;
+            }
+            &::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
+            
+            /* Firefox scrollbar styles */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+            /* 添加Markdown渲染样式 */
+            h1, h2, h3, h4, h5, h6 {
+                color: white;
+                margin: 1em 0 0.5em 0;
+            }
+            
+            p {
+                margin: 0.5em 0;
+            }
+            
+            a {
+                color: #8aa892;
+                text-decoration: none;
+            }
+            
+            a:hover {
+                text-decoration: underline;
+            }
+            
+            code {
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 0.2em 0.4em;
+                border-radius: 3px;
+                font-family: monospace;
+            }
+            
+            pre {
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 1em;
+                border-radius: 8px;
+                overflow-x: auto;
+            }
+            
+            blockquote {
+                border-left: 4px solid rgba(255, 255, 255, 0.3);
+                padding-left: 1em;
+                margin: 1em 0;
+                color: rgba(255, 255, 255, 0.8);
+            }
+            
+            ul, ol {
+                padding-left: 1.5em;
+                margin: 0.5em 0;
+            }
+            
+            li {
+                margin: 0.25em 0;
+            }          
+        }
+        .card-footer {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
+            line-height: 1.4;
+            display: flex;
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+        }
+        .card-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .card-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        .card-shadow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 24px;
+            z-index: -1;
+            filter: blur(20px);
+            opacity: 0.6;
+            transform: translateY(10px) scale(0.95);
+        }
+        /* 新增底部文本样式 */
+        .footer-text {
+            position: fixed;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            z-index: 1000;
+            font-style: italic;
+            text-align: center; /* 新增：文本居中对齐 */
+            display: flex;      /* 新增：使用flex布局 */
+            flex-direction: column; /* 新增：垂直排列 */
+            align-items: center;   /* 新增：水平居中 */
+            justify-content: center; /* 新增：垂直居中 */
+        }      
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+</head>
+<body>
+    <div class="card-container" id="cardContainer"></div>
+    <div class="footer-text">
+        2025-03-14<br>
+        by n8n & DeepSeek & Feishu
+    </div>
+
+    <script>
+        const cardContainer = document.getElementById('cardContainer');
+        let cards = [];
+        let isDragging = false;
+        let startY = 0;
+        let startX = 0;  // Added startX variable
+        let currentY = 0;
+        let currentX = 0;  // Added currentX variable
+        let activeCard = null;
+        let cardCounter = 0;  // Track which card we're displaying
+
+        // Card data with different themes
+        const cardData = [{
+    title: "AI摘要",
+    subtitle: "浅谈 Agent、MCP、OpenAI Responses API",
+    description: "本文讨论了AI领域的几个重要概念和工具，包括AI Agent、MCP（Model Context Protocol）和OpenAI Responses API。AI Agent是指能够自主行动的智能实体，可以执行复杂多步骤任务并直接输出结果。MCP是一种大模型上下文开放协议，旨在标准化LLM（大型语言模型）与外部系统的集成，增强AI Agent的功能。OpenAI Responses API则提供了一种便捷调用OpenAI大模型能力的方式，助力开发者构建自己的AI Agent。文章首先解释了AI Agent的概念，并提到了几个热门的AI Agent项目，如Devin和Manus。然后详细介绍了MCP协议的组成部分和工作原理，包括Host、MCP Client和MCP Server，以及五个核心构造。接下来，文章重点介绍了OpenAI Responses API，包括其内置工具（网络搜索、文件搜索和计算机操作）和Agents SDK。Responses API旨在简化开发者构建可靠AI Agent的过程，提供更灵活的基础来构建具备Agent能力的应用。最后，文章讨论了这些技术的发展前景和挑战，强调了AI Agent在放大AI能力方面的潜力，但也指出了大模型上下文长度限制、Token消耗和结果正确性等挑战。",
+    Url: "https://mp.weixin.qq.com/s/K9y1JsD46bSsLqA2su3D8A",
+    color: "#1A3B5C",
+    iconColor: "#8aa892"
+},{
+    title: "AI摘要",
+    subtitle: "Agents Simplified: What we mean in the context of AI | Weaviate",
+    description: "本文深入探讨了AI代理（Agent）的概念，特别是在大型语言模型（LLM）和人工智能（AI）的背景下。文章首先解释了AI代理并非新技术，但随着LLM的发展，其能力和复杂性显著提升，使其成为当前AI领域的热门话题。文章阐述了AI代理的定义，即一种半自主或全自主系统，使用LLM作为其“大脑”进行关键决策和解决复杂任务。这些代理通过各种工具（如搜索引擎、数据库、API等）与环境交互，为用户提供服务。文章回顾了AI代理的发展历程，从2005年微软的研究到2020年两篇关键论文的发表，这些论文奠定了当前AI代理的基础。论文提出了提供外部知识库和改进提示结构的方法，使LLM能够更可靠地进行推理和行动。文章进一步分析了AI代理的核心组件，包括LLM、工具访问、记忆和推理。这些组件共同作用，使代理能够理解问题、制定计划并执行任务。最后，文章展望了AI代理的未来，包括多模态AI代理的发展、工具和API的集成，以及代理在各个行业中的应用，如客户服务、营销和销售等。文章强调了代理技术在提高工作效率和改善用户体验方面的潜力。",
+    Url: "https://weaviate.io/blog/ai-agents",
+    color: "#3B5C1A",
+    iconColor: "#8aa892"
+},{
+    title: "AI摘要",
+    subtitle: "7 lessons from IT leaders on their AI adoption journeys | Elastic Blog",
+    description: "本文分享了IT领导者在AI采用过程中的七大经验教训。首先，文章指出92%的组织计划或已投资于AI，并强调了从早期采用者那里学习的重要性。AI采用被定义为在组织内部使用AI进行生产，如支持工程师利用AI工具解决问题，或汽车制造商使用AI进行预测性分析。文章提供了关键统计数据和趋势，显示过去一年全球AI采用激增，72%的组织已将AI集成到至少一个业务功能中。然而，大型公司在AI采用方面处于领先地位，制造业、信息业和医疗保健业是AI采用的领头羊。尽管AI采用广泛，但并非所有项目都成功，70%的CIO报告其定制AI应用程序的失败率为90%。IT领导者的经验教训包括：从高价值问题开始，拥抱实验，使用正确的高质量数据，量化影响，避免AI蔓延和技术债务，利用AI进行预测和决策，以及实施护栏以确保治理和风险管理。文章强调了建立强大的数据基础和明确的用例的重要性，并建议组织将AI视为一个相互关联的生态系统，以实现长期成功。最后，文章鼓励尚未开始AI之旅的组织抓住机会，创建可扩展且透明的AI程序，以保持竞争力。",
+    Url: "https://www.elastic.co/blog/ai-adoption-lessons-from-it-leaders",
+    color: "#1A3B5C",
+    iconColor: "#8aa892"
+},{
+    title: "AI摘要",
+    subtitle: "大语言模型简史：从 Transformer（2017）到 DeepSeek-R1（2025）的进化之路",
+    description: "本文回顾了大语言模型从2017年Transformer的提出到2025年DeepSeek-R1的发展历程。文章首先介绍了Transformer模型的创新之处，它通过自注意力机制和并行计算，显著提升了自然语言处理任务的性能。随后，文章详细阐述了BERT、GPT等后续模型的改进和应用，这些模型在预训练和微调策略上进行了优化，进一步推动了自然语言处理技术的发展。文章还探讨了大语言模型在实际应用中的价值，包括在文本生成、机器翻译、问答系统等领域的突破。同时，文章也指出了大语言模型面临的挑战，如计算资源需求、数据隐私和模型偏见等问题。最后，文章展望了大语言模型的未来发展趋势，强调了跨模态学习、模型压缩和可解释性等研究方向的重要性。DeepSeek-R1作为最新的代表模型，其在多任务处理和知识推理能力上的提升，为大语言模型的未来发展提供了新的思路和方向。本文为开发者、产品经理及技术人员提供了全面的大语言模型发展概述，有助于快速理解该领域的技术要点和应用价值。",
+    Url: "https://www.bestblogs.dev/article/4d7a24",
+    color: "#3B5C1A",
+    iconColor: "#8aa892"
+},{
+    title: "AI摘要",
+    subtitle: "我把我的文章手搓成了Token炸弹，发现这样居然还能防AI洗稿。",
+    description: "这篇文章讲述了作者通过将自己的文章转换为Token炸弹来防止AI洗稿的创新方法。作者发现，通过将文章内容转化为复杂的Token序列，可以增加AI理解和重写的难度，从而有效防止洗稿行为。文章详细描述了这一方法的实现过程，包括使用特殊字符、Unicode编码和emoji等技术手段来构建Token炸弹。同时，作者还探讨了这一方法在实际应用中的潜力和局限性，并与其他防洗稿技术进行了比较。这一创新性的防洗稿方法为内容创作者提供了新的思路和工具，有助于保护原创内容的权益。",
+    Url: "https://mp.weixin.qq.com/s/xO8Zuq26_EYdbv4TWF-YZQ?utm_source=wechat_session",
+    color: "#3B5C1A",
+    iconColor: "#8aa892"
+},
+        ];
+
+        // Initialize the first set of cards
+        function initCards() {
+            cardCounter = 0;
+            for (let i = 0; i < 100; i++) {
+                createCard(i);
+                cardCounter++;
+            }
+            positionCards();
+        }
+
+        // Create a single card
+        function createCard(index) {
+            const cardIndex = index % cardData.length;
+            const cardInfo = cardData[cardIndex];
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            // 直接使用预设的颜色
+            card.style.backgroundColor = cardInfo.color;
+            card.style.zIndex = 100 - index;
+            card.style.transform = `translateY(${index * -15}px) scale(${1 - index * 0.05})`;
+            card.style.opacity = 1 - (index * 0.1);
+
+            // Store the card's data index for reference
+            card.dataset.cardIndex = cardIndex;
+
+            // Create card shadow with matching color
+            const shadow = document.createElement('div');
+            shadow.className = 'card-shadow';
+            shadow.style.backgroundColor = cardInfo.color;
+            card.appendChild(shadow);
+
+            // Header with icons
+            const header = document.createElement('div');
+            header.className = 'card-header';
+
+            const leftIcon = document.createElement('div');
+            leftIcon.className = 'card-icon';
+            leftIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>';
+
+            const rightIcon = document.createElement('div');
+            rightIcon.className = 'card-icon';
+            rightIcon.style.backgroundColor = cardInfo.iconColor;
+            rightIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M7 17l9-9M17 17V8h-9"/></svg>';
+
+            header.appendChild(leftIcon);
+            header.appendChild(rightIcon);
+            card.appendChild(header);
+
+            // Title and subtitle
+            const title = document.createElement('div');
+            title.className = 'card-title';
+            title.innerHTML = `${cardInfo.title}<br><span class="card-subtitle">${cardInfo.subtitle}</span>`;
+            card.appendChild(title);
+
+            // Description container (replacing image container)
+            const descriptionContainer = document.createElement('div');
+            descriptionContainer.className = 'card-description';
+            descriptionContainer.innerHTML = marked.parse(cardInfo.description); // 使用marked解析markdown
+            card.appendChild(descriptionContainer);
+
+            // Button
+            const button = document.createElement('a'); // Changed from 'button' to 'a'
+            button.className = 'card-button';
+            button.href = cardInfo.Url; // Add the URL as href
+            button.target = "_blank"; // Open in new tab
+            button.innerHTML = '<span>原文链接</span>';
+            card.appendChild(button);
+
+            // Footer text
+            const footer = document.createElement('div');
+            footer.className = 'card-footer';
+            const githubLink = document.createElement('a');
+            githubLink.href = 'https://github.com/xulei-shl/Library-AI-demos';
+            githubLink.target = '_blank';
+            githubLink.style.color = 'inherit';
+            githubLink.style.textDecoration = 'none';
+            githubLink.style.display = 'flex';
+            githubLink.style.alignItems = 'center';
+            githubLink.style.gap = '4px';
+            
+            // Add text first
+            githubLink.appendChild(document.createTextNode('@XuLei'));
+            
+            // Add GitHub icon after text
+            const githubIcon = document.createElement('div');
+            githubIcon.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                </svg>
+            `;
+            githubLink.appendChild(githubIcon);
+            footer.appendChild(githubLink);
+            card.appendChild(footer);
+            // Add event listeners for drag
+            card.addEventListener('mousedown', startDrag);
+            card.addEventListener('touchstart', startDrag, { passive: false });
+
+            cards.push(card);
+            cardContainer.appendChild(card);
+
+            return card;
+        }
+
+        // Position cards with proper stacking and scaling
+        function positionCards() {
+            cards.forEach((card, index) => {
+                card.style.zIndex = 100 - index;
+                
+                // 增加X轴随机偏移范围
+                const randomX = index === 0 ? 0 : (Math.random() * 60 - 30); // 从-20到20
+                
+                // 增加Y轴随机偏移范围
+                const baseYOffset = index * -15;
+                const randomY = index === 0 ? 0 : (Math.random() * 20 - 10); // 从-5到5
+                
+                // 增加旋转角度范围
+                const randomRotation = index === 0 ? 0 : (Math.random() * 12 - 8); // 从-4到4
+                
+                // 增加缩放随机性
+                const baseScale = 1 - index * 0.05;
+                const randomScale = Math.random() * 0.02 - 0.01; // 轻微缩放变化
+                
+                // 应用变换
+                card.style.transform = `
+                    translate(${randomX}px, ${baseYOffset + randomY}px) 
+                    rotate(${randomRotation}deg) 
+                    scale(${baseScale + randomScale})
+                `;
+                
+                // 增加透明度随机性
+                const baseOpacity = 1 - (index * 0.1);
+                const randomOpacity = Math.random() * 0.05 - 0.025; // 轻微透明度变化
+                card.style.opacity = Math.max(0, Math.min(1, baseOpacity + randomOpacity));
+            });
+        }
+
+        // Start dragging a card
+        function startDrag(e) {
+            if (cards.length === 0) return;
+
+            e.preventDefault();
+            activeCard = this;
+            isDragging = true;
+
+            // Only allow dragging the top card
+            if (activeCard !== cards[0]) {
+                isDragging = false;
+                return;
+            }
+
+            startY = e.clientY || e.touches[0].clientY;
+            startX = e.clientX || e.touches[0].clientX;
+            currentY = startY;
+            currentX = startX;  // Initialize currentX
+
+            document.addEventListener('mousemove', dragCard);
+            document.addEventListener('touchmove', dragCard, { passive: false });
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        // Drag the card
+        function dragCard(e) {
+            if (!isDragging || !activeCard) return;
+
+            e.preventDefault();
+            currentY = e.clientY || e.touches[0].clientY;
+            currentX = e.clientX || e.touches[0].clientX;
+            const deltaY = currentY - startY;
+            const deltaX = currentX - startX;
+
+            // Allow dragging in any direction
+            const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const rotation = deltaX * 0.1;  // Simple rotation based on horizontal movement
+
+            activeCard.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(${rotation}deg)`;
+            activeCard.style.opacity = 1 - Math.min(delta / 500, 0.5);
+
+            // Adjust the other cards to start moving up with staggered effect
+            cards.slice(1).forEach((card, index) => {
+                const progress = Math.min(delta / 300, 1);
+                const targetY = Math.max(index * -15 + progress * 15, 0);
+                
+                // Add random staggering effect
+                const randomX = (Math.random() * 10 - 5) * (1 - progress); // Reduce randomness as cards move up
+                const randomY = (Math.random() * 5 - 2.5) * (1 - progress);
+                const randomRotation = (Math.random() * 3 - 1.5) * (1 - progress);
+                
+                const targetScale = 1 - (index + 1 - progress) * 0.05;
+                card.style.transform = `translate(${randomX}px, ${targetY + randomY}px) rotate(${randomRotation}deg) scale(${targetScale})`;
+                card.style.opacity = 1 - ((index + 1 - progress) * 0.1);
+            });
+        }
+
+        // Update stopDrag to reset cards with staggered positions
+        function stopDrag(e) {
+            if (!isDragging || !activeCard) return;
+
+            const deltaY = currentY - startY;
+            const deltaX = currentX - startX;
+            const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (delta > 150) {  // If dragged far enough, remove the card
+                removeTopCard();
+            } else {  // Otherwise snap back
+                activeCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                activeCard.style.transform = `translate(0, 0) rotate(0)`;
+                activeCard.style.opacity = '1';
+                
+                // Reset other cards with staggered effect
+                cards.slice(1).forEach((card, index) => {
+                    card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    
+                    // Create random offsets for natural look
+                    const randomX = (Math.random() * 15 - 7.5); // Random between -7.5 and 7.5
+                    const randomY = (Math.random() * 5 - 2.5);  // Small random Y variation
+                    const randomRotation = (Math.random() * 3 - 1.5); // Random slight rotation
+                    
+                    card.style.transform = `translate(${randomX}px, ${(index + 1) * -15 + randomY}px) rotate(${randomRotation}deg) scale(${1 - (index + 1) * 0.05})`;
+                    card.style.opacity = 1 - ((index + 1) * 0.1);
+                });
+                
+                setTimeout(() => {
+                    cards.forEach(card => {
+                        card.style.transition = 'transform 0.05s ease-out, opacity 0.2s ease';
+                    });
+                }, 300);
+            }
+
+            isDragging = false;
+            activeCard = null;
+
+            document.removeEventListener('mousemove', dragCard);
+            document.removeEventListener('touchmove', dragCard);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+
+        // Modify the removeTopCard function to maintain staggered look when adding new cards
+        function removeTopCard() {
+            if (cards.length === 0) return;
+            const removedCard = cards.shift();
+            removedCard.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
+            removedCard.style.transform = `translateY(${window.innerHeight}px)`;
+            removedCard.style.opacity = '0';
+            
+            // Create a new card and add it to the bottom of the stack
+            const nextCardIndex = cardCounter % cardData.length;
+            createCard(cards.length);
+            cardCounter = (cardCounter + 1) % cardData.length;
+            
+            // Reposition all cards with staggered animation
+            positionCards();
+            
+            // Remove the old card from DOM after animation
+            setTimeout(() => {
+                removedCard.remove();
+            }, 500);
+        }
+
+        // Initialize
+        initCards();
+
+        // Window resize handler
+        window.addEventListener('resize', positionCards);
+    </script>
+</body>
+</html>

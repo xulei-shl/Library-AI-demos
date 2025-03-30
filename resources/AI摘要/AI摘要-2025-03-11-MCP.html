@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI摘要日报</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #1F2935;
+            overflow: hidden;
+        }
+        .card-container {
+            position: relative;
+            width: 450px;
+            height: 950px;
+            perspective: 950px;
+            margin-top: 100px;
+        }
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 620px;
+            border-radius: 24px;
+            background-color: #000;
+            color: white;
+            padding: 20px;
+            cursor: grab;
+            transform-origin: center;
+            transition: transform 0.05s ease-out, opacity 0.2s ease;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 16px;
+        }
+        .card-subtitle {
+            font-size: 16px;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+        .card-description {
+            flex: 1;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            color: #e5e6ec;
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 16px 0;
+            overflow-y: auto;
+            max-height: 300px;
+            padding-right: 10px;
+            
+            /* WebKit scrollbar styles */
+            &::-webkit-scrollbar {
+                width: 6px;
+            }
+            &::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                margin: 5px 0;
+            }
+            &::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 10px;
+                transition: background 0.2s ease;
+            }
+            &::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
+            
+            /* Firefox scrollbar styles */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+            /* 添加Markdown渲染样式 */
+            h1, h2, h3, h4, h5, h6 {
+                color: white;
+                margin: 1em 0 0.5em 0;
+            }
+            
+            p {
+                margin: 0.5em 0;
+            }
+            
+            a {
+                color: #8aa892;
+                text-decoration: none;
+            }
+            
+            a:hover {
+                text-decoration: underline;
+            }
+            
+            code {
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 0.2em 0.4em;
+                border-radius: 3px;
+                font-family: monospace;
+            }
+            
+            pre {
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 1em;
+                border-radius: 8px;
+                overflow-x: auto;
+            }
+            
+            blockquote {
+                border-left: 4px solid rgba(255, 255, 255, 0.3);
+                padding-left: 1em;
+                margin: 1em 0;
+                color: rgba(255, 255, 255, 0.8);
+            }
+            
+            ul, ol {
+                padding-left: 1.5em;
+                margin: 0.5em 0;
+            }
+            
+            li {
+                margin: 0.25em 0;
+            }          
+        }
+        .card-footer {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
+            line-height: 1.4;
+            display: flex;
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+        }
+        .card-button {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .card-button:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        .card-shadow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 24px;
+            z-index: -1;
+            filter: blur(20px);
+            opacity: 0.6;
+            transform: translateY(10px) scale(0.95);
+        }
+        /* 新增底部文本样式 */
+        .footer-text {
+            position: fixed;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            z-index: 1000;
+            font-style: italic;
+            text-align: center; /* 新增：文本居中对齐 */
+            display: flex;      /* 新增：使用flex布局 */
+            flex-direction: column; /* 新增：垂直排列 */
+            align-items: center;   /* 新增：水平居中 */
+            justify-content: center; /* 新增：垂直居中 */
+        }      
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+</head>
+<body>
+    <div class="card-container" id="cardContainer"></div>
+    <div class="footer-text">
+        2025-03-11<br>
+        by n8n & DeepSeek & Feishu
+    </div>
+
+    <script>
+        const cardContainer = document.getElementById('cardContainer');
+        let cards = [];
+        let isDragging = false;
+        let startY = 0;
+        let startX = 0;  // Added startX variable
+        let currentY = 0;
+        let currentX = 0;  // Added currentX variable
+        let activeCard = null;
+        let cardCounter = 0;  // Track which card we're displaying
+
+        // Card data with different themes
+        const cardData = [{
+    title: "AI摘要",
+    subtitle: "MCP 终极指南",
+    description: "文章讨论了由Anthropic主导发布的MCP（Model Context Protocol，模型上下文协议），旨在解决AI模型与现有系统集成缓慢的问题。MCP作为一个开放的、通用的协议标准，使AI模型能够与不同的API和数据源无缝交互。",
+    Url: "https://guangzhengli.com/blog/zh/model-context-protocol/#top",
+    color: "#1A2E3C",
+    iconColor: "#6F8FA7"
+},{
+    title: "AI摘要",
+    subtitle: "What is Model Context Protocol (MCP)? How it simplifies AI integrations compared to APIs | AI Agents That Work",
+    description: "Model Context Protocol（MCP）是一种新型开放协议，旨在为大型语言模型（LLM）提供标准化的上下文信息。MCP类似于AI代理的USB-C端口，为AI系统连接各种工具和数据源提供了统一的方法。与传统的API相比，MCP通过单一标准化集成、实时双向通信和动态发现等特性，大大简化了AI集成的复杂性。",
+    Url: "https://norahsakal.com/blog/mcp-vs-api-model-context-protocol-explained/#:~:text=If%20your%20use%20case%20demands,for%20highly%20controlled%2C%20deterministic%20applications.",
+    color: "#2C3E0C",
+    iconColor: "#8aa892"
+},{
+    title: "AI摘要",
+    subtitle: "Building an AI Agent with MCP-Model Context Protocol(Anthropic's) and LangChain Adapters - DEV Community",
+    description: "本文详细介绍了如何使用Anthropic的Model Context Protocol (MCP)和LangChain适配器构建一个多功能AI代理。该AI代理结合了三个专业MCP服务器，实现了故事编写、图像生成和谷歌搜索的功能。文章首先阐述了每个MCP服务器的实现细节，包括故事编写、图像生成和谷歌搜索的具体代码示例。然后，通过MultiServerMCPClient将这些服务器连接起来，形成一个连贯的工作流。文章进一步探讨了如何通过添加文本转语音服务器、故事编辑器和翻译服务器来增强AI代理的功能，使其能够朗读故事、编辑生成的文本并进行多语言翻译。最后，文章提出了构建一个网络界面以方便用户与AI代理交互的想法。本文展示了MCP和LangChain的强大功能，为开发者提供了一个灵活且强大的框架，用于构建复杂的AI应用。无论是内容生成系统、研究助理还是其他创新应用，MCP和LangChain都为实现这些想法提供了可能。",
+    Url: "https://dev.to/sreeni5018/building-an-ai-agent-with-mcp-model-context-protocolanthropics-and-langchain-adapters-25dc",
+    color: "#3C1A2E",
+    iconColor: "#8A6F7B"
+},{
+    title: "AI摘要",
+    subtitle: "Model Context Protocol (MCP) Server Development Guide: Building Powerful Tools for LLMs",
+    description: "本文是一份关于Model Context Protocol（MCP）服务器开发指南，旨在为大型语言模型（LLMs）构建强大的工具。文章首先介绍了MCP的概念和重要性，指出其在提升LLMs性能和效率方面的潜力。文章详细阐述了MCP服务器的开发流程，包括环境设置、依赖安装、核心组件（如调度器、序列器、存储器）的实现，以及如何将这些组件整合到一个功能完备的MCP服务器中。指南还提供了丰富的代码示例和最佳实践，帮助开发者快速上手。此外，文章讨论了MCP服务器在实际应用中的挑战和解决方案，如处理大规模数据、优化性能和确保稳定性。它强调了MCP服务器在各种应用场景中的潜力，包括但不限于聊天机器人、内容生成和数据分析。本指南不仅为开发者提供了技术上的指导，还强调了MCP服务器在推动LLMs发展和应用中的重要作用。它鼓励开发者探索和创新，以构建更高效、智能的LLMs工具。",
+    Url: "https://raw.githubusercontent.com/cyanheads/model-context-protocol-resources/refs/heads/main/guides/mcp-server-development-guide.md",
+    color: "#1A3C2E",
+    iconColor: "#6F8A7B"
+},{
+    title: "AI摘要",
+    subtitle: "AI编程萌新必看：从0到1写一个 MCP服务，附优秀MCP导航站，复制粘贴就能用",
+    description: "本文是一篇面向AI编程萌新的文章，旨在通过实践的方式，帮助读者从零开始编写一个MCP（Model Context Protocol）服务。文章首先推荐了一些常用的AI编程工具，包括付费的Cursor、Windsurf和免费的Trae等，并介绍了如何使用Visual Studio Code and Cline进行自定义配置。文章的重点是手把手教读者创建第一个MCP服务器。具体步骤包括打开系统终端或安装第三方工具（如Warp），创建MCP项目文件夹，在文件夹中创建Python文件并安装MCP的Python SDK。然后，文章提供了一个简单的Python代码示例，用于创建一个提供加法功能的MCP服务器。此外，文章还介绍了如何使用Cursor和Cline等工具配置和使用MCP服务器，并提供了一些优秀的MCP导航站和市场，如Smithery.ai、MCP.so、MCPs.live和Pulse MCP等，方便读者查找和使用各种MCP服务。文章最后指出，MCP是未来让AI Agent变得更简单易用的关键，趋势已非常明显，值得持续跟进学习。同时，文章也提醒读者注意MCP导航和市场的质量参差不齐，需要谨慎甄别。",
+    Url: "https://mp.weixin.qq.com/s/y4f-TiK7kOe_vK2sh7It8A",
+    color: "#2E1A3C",
+    iconColor: "#7B6F8A"
+},{
+    title: "AI摘要",
+    subtitle: "MCP协议详解：复刻Manus全靠它，为什么说MCP是Agent进化的一大步？",
+    description: "文章深入解析了MCP（Model Context Protocol）协议，强调其在AI智能体发展中的里程碑意义。MCP协议由Anthropic于去年11月首次提出，旨在为AI模型提供标准化的上下文信息传递方式，实现与外部数据及工具的深度集成。其核心优势包括开发简化、灵活性、实时响应、安全性和可扩展性。\n\nMCP协议通过标准化的通用接口，使AI助手能无缝连接各种外部工具，无需为每种连接单独编写代码，极大提高了配置效率。例如，1万个AI助手和1万个外部工具在MCP模式下仅需2万次配置，而传统编码方式则需1亿次。\n\n文章还详细阐述了MCP与传统API的区别，包括单一协议、动态发现和双向通信等特点。并介绍了MCP的客户端-服务器架构模式，以及在行程规划助手、高级IDE和复杂数据分析等领域的潜在应用场景。\n\n最后，文章提到MCP用例的爆发，鼓励开发者构建商业化MCP服务器，并分享了多个开源项目案例，展示了MCP在提升开发效率和实现智能功能方面的广阔前景。",
+    Url: "https://mp.weixin.qq.com/s/msgNGCH_ptirK42xqsGWsA",
+    color: "#3C2E1A",
+    iconColor: "#8A7B6F"
+},{
+    title: "AI摘要",
+    subtitle: "Why MCP Won - Latent.Space",
+    description: "文章深入探讨了Model Context Protocol（MCP）迅速崛起并确立为AI领域新标准的原因。MCP于2024年11月推出，凭借其\"AI原生\"特性、强大的支持者Anthropic以及对现有成功协议LSP的继承，迅速获得了社区的广泛支持。\n\nMCP的成功可归因于以下几点：\n1. **AI原生特性**：MCP基于Anthropic的SWE-Bench结果和《构建有效代理》的理念设计，能够更好地满足AI应用的需求。\n2. **强大支持者**：Anthropic作为MCP的支持者，拥有强大的开发者社区和丰富的工具资源，为MCP的发展提供了有力支持。\n3. **继承成功协议**：MCP基于现有的成功协议LSP（Language Server Protocol）设计，避免了重新发明轮子的风险。\n4. **完整生态系统**：MCP提供了包括客户端、服务器、工具和SDK在内的完整生态系统，方便开发者使用和集成。\n5. **持续更新**：MCP自推出以来，持续进行更新和优化，保持其在AI领域的领先地位。\n\n文章还分析了MCP与其他标准如OpenAPI、LangChain等的比较，并强调了MCP在AI应用中的潜在价值和应用前景。",
+    Url: "https://www.latent.space/p/why-mcp-won",
+    color: "#1A3C3C",
+    iconColor: "#6F8A8A"
+},
+        ];
+
+        // Initialize the first set of cards
+        function initCards() {
+            cardCounter = 0;
+            for (let i = 0; i < 100; i++) {
+                createCard(i);
+                cardCounter++;
+            }
+            positionCards();
+        }
+
+        // Create a single card
+        function createCard(index) {
+            const cardIndex = index % cardData.length;
+            const cardInfo = cardData[cardIndex];
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            // 直接使用预设的颜色
+            card.style.backgroundColor = cardInfo.color;
+            card.style.zIndex = 100 - index;
+            card.style.transform = `translateY(${index * -15}px) scale(${1 - index * 0.05})`;
+            card.style.opacity = 1 - (index * 0.1);
+
+            // Store the card's data index for reference
+            card.dataset.cardIndex = cardIndex;
+
+            // Create card shadow with matching color
+            const shadow = document.createElement('div');
+            shadow.className = 'card-shadow';
+            shadow.style.backgroundColor = cardInfo.color;
+            card.appendChild(shadow);
+
+            // Header with icons
+            const header = document.createElement('div');
+            header.className = 'card-header';
+
+            const leftIcon = document.createElement('div');
+            leftIcon.className = 'card-icon';
+            leftIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>';
+
+            const rightIcon = document.createElement('div');
+            rightIcon.className = 'card-icon';
+            rightIcon.style.backgroundColor = cardInfo.iconColor;
+            rightIcon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M7 17l9-9M17 17V8h-9"/></svg>';
+
+            header.appendChild(leftIcon);
+            header.appendChild(rightIcon);
+            card.appendChild(header);
+
+            // Title and subtitle
+            const title = document.createElement('div');
+            title.className = 'card-title';
+            title.innerHTML = `${cardInfo.title}<br><span class="card-subtitle">${cardInfo.subtitle}</span>`;
+            card.appendChild(title);
+
+            // Description container (replacing image container)
+            const descriptionContainer = document.createElement('div');
+            descriptionContainer.className = 'card-description';
+            descriptionContainer.innerHTML = marked.parse(cardInfo.description); // 使用marked解析markdown
+            card.appendChild(descriptionContainer);
+
+            // Button
+            const button = document.createElement('a'); // Changed from 'button' to 'a'
+            button.className = 'card-button';
+            button.href = cardInfo.Url; // Add the URL as href
+            button.target = "_blank"; // Open in new tab
+            button.innerHTML = '<span>原文链接</span>';
+            card.appendChild(button);
+
+            // Footer text
+            const footer = document.createElement('div');
+            footer.className = 'card-footer';
+            const githubLink = document.createElement('a');
+            githubLink.href = 'https://github.com/xulei-shl/Library-AI-demos';
+            githubLink.target = '_blank';
+            githubLink.style.color = 'inherit';
+            githubLink.style.textDecoration = 'none';
+            githubLink.style.display = 'flex';
+            githubLink.style.alignItems = 'center';
+            githubLink.style.gap = '4px';
+            
+            // Add text first
+            githubLink.appendChild(document.createTextNode('@XuLei'));
+            
+            // Add GitHub icon after text
+            const githubIcon = document.createElement('div');
+            githubIcon.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                </svg>
+            `;
+            githubLink.appendChild(githubIcon);
+            footer.appendChild(githubLink);
+            card.appendChild(footer);
+            // Add event listeners for drag
+            card.addEventListener('mousedown', startDrag);
+            card.addEventListener('touchstart', startDrag, { passive: false });
+
+            cards.push(card);
+            cardContainer.appendChild(card);
+
+            return card;
+        }
+
+        // Position cards with proper stacking and scaling
+        function positionCards() {
+            cards.forEach((card, index) => {
+                card.style.zIndex = 100 - index;
+                
+                // 增加X轴随机偏移范围
+                const randomX = index === 0 ? 0 : (Math.random() * 60 - 30); // 从-20到20
+                
+                // 增加Y轴随机偏移范围
+                const baseYOffset = index * -15;
+                const randomY = index === 0 ? 0 : (Math.random() * 20 - 10); // 从-5到5
+                
+                // 增加旋转角度范围
+                const randomRotation = index === 0 ? 0 : (Math.random() * 12 - 8); // 从-4到4
+                
+                // 增加缩放随机性
+                const baseScale = 1 - index * 0.05;
+                const randomScale = Math.random() * 0.02 - 0.01; // 轻微缩放变化
+                
+                // 应用变换
+                card.style.transform = `
+                    translate(${randomX}px, ${baseYOffset + randomY}px) 
+                    rotate(${randomRotation}deg) 
+                    scale(${baseScale + randomScale})
+                `;
+                
+                // 增加透明度随机性
+                const baseOpacity = 1 - (index * 0.1);
+                const randomOpacity = Math.random() * 0.05 - 0.025; // 轻微透明度变化
+                card.style.opacity = Math.max(0, Math.min(1, baseOpacity + randomOpacity));
+            });
+        }
+
+        // Start dragging a card
+        function startDrag(e) {
+            if (cards.length === 0) return;
+
+            e.preventDefault();
+            activeCard = this;
+            isDragging = true;
+
+            // Only allow dragging the top card
+            if (activeCard !== cards[0]) {
+                isDragging = false;
+                return;
+            }
+
+            startY = e.clientY || e.touches[0].clientY;
+            startX = e.clientX || e.touches[0].clientX;
+            currentY = startY;
+            currentX = startX;  // Initialize currentX
+
+            document.addEventListener('mousemove', dragCard);
+            document.addEventListener('touchmove', dragCard, { passive: false });
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        // Drag the card
+        function dragCard(e) {
+            if (!isDragging || !activeCard) return;
+
+            e.preventDefault();
+            currentY = e.clientY || e.touches[0].clientY;
+            currentX = e.clientX || e.touches[0].clientX;
+            const deltaY = currentY - startY;
+            const deltaX = currentX - startX;
+
+            // Allow dragging in any direction
+            const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const rotation = deltaX * 0.1;  // Simple rotation based on horizontal movement
+
+            activeCard.style.transform = `translate(${deltaX}px, ${deltaY}px) rotate(${rotation}deg)`;
+            activeCard.style.opacity = 1 - Math.min(delta / 500, 0.5);
+
+            // Adjust the other cards to start moving up with staggered effect
+            cards.slice(1).forEach((card, index) => {
+                const progress = Math.min(delta / 300, 1);
+                const targetY = Math.max(index * -15 + progress * 15, 0);
+                
+                // Add random staggering effect
+                const randomX = (Math.random() * 10 - 5) * (1 - progress); // Reduce randomness as cards move up
+                const randomY = (Math.random() * 5 - 2.5) * (1 - progress);
+                const randomRotation = (Math.random() * 3 - 1.5) * (1 - progress);
+                
+                const targetScale = 1 - (index + 1 - progress) * 0.05;
+                card.style.transform = `translate(${randomX}px, ${targetY + randomY}px) rotate(${randomRotation}deg) scale(${targetScale})`;
+                card.style.opacity = 1 - ((index + 1 - progress) * 0.1);
+            });
+        }
+
+        // Update stopDrag to reset cards with staggered positions
+        function stopDrag(e) {
+            if (!isDragging || !activeCard) return;
+
+            const deltaY = currentY - startY;
+            const deltaX = currentX - startX;
+            const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (delta > 150) {  // If dragged far enough, remove the card
+                removeTopCard();
+            } else {  // Otherwise snap back
+                activeCard.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                activeCard.style.transform = `translate(0, 0) rotate(0)`;
+                activeCard.style.opacity = '1';
+                
+                // Reset other cards with staggered effect
+                cards.slice(1).forEach((card, index) => {
+                    card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+                    
+                    // Create random offsets for natural look
+                    const randomX = (Math.random() * 15 - 7.5); // Random between -7.5 and 7.5
+                    const randomY = (Math.random() * 5 - 2.5);  // Small random Y variation
+                    const randomRotation = (Math.random() * 3 - 1.5); // Random slight rotation
+                    
+                    card.style.transform = `translate(${randomX}px, ${(index + 1) * -15 + randomY}px) rotate(${randomRotation}deg) scale(${1 - (index + 1) * 0.05})`;
+                    card.style.opacity = 1 - ((index + 1) * 0.1);
+                });
+                
+                setTimeout(() => {
+                    cards.forEach(card => {
+                        card.style.transition = 'transform 0.05s ease-out, opacity 0.2s ease';
+                    });
+                }, 300);
+            }
+
+            isDragging = false;
+            activeCard = null;
+
+            document.removeEventListener('mousemove', dragCard);
+            document.removeEventListener('touchmove', dragCard);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+
+        // Modify the removeTopCard function to maintain staggered look when adding new cards
+        function removeTopCard() {
+            if (cards.length === 0) return;
+            const removedCard = cards.shift();
+            removedCard.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
+            removedCard.style.transform = `translateY(${window.innerHeight}px)`;
+            removedCard.style.opacity = '0';
+            
+            // Create a new card and add it to the bottom of the stack
+            const nextCardIndex = cardCounter % cardData.length;
+            createCard(cards.length);
+            cardCounter = (cardCounter + 1) % cardData.length;
+            
+            // Reposition all cards with staggered animation
+            positionCards();
+            
+            // Remove the old card from DOM after animation
+            setTimeout(() => {
+                removedCard.remove();
+            }, 500);
+        }
+
+        // Initialize
+        initCards();
+
+        // Window resize handler
+        window.addEventListener('resize', positionCards);
+    </script>
+</body>
+</html>
