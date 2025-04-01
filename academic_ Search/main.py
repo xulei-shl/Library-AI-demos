@@ -11,7 +11,6 @@ load_dotenv()
 def process_academic_search():
     try:
         # 步骤 1: 获取用户查询
-        user_query = "以“记忆女神图集”为代表的瓦尔堡图像学研究方法论分析"
         user_query = input("请输入您的查询问题：")
         print("\n=== 步骤 1: 问题讨论 ===\n")
 
@@ -55,8 +54,7 @@ def process_academic_search():
 
         # 步骤 3: 最终问题确认
         print("\n=== 步骤 3: 最终问题确认 ===\n")
-        final_question = "如何利用多模态大语言模型等AI技术模拟瓦尔堡“记忆女神图集”中的蒙太奇图像拼贴方法？"
-        # final_question = input("请输入您的最终问题：")
+        final_question = input("请输入您的最终问题：")
         # 读取初步分析结果
         with open(initial_analysis_path, 'r', encoding='utf-8') as f:
             initial_analysis = f.read()      
@@ -92,6 +90,7 @@ def process_academic_search():
 
 def process_retrieval_strategy():
     try:
+        # 第二阶段第一步 检索词生成
         # 读取选题报告结果
         topic_report_path = os.path.join('data', 'topic_report_result.md')
         with open(topic_report_path, 'r', encoding='utf-8') as f:
@@ -111,6 +110,12 @@ def process_retrieval_strategy():
             f.write(retrieval_strategy)
             
         return retrieval_strategy
+
+        # 第二阶段第二步 初检索
+        user_query = ""
+        # user_query = input("请输入您的检索关键词：")
+        print("\n=== 步骤 2: 文献检索 ===\n")
+
         
     except Exception as e:
         print(f"\n文献检索策略处理过程中出现错误: {str(e)}")
