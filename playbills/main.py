@@ -28,22 +28,24 @@ logger = setup_logger(r'E:\scripts\jiemudan\logs')
 # 1 调用 OCR 处理函数
 # process_images(image_folder, ocr_url, access_token, logger)
 
-# # 2 演出事件元数据提取
+# 2 演出事件元数据提取
 # festivals_metadata(image_folder, logger)
 
 # # 3 演出作品提取
 # # 3.1 演出作品预处理
 # pre_shows_list(image_folder, logger)
 
-# # # 3.2 演出事件与作品整合
+# # 3.2 演出事件与作品整合
 # structured_shows_list(image_folder, logger)
 
 
 # # 4 演职人员提取
-# process_casts_list(image_folder, logger)
+# # 执行姓名优化
+# # process_casts_list(image_folder, logger)
+# process_casts_list(image_folder, logger, optimize_names=False)
 
-# # 5 演职人员castDescription结构化
-# optimize_casts(image_folder, logger)
+# 5 演职人员eventCast结构化
+optimize_casts(image_folder, logger)
 
 # # 6 演出事件类型判断
 # process_performing_events(image_folder, logger)

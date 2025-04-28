@@ -37,11 +37,12 @@ def extract_metadata(md_file_path, logger, system_prompt, user_prompt):
 
         # base_url = os.getenv("DeepSeek_API_URL")
         # api_key = os.getenv("DeepSeek_API_KEY")
-        model_name = "deepseek-chat"
+        model_name = "doubao-1-5-lite-32k-250115"
+        # model_name = "doubao-1-5-pro-32k-250115"
     elif token_count <= token_threshold_128k:
-        base_url = os.getenv("Doubao_API_URL")
-        api_key = os.getenv("Doubao_API_KEY")
-        model_name = "ep-20240814153435-rmdkh"
+        base_url = os.getenv("OneAPI_API_URL")
+        api_key = os.getenv("OneAPI_API_KEY")
+        model_name = "doubao-1-5-pro-256k-250115"
     else:
         print(f"-----------------------------------------------")
         print("文本的token数量超过了128k模型的限制")
@@ -73,14 +74,14 @@ def extract_metadata(md_file_path, logger, system_prompt, user_prompt):
         result_json = json.loads(json_content)
         
         # 处理单个演出事件的情况
-        if isinstance(result_json, dict) and "performingEvent" in result_json:
-            result_json["performingEvent"]["metadata"] = metadata
+        if isinstance(result_json, dict) and "PerformanceEvent" in result_json:
+            result_json["PerformanceEvent"]["metadata"] = metadata
             result_json = [result_json]  # 将单个事件包装成列表
         # 处理多个演出事件的情况
         elif isinstance(result_json, list):
             for event in result_json:
-                if "performingEvent" in event:
-                    event["performingEvent"]["metadata"] = metadata
+                if "PerformanceEvent" in event:
+                    event["PerformanceEvent"]["metadata"] = metadata
         else:
             raise ValueError("Unexpected JSON structure")
         

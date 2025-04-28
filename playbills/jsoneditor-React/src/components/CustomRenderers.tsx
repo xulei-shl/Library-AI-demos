@@ -62,8 +62,8 @@ export const CustomTextAreaControl = withJsonFormsControlProps((props: any) => {
     );
   });
   
-  // 修改 PerformanceWorksRenderer
-  export const PerformanceWorksRenderer = withJsonFormsArrayLayoutProps((props: any) => {
+  // 修改 performanceWorkRenderer
+  export const performanceWorkRenderer = withJsonFormsArrayLayoutProps((props: any) => {
     return (
       <Box>
         <MaterialTableControl
@@ -146,8 +146,8 @@ export const CustomTextAreaControl = withJsonFormsControlProps((props: any) => {
     );
   });
   
-  // 修改 CastDescriptionRenderer
-  export const CastDescriptionRenderer = withJsonFormsLayoutProps((props: any) => {
+  // 修改 eventCastRenderer
+  export const eventCastRenderer = withJsonFormsLayoutProps((props: any) => {
     const { data, handleChange, path } = props;
     return (
       <div>

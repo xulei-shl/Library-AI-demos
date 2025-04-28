@@ -34,15 +34,11 @@ def optimize_shows_list(result, logger, prompt_key):
     if token_count <= token_threshold_32k:
         base_url = os.getenv("OneAPI_API_URL")
         api_key = os.getenv("OneAPI_API_KEY")
-
-        # base_url = os.getenv("DeepSeek_API_URL")
-        # api_key = os.getenv("DeepSeek_API_KEY")
-
-        model_name = "deepseek-chat"
+        model_name = "doubao-1-5-pro-32k-250115"
     elif token_count <= token_threshold_128k:
-        base_url = os.getenv("Doubao_API_URL")
-        api_key = os.getenv("Doubao_API_KEY")
-        model_name = "ep-20240814153435-rmdkh"
+        base_url = os.getenv("OneAPI_API_URL")
+        api_key = os.getenv("OneAPI_API_KEY")
+        model_name = "doubao-1-5-pro-256k-250115"
     else:
         print(f"\n-----------------------------------------------\n")
         print("文本的token数量超过了128k模型的限制")

@@ -6,8 +6,8 @@ import { openDB } from 'idb';
 import { 
   PerformingTroupesRenderer, 
   PerformanceCastsRenderer,
-  PerformanceWorksRenderer,
-  CastDescriptionRenderer,
+  performanceWorkRenderer,
+  eventCastRenderer,
   CustomTextAreaControl
 } from './CustomRenderers';
 import { Button, Box, TextField, Typography, Container, Grid, Paper, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
@@ -22,13 +22,13 @@ interface ExcelRow {
 }
 
 interface JsonData {
-  performingEvents?: Array<{
+  PerformanceEvents?: Array<{
     name: string;
     description?: string;
     sectionsOrActs: string;
     createdAt?: string;
     updatedAt?: string;
-    castDescription?: {
+    eventCast?: {
       description: string;
       performanceResponsibilities: Array<{
         performerName: string;
@@ -106,9 +106,9 @@ const generateSchema = (data: any): any => {
 const customRenderers = [
   ...materialRenderers,
   { tester: (schema) => schema.type === 'array' && schema.items.properties?.name && schema.items.properties?.role ? 10 : -1, renderer: PerformingTroupesRenderer },
-  { tester: (schema) => schema.type === 'array' && schema.items.properties?.name && schema.items.properties?.sectionsOrActs ? 10 : -1, renderer: PerformanceWorksRenderer },
+  { tester: (schema) => schema.type === 'array' && schema.items.properties?.name && schema.items.properties?.sectionsOrActs ? 10 : -1, renderer: performanceWorkRenderer },
   { tester: (schema) => schema.type === 'array' && schema.items.properties?.name && schema.items.properties?.role && !schema.items.properties?.description ? 10 : -1, renderer: PerformanceCastsRenderer },
-  { tester: (schema) => schema.type === 'object' && schema.properties?.description && schema.properties?.performanceResponsibilities ? 10 : -1, renderer: CastDescriptionRenderer },
+  { tester: (schema) => schema.type === 'object' && schema.properties?.description && schema.properties?.performanceResponsibilities ? 10 : -1, renderer: eventCastRenderer },
   { 
     tester: (schema, uischema) => 
       uischema.type === 'Control' && 
@@ -183,7 +183,7 @@ const ExcelJsonEditor: React.FC = () => {
       let parsedJson = JSON.parse(rawJsonString);
       console.log('Parsed JSON:', parsedJson);
 
-      let processedData: any = { performingEvents: [] };
+      let processedData: any = { PerformanceEvents: [] };
 
       const processEvent = (event: any) => {
         const processedEvent: any = {
@@ -205,19 +205,19 @@ const ExcelJsonEditor: React.FC = () => {
 
       if (Array.isArray(parsedJson)) {
         parsedJson.forEach(item => {
-          if (item.performingEvent) {
-            processedData.performingEvents.push(processEvent(item.performingEvent));
+          if (item.PerformanceEvent) {
+            processedData.PerformanceEvents.push(processEvent(item.PerformanceEvent));
           } else {
-            processedData.performingEvents.push(processEvent(item));
+            processedData.PerformanceEvents.push(processEvent(item));
           }
         });
       } else if (typeof parsedJson === 'object') {
-        if (parsedJson.performingEvent) {
-          processedData.performingEvents.push(processEvent(parsedJson.performingEvent));
-        } else if (parsedJson.performingEvents) {
-          processedData.performingEvents = parsedJson.performingEvents.map(processEvent);
+        if (parsedJson.PerformanceEvent) {
+          processedData.PerformanceEvents.push(processEvent(parsedJson.PerformanceEvent));
+        } else if (parsedJson.PerformanceEvents) {
+          processedData.PerformanceEvents = parsedJson.PerformanceEvents.map(processEvent);
         } else {
-          processedData.performingEvents.push(processEvent(parsedJson));
+          processedData.PerformanceEvents.push(processEvent(parsedJson));
         }
       }
 
@@ -286,15 +286,15 @@ const ExcelJsonEditor: React.FC = () => {
           let processedRow = { ...row };
           try {
             const jsonContent = JSON.parse(row[jsonColumnName] || '{}');
-            if (jsonContent.performingEvents) {
-              jsonContent.performingEvents = jsonContent.performingEvents.map((event: any) => ({
+            if (jsonContent.PerformanceEvents) {
+              jsonContent.PerformanceEvents = jsonContent.PerformanceEvents.map((event: any) => ({
                 ...event,
                 createdAt: now,
                 updatedAt: now
               }));
-            } else if (jsonContent.performingEvent) {
-              jsonContent.performingEvent = {
-                ...jsonContent.performingEvent,
+            } else if (jsonContent.PerformanceEvent) {
+              jsonContent.PerformanceEvent = {
+                ...jsonContent.PerformanceEvent,
                 createdAt: now,
                 updatedAt: now
               };
@@ -344,9 +344,9 @@ const ExcelJsonEditor: React.FC = () => {
     const now = new Date().toISOString();
 
     let dataToSave;
-    if (jsonData.performingEvents && jsonData.performingEvents.length > 0) {
+    if (jsonData.PerformanceEvents && jsonData.PerformanceEvents.length > 0) {
       dataToSave = {
-        performingEvents: jsonData.performingEvents.map(event => ({
+        PerformanceEvents: jsonData.PerformanceEvents.map(event => ({
           ...event,
           updatedAt: now
         }))

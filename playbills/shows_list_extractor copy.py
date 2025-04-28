@@ -12,6 +12,7 @@ import re
 from tools.llm_json_extractor import extract_json_content
 
 # 已合并到 shows_list_extractor.py
+# 新版本去掉对章节/半场，sections_or_acts的判断逻辑
 
 
 load_dotenv()
@@ -101,7 +102,35 @@ def get_shows(md_file_path, logger, performing_event):
     print(f"节目单信息添加metadata的结果: {json.dumps(result_json, ensure_ascii=False, indent=4)}")
     return result_json, token_count, output_token_count
 
+#旧的处理逻辑舍弃。新逻辑 process_single_event，对每个节目进行循环调用判断其所属的章节演出
+def process_event(event, md_file_path, logger):
+    result_json, token_count, output_token_count = get_shows(md_file_path, logger, event)
+    
+    if result_json:
+        original_metadata = event['PerformanceEvent'].get('metadata', {})
+        
+        if 'sectionsOrActs' in result_json:
+            event['PerformanceEvent']['sectionsOrActs'] = {
+                'content': result_json['sectionsOrActs'],
+                'metadata': result_json.get('metadata', {})
+            }
+            print("更新了sectionsOrActs")
+        elif 'performanceWork' in result_json:
+            event['PerformanceEvent']['performanceWork'] = {
+                'content': result_json['performanceWork'],
+                'metadata': result_json.get('metadata', {})
+            }
+            print("更新了performanceWork")
+        
+        event['PerformanceEvent']['metadata'] = original_metadata
+
+    print(f"事件处理完成，输入token: {token_count}, 输出token: {output_token_count}")
+    return token_count, output_token_count
+
 def process_single_event(event, shows_list, md_file_path, logger):
+    with open(md_file_path, "r", encoding="utf-8") as file:
+        md_content = file.read()
+
     try:
         shows = json.loads(shows_list)
     except json.JSONDecodeError:
@@ -109,22 +138,59 @@ def process_single_event(event, shows_list, md_file_path, logger):
         print(f"错误: 无法解析演出作品: {shows_list}")
         return None, 0, 0
 
+    total_input_tokens = 0
+    total_output_tokens = 0
+
     logger.info(f"总共有 {len(shows['performanceWork'])} 个节目需要处理")
     print(f"总共有 {len(shows['performanceWork'])} 个节目需要处理")
 
-    # 直接将演出作品添加到事件中
+    processed_performances = []
+
+    for index, show in enumerate(shows['performanceWork'], 1):
+        show_name = show['name']
+        logger.info(f"处理第 {index} 个节目: {show_name}")
+        print(f"处理第 {index} 个节目: {show_name}")
+        
+        combined_prompt = f"### 集合演出信息：\n{json.dumps(event, ensure_ascii=False)}\n\n### 演出节目名：\n{show_name}\n\n### 原始的OCR文本：\n{md_content}"
+        
+        optimized_result, model_name, input_tokens, output_tokens = shows_list_optimizer.optimize_shows_list(
+            combined_prompt, logger, prompt_key="single_shows_to_festivals_user_prompt"
+        )
+        
+        total_input_tokens += input_tokens
+        total_output_tokens += output_tokens
+
+        json_match = re.search(r'\{.*\}', optimized_result, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(0)
+            try:
+                result_json = json.loads(json_str)
+                sections_or_acts = result_json.get('sectionsOrActs')
+                show['sectionsOrActs'] = sections_or_acts
+                processed_performances.append(show)
+            except json.JSONDecodeError:
+                logger.warning(f"无法解析节目 '{show_name}' 的返回结果")
+                print(f"警告: 无法解析节目 '{show_name}' 的返回结果")
+                show['sectionsOrActs'] = None
+                processed_performances.append(show)
+        else:
+            logger.warning(f"无法在返回结果中找到JSON格式的数据，节目: '{show_name}'")
+            print(f"警告: 无法在返回结果中找到JSON格式的数据，节目: '{show_name}'")
+            show['sectionsOrActs'] = None
+            processed_performances.append(show)
+
     event['PerformanceEvent']['performanceWork'] = {
-        'content': shows['performanceWork'],
+        'content': processed_performances,
         'metadata': {
-            "model_name": "direct_merge",
+            "model_name": model_name,
             "timestamp": datetime.now().isoformat()
         }
     }
 
-    logger.info(f"单事件处理完成。直接合并演出作品到事件中")
-    print(f"单事件处理完成。直接合并演出作品到事件中")
+    logger.info(f"单事件处理完成。总输入tokens: {total_input_tokens}, 总输出tokens: {total_output_tokens}")
+    print(f"单事件处理完成。总输入tokens: {total_input_tokens}, 总输出tokens: {total_output_tokens}")
 
-    return [event], 0, 0  # 因为没有调用 LLM，所以 token 计数为 0
+    return [event], total_input_tokens, total_output_tokens
 
 def process_multi_events(events, shows_list, md_file_path, logger):
     with open(md_file_path, "r", encoding="utf-8") as file:
@@ -144,21 +210,15 @@ def process_multi_events(events, shows_list, md_file_path, logger):
     print(f"总共有 {len(shows['performanceWork'])} 个节目需要处理")
 
     for index, show in enumerate(shows['performanceWork'], 1):
-        show_name = show['title']
+        show_name = show['name']
         logger.info(f"处理第 {index} 个节目: {show_name}")
         print(f"处理第 {index} 个节目: {show_name}")
         
-        combined_prompt = f"### PerformanceEvent：\n{json.dumps(events, ensure_ascii=False)}\n\n### performanceWorkTitle：\n{show_name}\n\n### originalOcrText：\n{md_content}"
-        
-        # 添加日志：记录模型输入
-        logger.info(f"第一次调用的输入提示(前200字符)：{combined_prompt[:200]}...")
+        combined_prompt = f"### 集合演出信息：\n{json.dumps(events, ensure_ascii=False)}\n\n### 演出节目名：\n{show_name}\n\n### 原始的OCR文本：\n{md_content}"
         
         optimized_result, model_name, input_tokens, output_tokens = shows_list_optimizer.optimize_shows_list(
             combined_prompt, logger, prompt_key="shows_to_festivals_user_prompt"
         )
-        
-        # 添加日志：记录第一次调用的结果
-        logger.info(f"第一次调用的返回结果：{optimized_result}")
         
         total_input_tokens += input_tokens
         total_output_tokens += output_tokens
@@ -169,28 +229,22 @@ def process_multi_events(events, shows_list, md_file_path, logger):
             md_content_2 = file.read()
 
         # 将第一次调用的结果添加到新的 combined_prompt 中
-        combined_prompt_2 = f"## PerformanceEvent：\n{json.dumps(events, ensure_ascii=False)}\n\n## performanceWorkTitle：\n{show_name}\n\n## originalOcrText：\n{md_content_2}\n\n## previousAssignment：\n{optimized_result}"
-        
-        # 添加日志：记录第二次调用的输入
-        logger.info(f"第二次调用的输入提示(前200字符)：{combined_prompt_2[:200]}...")
+        combined_prompt_2 = f"### 集合演出信息：\n{json.dumps(events, ensure_ascii=False)}\n\n### 演出节目名：\n{show_name}\n\n### 原始的OCR文本：\n{md_content_2}\n\n### 第一次判断结果：\n{optimized_result}"
         
         optimized_result_2, model_name_2, input_tokens_2, output_tokens_2 = shows_list_optimizer.optimize_shows_list(
             combined_prompt_2, logger, prompt_key="shows_to_festivals_judge_user_prompt"
         )
         
-        # 添加日志：记录第二次调用的原始结果
-        logger.info(f"第二次调用的返回结果：{optimized_result_2}")
+        total_input_tokens += input_tokens_2
+        total_output_tokens += output_tokens_2
 
         json_match = re.search(r'\{.*\}', optimized_result_2, re.DOTALL)
         if json_match:
             json_str = json_match.group(0)
             try:
                 result_json = json.loads(json_str)
-                # 添加日志：记录JSON解析结果
-                logger.info(f"JSON解析结果：{json.dumps(result_json, ensure_ascii=False)}")
-                matched_event_name = result_json.get('parentEventName')
-                # 添加日志：记录提取的事件名称
-                logger.info(f"提取的事件名称：{matched_event_name}")
+                matched_event_name = result_json.get('PerformanceEvent')
+                sections_or_acts = result_json.get('sectionsOrActs')
             except json.JSONDecodeError:
                 logger.warning(f"无法解析节目 '{show_name}' 的返回结果")
                 print(f"警告: 无法解析节目 '{show_name}' 的返回结果")
@@ -207,6 +261,8 @@ def process_multi_events(events, shows_list, md_file_path, logger):
                 if event['PerformanceEvent']['name'] == matched_event_name:
                     if 'performanceWork' not in event['PerformanceEvent']:
                         event['PerformanceEvent']['performanceWork'] = []
+                    
+                    show['sectionsOrActs'] = sections_or_acts
                     
                     event['PerformanceEvent']['performanceWork'].append(show)
                     logger.info(f"已将节目 '{show_name}' 添加到事件 '{matched_event_name}'")

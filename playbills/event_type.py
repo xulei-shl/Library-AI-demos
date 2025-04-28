@@ -76,19 +76,19 @@ def process_performing_events(image_folder, logger):
         total_output_tokens = 0
 
         for idx, event in enumerate(performing_events):
-            logger.info(f"处理事件: {event['performingEvent']['name']}")
-            print(f"处理事件: {event['performingEvent']['name']}")
+            logger.info(f"处理事件: {event['PerformanceEvent']['name']}")
+            print(f"处理事件: {event['PerformanceEvent']['name']}")
             
-            event_type, input_tokens, output_tokens = process_event(event['performingEvent'], logger)
+            event_type, input_tokens, output_tokens = process_event(event['PerformanceEvent'], logger)
             total_input_tokens += input_tokens
             total_output_tokens += output_tokens
 
             if event_type and idx < len(optimized_events):
-            # 更新 optimized_events 中的 performingEvent
-                if 'performingEvent' in optimized_events[idx]:
-                    optimized_events[idx]['performingEvent']['eventType'] = event_type['eventType']
+            # 更新 optimized_events 中的 PerformanceEvent
+                if 'PerformanceEvent' in optimized_events[idx]:
+                    optimized_events[idx]['PerformanceEvent']['eventType'] = event_type['eventType']
                 else:
-                    optimized_events[idx]['performingEvent'] = {'eventType': event_type['eventType']}        
+                    optimized_events[idx]['PerformanceEvent'] = {'eventType': event_type['eventType']}        
 
         df.loc[i, '输入token-总5'] = df.loc[i, '输入token-总4'] + total_input_tokens
         df.loc[i, '输出token-总5'] = df.loc[i, '输出token-总4'] + total_output_tokens

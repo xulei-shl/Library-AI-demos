@@ -20,7 +20,7 @@ def process_cast_description(cast_description, logger):
     except json.JSONDecodeError:
         print(f"\nJSON解析失败: {json_content}")
         logger.info(f"JSON解析失败: {json_content}")
-        result_json = {"castDescription": {"description": cast_description}}
+        result_json = {"performanceCast": {"description": cast_description}}
 
     return result_json, input_tokens, output_tokens
 
@@ -32,20 +32,20 @@ def process_performance_works(performance_works, logger):
     logger.info(f"开始结构化演职人员描述...\n")
 
     for work in performance_works['content']:
-        if 'castDescription' in work:
-            if work['castDescription'] is None:
-                work['castDescription'] = []
+        if 'performanceCast' in work:
+            if work['performanceCast'] is None:
+                work['performanceCast'] = []
             else:
-                result, input_tokens, output_tokens = process_cast_description(work['castDescription'], logger)
-                if isinstance(work['castDescription'], dict) and 'description' in work['castDescription']:
-                    work['castDescription'] = {
-                        'description': work['castDescription']['description'],
-                        'performanceResponsibilities': result.get('performanceResponsibilities', [])
+                result, input_tokens, output_tokens = process_cast_description(work['performanceCast'], logger)
+                if isinstance(work['performanceCast'], dict) and 'description' in work['performanceCast']:
+                    work['performanceCast'] = {
+                        'description': work['performanceCast']['description'],
+                        'performanceResponsibility': result.get('performanceResponsibility', [])
                     }
-                elif isinstance(work['castDescription'], str):
-                    work['castDescription'] = {
-                        'description': work['castDescription'],
-                        'performanceResponsibilities': result.get('performanceResponsibilities', [])
+                elif isinstance(work['performanceCast'], str):
+                    work['performanceCast'] = {
+                        'description': work['performanceCast'],
+                        'performanceResponsibility': result.get('performanceResponsibility', [])
                     }
                 total_input_tokens += input_tokens
                 total_output_tokens += output_tokens
@@ -78,16 +78,16 @@ def optimize_casts(image_folder, logger):
 
             if isinstance(performing_events, list):
                 for event in performing_events:
-                    if 'performanceWorks' in event['performingEvent']:
-                        event['performingEvent']['performanceWorks'], input_tokens, output_tokens = process_performance_works(
-                            event['performingEvent']['performanceWorks'], logger
+                    if 'performanceWork' in event['PerformanceEvent']:
+                        event['PerformanceEvent']['performanceWork'], input_tokens, output_tokens = process_performance_works(
+                            event['PerformanceEvent']['performanceWork'], logger
                         )
                         total_input_tokens += input_tokens
                         total_output_tokens += output_tokens
             else:
-                if 'performanceWorks' in performing_events['performingEvent']:
-                    performing_events['performingEvent']['performanceWorks'], input_tokens, output_tokens = process_performance_works(
-                        performing_events['performingEvent']['performanceWorks'], logger
+                if 'performanceWork' in performing_events['PerformanceEvent']:
+                    performing_events['PerformanceEvent']['performanceWork'], input_tokens, output_tokens = process_performance_works(
+                        performing_events['PerformanceEvent']['performanceWork'], logger
                     )
                     total_input_tokens += input_tokens
                     total_output_tokens += output_tokens

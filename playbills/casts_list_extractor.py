@@ -26,26 +26,27 @@ def optimize_name(name, logger):
 def split_casts(performing_events):
     if isinstance(performing_events, list):
         for event in performing_events:
-            split_casts_for_event(event['performingEvent'])
+            split_casts_for_event(event['PerformanceEvent'])
     else:
-        split_casts_for_event(performing_events['performingEvent'])
+        split_casts_for_event(performing_events['PerformanceEvent'])
     return performing_events
 
 def split_casts_for_event(event):
-    if 'performanceCasts' in event and 'content' in event['performanceCasts']:
+    if 'eventCast' in event and 'content' in event['eventCast']:
         new_casts = []
-        for cast in event['performanceCasts']['content']:
+        for cast in event['eventCast']['content']:
             names = cast['name'].split(';')
             for name in names:
                 new_cast = {
+                    'type': 'Person',
                     'name': name.strip(),
-                    'role': cast['role'],
+                    'roleName': cast['roleName'],
                     'description': cast['description']
                 }
                 new_casts.append(new_cast)
-        event['performanceCasts']['content'] = new_casts
+        event['eventCast']['content'] = new_casts
 
-def process_casts_list(image_folder, logger):
+def process_casts_list(image_folder, logger, optimize_names=True):
     print(f"开始处理文件夹: {image_folder}")
     output_folder = os.path.join(image_folder, 'output')
     current_date = datetime.now().strftime('%Y%m%d')
@@ -82,27 +83,32 @@ def process_casts_list(image_folder, logger):
             
             try:
                 result_json = json.loads(json_content)
-                processed_casts = result_json.get("performanceCasts", [])
+                processed_casts = result_json.get("eventCast", [])
 
                 # 创建变量来累加 tokens
                 total_input_tokens = input_tokens
                 total_output_tokens = output_tokens
                 
-                # 优化每个演员的名字
-                print(f"\n开始优化演职人员名字...\n")
-                logger.info(f"开始优化演职人员名字...\n")
-                for cast in processed_casts:
-                    optimized_name, name_input_tokens, name_output_tokens = optimize_name(cast['name'], logger)
-                    cast['name'] = optimized_name
-
-                    total_input_tokens += name_input_tokens
-                    total_output_tokens += name_output_tokens                    
+                # 根据参数决定是否执行名字优化
+                if optimize_names:
+                    # 优化每个演员的名字
+                    print(f"\n开始优化演职人员名字...\n")
+                    logger.info(f"开始优化演职人员名字...\n")
+                    for cast in processed_casts:
+                        optimized_name, name_input_tokens, name_output_tokens = optimize_name(cast['name'], logger)
+                        cast['name'] = optimized_name
+                        total_input_tokens += name_input_tokens
+                        total_output_tokens += name_output_tokens
+                else:
+                    print("\n跳过名字优化步骤\n")
+                    logger.info("跳过名字优化步骤")
                 
                 result_json = {
                     "content": processed_casts,
                     "metadata": {
                         "model_name": model_name,
-                        "timestamp": datetime.now().isoformat()
+                        "timestamp": datetime.now().isoformat(),
+                        "name_optimized": optimize_names
                     }
                 }
             except json.JSONDecodeError:
@@ -120,9 +126,9 @@ def process_casts_list(image_folder, logger):
             # 处理单事件和多事件的情况
             if isinstance(performing_events, list):
                 for event in performing_events:
-                    event['performingEvent']['performanceCasts'] = result_json
+                    event['PerformanceEvent']['eventCast'] = result_json
             else:
-                performing_events['performingEvent']['performanceCasts'] = result_json
+                performing_events['PerformanceEvent']['eventCast'] = result_json
 
             # 拆分演职人员名单
             performing_events = split_casts(performing_events)

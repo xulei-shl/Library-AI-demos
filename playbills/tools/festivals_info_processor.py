@@ -20,12 +20,12 @@ def process_item(item, md_file_path, logger):
     total_token_count = 0
     total_output_token_count = 0
 
-    if 'performingEvent' in item and item['performingEvent'] is not None:
-        performing_event = item['performingEvent']
+    if 'PerformanceEvent' in item and item['PerformanceEvent'] is not None:
+        performing_event = item['PerformanceEvent']
         
         # Process name and description
         if 'name' in performing_event:
-            token_count, output_token_count = add_description_with_metadata(performing_event, performing_event['name'], 'performingEvent')
+            token_count, output_token_count = add_description_with_metadata(performing_event, performing_event['name'], 'PerformanceEvent')
             total_token_count += token_count
             total_output_token_count += output_token_count
         
