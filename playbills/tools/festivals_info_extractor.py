@@ -53,7 +53,7 @@ def get_description(md_file_path, logger, name):
     if token_count <= token_threshold_32k:
         base_url = os.getenv("OneAPI_API_URL")
         api_key = os.getenv("OneAPI_API_KEY")
-        model_name = "deepseek-Chat"
+        model_name = "doubao-1-5-lite-32k-250115"
     elif token_count <= token_threshold_128k:
         base_url = os.getenv("Doubao_API_URL")
         api_key = os.getenv("Doubao_API_KEY")
