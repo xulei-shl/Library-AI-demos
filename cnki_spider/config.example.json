@@ -1,0 +1,36 @@
+{
+    "default_settings": {
+        "keyword": "示例关键词",
+        "time_range": "recent_year",
+        "start_year": null,
+        "end_year": null,
+        "check_core": false,
+        "max_results": 50,
+        "output_path": "D:/数据",
+        "ai_model": "your-ai-model-name",
+        "api_key": "your-api-key-here",
+        "base_url": "https://api.example.com/openai/v1/",
+        "temperature": 0.7,
+        "top_p": 0.9
+    },
+    "ui_settings": {
+        "window_title": "CNKI文献爬虫工具",
+        "window_size": "800x600",
+        "theme": "default"
+    },
+    "download_settings": {
+        "base_folder": "data",
+        "create_topic_folder": true,
+        "filename_format": "CNKI_export_{timestamp}.xls"
+    },
+    "prompts": {
+        "prompt1": {
+            "label": "检索主题词生成",
+            "content": "在此处填写检索主题词生成的提示词模板"
+        },
+        "prompt2": {
+            "label": "文献相关性判断",
+            "content": "在此处填写文献相关性判断的提示词模板"
+        }
+    }
+}
