@@ -945,19 +945,39 @@ class PDFDownloaderTab:
             df = pd.read_excel(self.selected_file)
             self.log_message(f"读取到 {len(df)} 条记录")
             
+            # 初始化跳过计数
+            self.skipped_no_score_count = 0
+            
             # 应用筛选
             if self.use_threshold_var.get():
                 threshold = self.threshold_var.get()
-                # 查找评分列
-                score_columns = [col for col in df.columns if '评分' in col or 'score' in col.lower()]
-                if score_columns:
-                    score_col = score_columns[0]
-                    df[score_col] = pd.to_numeric(df[score_col], errors='coerce').fillna(0)
+                # 查找"相关性评分"列
+                score_col = None
+                for col in df.columns:
+                    if col == "相关性评分":
+                        score_col = col
+                        break
+                
+                if score_col:
+                    # 统计空值情况
                     original_count = len(df)
-                    df = df[df[score_col] >= threshold]
-                    self.log_message(f"评分筛选: {original_count} -> {len(df)} 条记录 (阈值: {threshold})")
+                    df[score_col] = pd.to_numeric(df[score_col], errors='coerce')
+                    
+                    # 分别统计空值和有效值
+                    null_count = df[score_col].isnull().sum()
+                    self.skipped_no_score_count = null_count
+                    
+                    # 跳过空值行，只保留有评分且满足阈值的行
+                    df = df.dropna(subset=[score_col])  # 移除空值行
+                    df = df[df[score_col] >= threshold]  # 应用阈值筛选
+                    
+                    # 构建筛选结果消息
+                    filter_msg = f"阈值筛选: {original_count} -> {len(df)} 条记录"
+                    if null_count > 0:
+                        filter_msg += f"，其中{null_count}条没有评分"
+                    self.log_message(filter_msg)
                 else:
-                    self.log_message("未找到评分列，跳过筛选")
+                    self.log_message("未找到'相关性评分'列，跳过筛选")
             
             if len(df) == 0:
                 self.log_message("没有记录需要下载")
@@ -1029,8 +1049,15 @@ class PDFDownloaderTab:
         # 显示结果
         if self.is_downloading:  # 只有在正常完成时才显示结果
             self.log_message(f"下载完成: 成功 {result['success']}, 失败 {result['failed']}, 跳过 {result['skipped']}")
+            
+            # 显示无评分统计（如果启用了评分筛选）
+            if hasattr(self, 'skipped_no_score_count') and self.skipped_no_score_count > 0:
+                self.log_message(f"无评分跳过统计: {self.skipped_no_score_count} 条记录因缺少相关性评分被跳过")
         else:
             self.log_message("下载已停止")
+            # 即使停止也显示无评分统计
+            if hasattr(self, 'skipped_no_score_count') and self.skipped_no_score_count > 0:
+                self.log_message(f"无评分跳过统计: {self.skipped_no_score_count} 条记录因缺少相关性评分被跳过")
     
     def download_single_pdf(self, row, output_folder):
         """下载单个PDF文件 - 供GUI调用"""

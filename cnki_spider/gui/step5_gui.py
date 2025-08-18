@@ -281,11 +281,23 @@ class Step5GUI:
         
         # 筛选数据
         try:
-            # 转换为数值类型，无法转换的设为0
-            df[score_col] = pd.to_numeric(df[score_col], errors='coerce').fillna(0)
-            filtered_df = df[df[score_col] >= threshold]
+            # 统计空值情况
+            original_count = len(df)
+            df[score_col] = pd.to_numeric(df[score_col], errors='coerce')
             
-            self.log_message(f"阈值筛选: {len(df)} -> {len(filtered_df)} 条记录")
+            # 分别统计空值和有效值
+            null_count = df[score_col].isnull().sum()
+            
+            # 跳过空值行，只保留有评分且满足阈值的行
+            df_with_score = df.dropna(subset=[score_col])  # 移除空值行
+            filtered_df = df_with_score[df_with_score[score_col] >= threshold]  # 应用阈值筛选
+            
+            # 构建筛选结果消息
+            filter_msg = f"阈值筛选: {original_count} -> {len(filtered_df)} 条记录"
+            if null_count > 0:
+                filter_msg += f"，其中{null_count}条没有评分"
+            self.log_message(filter_msg)
+            
             return filtered_df
             
         except Exception as e:
