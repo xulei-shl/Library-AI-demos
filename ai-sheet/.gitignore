@@ -1,0 +1,24 @@
+# IDE and cache files
+.idea/
+.vscode/
+__pycache__/
+.pytest_cache/
+
+# Log files
+logs/
+*.log
+
+# Test files
+test/
+
+# Configuration files with secrets
+config/models_config.json
+
+# Environment
+.env
+venv/
+
+# Ignore all dotfiles and dotfolders
+.*
+# But keep .gitignore
+!/.gitignore

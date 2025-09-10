@@ -1,0 +1,135 @@
+{
+  "formula_processing": {
+    "default_settings": {
+      "preview_rows": 10,
+      "batch_size": 1000,
+      "error_strategy": "skip",
+      "backup_enabled": true,
+      "max_retries": 3,
+      "timeout_seconds": 300,
+      "memory_limit_mb": 512
+    },
+    "ui_settings": {
+      "left_panel_width": 75,
+      "right_panel_width": 25,
+      "log_max_lines": 1000,
+      "auto_scroll_log": true,
+      "progress_update_interval": 100
+    },
+    "formula_templates": [
+      {
+        "name": "求和公式",
+        "formula": "=SUM(A1:A10)",
+        "description": "计算指定范围的数值总和"
+      },
+      {
+        "name": "平均值公式",
+        "formula": "=AVERAGE(A1:A10)",
+        "description": "计算指定范围的数值平均值"
+      },
+      {
+        "name": "条件求和",
+        "formula": "=SUMIF(A1:A10,\">0\")",
+        "description": "按条件求和，只计算大于0的值"
+      },
+      {
+        "name": "条件计数",
+        "formula": "=COUNTIF(A1:A10,\">0\")",
+        "description": "按条件计数，统计大于0的单元格数量"
+      },
+      {
+        "name": "最大值",
+        "formula": "=MAX(A1:A10)",
+        "description": "找出指定范围的最大值"
+      },
+      {
+        "name": "最小值",
+        "formula": "=MIN(A1:A10)",
+        "description": "找出指定范围的最小值"
+      },
+      {
+        "name": "条件判断",
+        "formula": "=IF(A1>0,\"正数\",\"非正数\")",
+        "description": "根据条件返回不同的值"
+      },
+      {
+        "name": "文本连接",
+        "formula": "=CONCATENATE(A1,\"-\",B1)",
+        "description": "连接多个文本或数值"
+      },
+      {
+        "name": "查找替换",
+        "formula": "=SUBSTITUTE(A1,\"old\",\"new\")",
+        "description": "在文本中查找并替换指定内容"
+      },
+      {
+        "name": "日期计算",
+        "formula": "=TODAY()+30",
+        "description": "计算从今天开始30天后的日期"
+      }
+    ],
+    "error_handling": {
+      "strategies": [
+        {
+          "value": "skip",
+          "label": "跳过错误行",
+          "description": "遇到错误时跳过当前行，继续处理下一行"
+        },
+        {
+          "value": "default",
+          "label": "使用默认值",
+          "description": "遇到错误时使用预设的默认值"
+        },
+        {
+          "value": "stop",
+          "label": "停止处理",
+          "description": "遇到错误时立即停止整个处理过程"
+        },
+        {
+          "value": "retry",
+          "label": "重试处理",
+          "description": "遇到错误时尝试重新处理当前行"
+        }
+      ],
+      "default_values": {
+        "numeric": 0,
+        "text": "",
+        "boolean": false,
+        "date": null
+      }
+    },
+    "overwrite_strategies": [
+      {
+        "value": "overwrite",
+        "label": "覆盖现有列",
+        "description": "如果目标列已存在，直接覆盖其内容"
+      },
+      {
+        "value": "append",
+        "label": "追加到文件",
+        "description": "将结果追加到文件末尾"
+      },
+      {
+        "value": "new_sheet",
+        "label": "创建新工作表",
+        "description": "在新的工作表中保存结果"
+      }
+    ],
+    "performance": {
+      "batch_sizes": [100, 500, 1000, 2000, 5000],
+      "memory_limits": [256, 512, 1024, 2048],
+      "timeout_options": [60, 300, 600, 1800, 3600]
+    },
+    "logging": {
+      "levels": ["DEBUG", "INFO", "WARNING", "ERROR"],
+      "colors": {
+        "DEBUG": "#808080",
+        "INFO": "#000000", 
+        "WARNING": "#FF8C00",
+        "ERROR": "#FF0000"
+      },
+      "max_log_size": 10485760,
+      "log_rotation": true
+    }
+  }
+}
