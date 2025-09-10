@@ -102,3 +102,7 @@ DONE readingHeatwave
 ### 图书馆会议信息爬取
 
 DONE lib_conference_spider
+
+### AI辅助Excel批处理工具
+
+DONE ai-sheet

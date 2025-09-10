@@ -4,7 +4,7 @@ AI-Sheet 是一款集成了大语言模型（LLM）的智能化桌面应用，�
 
 本应用的设计理念源于现代Excel处理的三种核心路径：通过自然语言生成**公式**、利用AI进行**非结构化文本处理**，以及为复杂任务自动生成并执行**Python脚本**。AI-Sheet将这三种能力整合到一个简洁的图形界面中，让您能轻松应对不同复杂度的数据挑战。
 
-<img src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/20250910112956.png" style="zoom:50%;" />
+<img src="https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/20250910112956.png" style="zoom: 67%;" />
 
 ---
 
