@@ -10,7 +10,6 @@ import pandas as pd
 from typing import Dict, List, Any, Tuple, Optional
 from modules.config_manager import MultiModelConfigManager
 from modules.excel_utils import validate_excel_file, format_file_size
-from modules.column_utils import generate_filtered_preview, update_selections_with_columns
 
 
 class MultiExcelManager:
@@ -163,11 +162,11 @@ class MultiExcelManager:
         """清除所有数据"""
         self.excel_files.clear()
     
-    def generate_combined_preview(self, selections: List[Tuple[str, str]]) -> str:
+    def generate_combined_preview(self, selections: List[Tuple]) -> str:
         """生成多个文件-Sheet组合的预览
         
         参数:
-            selections: [(file_path, sheet_name), ...] 选择的文件-Sheet组合
+            selections: [(file_path, sheet_name), ...] 或 [(file_path, sheet_name, selected_columns), ...] 选择的文件-Sheet组合
             
         返回:
             组合预览的Markdown字符串
@@ -182,8 +181,11 @@ class MultiExcelManager:
             if len(selection) == 2:
                 file_path, sheet_name = selection
                 selected_columns = []
-            else:
+            elif len(selection) == 3:
                 file_path, sheet_name, selected_columns = selection
+            else:
+                continue  # 跳过无效的选择
+            
             try:
                 # 获取文件名
                 file_name = os.path.basename(file_path)
@@ -206,6 +208,7 @@ class MultiExcelManager:
                 
                 # 生成过滤后的预览
                 if selected_columns:
+                    from modules.column_utils import generate_filtered_preview
                     filtered_preview = generate_filtered_preview(sheet_data, selected_columns, self.config['preview_rows'])
                     preview_parts.append(filtered_preview)
                 else:
