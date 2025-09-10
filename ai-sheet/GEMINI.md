@@ -16,6 +16,7 @@ The project is structured into the following directories:
 *   `modules/`: Contains the core business logic for features like formula generation, batch processing, and configuration management.
 *   `config/`: Contains configuration files for models and prompts.
 *   `units/`: Contains low-level units like the LLM client.
+*   `preinstalled_packages/`: Contains pre-installed Python packages to speed up dependency installation on Windows.
 *   `main.py`: The main entry point of the application.
 
 ## Building and Running
@@ -27,7 +28,13 @@ To run this project, you need to have Python installed. Then, follow these steps
     pip install -r requirements.txt
     ```
 
-2.  **Run the application:**
+2.  **(Optional) Prepare Pre-installed Packages for Performance Optimization (Windows Only):**
+    To significantly speed up dependency installation during Python code execution, you can prepare a local cache of common packages.
+    ```bash
+    python setup_preinstalled_packages.py
+    ```
+
+3.  **Run the application:**
     ```bash
     python main.py
     ```
@@ -57,7 +64,8 @@ Upon first launch, you will need to configure the large language model (LLM) set
     *   **`formula_generator.py`**: Contains the logic for generating Excel formulas using an LLM.
     *   **`llm_batch_processor.py`**: Implements the logic for batch processing of Excel data using an LLM.
     *   **`python_code_processor.py`**: Orchestrates the Python code processing workflow, from requirement analysis to code generation and execution.
-    *   **`python_code_executor.py`**: Safely executes Python code in an isolated environment, managing dependencies and capturing outputs.
+    *   **`python_code_executor.py`**: Safely executes Python code in an isolated environment, integrating the `PackageManager` to optimize dependency installation.
+    *   **`package_manager.py`**: Manages Python packages, using pre-installed packages on Windows to speed up installation.
     *   **`config_manager.py`**: Manages the LLM model configurations.
     *   **`prompt_manager.py`**: Manages the prompts.
 
@@ -76,7 +84,8 @@ Upon first launch, you will need to configure the large language model (LLM) set
 *   **`modules/llm_batch_processor.py`**: Backend logic for LLM batch processing.
 *   **`ui/python_processing_tab.py`**: UI for the Python code processing tab.
 *   **`modules/python_code_processor.py`**: Backend logic for analyzing and processing data using generated Python code.
-*   **`modules/python_code_executor.py`**: Backend logic for executing Python code in a sandboxed environment.
+*   **`modules/python_code_executor.py`**: Backend logic for executing Python code, using the package manager for optimized dependency handling.
+*   **`modules/package_manager.py`**: Backend logic for managing Python package installations, using pre-installed packages to accelerate setup on Windows.
 *   **`ui/config_tab.py`**: UI for the model configuration tab.
 *   **`modules/config_manager.py`**: Backend logic for managing model configurations.
 *   **`ui/prompt_management_tab.py`**: UI for the prompt management tab.

@@ -547,7 +547,10 @@ class PythonProcessingTab:
             # 构建包含策略信息的增强提示词
             strategy_info = self._build_strategy_info()
             enhanced_requirement = self.column_selector.build_enhanced_prompt(requirement)
-            enhanced_requirement += f"\n\n---\n\n# 输出策略\n\n{strategy_info}"
+            
+            # 检查是否已包含输出策略信息，避免重复
+            if "# 输出策略" not in enhanced_requirement and "# 处理策略" not in enhanced_requirement:
+                enhanced_requirement += f"\n\n---\n\n# 输出策略\n\n{strategy_info}"
             
             self.is_processing = True
             self.execute_button.config(state=tk.DISABLED, text="🔄 处理中...")

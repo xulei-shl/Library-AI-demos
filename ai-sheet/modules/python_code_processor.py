@@ -208,7 +208,49 @@ class PythonCodeProcessor:
         processing_type = strategy.get('type', 'enhancement')
         analysis_result = strategy.get('analysis_result', {})
         
-        enhanced_prompt = f"""# 数据处理需求
+        # 检查requirement是否已经是完整的提示词格式（包含标题结构）
+        if "# 数据处理需求" in requirement and ("# Excel" in requirement or "# 输出策略" in requirement):
+            # 已有完整结构，智能检测是否已包含策略信息
+            if "# 输出策略" in requirement or "# 处理策略" in requirement:
+                # 已包含策略信息，直接返回，避免重复
+                enhanced_prompt = requirement
+            else:
+                # 只添加缺少的策略信息
+                enhanced_prompt = requirement
+                strategy_section = f"""\n\n---\n\n# 处理策略\n\n处理类型：{processing_type}"""
+                
+                if processing_type == "enhancement":
+                    main_excel = strategy.get('main_excel', '')
+                    main_sheet = strategy.get('main_sheet', '')
+                    keep_original = strategy.get('keep_original', True)
+                    suggested_columns = analysis_result.get('suggested_columns', [])
+                    
+                    strategy_section += f"""
+主Excel文件：{main_excel}
+主Sheet：{main_sheet}
+保留原始数据：{'是' if keep_original else '否'}
+建议新增列：{', '.join(suggested_columns)}
+
+**要求：**
+1. 从指定的Excel文件和Sheet中读取数据
+2. 对数据进行处理并生成结果
+3. 将结果作为新列添加到原始数据中
+4. 保存为新的Excel文件
+5. 如果存在同名列，自动添加序号后缀（如 -1, -2, -3）"""
+                
+                else:  # reconstruction
+                    strategy_section += f"""
+
+**要求：**
+1. 从提供的数据中读取信息
+2. 根据需求重新组织和处理数据
+3. 生成全新的结构化结果文件
+4. 不需要保留原始数据结构"""
+                
+                enhanced_prompt += strategy_section
+        else:
+            # 简单的需求描述，构建完整提示词
+            enhanced_prompt = f"""# 数据处理需求
 
 {requirement}
 
@@ -224,14 +266,14 @@ class PythonCodeProcessor:
 
 处理类型：{processing_type}
 """
-        
-        if processing_type == "enhancement":
-            main_excel = strategy.get('main_excel', '')
-            main_sheet = strategy.get('main_sheet', '')
-            keep_original = strategy.get('keep_original', True)
-            suggested_columns = analysis_result.get('suggested_columns', [])
             
-            enhanced_prompt += f"""
+            if processing_type == "enhancement":
+                main_excel = strategy.get('main_excel', '')
+                main_sheet = strategy.get('main_sheet', '')
+                keep_original = strategy.get('keep_original', True)
+                suggested_columns = analysis_result.get('suggested_columns', [])
+                
+                enhanced_prompt += f"""
 主Excel文件：{main_excel}
 主Sheet：{main_sheet}
 保留原始数据：{'是' if keep_original else '否'}
@@ -243,9 +285,9 @@ class PythonCodeProcessor:
 3. 将结果作为新列添加到原始数据中
 4. 保存为新的Excel文件
 5. 如果存在同名列，自动添加序号后缀（如 -1, -2, -3）"""
-        
-        else:  # reconstruction
-            enhanced_prompt += f"""
+            
+            else:  # reconstruction
+                enhanced_prompt += f"""
 
 **要求：**
 1. 从提供的数据中读取信息
@@ -253,7 +295,9 @@ class PythonCodeProcessor:
 3. 生成全新的结构化结果文件
 4. 不需要保留原始数据结构"""
         
-        enhanced_prompt += "\n\n请根据上述要求生成完整的Python代码。"
+        # 确保末尾有生成指令
+        if "请根据上述" not in enhanced_prompt:
+            enhanced_prompt += "\n\n请根据上述要求生成完整的Python代码。"
         
         return enhanced_prompt
     
@@ -409,7 +453,16 @@ class PythonCodeProcessor:
     
     def _build_initial_prompt(self, requirement: str, sample_data: str) -> str:
         """构建初始提示词"""
-        prompt = f"""# 数据处理需求
+        # 检查requirement是否已经是完整的提示词格式（包含标题结构）
+        if "# 数据处理需求" in requirement and "# Excel" in requirement:
+            # 已经是完整的提示词，直接使用
+            prompt = requirement
+            # 如果需要，在末尾添加生成指令
+            if "请根据上述需求和数据样例，生成处理Excel数据的Python代码" not in prompt:
+                prompt += "\n\n请根据上述需求和数据样例，生成处理Excel数据的Python代码。"
+        else:
+            # 简单的需求描述，需要构建完整提示词
+            prompt = f"""# 数据处理需求
 
 {requirement}
 
@@ -704,7 +757,6 @@ class PythonCodeProcessor:
             # 构建文档生成提示词
             doc_prompt = f"""请为以下Python数据处理项目生成README.md文档：
 
-# 原始需求
 {requirement}
 
 # 最终Python代码

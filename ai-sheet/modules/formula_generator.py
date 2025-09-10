@@ -94,12 +94,17 @@ class OptimizedFormulaGenerator:
             print(f"加载默认提示词失败: {e}")
 
     def _load_default_prompts_from_config(self):
-        path = os.path.join("config", "default_prompts.json")
+        path = os.path.join("config", "prompts.json")
         if not os.path.exists(path): return
         with open(path, encoding='utf-8') as f:
-            defaults = json.load(f)
-        if 'formula_generation_system' in defaults:
-            self.prompt_manager.save_prompt(defaults['formula_generation_system'])
+            prompts_data = json.load(f)
+        
+        # 从prompts.json格式中查找formula_generation_system
+        if 'prompts' in prompts_data:
+            for prompt in prompts_data['prompts']:
+                if prompt.get('id') == 'formula_generation_system':
+                    self.prompt_manager.save_prompt(prompt)
+                    break
 
     # ------------------- 唯一入口 -------------------
     def generate_formula(self, requirement: str, columns: List[str],
@@ -161,11 +166,15 @@ class OptimizedFormulaGenerator:
         return self._fallback_prompt()
 
     def _fallback_prompt(self) -> str:
-        path = os.path.join("config", "default_prompts.json")
+        path = os.path.join("config", "prompts.json")
         if os.path.exists(path):
             with open(path, encoding='utf-8') as f:
-                d = json.load(f).get('formula_generation_fallback', {})
-                return d.get('content', '')
+                prompts_data = json.load(f)
+            # 从prompts.json格式中查找fallback提示词
+            if 'prompts' in prompts_data:
+                for prompt in prompts_data['prompts']:
+                    if prompt.get('id') == 'formula_generation_fallback':
+                        return prompt.get('content', '')
         return "请根据用户需求生成Excel公式，格式：公式：=你的公式\\n说明：公式说明"
 
     # ------------------- 异步包裹 -------------------

@@ -17,6 +17,9 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 
+# 导入包管理器
+from .package_manager import PackageManager
+
 
 class PythonExecutor:
     """Python代码执行器类
@@ -39,6 +42,17 @@ class PythonExecutor:
         self.venv_path = self.work_directory / ".venv"
         self.python_executable = self._get_python_executable()
         self.pip_executable = self._get_pip_executable()
+        
+        # 初始化包管理器
+        # 尝试从当前文件路径找到项目根目录
+        current_file = Path(__file__).parent.parent  # modules的上级目录
+        if (current_file / "modules" / "package_manager.py").exists():
+            project_root = current_file
+        else:
+            # 降级方案：使用工作目录的上级目录
+            project_root = self.work_directory.parent if "temp" not in str(self.work_directory) else Path.cwd()
+        
+        self.package_manager = PackageManager(str(project_root))
         
         # 确保工作目录存在
         self.work_directory.mkdir(parents=True, exist_ok=True)
@@ -109,7 +123,7 @@ class PythonExecutor:
             return False, error_msg
     
     def install_dependencies(self, requirements_content: str) -> Tuple[bool, str, str]:
-        """安装依赖包
+        """安装依赖包（优化版：Windows平台优先使用预置包）
         
         Args:
             requirements_content: requirements.txt文件内容
@@ -124,12 +138,46 @@ class PythonExecutor:
             if not os.path.exists(self.python_executable):
                 return False, "", "虚拟环境不存在，请先设置环境"
             
-            # 将requirements内容写入文件
+            # 尝试使用预置包优化（仅Windows）
+            preinstalled_packages = []
+            filtered_requirements = requirements_content
+            
+            if self.package_manager.is_optimization_available():
+                self._log("检测到Windows环境且预置包可用，尝试使用预置包优化...")
+                
+                # 获取site-packages路径
+                site_packages = self.package_manager.get_site_packages_path(str(self.venv_path))
+                
+                # 复制预置包
+                copy_success, installed_packages, failed_packages = self.package_manager.copy_preinstalled_packages(site_packages)
+                
+                if copy_success:
+                    self._log(f"预置包复制成功: {installed_packages}")
+                    preinstalled_packages = installed_packages
+                    
+                    # 过滤requirements，移除已预置的包
+                    filtered_requirements, _ = self.package_manager.filter_requirements(requirements_content)
+                    
+                    if not filtered_requirements.strip():
+                        self._log("所有依赖包已通过预置包安装，无需pip安装")
+                        return True, f"预置包安装成功: {', '.join(installed_packages)}", ""
+                else:
+                    self._log(f"预置包复制失败: {failed_packages}，降级到pip安装")
+            else:
+                self._log("预置包优化不可用，使用标准pip安装")
+            
+            # 如果没有需要pip安装的包，直接返回
+            if not filtered_requirements.strip():
+                return True, f"所有依赖包已安装: {', '.join(preinstalled_packages)}", ""
+            
+            # 将过滤后的requirements写入文件
             requirements_file = self.work_directory / "requirements.txt"
             with open(requirements_file, 'w', encoding='utf-8') as f:
-                f.write(requirements_content)
+                f.write(filtered_requirements)
             
             self._log(f"requirements.txt 已保存到 {requirements_file}")
+            if preinstalled_packages:
+                self._log(f"预置包已安装: {', '.join(preinstalled_packages)}")
             
             # 升级pip
             self._log("升级pip...")
@@ -147,8 +195,8 @@ class PythonExecutor:
             else:
                 self._log("pip升级成功")
             
-            # 安装依赖
-            self._log("安装requirements.txt中的依赖...")
+            # 安装剩余依赖
+            self._log("安装剩余依赖...")
             install_cmd = [
                 self.python_executable, 
                 "-m", 
@@ -167,12 +215,18 @@ class PythonExecutor:
                 timeout=600  # 10分钟超时
             )
             
+            # 组合输出信息
+            combined_stdout = ""
+            if preinstalled_packages:
+                combined_stdout += f"预置包已安装: {', '.join(preinstalled_packages)}\n"
+            combined_stdout += result.stdout
+            
             if result.returncode == 0:
                 self._log("依赖安装成功")
-                return True, result.stdout, result.stderr
+                return True, combined_stdout, result.stderr
             else:
                 self._log(f"依赖安装失败: {result.stderr}")
-                return False, result.stdout, result.stderr
+                return False, combined_stdout, result.stderr
                 
         except subprocess.TimeoutExpired:
             error_msg = "依赖安装超时"

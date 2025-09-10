@@ -4,12 +4,16 @@
 __pycache__/
 .pytest_cache/
 
+# other
+问题.md
+
 # Log files
 logs/
 *.log
 
-# Test files
+# files
 test/
+preinstalled_packages/
 
 # Configuration files with secrets
 config/models_config.json
