@@ -3,10 +3,9 @@ load_dotenv()
 import os
 from langfuse.openai import OpenAI
 from langfuse.decorators import observe
-from langfuse import Langfuse
 import time
 from functools import wraps
-import tenacity
+from langfuse import Langfuse
 from typing import Dict, Any, Optional, Union
 from utils.prompt import get_prompt, LLMConfig, ConfigSource, PromptType
 
@@ -57,16 +56,16 @@ def retry_with_fallback(max_attempts: int = DEFAULT_MAX_ATTEMPTS, initial_wait: 
             
             # 将备用配置移到函数内部，便于维护
             fallback_configs = [
-                {
-                    'base_url': os.getenv('FALLBACK_API_BASE_1'),
-                    'api_key': os.getenv('FALLBACK_API_KEY_1'),
-                    'model_name': 'fallback-model-1'
-                },
-                {
-                    'base_url': os.getenv('FALLBACK_API_BASE_2'),
-                    'api_key': os.getenv('FALLBACK_API_KEY_2'),
-                    'model_name': 'fallback-model-2'
-                }
+                LLMConfig(
+                    base_url=os.getenv('ONEAPI_API_BASE'),
+                    api_key=os.getenv('ONEAPI_API_KEY'),
+                    model_name='doubao/deepseek-think'
+                ),
+                LLMConfig(
+                    base_url=os.getenv('ONEAPI_API_BASE'),
+                    api_key=os.getenv('ONEAPI_API_KEY'),
+                    model_name='qwen'
+                )
             ]
             
             while attempts <= max_attempts:
@@ -77,14 +76,18 @@ def retry_with_fallback(max_attempts: int = DEFAULT_MAX_ATTEMPTS, initial_wait: 
                         fallback_idx = min(attempts - 1, len(fallback_configs) - 1)
                         fallback = fallback_configs[fallback_idx]
                         
-                        # 仅更新API相关配置，保留其他原始参数
+                        # 修改这里：正确访问 LLMConfig 对象的属性
                         modified_kwargs = original_kwargs.copy()
-                        for key in ['base_url', 'api_key', 'model_name']:
-                            if key not in original_kwargs or original_kwargs[key] is None:
-                                modified_kwargs[key] = fallback[key]
+                        if 'config' not in modified_kwargs or modified_kwargs['config'] is None:
+                            modified_kwargs['config'] = fallback
+                        else:
+                            # 如果已有配置，更新必要的字段
+                            modified_kwargs['config'].base_url = fallback.base_url
+                            modified_kwargs['config'].api_key = fallback.api_key
+                            modified_kwargs['config'].model_name = fallback.model_name
                         
                         print(f"\n=== 第{attempts}次重试：切换到备用配置 {fallback_idx + 1} ===")
-                        print(f"使用模型: {modified_kwargs.get('model_name')}")
+                        print(f"使用模型: {fallback.model_name}")
                         return func(*args, **modified_kwargs)
                 
                 except Exception as e:
@@ -115,10 +118,12 @@ def get_llm_response(
     config: Optional[LLMConfig] = None,
     prompt_source: ConfigSource = ConfigSource.LANGFUSE,
     config_source: ConfigSource = ConfigSource.LANGFUSE,
-    name: Optional[str] = None,
-    tags: Optional[list] = None,
-    metadata: Optional[dict] = None,
+    trace_name: Optional[str] = None,
+    trace_tags: Optional[list] = None,
+    trace_metadata: Optional[dict] = None,
     prompt_variables: Optional[Dict[str, Any]] = None,
+    prompt_label: Optional[str] = None,
+    history: Optional[List[Dict[str, str]]] = None,
 ) -> Any:
     """
     使用大语言模型(LLM)生成响应，支持多种配置来源和提示词管理
@@ -137,9 +142,9 @@ def get_llm_response(
         config (Optional[LLMConfig]): 直接传入的LLM配置
         prompt_source (ConfigSource): 提示词来源(LANGFUSE/DIRECT)，默认为LANGFUSE
         config_source (ConfigSource): 配置来源(LANGFUSE/DIRECT)，默认为LANGFUSE
-        name (Optional[str]): 为本次调用命名，用于追踪
-        tags (Optional[list]): 标签列表，用于分类和过滤
-        metadata (Optional[dict]): 元数据字典，用于记录额外信息
+        trace_name (Optional[str]): 为本次调用命名，用于追踪
+        trace_tags (Optional[list]): 标签列表，用于分类和过滤
+        trace_metadata (Optional[dict]): 元数据字典，用于记录额外信息
         prompt_variables (Optional[Dict[str, Any]]): 提示词变量替换字典
         
     返回:
@@ -176,12 +181,13 @@ def get_llm_response(
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
     elif prompt_name and prompt_type == PromptType.SYSTEM:
-        try:  # 新增：捕获可能的SystemExit异常
+        try:
             system_config = get_prompt(
                 prompt_name=prompt_name,
                 prompt_type=PromptType.SYSTEM,
                 prompt_source=prompt_source,
-                config_source=config_source
+                config_source=config_source,
+                prompt_label=prompt_label
             )
             if system_config.content:
                 messages.append({"role": "system", "content": system_config.content})
@@ -189,17 +195,22 @@ def get_llm_response(
             print(e)
             return None
     
+    # 添加历史消息
+    if history:
+        messages.extend(history)
+    
     # 处理用户提示词
     if prompt_source == ConfigSource.DIRECT:
         messages.append({"role": "user", "content": user_prompt})
     elif prompt_name and prompt_type == PromptType.USER:
-        try:  # 新增：捕获可能的SystemExit异常
+        try:
             user_config = get_prompt(
                 prompt_name=prompt_name,
                 prompt_type=PromptType.USER,
                 prompt_source=prompt_source,
                 config_source=config_source,
-                prompt_variables=variables
+                prompt_variables=variables,
+                prompt_label=prompt_label
             )
             messages.append({"role": "user", "content": user_config.content or user_prompt})
         except SystemExit as e:
@@ -241,9 +252,9 @@ def get_llm_response(
             "model": final_config.model_name,
             "messages": messages,
             "temperature": final_config.temperature,
-            "name": f"{name}-{final_config.model_name}" if name else final_config.model_name,
-            "tags": tags or [],
-            "metadata": metadata or {},
+            "name": f"{trace_name}-{final_config.model_name}" if trace_name else final_config.model_name,
+            "tags": trace_tags or [],
+            "metadata": trace_metadata or {},
         }
         
         # 如果提示词来源是Langfuse，添加langfuse_prompt参数以便追踪
@@ -260,7 +271,21 @@ def get_llm_response(
                 completion_params["langfuse_prompt"] = langfuse_prompt_obj
         
         completion = client.chat.completions.create(**completion_params)
+        
+        # 获取并记录 token 使用情况
+        if hasattr(completion, 'usage'):
+            # 使用 langfuse_context 而不是直接使用 Langfuse 实例
+            from langfuse.decorators import langfuse_context
+            langfuse_context.update_current_observation(
+                usage_details={
+                    "input": completion.usage.prompt_tokens,
+                    "output": completion.usage.completion_tokens,
+                    "total": completion.usage.total_tokens
+                }
+            )
+
         return completion
+        
     except Exception as e:
         if not isinstance(config_source, ConfigSource):
             config_source = ConfigSource(config_source)

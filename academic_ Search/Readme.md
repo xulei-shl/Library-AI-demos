@@ -21,6 +21,14 @@ LANGFUSE_HOST=https://cloud.langfuse.com
 
 ### 运行系统
 
+1. 用户数据库初始化
+```bash
+python init_database.py
+```
+2. 运行系统
+```
+   
+
 ```bash
 python main.py
 ```

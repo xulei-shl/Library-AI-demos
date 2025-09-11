@@ -36,6 +36,7 @@ def get_prompt(
     prompt_source: ConfigSource = ConfigSource.LANGFUSE,
     config_source: ConfigSource = ConfigSource.LANGFUSE,
     prompt_variables: Optional[Dict[str, Any]] = None,
+    prompt_label: Optional[str] = None,
 ) -> PromptConfig:
     """获取提示词及相关配置"""
     # 移除所有类型转换逻辑，直接使用枚举类型
@@ -47,7 +48,11 @@ def get_prompt(
     elif prompt_source == ConfigSource.LANGFUSE and prompt_name:
         try:
             langfuse = Langfuse()
-            prompt = langfuse.get_prompt(prompt_name)
+            # 根据是否指定 label 调用不同的方法
+            if prompt_label is not None:
+                prompt = langfuse.get_prompt(prompt_name, label=prompt_label)
+            else:
+                prompt = langfuse.get_prompt(prompt_name)
             result.langfuse_prompt = prompt
             
             # 如果有变量，使用compile

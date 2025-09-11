@@ -12,7 +12,11 @@ def analyze_query(
     config_source: ConfigSource = ConfigSource.LANGFUSE,
     prompt_name: str = None,
     prompt_type: PromptType = None,
-    system_prompt: str = None
+    system_prompt: str = None,
+    trace_name: str = None,
+    trace_tags: list = None,
+    trace_metadata: dict = None,
+    prompt_label: int = None,
 ) -> str:
     """
     使用 LLM 对用户的查询问题进行分析与扩展
@@ -28,8 +32,7 @@ def analyze_query(
         config_source (ConfigSource, optional): 配置来源，可选值：ConfigSource.LANGFUSE/ConfigSource.DIRECT，默认LANGFUSE
         prompt_name (str, optional): Langfuse中的提示词名称。当 prompt_source=ConfigSource.LANGFUSE 时必需
         prompt_type (PromptType, optional): 提示词类型，可选值：PromptType.SYSTEM/PromptType.USER。当使用Langfuse提示词时必需
-        
-        system_prompt (str, optional): 系统提示词文本。当 prompt_source=ConfigSource.DIRECT 时必需
+        prompt_label (int, optional): Langfuse提示词版本。当 prompt_source=ConfigSource.LANGFUSE 时可选
 
     返回:
         str: 分析后的结果文本
@@ -51,6 +54,14 @@ def analyze_query(
         if system_prompt:
             prompt_source = ConfigSource.DIRECT
 
+        # 设置默认值
+        if trace_name is None:
+            trace_name = "查询分析"
+        if trace_tags is None:
+            trace_tags = ["查询分析"]
+        if trace_metadata is None:
+            trace_metadata = {"project": "cnki"}
+
         # 调用 LLM
         response = get_llm_response(
             user_prompt=user_query,
@@ -60,19 +71,21 @@ def analyze_query(
             config=config,
             prompt_source=prompt_source,
             config_source=config_source,
-            name="查询分析",
-            tags=["查询分析"],
-            metadata={"project": "cnki"}
+            trace_name=trace_name,
+            trace_tags=trace_tags,
+            trace_metadata=trace_metadata,
+            prompt_label=prompt_label
         )
         
         if response and response.choices:
-            parsed_content = parse_llm_response(response.choices[0].message.content)
+            reasoning = getattr(response.choices[0].message, 'reasoning_content', '')
+            answer = response.choices[0].message.content
             return "\n".join([
                 "## 思考过程\n\n",
-                parsed_content["thinking"],
+                reasoning,
                 "## 回答\n\n",
-                parsed_content["answer"]
-            ]) if parsed_content["thinking"] else parsed_content["answer"]
+                answer
+            ]) if reasoning else answer
         return user_query
         
     except Exception as e:
