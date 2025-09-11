@@ -211,13 +211,13 @@ class PythonCodeProcessor:
         # 检查requirement是否已经是完整的提示词格式（包含标题结构）
         if "# 数据处理需求" in requirement and ("# Excel" in requirement or "# 输出策略" in requirement):
             # 已有完整结构，智能检测是否已包含策略信息
-            if "# 输出策略" in requirement or "# 处理策略" in requirement:
+            if "# 输出策略" in requirement or "# 结果保存策略" in requirement:
                 # 已包含策略信息，直接返回，避免重复
                 enhanced_prompt = requirement
             else:
                 # 只添加缺少的策略信息
                 enhanced_prompt = requirement
-                strategy_section = f"""\n\n---\n\n# 处理策略\n\n处理类型：{processing_type}"""
+                strategy_section = f"""\n\n---\n\n# 结果保存策略\n\n处理类型：{processing_type}"""
                 
                 if processing_type == "enhancement":
                     main_excel = strategy.get('main_excel', '')
@@ -226,8 +226,8 @@ class PythonCodeProcessor:
                     suggested_columns = analysis_result.get('suggested_columns', [])
                     
                     strategy_section += f"""
-主Excel文件：{main_excel}
-主Sheet：{main_sheet}
+处理结果存储的Excel文件：{main_excel}
+处理结果存储的Sheet：{main_sheet}
 保留原始数据：{'是' if keep_original else '否'}
 建议新增列：{', '.join(suggested_columns)}
 
@@ -262,7 +262,7 @@ class PythonCodeProcessor:
 
 ---
 
-# 处理策略
+# 结果保存策略
 
 处理类型：{processing_type}
 """
@@ -274,8 +274,8 @@ class PythonCodeProcessor:
                 suggested_columns = analysis_result.get('suggested_columns', [])
                 
                 enhanced_prompt += f"""
-主Excel文件：{main_excel}
-主Sheet：{main_sheet}
+处理结果存储的Excel文件：{main_excel}
+处理结果存储的Sheet：{main_sheet}
 保留原始数据：{'是' if keep_original else '否'}
 建议新增列：{', '.join(suggested_columns)}
 

@@ -7,6 +7,7 @@ import time
 import threading
 from typing import List, Dict, Any, Callable, Optional
 import logging
+from pathlib import Path
 
 from .prompt_generator import OptimizedPromptGenerator
 from .excel_processor import ExcelProcessor
@@ -108,6 +109,17 @@ class LLMBatchProcessor:
             
             if log_callback:
                 log_callback("开始批量处理Excel数据...", "INFO")
+            
+            # 创建文件备份
+            if log_callback:
+                log_callback("正在创建文件备份...", "INFO")
+            backup_path = self._create_backup(file_path)
+            if backup_path:
+                if log_callback:
+                    log_callback(f"文件备份成功: {backup_path}", "INFO")
+            else:
+                if log_callback:
+                    log_callback("文件备份失败，但继续处理", "WARNING")
                 
             # 使用Excel处理器
             with ExcelProcessor() as excel_processor:
@@ -354,6 +366,24 @@ class LLMBatchProcessor:
         self.stats = self.state.to_dict()
         self.logger.info("批量处理器状态已重置")
         
+    def _create_backup(self, file_path: str) -> str:
+        """创建文件备份"""
+        try:
+            file_path = Path(file_path)
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            backup_name = f"{file_path.stem}_backup_{timestamp}{file_path.suffix}"
+            backup_path = file_path.parent / backup_name
+            
+            # 复制文件
+            import shutil
+            shutil.copy2(file_path, backup_path)
+            
+            return str(backup_path)
+            
+        except Exception as e:
+            self.logger.warning(f"创建备份失败: {str(e)}")
+            return ""
+
     def force_stop(self):
         """强制停止处理"""
         self.should_stop = True

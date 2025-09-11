@@ -84,7 +84,7 @@ class SimpleDataDisplaySelector:
                     f"   文件路径: {file_path}",
                     f"   Sheet名称: {sheet_name}",
                     f"   数据行数: {total_rows}",
-                    f"   选择的列: {', '.join(selected_columns) if selected_columns else '无'}",
+                    f"   选择的列: {', '.join(selected_columns) if selected_columns else '未选择指定列'}",
                     ""
                 ])
         self._last_struct_info = "\n".join(display_lines)
@@ -101,13 +101,26 @@ class SimpleDataDisplaySelector:
         with open(preview_file, encoding='utf-8') as f:
             return f.read().strip()
 
-    def build_enhanced_prompt(self, requirement_text: str) -> str:
+    def build_enhanced_prompt(self, requirement_text: str, output_path: str = "") -> str:
         """构建增强的提示词"""
         if not self._last_struct_info:
             return requirement_text
         whole_sample = self._load_preview_sample()
         sample_section = whole_sample or "*请在【多Excel上传】页生成预览后，再返回此处*"
-        return f"# 数据处理需求\n\n{requirement_text}\n\n---\n\n# Excel文件、工作表和处理列信息\n\n{self._last_struct_info}\n\n---\n\n# Excel数据样例\n\n{sample_section}"
+        # 构建基础提示词
+        prompt_parts = [f"# 数据处理需求\n\n{requirement_text}"]
+        
+        # 添加结果保存路径部分（如果提供了路径）
+        if output_path.strip():
+            prompt_parts.append(f"# 结果保存路径\n\n{output_path.strip()}")
+        
+        # 添加Excel信息和数据样例
+        prompt_parts.extend([
+            f"# Excel文件、工作表和处理列信息\n\n{self._last_struct_info}",
+            f"# Excel数据样例\n\n{sample_section}"
+        ])
+        
+        return "\n\n---\n\n".join(prompt_parts)
 
     def get_sample_data(self) -> str:
         return self._load_preview_sample()
@@ -546,10 +559,10 @@ class PythonProcessingTab:
             
             # 构建包含策略信息的增强提示词
             strategy_info = self._build_strategy_info()
-            enhanced_requirement = self.column_selector.build_enhanced_prompt(requirement)
+            enhanced_requirement = self.column_selector.build_enhanced_prompt(requirement, output_path)
             
             # 检查是否已包含输出策略信息，避免重复
-            if "# 输出策略" not in enhanced_requirement and "# 处理策略" not in enhanced_requirement:
+            if "# 输出策略" not in enhanced_requirement and "# 结果保存策略" not in enhanced_requirement:
                 enhanced_requirement += f"\n\n---\n\n# 输出策略\n\n{strategy_info}"
             
             self.is_processing = True

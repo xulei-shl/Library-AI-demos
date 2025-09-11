@@ -95,7 +95,7 @@ class SimpleDataDisplaySelector:
                     f"   文件路径: {file_path}",
                     f"   Sheet名称: {sheet_name}",
                     f"   数据行数: {total_rows}",
-                    f"   选择的列: {', '.join(selected_columns) if selected_columns else '无'}",
+                    f"   选择的列: {', '.join(selected_columns) if selected_columns else '未选择指定列'}",
                     ""
                 ])
         # 缓存结构信息
