@@ -5,6 +5,7 @@
 import pandas as pd
 
 from .base_processor import BaseProcessor
+from ..config import settings
 from ..utils.logger import logger
 from ..utils.config_mapper import ConfigMapper
 
@@ -29,11 +30,18 @@ class SanbuProcessor(BaseProcessor):
             filename: 文件名
             
         Returns:
-            文件名包含"三部"时返回True
+            如果文件名匹配配置中的关键词，则返回True
         """
-        can_handle = "三部" in filename
+        file_type = self.get_file_type()
+        pattern = settings.FILE_PATTERNS.get(file_type)
+        
+        if not pattern:
+            logger.warning(f"SanbuProcessor: 未在配置中找到文件类型 '{file_type}' 的识别模式。")
+            return False
+            
+        can_handle = pattern in filename
         if can_handle:
-            logger.info(f"SanbuProcessor: 检测到三部文件: {filename}")
+            logger.info(f"SanbuProcessor: 检测到 {pattern} 文件: {filename}")
         return can_handle
     def process_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """
