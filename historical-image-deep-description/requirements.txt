@@ -1,0 +1,4 @@
+openpyxl
+PyYAML
+openai
+zhipuai

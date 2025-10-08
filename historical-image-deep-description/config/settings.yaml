@@ -1,0 +1,822 @@
+# 全局配置（MVP）
+api_providers:
+  # 文本与图像统一使用 OpenAI 兼容 chat/completions
+  vision:
+    primary:
+      name: "ZhipuAI_Primary_Vision"
+      api_key: "env:ZHIPUAI_API_KEY"
+      base_url: "https://open.bigmodel.cn/api/paas/v4"
+      model: "glm-4.5v"
+    secondary:
+      name: "SophNet_Secondary_Vision"
+      api_key: "env:SophNet_API_KEY"
+      base_url: "https://www.sophnet.com/api/open-apis/v1"
+      model: "glm-4.5v"
+  text:
+    primary:
+      name: "SophNet_Primary_Text"
+      api_key: "env:SophNet_API_KEY"
+      base_url: "https://www.sophnet.com/api/open-apis/v1"
+      model: "DeepSeek-V3.2-Exp"
+      timeout_seconds: 90
+    secondary:
+      name: "ZhipuAI_Secondary_Text"
+      api_key: "env:ZHIPUAI_API_KEY"
+      base_url: "https://open.bigmodel.cn/api/paas/v4"
+      model: "glm-4.5-air"
+      timeout_seconds: 90
+  text-small:
+    primary:
+      name: "ZhipuAI_Primary_Text_Small"
+      api_key: "env:ZHIPUAI_API_KEY"
+      base_url: "https://open.bigmodel.cn/api/paas/v4"
+      model: "glm-4.5-air"
+    secondary:
+      name: "ZhipuAI_Secondary_Text_Small"
+      api_key: "env:ZHIPUAI_API_KEY"
+      base_url: "https://open.bigmodel.cn/api/paas/v4"
+      model: "glm-4.5-air"
+  text-big:
+    primary:
+      name: "ZhipuAI_Primary_Text"
+      api_key: "env:ZHIPUAI_API_KEY"
+      base_url: "https://open.bigmodel.cn/api/paas/v4"
+      model: "glm-4.6"   
+      timeout_seconds: 120
+    secondary:
+      name: "SophNet_Secondary_Text"
+      api_key: "env:SophNet_API_KEY"
+      base_url: "https://www.sophnet.com/api/open-apis/v1"
+      model: "DeepSeek-V3.2-Exp"       
+      timeout_seconds: 90
+
+retry_policy:
+  max_retries: 3
+  delay_seconds: 5
+
+rate_limit_ms: 0  # 0 关闭简单速率限制
+
+# 别名检索配置
+alias_search:
+  enabled: true
+  max_alias_attempts: 3
+  min_confidence_threshold: 0.6
+  rate_limit_ms: 1000
+
+# 内部API速率限制配置（毫秒）
+internal_api_rate_limits:
+  internal_api_ms: 1000
+  person_api_ms: 1000
+  place_api_ms: 1000
+  organization_api_ms: 1000
+  event_api_ms: 1000
+  work_api_ms: 1000
+  theater_api_ms: 1000
+
+logging:
+  system_preview_max_len: 1000
+  user_preview_max_len: 300
+  response_preview_max_len: 2000
+
+tasks:
+  # L0 图像描述 
+  long_description:
+    provider_type: "vision"
+    temperature: 0.5
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "long_desc_system.md"
+    # 可选字段选择：若提供则只使用并按此顺序输出；未提供默认使用全部 metadata 字段
+    metadata_fields: ["id", "title", "desc", "persons", "topic", "year", "location"]
+  alt_text:
+    provider_type: "vision"
+    temperature: 0.7
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "alt_text_system.md"
+  keywords:
+    provider_type: "text"
+    temperature: 0.2
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "keywords_system.md"
+
+  # L1 结构化信息抽取
+  l1_extraction:
+    provider_type: "text"
+    temperature: 0.2
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l1_extract_prompt.md"
+
+  # L2：实体类型分类
+  l2_classification:
+    provider_type: "text"
+    temperature: 0.2
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l2_entity_classification.md"
+
+  # L2：通用消歧
+  l2_disambiguation:
+    provider_type: "text"
+    temperature: 0.2
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l2_entity_disambiguation.md"
+
+  # L2：别名提取
+  l2_alias_extraction:
+    provider_type: "text"
+    temperature: 0.2
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l2_alias_extraction.md"
+
+  # L2：Wikidata 候选项格式化
+  l2_wikidata_candidate_formatting:
+    provider_type: "text"
+    temperature: 0.2
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l2_wikidata_candidate_formatting.md"
+
+  # L2：相关事件关键词提取
+  l2_event_keyword_extraction:
+    provider_type: "text"
+    temperature: 0.2
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l2_event_keyword_extraction.md"
+
+  # L2：相关事件相关性判断
+  l2_event_relevance_judgment:
+    provider_type: "text"
+    temperature: 0.2
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l2_event_relevance_judgment.md"
+
+  # L3：Web搜索结果分析 - 第一阶段（信息甄别与评估）
+  l3_web_search_stage_one:
+    provider_type: "text"
+    temperature: 0.1
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l3_web_search_analysis.md"
+    
+  # L3：Web搜索结果分析 - 第二阶段（深度阐释与生成）
+  l3_web_search_stage_two:
+    provider_type: "text"
+    temperature: 0.3
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l3_web_search_report.md"
+
+  # L3：统一标签扩展 - 事件关键词提取（用于增强RAG检索）
+  event_keyword_extraction:
+    provider_type: "text"
+    temperature: 0.1
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l2_event_keyword_extraction.md"
+
+  # L3：统一标签扩展 - 作品标签增强（用于增强RAG检索）
+  work_label_enhancement:
+    provider_type: "text"
+    temperature: 0.1
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l3_work_label_enhancement.md"
+
+  architecture_label_enhancement:
+    provider_type: "text"
+    temperature: 0.1
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l3_architecture_label_enhancement.md"
+
+  organization_keyword_extraction:
+    provider_type: "text"
+    temperature: 0.1
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l3_organization_keyword_extraction.md"
+
+  # L3:深度阐释任务
+  deep_analysis_planning:
+    provider_type: "text"
+    temperature: 0.55
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l3_deep_analysis_planning.md"
+  
+  deep_analysis_report:
+    provider_type: "text-big"
+    temperature: 0.55
+    top_p: 0.9
+    endpoint: "/chat/completions"
+    system_prompt_file: "l3_deep_analysis_report.md"
+
+
+
+data:
+  paths:
+    images_dir: "pics"
+    metadata_excel: "metadata.xlsx"
+    supported_exts: [".jpg", ".jpeg", ".png"]
+  excel:
+    sheet_name: ""  # 空表示第一个工作表
+    columns:
+      # 新结构：分层的列配置（兼容旧键）
+      metadata:
+        id: "编号"
+        title: "题名"
+        desc: "说明"
+        persons: "相关人物"
+        topic: "所属专题"
+        # 可选预留
+        year: "年代"
+        location: "地点"
+        author: "作者"
+        source: "来源"
+      outputs:
+        long_desc: "长描述"
+        alt_text: "替换文本"
+        keywords_json: "关键词JSON"
+        l1_structured_json: "L1结构化JSON"
+      # 兼容旧扁平键（保留）
+      id_col: "编号"
+      title_col: "题名"
+      topic_col: "所属专题"
+      persons_col: "相关人物"
+      desc_col: "说明"
+      long_desc_col: "长描述"
+      alt_text_col: "替换文本"
+      keywords_col: "关键词JSON"
+  outputs:
+    enabled: false
+    dir: "runtime/outputs"
+
+# 写入策略：主要控制 L0/L1 阶段向 Excel 写入数据的行为
+write_policy:
+  # 若目标单元格已存在值，则跳过生成与写入，用于增量更新
+  skip_if_present: true
+  # 在程序启动时，是否创建 metadata.xlsx 的时间戳备份
+  create_backup: false
+
+# L2 知识关联覆盖开关：若为 true，则强制重跑所有实体的知识关联流程，忽略已有的成功或失败状态
+overwrite: false
+
+# L2 知识关联模块配置
+l2_knowledge_linking:
+  # 仅从"关键词JSON"中的以下字段路径抽取实体（点号路径）
+  keywords_entity_fields:
+    - "specific_context.location"
+    - "specific_context.named_entities"
+  # L1 结构化JSON：按路径抽取并为每条路径指定类型
+  l1_entity_fields:
+    - { path: "location", type: "location" }
+    - { path: "architecture", type: "architecture" }
+    - { path: "organization", type: "organization" }
+    - { path: "work_title", type: "work" }
+    - { path: "event_title", type: "event" }
+    - { path: "cast.actor", type: "person" }
+    - { path: "persons.name", type: "person" }
+
+# 相关事件检索与匹配配置
+related_event_search:
+  # 全局启用开关
+  enabled: true
+  
+  # 最终保留的相关事件数量
+  max_events: 3
+  
+  # 大模型判断的最低置信度阈值
+  min_confidence: 0.7
+  
+  # 是否必须通过规则性筛选（事件title必须包含检索关键词）
+  title_filter_required: true
+  
+  # 速率限制（毫秒）
+  rate_limit_ms: 1000
+  
+  # 事件API检索配置
+  api_config:
+    # API的URL地址
+    url: http://data1.library.sh.cn/webapi/hsly/route/getEventList
+    # API密钥，使用环境变量引用
+    key: "env:SHL_API_KEY"
+    # 单次查询返回的最大结果数（MVP阶段使用单页模式）
+    limit: 20
+    # 字段配置
+    fields:
+      extract:
+        - title
+        - description
+        - begin
+        - end
+        - uri
+        - dateLabel
+      mapping:
+        title: label
+        description: description
+        begin: start_date
+        end: end_date
+        uri: uri
+        dateLabel: date_label
+    # 未来扩展：分页搜索配置（MVP阶段暂不启用）
+    pagination:
+      enabled: false         # MVP阶段使用单页模式
+      page_size: 10          # 每页大小
+      max_pages: 3           # 最大搜索页数
+      early_stop: true       # 启用早停机制
+      min_confidence: 0.8    # 最小置信度阈值
+      rate_limit_ms: 1000    # 页面间延时（毫秒）
+  
+  # 按实体类型的启用配置
+  entity_types:
+    person:
+      enabled: true
+      enable_keyword_extraction: false  # 人名通常直接搜索效果更好
+    organization: 
+      enabled: true
+      enable_keyword_extraction: false   # 机构名称通常需要提取核心词
+    architecture:
+      enabled: true
+      enable_keyword_extraction: false   # 建筑名称需要去除修饰词
+    location:
+      enabled: false                    # 地点类实体通常不需要相关事件
+      enable_keyword_extraction: false
+    place:
+      enabled: false                    # 地点类实体（place）通常不需要相关事件
+      enable_keyword_extraction: false
+    work:
+      enabled: false
+      enable_keyword_extraction: false   # 作品标题需要提取核心词
+    event:
+      enabled: true                    # 事件实体本身不再检索相关事件，避免循环
+      enable_keyword_extraction: true
+
+# L2知识关联工具启用配置：用于按配置启用/禁用各检索工具
+tools:
+  # 外部API配置
+  wikipedia:
+    enabled: true
+  wikidata:
+    enabled: true
+    preferred: "lc"  # 可选: "lc" | "api"；默认"lc"优先使用 LangChain，失败回退官方API
+
+  # 内部API配置 - 统一配置结构
+  person_api:
+    enabled: true
+    enable_alias_search: true
+    # 分页搜索配置（可选）
+    pagination:
+      enabled: false         # 默认禁用，可根据需要启用
+      page_size: 10          # 每页大小
+      max_pages: 3           # 最大搜索页数
+      early_stop: true       # 启用早停机制
+      min_confidence: 0.7    # 最小置信度阈值
+      rate_limit_ms: 1000    # 页面间延时（毫秒）
+    # API的URL地址
+    url: http://data1.library.sh.cn/persons/data
+    # API密钥，使用环境变量引用
+    key: "env:SHL_API_KEY"
+    # 单次查询返回的最大结果数
+    limit: 10
+    # 支持的实体类型
+    entity_types: ["person"]
+    # 字段配置
+    fields:
+      extract:
+        - fname
+        - start
+        - end
+        - briefBiography
+        - uri
+        - place
+        - place_uri
+      mapping:
+        fname: label
+        start: birth_year
+        end: death_year
+        briefBiography: description
+        uri: uri
+        place: place
+        place_uri: place_uri
+  
+  # 地点API工具配置
+  place_api:
+    enabled: true
+    enable_alias_search: true
+    # API的URL模板，{place}会被替换为地名，{key}会被替换为API密钥
+    url_template: "http://data1.library.sh.cn/place/{place}?key={key}"
+    # API密钥，使用环境变量引用
+    key: "env:SHL_API_KEY"
+    # 单次查询返回的最大结果数（对于地点API，通常只有一个结果）
+    limit: 10
+    # 支持的实体类型
+    entity_types: ["place"]
+    # 字段配置
+    fields:
+      extract:
+        - label
+        - city
+        - country
+        - province
+        - county
+        - "@id"
+      mapping:
+        label: label
+        city: city
+        country: country
+        province: province
+        county: county
+        "@id": uri
+  
+  # 机构API工具配置
+  organization_api:
+    enabled: true
+    enable_alias_search: true
+    # 分页搜索配置（可选）
+    pagination:
+      enabled: false         # 默认禁用，可根据需要启用
+      page_size: 30          # 每页大小
+      max_pages: 3           # 最大搜索页数
+      early_stop: true       # 启用早停机制
+      min_confidence: 0.7    # 最小置信度阈值
+      rate_limit_ms: 1000    # 页面间延时（毫秒）
+    # API的URL地址
+    url: http://data1.library.sh.cn/shnh/whzk/webapi/org/list
+    # API密钥，使用环境变量引用
+    key: "env:SHL_API_KEY"
+    # 单次查询返回的最大结果数
+    limit: 10
+    # 支持的实体类型
+    entity_types: ["organization"]
+    # 字段配置（注意：机构API有特殊的响应格式，由专用解析器处理）
+    fields:
+      extract:
+        - name
+        - uri
+        - type
+        - description
+        - creator
+        - created
+        - place
+      mapping:
+        # 多语言标签将由专用解析器处理
+        # name数组中的@chs -> label, @cht -> label_cht
+        name: label
+        uri: uri
+        type: type
+        description: description
+        creator: creator
+        created: created
+        # place对象中的city -> place, placeUri -> place_uri
+        place: place
+  
+  # 事件API工具配置
+  event_api:
+    enabled: true
+    enable_alias_search: true
+    # 分页搜索配置
+    pagination:
+      enabled: false         # 启用分页搜索
+      page_size: 10          # 每页大小
+      max_pages: 2           # 最大搜索页数
+      early_stop: true       # 启用早停机制
+      min_confidence: 0.8    # 最小置信度阈值
+      rate_limit_ms: 1000    # 页面间延时（毫秒）
+    # API的URL地址
+    url: http://data1.library.sh.cn/webapi/hsly/route/getEventList
+    # API密钥，使用环境变量引用
+    key: "env:SHL_API_KEY"
+    # 单次查询返回的最大结果数（单页模式使用）
+    limit: 10
+    # 支持的实体类型
+    entity_types: ["event"]
+    # 字段配置
+    fields:
+      extract:
+        - title
+        - description
+        - begin
+        - end
+        - uri
+        - dateLabel
+      mapping:
+        title: label
+        description: description
+        begin: start_date
+        end: end_date
+        uri: uri
+        dateLabel: date_label
+  
+  # 作品API工具配置
+  work_api:
+    enabled: true
+    enable_alias_search: true
+    # 分页搜索配置
+    pagination:
+      enabled: true           # 启用分页搜索
+      page_size: 50          # 每页大小
+      max_pages: 5           # 最大搜索页数
+      early_stop: true       # 启用早停机制
+      min_confidence: 0.8    # 最小置信度阈值
+      rate_limit_ms: 1000    # 页面间延时（毫秒）
+    # API的URL地址
+    url: http://data1.library.sh.cn/bib/webapi/work/list
+    # API密钥，使用环境变量引用
+    key: "env:SHL_API_KEY"
+    # 单次查询返回的最大结果数（单页模式使用）
+    limit: 30
+    # 支持的实体类型
+    entity_types: ["work"]
+    # 字段配置
+    fields:
+      extract:
+        - label
+        - uri
+        - note
+        - creator
+      mapping:
+        label: label
+        uri: uri
+        note: description
+        creator: creator
+  
+  # 影剧院API工具配置
+  architecture_api:
+    enabled: true
+    enable_alias_search: true
+    # 分页搜索配置（可选）
+    pagination:
+      enabled: false         # 默认禁用，可根据需要启用
+      page_size: 20          # 每页大小
+      max_pages: 5           # 最大搜索页数
+      early_stop: true       # 启用早停机制
+      min_confidence: 0.7    # 最小置信度阈值
+      rate_limit_ms: 1000    # 页面间延时（毫秒）
+    # API的URL地址
+    url: http://data1.library.sh.cn/shnh/dydata/webapi/architecture/getArchitecture
+    # API密钥，使用环境变量引用
+    key: "env:SHL_API_KEY"
+    # 单次查询返回的最大结果数
+    limit: 10
+    # 支持的实体类型
+    entity_types: ["architecture"]
+    # 字段配置
+    fields:
+      extract:
+        - nameS
+        - nameE
+        - orgName
+        - nameOther
+        - des
+        - uri
+        - bUri
+      mapping:
+        nameS: label
+        nameE: label_en
+        orgName: organization
+        nameOther: other_name
+        des: description
+        uri: uri
+        bUri: building_uri
+
+# L3 语境线索层配置
+l3_context_interpretation:
+  # 全局启用开关
+  enabled: true
+  
+  # RAG 任务配置
+  rag_tasks:
+    # 任务1：基于实体标签的检索
+    entity_label_retrieval:
+      enabled: true
+      dify_key: "env:DIFY_ENTITY_RETRIEVAL_KEY"
+      dify_base_url: "https://api.dify.ai/v1"
+      # 速率限制（毫秒）
+      rate_limit_ms: 1000
+      # 请求超时时间（秒）
+      timeout_seconds: 65
+      # 超时恢复配置
+      timeout_recovery:
+        enabled: true              # 启用超时恢复
+        max_attempts: 3            # 最大重试次数
+        delay_seconds: 10          # 每次重试间隔（秒）
+        match_time_window: 120     # 消息匹配时间窗口（秒）
+      # 重试配置
+      retry_policy:
+        max_retries: 3
+        delay_seconds: 2
+        backoff_factor: 2.0
+        
+    # 任务2：基于已有信息的深度阐释（后续扩展）
+    deep_interpretation:
+      enabled: false
+      dify_key: "env:DIFY_DEEP_INTERPRETATION_KEY"
+      dify_base_url: "https://api.dify.ai/v1"
+      rate_limit_ms: 1000
+      # 请求超时时间（秒）
+      timeout_seconds: 95
+      # 超时恢复配置
+      timeout_recovery:
+        enabled: true
+        max_attempts: 3
+        delay_seconds: 10
+        match_time_window: 120
+  
+  # 按实体类型的细粒度任务控制
+  entity_types:
+    person:
+      entity_label_retrieval:
+        enabled: true      # 人物实体的标签检索
+      deep_interpretation:
+        enabled: false     # 人物实体暂不需要深度阐释
+    
+    organization:
+      entity_label_retrieval:
+        enabled: true
+      deep_interpretation:
+        enabled: false      # 机构可能需要深度阐释
+    
+    architecture:
+      entity_label_retrieval:
+        enabled: true
+      deep_interpretation:
+        enabled: false
+    
+    location:
+      entity_label_retrieval:
+        enabled: true
+      deep_interpretation:
+        enabled: false
+    
+    place:
+      entity_label_retrieval:
+        enabled: false
+      deep_interpretation:
+        enabled: false
+    
+    work:
+      entity_label_retrieval:
+        enabled: true
+      deep_interpretation:
+        enabled: false
+    
+    event:
+      entity_label_retrieval:
+        enabled: true
+      deep_interpretation:
+        enabled: false
+  
+  # 增强RAG检索配置（支持多种实体类型的增强检索）
+  enhanced_rag_retrieval:
+    # 全局启用开关
+    enabled: true
+    # Dify API配置
+    dify_key: "env:DIFY_ENTITY_RETRIEVAL_KEY"
+    dify_base_url: "https://api.dify.ai/v1"
+    # 速率限制（毫秒）
+    rate_limit_ms: 1000
+    # 请求超时时间（秒）
+    timeout_seconds: 90
+    # 超时恢复配置
+    timeout_recovery:
+      enabled: true
+      max_attempts: 3
+      delay_seconds: 10
+      match_time_window: 120
+    # 按实体类型的启用配置
+    entity_types:
+      event:
+        enabled: true   # 事件类型增强检索
+        task_name: "event_keyword_extraction"  # 用于invoke_model的任务名
+      work:
+        enabled: true   # 作品类型增强检索
+        task_name: "work_label_enhancement"     # 用于invoke_model的任务名
+      person:
+        enabled: false  # 其他类型默认禁用
+      organization:
+        enabled: true
+        task_name: "organization_keyword_extraction"
+      architecture:
+        enabled: true
+        task_name: "architecture_label_enhancement"
+      location:
+        enabled: false
+      place:
+        enabled: false
+
+  # 增强Web检索配置（支持多种实体类型的增强Web搜索）  # 新增配置
+  enhanced_web_retrieval:
+    # 全局启用开关
+    enabled: true
+    # 按实体类型的启用配置
+    entity_types:
+      person:
+        enabled: false
+      organization:
+        enabled: true
+        task_name: "organization_keyword_extraction"
+      event:
+        enabled: true
+        task_name: "event_keyword_extraction"
+      architecture:
+        enabled: true
+        task_name: "architecture_label_enhancement"
+      location:
+        enabled: false
+      place:
+        enabled: false
+      work:
+        enabled: true
+        task_name: "work_label_enhancement"
+
+  # Web搜索配置
+  web_search:
+    enabled: true
+    
+    # 按实体类型的启用配置
+    entity_types:
+      person:
+        enabled: true
+      organization:
+        enabled: true
+      event:
+        enabled: true
+      architecture:
+        enabled: true
+      location:
+        enabled: true
+      place:
+        enabled: false
+      work:
+        enabled: true
+    
+    # 智谱 AI 配置
+    zhipu_ai:
+      api_key: "env:ZHIPUAI_API_KEY"
+      search_engine: "search_pro"      # 搜索引擎类型
+      count: 10                        # 返回结果条数 (1-50)
+      search_recency_filter: "noLimit" # 搜索时间范围
+      content_size: "high"             # 网页摘要字数控制
+      delay_ms: 1000                   # 搜索延迟（毫秒）
+      
+    # LLM 分析配置（已迁移到tasks配置，此处仅保留通用参数）
+    llm_analysis:
+      max_tokens: 2000               # 最大输出令牌数
+
+    
+    # 第一阶段：信息甄别与评估配置
+    assessment:
+      score_threshold: 8             # 高分筛选阈值（0-10分）
+      max_selected_results: 3        # 最多选取的高分结果数量
+      
+      
+    # 输出配置
+    output:
+      result_field_name: "l3_web_search"  # 存储字段名
+      max_result_length: 1500             # 最大结果长度限制
+    
+  # 输出配置
+  output:
+    # 是否启用结果缓存
+    enable_caching: true
+    # 结果保存到实体节点的字段前缀
+    result_field_prefix: "l3_rag"
+
+# L3 Deep Analysis（新增）
+deep_analysis:
+  enabled: true
+  excel_path: "metadata.xlsx"
+  id_column: "编号"
+  output_dir: "runtime/outputs"
+  overwrite_report: false
+  planning:
+    llm_task_name: "deep_analysis_planning"
+  report:
+    llm_task_name: "deep_analysis_report"
+    # 可选：覆盖单次报告生成的 LLM 请求超时（秒）。若未设置，使用 provider 级 timeout_seconds 或默认 60。
+    timeout_seconds: 320
+  dify:
+    base_url: "https://api.dify.ai/v1"
+    api_key: "env:DIFY_DEEP_INTERPRETATION_KEY"
+    enabled: true
+    skip_if_executed: false
+    rate_limit_ms: 1000
+    timeout_seconds: 75
+    timeout_recovery:
+      enabled: true
+      max_attempts: 3
+      delay_seconds: 20
+      match_time_window: 120
+  glm:
+    enabled: true
+    retry_policy:
+      max_retries: 3
+      delay_seconds: 30
+      backoff_factor: 2.0

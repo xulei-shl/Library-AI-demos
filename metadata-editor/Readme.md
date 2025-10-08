@@ -1,69 +1,49 @@
-## 自动化工作流程图
+# Metadata Editor 项目说明
 
-![](https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/%E8%8A%82%E7%9B%AE%E5%8D%95%E5%AE%9E%E4%BD%93%E6%8F%90%E5%8F%96%E4%B8%8E%E7%BC%96%E8%BE%91.png)
+## 1. 项目概述
 
+本项目是一个基于 Python 和 Streamlit 构建的元数据编辑工具，专用于图书馆或机构管理和编辑演艺事件的元数据。它通过一个交互式的 Web界面，实现了对存储在 SQLite 数据库中数据的浏览、编辑和版本控制。项目集成了大型语言模型（LLM）和外部知识库，为元数据处理、实体关联和内容问答等任务提供智能辅助。
 
-## 页面
+## 2. 核心功能
 
-![](https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/20240905094317.png)
+- **数据加载与持久化**: 从 SQLite 数据库加载数据，并能将修改后的数据持久化保存，同时记录版本历史。
+- **交互式Web界面**: 使用 Streamlit 构建，提供数据加载、实体编辑、词表管理等多个功能页面。
+- **实体编辑**: 提供丰富的表单控件，用于编辑演出事件、场地、参与团体、作品、演职人员等复杂嵌套的元数据结构。
+- **AI 辅助**:
+    - **实体链接**: 可调用外部API（如人名规范库）进行实体链接。
+    - **知识库问答**: 集成 Dify 等平台，实现基于特定知识库的问答。
+    - **通用AI问答**: 支持调用多种大模型 API（如 SiliconFlow, Zhipu AI）进行开放式问答。
+- **词表管理**: 提供对事件类型、实体关系类型等多种词表的增删改查功能，词表存储于数据库中。
+- **配置化管理**: 对大模型、知识库和提示词（Prompts）进行JSON文件配置化管理，方便用户自定义。
 
-## API配置
+## 3. 项目结构
 
-大模型 API、知识库 API 和提示词都是用的本地 `.json` 存储。需要在 `jsondata`文件夹新建 `llm_settings.json` 、`knowledge_settings.json` 和 `prompts.json` 文件。样例如下：
+```
+/
+├── main.py                # Streamlit 应用的主入口，负责页面导航
+├── api_utils.py           # 封装与 LLM 和外部知识库 API 的通信
+├── data_browsing.py       # “实体编辑”页面的核心逻辑
+├── data_loading.py        # “数据加载”页面的核心逻辑
+├── utils.py               # 通用工具函数，如数据库操作
+├── jsondata/              # 存放各类JSON配置文件
+│   ├── llm_settings.json     # 大模型API配置
+│   ├── knowledge_settings.json # 知识库配置
+│   └── prompts.json          # 预设的提示语
+└── tools/                 # 存放各类后台工具和管理脚本
+    ├── create_database.py    # 初始化数据库和表结构
+    ├── json2sql.py           # 将JSON文件导入到SQLite数据库
+    ├── type_settings.py      # 事件类型词表管理界面
+    └── ...                   # 其他管理页面和脚本
+```
 
-1. llm_settings.json
-   
-   ```
-   [
-    {
-        "name": "智谱/GLM-4-Flash",
-        "api_key": "",
-        "api_url": "https://open.bigmodel.cn/api/paas/v4/",
-        "model": "glm-4-flash"
-    },
-    {
-        "name": "siliconflow/Qwen2-7B-Instruct",
-        "api_key": "",
-        "api_url": "https://api.siliconflow.cn/v1/",
-        "model": "Qwen/Qwen2-7B-Instruct"
-    }
-    ]
-   ```
+## 4. 快速开始
 
-2. knowledge_settings.json
-   ```
-    [
-        {
-            "name": "Dify/节目单",
-            "api_key": "",
-            "api_url": "https://api.dify.ai/v1/chat-messages"
-        }
-    ]
+1.  **环境准备**: 确保已安装 Python 及 `requirements.txt` 中声明的依赖库（如 `streamlit`, `openai`, `requests`）。
+2.  **配置API**: 在项目根目录创建 `.env` 文件，并填入所需的大模型及外部知识库的 API Key 和 URL。
+3.  **初始化数据库**: 如果是首次运行，需要先准备好数据文件，并执行 `tools/json2sql.py` 脚本，它将创建数据库并将数据导入。
+4.  **运行应用**: 在项目根目录下执行以下命令：
+    ```bash
+    streamlit run main.py
     ```
+5.  **使用**: 在浏览器中打开应用，通过侧边栏导航至不同功能页面进行操作。首先在“数据加载”页面加载数据，然后切换到“实体编辑”页面进行浏览和修改。
 
-3. prompts.json
-   ```
-   [
-    {
-        "label": "询问",
-        "description": ""
-    },
-    {
-        "label": "解释",
-        "description": "请用通俗的语言解释下这个内容"
-    },
-    {
-        "label": "翻译",
-        "description": "请将内容翻译成英文"
-    },
-    {
-        "label": "OCR纠错",
-        "description": "请根据中文语义、语法角度，判断文本中是否有OCR识别错误的内容"
-    }
-    ]
-   ```
-
-
-### 优化
-
-1. 是否可以用 ReAct 智能体进行相关实体判断？？
