@@ -26,9 +26,14 @@
 
 ### L2 - 知识关联层 (Knowledge Linking)
 
-*   **功能**：本层是连接文本实体与权威知识库的桥梁。它接收 L1 提取的实体，通过调用外部知识库（如 Wikidata, Wikipedia）和上海图书馆开放数据 API，对实体进行链接和消歧。
+*   **功能**：本层是连接文本实体与权威知识库的桥梁。它接收 L1 提取的实体，通过调用外部知识库（如 Wikidata, Wikipedia）和内部 API（如上图开放数据），对实体进行链接和消歧。为了提升关联的准确性和深度，L2 包含了两个高级功能模块：
+
+    *   **别名补充检索 (Alias Search)**：这是一个智能的补充检索机制。当使用实体的主要名称在内部 API 中找不到理想结果时，此功能会被触发。它首先利用大模型（LLM）从该实体的 Wikipedia 描述中自动提取各种可能的别名（如简称、旧称、外文名等），然后依次使用这些别名重新进行 API 检索。最后，再次利用 LLM 对别名检索出的结果进行相关性验证，确保匹配的准确性，从而显著提高实体的关联成功率。
+
+    *   **相关事件关联 (Related Event Search)**：此功能旨在为核心实体（特别是人物、组织和作品）关联相关的历史事件，极大地丰富了实体的上下文。它采用一个“检索-重排”工作流：首先，利用 LLM 将实体名称优化为更适合检索的关键词；然后，使用关键词调用事件 API 获取一批候选事件；最后，再次动用 LLM 扮演“事件分析专家”，对所有候选事件进行深度分析和相关性打分，筛选出最相关的几个事件并附上置信度。
+
 *   **主要输出**：
-    *   **知识关联JSON**：在 L1 的 JSON 基础上，为每个实体增加了指向权威知识库的唯一标识符（URI），并保留了所有 API 的原始返回结果以供追溯。
+    *   **知识关联JSON**：在 L1 的 JSON 基础上，为每个实体增加了指向权威知识库的唯一标识符（URI）、关联到的相关事件，并保留了所有 API 的原始返回结果以供追溯。
 
 ### L3 - 语境阐释层 (Context Interpretation & Deep Analysis)
 
@@ -154,82 +159,117 @@ python main.py --tasks deep_report --row-id 2202_001
 
 ```mermaid
 graph TD
+    %% 图标题: 框架原型实现流程与数据流图
+
     subgraph "输入层"
-        A1["pics/*.png (图像)"]
-        A2["metadata.xlsx (元数据)"]
+        direction LR
+        A1(("原始历史图像<br/>(《日出》首演剧照)"))
+        A2(("初始元数据<br/>"))
     end
 
-    subgraph "L0: 媒介内容层 (视觉转述)"
-        L0_VLM["调用视觉大模型 (VLM)"]
-        L0_LLM["调用文本大模型 (LLM)"]
-        L0_DescOut{"长描述/Alt-Text"}
-        L0_KwOut{"关键词 JSON"}
-        A1 --> L0_VLM --> L0_DescOut
-        L0_DescOut --> L0_LLM --> L0_KwOut
+    subgraph "L0-媒介内容层 (视觉转述与初始上下文构建)"
+        P0["<B>处理过程</B><br/>VLM / LLM<br/>生成客观视觉描述"]
+        D0("<b>产出:</b> 描述性长文本/AltText、关键词 JSON<br/>(初始上下文)")
+        A1 --> P0
+        A2 --> P0
+        P0 --> D0
     end
 
-    subgraph "L1: 客观知识层 (结构化抽取)"
-        L1_LLM["调用文本大模型 (LLM)"]
-        L1_Output{"结构化JSON"}
-        L0_DescOut --> L1_LLM
-        L0_KwOut --> L1_LLM
-        A2 --> L1_LLM
-        L1_LLM --> L1_Output
+    subgraph "L1-客观知识层 (结构化信息抽取)"
+        P1["<B>处理过程</B><br/>LLM 基于任务分解策略<br/>抽取关键实体"]
+        D1("<b>产出:</b> 结构化知识单元<br/>(JSON格式)")
+        D0 --> P1
+        A2 --> P1
+        P1 --> D1
     end
 
-    subgraph "L2: 知识关联层 (实体链接)"
-        L2_Search["API检索 (Internal/Wiki)"]
-        L2_Candidates{"候选实体"}
-        L2_LLM["调用大模型进行消歧"]
-        L2_Output{"知识关联JSON"}
+    %% L2-知识关联层 (重构以体现高级功能)
+    subgraph "L2-知识关联层 (实体链接与知识丰富)"
+        direction TB
         
-        L1_Output --> L2_Search --> L2_Candidates --> L2_LLM --> L2_Output
+        KB1[("上海图书馆开放知识库")]
+        KB2[("外部 WIkI 公共知识库")]
+
+        P2_Entry["<b>1. 主要实体链接 & 消歧</b><br/>使用实体主名称检索内外部知识库"]
+
+        subgraph "高级功能模块"
+            direction LR
+            
+            subgraph "别名补充检索 (Fallback)"
+                P2A_Alias["<b>2a. 别名提取与补充检索</b><br/>LLM从Wiki提取别名<br/>使用别名重新查询内部API"]
+                P2A_Validate["<b>2b. 结果验证 (LLM)</b><br/>LLM评估别名检索结果<br/>确保匹配准确性"]
+                P2_Entry -->|若内部API检索失败| P2A_Alias
+                KB2 --> P2A_Alias
+                KB1 --> P2A_Alias
+                P2A_Alias --> P2A_Validate
+            end
+
+            subgraph "相关事件关联 (Enrichment)"
+                P2B_Retrieve["<b>3a. 事件检索 (Retrieve)</b><br/>LLM优化关键词<br/>调用事件API获取候选事件"]
+                P2B_Rerank["<b>3b. 事件重排 (Rerank)</b><br/>LLM扮演专家角色<br/>为事件打分、筛选"]
+                P2_Entry --> P2B_Retrieve
+                KB1 -- 事件API --> P2B_Retrieve
+                P2B_Retrieve --> P2B_Rerank
+            end
+        end
+
+        P2_Merge["<b>4. 知识整合</b><br/>合并所有链接、事件<br/>及原始API结果"]
+        D2("<b>产出:</b> 知识关联JSON<br/>(含URI、相关事件、原始API结果)")
+        
+        %% L2 内部数据流
+        D1 --> P2_Entry
+        KB1 --> P2_Entry
+        KB2 --> P2_Entry
+        
+        P2_Entry --> P2_Merge
+        P2A_Validate --> P2_Merge
+        P2B_Rerank --> P2_Merge
+        P2_Merge --> D2
     end
 
-    subgraph "L3: 语境阐释层 (Context Interpretation & Deep Analysis)"
-        %% 阶段A: 语境阐释
-        L3_Direct_Retrieve["直接检索 (RAG/Web)"]
-        L3_Label_Enhance["实体词扩展 (LLM)"]
-        L3_Expanded_Retrieve["增强检索 (RAG/Web)"]
-        L3_Analyze["相关性分析 (LLM)"]
-        L3_Enriched_JSON{"知识关联JSON (增强)"}
+    %% L3层重构，分为A、B两个阶段
+    subgraph "L3-语境线索层 (语境阐释与深度分析)"
+        
+        subgraph "阶段A: 语境阐释 (实体知识增强)"
+            direction TB
+            P3A_Retrieve["<b>1. 双路径信息检索</b><br/>- 直接检索 (原始标签)<br/>- 增强检索 (LLM扩展关键词)"]
+            D3A_RawInfo("原始检索信息集合")
+            P3A_Filter["<b>2. LLM相关性分析与筛选</b><br/>评估、打分并过滤<br/>高质量语境信息"]
+            D3A_EnhancedJSON("<b>产出:</b> 增强版知识JSON")
+            
+            D2 --> P3A_Retrieve
+            P3A_Retrieve --> D3A_RawInfo --> P3A_Filter --> D3A_EnhancedJSON
+        end
 
-        L2_Output --> L3_Direct_Retrieve --> L3_Analyze
-        L2_Output --> L3_Label_Enhance --> L3_Expanded_Retrieve --> L3_Analyze
-        L3_Analyze --> L3_Enriched_JSON
+        subgraph "阶段B: 深度分析 (报告生成)"
+            direction TB
+            P3B_Plan["<b>3. 规划 </b><br/>LLM基于增强知识<br/>生成分析计划 (子主题/问题)"]
+            D3B_Plan("分析计划")
+            P3B_Execute["<b>4. 执行 </b><br/>针对每个子主题<br/>调度执行器搜集信息"]
+            D3B_Evidence("综合语境证据")
+            P3B_Write["<b>5. 撰写 </b><br/>LLM整合所有证据<br/>撰写深度分析报告"]
+            D3("<b>最终产出:</b><br/>深度阐释报告<br/>")
+            
+            D3A_EnhancedJSON -- 输入 --> P3B_Plan --> D3B_Plan --> P3B_Execute --> D3B_Evidence --> P3B_Write --> D3
+        end
 
-        %% 阶段B: 深度分析
-        L3_Planner["planner.py (LLM规划)"]
-        L3_PlanOut{"执行计划"}
-        L3_Executor["executors (Dify RAG/GLM Web)"]
-        L3_ExecResult{"检索结果"}
-        L3_Writer["report_writer.py (LLM报告)"]
-        L3_Final_Output{"深度分析报告 (.md)"}
-
-        L3_Enriched_JSON --> L3_Planner
-        L3_Planner --> L3_PlanOut --> L3_Executor --> L3_ExecResult --> L3_Writer --> L3_Final_Output
+        %% L3 外部知识源
+        CORPUS[("专业领域知识库<br/>(Dify RAG)")]
+        WEB_KB[("网络知识源<br/>(GLM Web / Deep Search)")]
+        
+        %% 知识源连接
+        CORPUS --> P3A_Retrieve
+        WEB_KB --> P3A_Retrieve
+        CORPUS --> P3B_Execute
+        WEB_KB --> P3B_Execute
     end
 
-    subgraph "全局模块"
-        Orchestrator["main.py (任务编排)"]
-        Config["config/settings.yaml"]
-        Prompts["prompts/*.md"]
-    end
+    %% 定义样式
+    classDef process fill:#e6f3ff,stroke:#0055cc,stroke-width:2px;
+    classDef data fill:#f9f0ff,stroke:#800080,stroke-width:2px,color:#333;
+    classDef source fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
 
-    Orchestrator --> L0_VLM
-    Orchestrator --> L1_LLM
-    Orchestrator --> L2_Search
-    Orchestrator --> L3_Direct_Retrieve
-    Orchestrator --> L3_Label_Enhance
-    Orchestrator --> L3_Planner
-
-    Config --> Orchestrator
-    Prompts --> L0_VLM
-    Prompts --> L0_LLM
-    Prompts --> L1_LLM
-    Prompts --> L2_LLM
-    Prompts --> L3_Label_Enhance
-    Prompts --> L3_Analyze
-    Prompts --> L3_Planner
-    Prompts --> L3_Writer
+    class P0,P1,P2_Entry,P2A_Alias,P2A_Validate,P2B_Retrieve,P2B_Rerank,P2_Merge,P3A_Retrieve,P3A_Filter,P3B_Plan,P3B_Execute,P3B_Write process;
+    class A1,A2,D0,D1,D2,D3,D3A_RawInfo,D3A_EnhancedJSON,D3B_Plan,D3B_Evidence data;
+    class KB1,KB2,CORPUS,WEB_KB source;
 ```
