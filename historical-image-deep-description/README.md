@@ -32,11 +32,19 @@
 
 ### L3 - 语境阐释层 (Context Interpretation & Deep Analysis)
 
-*   **功能**：作为最高层，本层利用前序阶段生成的结构化和关联化数据，进行深度的语境分析和知识挖掘。
-*   **主要任务包括**：
-    *   **增强RAG检索 (Enhanced RAG Retrieval)**：基于实体类型，从专业知识库中检索相关事件、作品等信息。
-    *   **Web搜索 (Web Search)**：利用搜索引擎，围绕核心实体和主题进行开放域信息探索。
-    *   **深度分析 (Deep Analysis)**：一个复杂的多阶段任务，它首先基于已有信息进行“规划”，生成一系列待研究的子主题和问题，然后通过执行器（如 `GLM` Web Search, `Dify` RAG）搜集信息，最后“撰写”一份综合性的分析报告（Markdown 格式）。
+*   **功能**：作为流水线的最高层，本层在前序阶段生成的结构化和关联化数据的基础上，通过一个两阶段过程进行深度的语境分析和知识挖掘，最终产出综合性的分析报告。
+
+*   **阶段 A: 语境阐释 (Context Interpretation)**
+    此阶段的核心目标是围绕 L2 输出的每个知识实体，搜集并关联丰富的上下文信息。它采用双路径检索策略，以确保信息的广度和深度：
+    *   **直接检索 (Direct Retrieval)**：使用实体原始标签，直接在专业知识库（通过 RAG）和 Web 上进行一轮基础信息检索。
+    *   **增强检索 (Enhanced Retrieval)**：首先，利用大语言模型（LLM）对原始实体标签进行分析、改写和扩展，生成更优化的检索关键词；然后，使用这些增强后的关键词执行第二轮更深入的 RAG 和 Web 检索。
+    *   **相关性分析 (Relevance Analysis)**：将上述两轮检索获得的所有信息交由 LLM进行相关性评估和打分。只有高于预设阈值的高质量、高相关性信息才会被筛选出来，并写回知识关联 JSON 文件中，完成对实体的“增强”。
+
+*   **阶段 B: 深度分析 (Deep Analysis)**
+    此阶段是知识的综合与升华。它利用阶段 A 生成的增强版知识 JSON，执行一个“规划-执行-报告”的复杂工作流：
+    *   **规划 (Planning)**：基于实体及其丰富的上下文信息，由 LLM 规划出一系列有待深入研究的子主题和问题。
+    *   **执行 (Execution)**：针对规划好的每个问题，调度不同的执行器（如 `GLM` Web Search, `Dify` RAG）分头搜集信息。
+    *   **撰写 (Reporting)**：最后，整合所有检索到的信息，由 LLM 撰写一份结构清晰、内容详实的综合性分析报告（Markdown 格式）。
 
 ## 3. 安装与配置
 
@@ -141,3 +149,87 @@ python main.py --tasks deep_report --row-id 2202_001
     *   `{编号}_deep.json`: L3 `deep_planning` 阶段生成的规划文件，包含了子主题和待检索的问题。
     *   `{编号}_deep.md`: L3 `deep_report` 阶段生成的最终分析报告。
 *   **日志 (`runtime/logs/app.log`)**: 记录了详细的运行过程和潜在错误，是排查问题的重要依据。
+
+## 6. 项目框架图
+
+```mermaid
+graph TD
+    subgraph "输入层"
+        A1["pics/*.png (图像)"]
+        A2["metadata.xlsx (元数据)"]
+    end
+
+    subgraph "L0: 媒介内容层 (视觉转述)"
+        L0_VLM["调用视觉大模型 (VLM)"]
+        L0_LLM["调用文本大模型 (LLM)"]
+        L0_DescOut{"长描述/Alt-Text"}
+        L0_KwOut{"关键词 JSON"}
+        A1 --> L0_VLM --> L0_DescOut
+        L0_DescOut --> L0_LLM --> L0_KwOut
+    end
+
+    subgraph "L1: 客观知识层 (结构化抽取)"
+        L1_LLM["调用文本大模型 (LLM)"]
+        L1_Output{"结构化JSON"}
+        L0_DescOut --> L1_LLM
+        L0_KwOut --> L1_LLM
+        A2 --> L1_LLM
+        L1_LLM --> L1_Output
+    end
+
+    subgraph "L2: 知识关联层 (实体链接)"
+        L2_Search["API检索 (Internal/Wiki)"]
+        L2_Candidates{"候选实体"}
+        L2_LLM["调用大模型进行消歧"]
+        L2_Output{"知识关联JSON"}
+        
+        L1_Output --> L2_Search --> L2_Candidates --> L2_LLM --> L2_Output
+    end
+
+    subgraph "L3: 语境阐释层 (Context Interpretation & Deep Analysis)"
+        %% 阶段A: 语境阐释
+        L3_Direct_Retrieve["直接检索 (RAG/Web)"]
+        L3_Label_Enhance["实体词扩展 (LLM)"]
+        L3_Expanded_Retrieve["增强检索 (RAG/Web)"]
+        L3_Analyze["相关性分析 (LLM)"]
+        L3_Enriched_JSON{"知识关联JSON (增强)"}
+
+        L2_Output --> L3_Direct_Retrieve --> L3_Analyze
+        L2_Output --> L3_Label_Enhance --> L3_Expanded_Retrieve --> L3_Analyze
+        L3_Analyze --> L3_Enriched_JSON
+
+        %% 阶段B: 深度分析
+        L3_Planner["planner.py (LLM规划)"]
+        L3_PlanOut{"执行计划"}
+        L3_Executor["executors (Dify RAG/GLM Web)"]
+        L3_ExecResult{"检索结果"}
+        L3_Writer["report_writer.py (LLM报告)"]
+        L3_Final_Output{"深度分析报告 (.md)"}
+
+        L3_Enriched_JSON --> L3_Planner
+        L3_Planner --> L3_PlanOut --> L3_Executor --> L3_ExecResult --> L3_Writer --> L3_Final_Output
+    end
+
+    subgraph "全局模块"
+        Orchestrator["main.py (任务编排)"]
+        Config["config/settings.yaml"]
+        Prompts["prompts/*.md"]
+    end
+
+    Orchestrator --> L0_VLM
+    Orchestrator --> L1_LLM
+    Orchestrator --> L2_Search
+    Orchestrator --> L3_Direct_Retrieve
+    Orchestrator --> L3_Label_Enhance
+    Orchestrator --> L3_Planner
+
+    Config --> Orchestrator
+    Prompts --> L0_VLM
+    Prompts --> L0_LLM
+    Prompts --> L1_LLM
+    Prompts --> L2_LLM
+    Prompts --> L3_Label_Enhance
+    Prompts --> L3_Analyze
+    Prompts --> L3_Planner
+    Prompts --> L3_Writer
+```
