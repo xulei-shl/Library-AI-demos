@@ -51,11 +51,11 @@ DONE topic_tracking
 
 ### 文献预警报告撰写专家
 
-TODO
+TODO❌
 
 ### 书目推荐 ChatBot
 
-TODO
+TODO❌
 
 ### 特藏资源（节目单）实体提取
 
@@ -88,6 +88,14 @@ DONE litWay
 ### 借阅热图 - 年度借阅统计可视化
 
 DONE readingHeatwave
+
+### 历史图书深度描述
+
+DONE historical-image-deep-description
+
+### 图书馆高质量检索工具集
+
+DOING api-tools
 
 ### 资源分享
 
