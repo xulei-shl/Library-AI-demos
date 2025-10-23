@@ -1,0 +1,103 @@
+api_providers:
+  vision:
+    primary:
+      name: ModelScope_Secondary_Vision
+      api_key: env:ModelScope_API_KEY
+      base_url: https://api-inference.modelscope.cn/v1
+      model: Qwen/Qwen3-VL-235B-A22B-Instruct
+      # name: GLM_Secondary_Vision
+      # api_key: env:GLM_API_KEY
+      # base_url: https://open.bigmodel.cn/api/paas/v4
+      # model: glm-4.5v      
+      timeout_seconds: 180    
+    secondary:
+      name: Qwen_Primary_Vision
+      api_key: env:QWEN_API_KEY
+      base_url: http://47.103.50.106:3031/v1
+      # api_key: env:Cherry_API_KEY
+      # base_url: http://localhost:23333/v1
+      model: qwen3-vl-plus
+      timeout_seconds: 180
+
+  text:
+    primary:
+      name: SophNet_Primary_Text
+      api_key: env:SophNet_API_KEY
+      base_url: https://www.sophnet.com/api/open-apis/v1
+      model: DeepSeek-V3.2-Exp
+      timeout_seconds: 120
+    secondary:
+      name: ModelScope_Secondary_Text
+      api_key: env:ModelScope_API_KEY
+      base_url: https://api-inference.modelscope.cn/v1
+      model: deepseek-ai/DeepSeek-V3.2-Exp
+      timeout_seconds: 120
+tasks:
+  fact_description:
+    provider_type: vision
+    endpoint: /chat/completions
+    temperature: 0.45
+    top_p: 0.9
+    system_prompt_file: src/prompts/fact_description.md
+  fact_description_noseries:
+    provider_type: vision
+    endpoint: /chat/completions
+    temperature: 0.45
+    top_p: 0.9
+    system_prompt_file: src/prompts/fact_description-noseries.md
+  function_type:
+    provider_type: vision
+    endpoint: /chat/completions
+    temperature: 0.45
+    top_p: 0.9
+    system_prompt_file: src/prompts/function_type.md
+  series:
+    provider_type: vision
+    endpoint: /chat/completions
+    temperature: 0.45
+    top_p: 0.9
+    system_prompt_file: src/prompts/series.md
+  art_style:
+    provider_type: vision
+    endpoint: /chat/completions
+    temperature: 0.2
+    top_p: 0.9
+    system_prompt_file: src/prompts/art_style.md
+  correction:
+    provider_type: text
+    endpoint: /chat/completions
+    temperature: 0.2
+    top_p: 0.9
+    system_prompt_file: src/prompts/correction.md
+  series_consensus:
+    provider_type: text
+    endpoint: /chat/completions
+    temperature: 0.2
+    top_p: 0.9
+    system_prompt_file: src/prompts/series_consensus.md
+
+paths:
+  input_image_dir: E:/scripts/doing/huohua/ceshi
+  outputs_dir: runtime/outputs
+  logs_dir: runtime/logs
+
+# 顶层字段，方便 invoke_model 直接读取
+rate_limit_ms: 0
+retry_policy:
+  max_retries: 3
+  delay_seconds: 5
+
+execution:
+  overwrite_existing: false
+
+# 系列共识配置
+series_consensus:
+  sample_size: 3  # 用于共识计算的样本组数量（默认 3）
+  force_recalculate: false  # 强制重新计算共识，忽略已有共识文件
+  generate_even_without_objects: true  # 即使没有对象组（仅有系列样本）也生成系列共识文件
+
+logging:
+  level: INFO
+  system_preview_max_len: 1000
+  user_preview_max_len: 100
+  response_preview_max_len: 2000
