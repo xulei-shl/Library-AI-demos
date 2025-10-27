@@ -1,22 +1,16 @@
 api_providers:
   vision:
     primary:
-      name: ModelScope_Secondary_Vision
-      api_key: env:ModelScope_API_KEY
-      base_url: https://api-inference.modelscope.cn/v1
-      model: Qwen/Qwen3-VL-235B-A22B-Instruct
-      # name: GLM_Secondary_Vision
-      # api_key: env:GLM_API_KEY
-      # base_url: https://open.bigmodel.cn/api/paas/v4
-      # model: glm-4.5v      
-      timeout_seconds: 180    
+      name: OneAPI
+      api_key: env:OneAPI_API_KEY
+      base_url: http://47.103.50.106:3000/v1
+      model: doubao-seed-1-6-flash-250828
+      timeout_seconds: 180
     secondary:
-      name: Qwen_Primary_Vision
-      api_key: env:QWEN_API_KEY
-      base_url: http://47.103.50.106:3031/v1
-      # api_key: env:Cherry_API_KEY
-      # base_url: http://localhost:23333/v1
-      model: qwen3-vl-plus
+      name: SophNet_Secondary_Vision
+      api_key: env:SophNet_API_KEY
+      base_url: https://www.sophnet.com/api/open-apis/v1
+      model: Qwen3-VL-235B-A22B-Instruct
       timeout_seconds: 180
 
   text:

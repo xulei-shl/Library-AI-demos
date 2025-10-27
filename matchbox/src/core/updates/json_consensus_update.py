@@ -2,11 +2,12 @@
 """
 JSON consensus updater:
 - 批量将系列共识字段合并到对象 JSON 和系列样本 JSON
-- 统一异常与日志处理，复用 merge_series_consensus_into_object 和 merge_series_consensus_into_series_json
+- 实现方案1优化流程：
+  1. 先用共识更新系列样本 JSON（4个字段）
+  2. 将更新后的系列样本 JSON 合并到对象 JSON 的 series 节点
+  3. 再用共识更新对象 JSON 的顶层字段（5个字段）
+  这样确保对象的 series 节点包含最新的共识数据
 - 不在此模块中生成/读取共识，仅消费由 consensus.manager 提供的共识数据
-- 按类型规则执行校正：
-  - A/B 类型不在此阶段执行 correction（遵循设计解耦）
-  - C 类型的 correction 已在 no_series_processor 尾部执行，此模块不重复执行
 - A 类型系列样本 JSON 从共识更新 4 个字段：name, manufacturer, country, art_style
 """
 import os
@@ -17,6 +18,7 @@ from src.utils.logger import get_logger
 from src.core.pipeline_utils import (
     merge_series_consensus_into_object,
     merge_series_consensus_into_series_json,
+    merge_series_name_into_object,
 )
 
 logger = get_logger(__name__)
@@ -46,18 +48,17 @@ def update_jsons_with_consensus(
     settings: Dict[str, Any],
 ) -> Tuple[int, List[str]]:
     """
-    批量合并系列共识字段：
-      - 对每个系列（consensus_path != "_no_series_"），逐文件合并系列级字段
-      - A 类型系列样本（以 S_ 开头）：使用 merge_series_consensus_into_series_json 更新 4 个字段
-      - 对象 JSON：使用 merge_series_consensus_into_object 更新 5 个字段（包括 inferred_era）
-      - A/B 类型不在此阶段执行 correction
-      - C 类型不参与此函数（其共识为空；correction 已在 no_series_processor 尾部执行）
+    批量合并系列共识字段（方案1优化流程）：
+      第一阶段：先更新所有系列样本 JSON
+      第二阶段：将更新后的系列样本合并到对象，并更新对象顶层字段
+
+      这样确保对象的 series 节点包含最新的共识数据。
 
     Args:
       json_paths_by_consensus: {consensus_path: [json_file_path, ...]}
       consensus_by_path: {consensus_path: consensus_data}
       series_groups: {consensus_path: [Group, ...]} 用于类型判断与日志
-      settings: 管线配置（当前函数不读取/生成共识，仅用于日志策略）
+      settings: 管线配置
 
     Returns:
       (updated_count, updated_paths)
@@ -83,54 +84,97 @@ def update_jsons_with_consensus(
 
         # 收集系列样本的 JSON 路径（a_series 类型）
         series_json_paths = set()
+        series_json_map = {}  # 路径到 JSON 数据的映射
         for g in series_group_list:
             if g.group_type == "a_series" and hasattr(g, "json_path") and g.json_path:
                 series_json_paths.add(g.json_path)
 
-        # 合并系列级字段
+        # ========== 第一阶段：先更新所有系列样本 JSON ==========
         for jp in json_paths:
-            try:
-                basename = os.path.basename(jp)
-                gid = os.path.splitext(basename)[0]
+            basename = os.path.basename(jp)
+            gid = os.path.splitext(basename)[0]
+            is_series_json = jp in series_json_paths or gid.startswith("S_")
 
-                # 判断是否为系列样本 JSON
-                is_series_json = jp in series_json_paths or gid.startswith("S_")
+            if is_series_json:
+                try:
+                    with open(jp, "r", encoding="utf-8") as f:
+                        json_data = json.load(f)
 
-                with open(jp, "r", encoding="utf-8") as f:
-                    json_data = json.load(f)
-
-                if is_series_json:
-                    # A 类型系列样本：更新 4 个字段（不包括 inferred_era）
+                    # 更新系列样本的 4 个字段
                     merge_series_consensus_into_series_json(json_data, consensus_data)
+
+                    # 保存更新后的系列样本 JSON
+                    with open(jp, "w", encoding="utf-8") as f:
+                        json.dump(json_data, f, ensure_ascii=False, indent=2)
+
+                    # 缓存更新后的系列样本数据，供对象合并使用
+                    series_json_map[jp] = json_data
+
                     logger.info(
                         f"series_json_updated_with_consensus path={jp} "
                         f"consensus_path={consensus_path} type=a_series "
                         f"fields=name,manufacturer,country,art_style"
                     )
-                else:
-                    # 对象 JSON：更新 5 个字段（包括 inferred_era）
-                    merge_series_consensus_into_object(json_data, consensus_data)
 
-                    # 记录类型信息（仅用于日志）
-                    group_type = None
-                    type_index = group_type_index.get(consensus_path) or {}
-                    group_type = type_index.get(gid)
-                    logger.info(
-                        f"object_json_updated_with_consensus path={jp} "
-                        f"consensus_path={consensus_path} group_type={group_type}"
+                    updated_count += 1
+                    updated_paths.append(jp)
+
+                except Exception as e:
+                    logger.warning(
+                        f"update_series_json_failed path={jp} err={str(e)[:200]} consensus_path={consensus_path}"
                     )
 
-                # 保存更新后的 JSON
-                with open(jp, "w", encoding="utf-8") as f:
-                    json.dump(json_data, f, ensure_ascii=False, indent=2)
+        # ========== 第二阶段：更新对象 JSON（合并系列 + 更新顶层字段）==========
+        # 找到该系列对应的已更新的系列样本数据
+        updated_series_json = None
+        if series_json_map:
+            # 假设一个系列只有一个系列样本，取第一个
+            updated_series_json = next(iter(series_json_map.values()))
 
-                updated_count += 1
-                updated_paths.append(jp)
+        for jp in json_paths:
+            basename = os.path.basename(jp)
+            gid = os.path.splitext(basename)[0]
+            is_series_json = jp in series_json_paths or gid.startswith("S_")
 
-            except Exception as e:
-                logger.warning(
-                    f"update_json_with_consensus_failed path={jp} err={str(e)[:200]} consensus_path={consensus_path}"
-                )
+            # 只处理对象 JSON
+            if not is_series_json:
+                try:
+                    with open(jp, "r", encoding="utf-8") as f:
+                        json_data = json.load(f)
+
+                    # 判断是否为 a_object（有 series 文件夹）
+                    type_index = group_type_index.get(consensus_path) or {}
+                    group_type = type_index.get(gid)
+                    is_a_object_with_series = (group_type == "a_object") and updated_series_json
+
+                    # 如果是 a_object 且有系列样本，先合并已更新的系列样本数据
+                    if is_a_object_with_series:
+                        merge_series_name_into_object(json_data, updated_series_json)
+                        logger.info(
+                            f"merged_updated_series_into_object path={jp} "
+                            f"consensus_path={consensus_path}"
+                        )
+
+                    # 更新对象 JSON 的顶层 5 个字段（包括 inferred_era 和 series.name）
+                    merge_series_consensus_into_object(json_data, consensus_data)
+
+                    # 保存更新后的对象 JSON
+                    with open(jp, "w", encoding="utf-8") as f:
+                        json.dump(json_data, f, ensure_ascii=False, indent=2)
+
+                    logger.info(
+                        f"object_json_updated_with_consensus path={jp} "
+                        f"consensus_path={consensus_path} group_type={group_type} "
+                        f"fields=manufacturer,country,art_style,inferred_era,series.name"
+                    )
+
+                    updated_count += 1
+                    updated_paths.append(jp)
+
+                except Exception as e:
+                    logger.warning(
+                        f"update_object_json_failed path={jp} err={str(e)[:200]} consensus_path={consensus_path}"
+                    )
 
     logger.info(f"consensus_bulk_update_done updated={updated_count}")
     return updated_count, updated_paths

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Series processor: handle A/B type groups.
-Responsible for series sample execution (a_series) and object group JSON generation.
-No consensus or bulk update logic here.
+负责系列样本执行（a_series）和对象组 JSON 生成。
+不在此阶段合并系列信息，所有共识合并逻辑在 json_consensus_update 中统一处理。
 """
 import os
 import json
@@ -25,8 +25,10 @@ def process_series_groups(
 ) -> Tuple[List[str], List[Dict[str, str]], Dict[str, Any]]:
     """
     处理 A/B 类型的组：
-      1) a_series 样本生成 JSON
-      2) 对象组生成 JSON，不合并共识字段
+      1) a_series 样本生成 JSON（不做共识更新）
+      2) 对象组生成 JSON（不合并系列信息，不做共识更新）
+      3) 所有共识合并操作在 json_consensus_update 中统一处理
+
     返回:
       (json_paths_for_series, excel_records, series_ctx)
     """
@@ -103,9 +105,7 @@ def process_series_groups(
         if fact_json is None:
             fact_json = {}
             fact_json["fact_meta"] = make_meta("fact_description", settings, error="stage1_failed")
-            # 只有有 series 文件夹的 a_object 才需要合并系列信息
-            if g.group_type == "a_object" and has_series_folder:
-                merge_series_name_into_object(fact_json, series_ctx_by_object_dir.get(g.object_dir or ""))
+            # 系列信息将在共识更新阶段合并，这里不再提前合并
             fact_json["id"] = g.group_id
             write_json(out_json_path, fact_json)
             # 设置 json_path 以便共识生成时使用
@@ -137,10 +137,8 @@ def process_series_groups(
         if isinstance(type_json, dict) and "function_type" in type_json:
             fact_json["function_type"] = type_json.get("function_type")
 
-        # 只有有 series 文件夹的 a_object 才需要合并系列信息
-        # 无 series 文件夹的 a_object 和 b 类型已经在 fact_description 阶段识别了 series
-        if g.group_type == "a_object" and has_series_folder:
-            merge_series_name_into_object(fact_json, series_ctx_by_object_dir.get(g.object_dir or ""))
+        # 系列信息将在共识更新阶段统一合并，不再在此处提前合并
+        # 这样可以确保合并的是已经被共识更新过的最新系列数据
 
         write_json(out_json_path, fact_json)
         # 设置 json_path 以便共识生成时使用
@@ -149,8 +147,10 @@ def process_series_groups(
         logger.info(f"object_or_group_saved type={g.group_type} id={g.group_id} path={out_json_path}")
 
     # 返回所有 JSON 路径（包括系列样本和对象组）
-    # 系列样本的 JSON 会被 merge_series_consensus_into_series_json 更新 4 个字段
-    # 对象组的 JSON 会被 merge_series_consensus_into_object 更新 5 个字段
+    # 系列样本的 JSON 会在共识更新阶段被 merge_series_consensus_into_series_json 更新 4 个字段
+    # 对象组的 JSON 会在共识更新阶段：
+    #   1. 合并已更新的系列样本 JSON（如果是 a_object）
+    #   2. 被 merge_series_consensus_into_object 更新顶层 5 个字段
     all_json_paths = []
     # 添加系列样本的 JSON 路径
     for g in a_series_groups:
