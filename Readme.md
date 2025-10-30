@@ -89,7 +89,7 @@ DONE litWay
 
 DONE readingHeatwave
 
-### 历史图书深度描述
+### 历史图像深度描述
 
 DONE historical-image-deep-description
 
