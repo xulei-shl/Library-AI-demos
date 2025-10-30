@@ -20,12 +20,12 @@ from src.core.pipeline_utils import (
     write_series_consensus,
     merge_series_consensus_into_object,
 )
-from src.core.output_formatter import flatten_record_for_excel, write_csv
 from src.core.stages import fact_description, function_type, series, correction, art_style
 from src.core.orchestration.no_series_processor import process_no_series_groups
 from src.core.orchestration.series_processor import process_series_groups
 from src.core.consensus.manager import ensure_consensus_for_series
 from src.core.updates.json_consensus_update import update_jsons_with_consensus
+from src.utils.json_to_csv import export_json_to_csv
 
 logger = get_logger(__name__)
 
@@ -56,7 +56,6 @@ def run_pipeline(settings: Optional[Dict[str, Any]] = None) -> None:
     series_ctx_by_object_dir: Dict[str, Dict[str, Any]] = {}
     # Series consensus storage (keyed by consensus file path)
     consensus_by_path: Dict[str, Dict[str, Any]] = {}
-    excel_records: List[Dict[str, str]] = []
 
     # Group by series for consensus processing
     from collections import defaultdict
@@ -78,17 +77,15 @@ def run_pipeline(settings: Optional[Dict[str, Any]] = None) -> None:
         if consensus_path == "_no_series_":
             # 使用专用处理器处理 C 类型（根目录扁平 b 组），在尾部执行 correction
             logger.info(f"process_groups_no_series count={len(series_group_list)}")
-            json_paths, records = process_no_series_groups(series_group_list, settings, outputs_dir)
+            json_paths, _ = process_no_series_groups(series_group_list, settings, outputs_dir)
             series_object_json_paths[consensus_path] = json_paths
-            excel_records.extend(records)
             continue
 
         # 使用专用处理器处理 A/B 类型（生成 JSON，不在此阶段合并共识）
-        json_paths_for_series, records, series_ctx = process_series_groups(
+        json_paths_for_series, _, series_ctx = process_series_groups(
             series_group_list, consensus_path, settings, outputs_dir, series_ctx_by_object_dir
         )
         series_object_json_paths[consensus_path] = json_paths_for_series
-        excel_records.extend(records)
 
         # 统一通过共识管理器生成/读取系列共识
         consensus_data = ensure_consensus_for_series(
@@ -102,10 +99,16 @@ def run_pipeline(settings: Optional[Dict[str, Any]] = None) -> None:
         series_object_json_paths, consensus_by_path, series_groups, settings
     )
 
-    # Write CSV summary (Excel fallback)
-    csv_path = os.path.join(outputs_dir, "results.csv")
-    write_csv(excel_records, csv_path)
-    logger.info(f"pipeline_done csv={csv_path} records={len(excel_records)}")
+    # 导出 JSON 到 CSV（分别导出系列和对象）
+    series_csv_path = os.path.join(outputs_dir, "series_results.csv")
+    object_csv_path = os.path.join(outputs_dir, "object_results.csv")
+    series_count, object_count = export_json_to_csv(
+        outputs_dir, series_csv_path, object_csv_path
+    )
+    logger.info(
+        f"pipeline_done series_csv={series_csv_path} ({series_count} records), "
+        f"object_csv={object_csv_path} ({object_count} records)"
+    )
 
 
 # Allow running as script
