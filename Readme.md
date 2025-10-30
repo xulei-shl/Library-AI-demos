@@ -97,6 +97,10 @@ DONE historical-image-deep-description
 
 DOING api-tools
 
+### 大模型 API 调用公共模块
+
+DONE llm-api
+
 ### 资源分享
 
 - /resources
