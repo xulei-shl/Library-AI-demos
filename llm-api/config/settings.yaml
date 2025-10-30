@@ -1,0 +1,142 @@
+# LLM调用系统统一配置文件
+# 统一管理所有API提供商、任务配置和系统设置
+
+# API提供商配置
+api_providers:
+  text:
+    primary:
+      name: "主文本提供商"
+      api_key: env:SophNet_API_KEY
+      base_url: "https://www.sophnet.com/api/open-apis/v1"
+      model: "DeepSeek-V3.2-Exp"
+      timeout_seconds: 120
+      max_tokens: 4096
+    secondary:
+      name: "备用文本提供商"
+      api_key: env:ModelScope_API_KEY
+      base_url: "https://api-inference.modelscope.cn/v1"
+      model: "deepseek-ai/DeepSeek-V3.2-Exp"
+      timeout_seconds: 120
+      max_tokens: 4096
+
+  vision:
+    primary:
+      name: "主视觉提供商"
+      api_key: env:OneAPI_API_KEY
+      base_url: "http://47.103.50.106:3000/v1"
+      model: "doubao-seed-1-6-flash-250828"
+      timeout_seconds: 180
+      max_tokens: 4096
+    secondary:
+      name: "备用视觉提供商"
+      api_key: env:SophNet_API_KEY
+      base_url: "https://www.sophnet.com/api/open-apis/v1"
+      model: "Qwen3-VL-235B-A22B-Instruct"
+      timeout_seconds: 180
+      max_tokens: 4096
+
+# 任务配置
+tasks:
+  fact_description:
+    provider_type: "vision"
+    temperature: 0.45
+    top_p: 0.9
+    max_tokens: 2048
+
+    # 提示词配置（支持多格式）
+    prompt:
+      type: "md"              # md | langfuse | dict
+      source: "prompts/fact_description.md"  # .md文件路径
+
+    # 重试策略
+    retry:
+      max_retries: 3           # 最大重试次数
+      base_delay: 1            # 指数退避基数（秒）
+      max_delay: 60            # 最大退避时间（秒）
+      enable_provider_switch: true  # 是否启用Provider切换
+
+    # Langfuse监控
+    langfuse:
+      enabled: false
+      name: "fact_description"
+      tags: ["fact", "description", "image_analysis"]
+      metadata:
+        task_type: "description"
+        source: "unified_client"
+
+    # JSON处理
+    json_repair:
+      enabled: true
+      strict_mode: false  # true: 修复失败返回None, false: 返回原文
+
+    # 速率限制
+    rate_limit:
+      requests_per_minute: 60
+      burst_size: 10
+
+  correction:
+    provider_type: "text"
+    temperature: 0.2
+    top_p: 0.9
+    prompt:
+      type: "md"
+      source: "prompts/correction.md"
+    retry:
+      max_retries: 2
+      base_delay: 1
+      max_delay: 30
+      enable_provider_switch: true
+    langfuse:
+      enabled: false
+    json_repair:
+      enabled: false
+
+# 全局默认配置
+defaults:
+  temperature: 0.7
+  top_p: 0.9
+  timeout_seconds: 60
+  max_retries: 3
+
+# 全局重试策略（可被任务级覆盖）
+retry_policy:
+  max_retries: 3
+  base_delay: 1
+  max_delay: 60
+  jitter: true  # 启用随机抖动
+
+# 速率限制
+rate_limit:
+  global:
+    requests_per_minute: 1000
+    concurrent_requests: 10
+
+# 统一日志配置
+logging:
+  level: "INFO"
+  logs_dir: "runtime/logs"
+
+  # 中文日志格式
+  format: |
+    时间=%(asctime)s | 级别=%(levelname)s | 模块=%(name)s | 行号=%(lineno)d | 信息=%(message)s
+  date_format: "%Y-%m-%d %H:%M:%S"
+
+  # 日志轮转
+  rotation:
+    when: "D"              # 按天轮转
+    interval: 1
+    backup_count: 7        # 保留7天
+    encoding: "utf-8"
+
+  # 日志分级
+  levels:
+    console: "INFO"        # 控制台显示INFO及以上
+    file: "DEBUG"          # 文件记录DEBUG及以上
+
+# Langfuse全局配置
+langfuse:
+  enabled: false
+  host: env:LANGFUSE_HOST
+  secret_key: env:LANGFUSE_SECRET_KEY
+  public_key: env:LANGFUSE_PUBLIC_KEY
+  debug: false
