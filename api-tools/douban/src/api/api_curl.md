@@ -1,0 +1,11 @@
+curl --request GET \
+  --url https://m.douban.com/rexxar/api/v2/subject/37351901 \
+  --header 'Accept: application/json, text/plain, */*' \
+  --header 'Accept-Encoding: gzip, deflate, br' \
+  --header 'Accept-Language: zh-CN,zh;q=0.9,en;q=0.8' \
+  --header 'Connection: keep-alive' \
+  --header 'Referer: https://m.douban.com/' \
+  --header 'Sec-Fetch-Dest: empty' \
+  --header 'Sec-Fetch-Mode: cors' \
+  --header 'Sec-Fetch-Site: same-origin' \
+  --header 'User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1'

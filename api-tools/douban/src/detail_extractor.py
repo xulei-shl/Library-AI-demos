@@ -256,9 +256,31 @@ class DetailExtractor:
             if info_div:
                 author_span = info_div.find('span', string=re.compile(r'作者'))
                 if author_span:
-                    author_text = author_span.find_next_sibling().text.strip()
-                    # 清理多余的换行和空格
-                    return re.sub(r'\s+', ' ', author_text)
+                    # 获取包含所有作者的父span元素
+                    parent_span = author_span.parent
+                    if parent_span:
+                        # 获取完整的作者文本（包括所有链接和分隔符）
+                        author_text = parent_span.get_text()
+                        # 使用正则表达式提取作者部分，支持多行和换行
+                        match = re.search(r'作者[:：]\s*(.+?)(?=\s*<|\s*$)', author_text, re.DOTALL)
+                        if match:
+                            author_names = match.group(1).strip()
+                            # 清理多余换行和空格，保留作者间的分隔符
+                            author_names = re.sub(r'\s+', ' ', author_names)
+                            return author_names
+
+                    # 备用方案：尝试获取所有后续兄弟元素
+                    all_authors = []
+                    current_element = author_span.find_next_sibling()
+                    while current_element:
+                        if hasattr(current_element, 'text'):
+                            text = current_element.text.strip()
+                            if text and text not in [':', '/']:
+                                all_authors.append(text)
+                        current_element = current_element.find_next_sibling()
+
+                    if all_authors:
+                        return ' / '.join(all_authors)
             return ""
         except:
             return ""
