@@ -1,0 +1,608 @@
+"""
+图书卡片生成主程序
+统筹整个卡片生成流程
+"""
+
+import os
+import sys
+import time
+import argparse
+from typing import Dict, List, Tuple, Optional
+import pandas as pd
+
+# 添加项目根目录到路径
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+sys.path.insert(0, project_root)
+
+from src.utils.logger import get_logger
+from src.utils.config_manager import get_config_manager
+from src.core.card_generator.models import BookCardData
+from src.core.card_generator.validator import DataValidator
+from src.core.card_generator.directory_manager import DirectoryManager
+from src.core.card_generator.image_downloader import ImageDownloader
+from src.core.card_generator.qrcode_generator import QRCodeGenerator
+from src.core.card_generator.html_generator import HTMLGenerator
+from src.core.card_generator.html_to_image_converter import HTMLToImageConverter
+
+logger = get_logger(__name__)
+
+
+class CardGeneratorModule:
+    """图书卡片生成模块主类"""
+
+    def __init__(self, config: Dict):
+        """
+        初始化模块
+
+        Args:
+            config: 配置字典
+        """
+        self.config = config
+        self.validator = DataValidator(config)
+        self.directory_manager = DirectoryManager(config)
+        self.image_downloader = ImageDownloader(config)
+        self.qrcode_generator = QRCodeGenerator(config)
+        self.html_generator = HTMLGenerator(config)
+        self.html_to_image_converter = HTMLToImageConverter(config)
+
+        # 获取字段配置
+        self.fields_config = config.get('fields', {})
+        self.recommendation_column = self.fields_config.get('recommendation_column', '初评理由')
+        self.recommendation_priority_column = self.fields_config.get('recommendation_priority_column', '人工推荐语')
+
+        # 截取长度配置
+        self.truncate_config = self.fields_config.get('truncate', {})
+
+        # 统计信息
+        self.stats = {
+            'total_count': 0,
+            'passed_count': 0,
+            'success_count': 0,
+            'failed_count': 0,
+            'warning_count': 0,
+            'failed_records': [],
+            'warning_records': []
+        }
+
+    def run(self, excel_path: str) -> int:
+        """
+        主函数流程
+
+        Args:
+            excel_path: Excel文件路径
+
+        Returns:
+            int: 成功返回0，失败返回1
+        """
+        start_time = time.time()
+
+        logger.info("=" * 60)
+        logger.info("模块5: 图书卡片生成模块")
+        logger.info("=" * 60)
+
+        try:
+            # 1. 验证Excel文件
+            if not self.validator.validate_excel_file(excel_path):
+                return 1
+
+            # 2. 加载Excel数据
+            logger.info(f"加载Excel文件：{excel_path}")
+            df = pd.read_excel(excel_path)
+            self.stats['total_count'] = len(df)
+
+            # 3. 验证必填列
+            required_columns = list(self.config.get('fields', {}).get('required', []))
+            required_columns.append('书目条码')  # 添加书目条码为必填
+            if self.recommendation_column:
+                required_columns.append(self.recommendation_column)
+
+            valid, missing_cols = self.validator.validate_required_columns(df, required_columns)
+            if not valid:
+                return 1
+
+            # 4. 筛选通过的图书
+            filtered_df = self.validator.filter_passed_books(df)
+            self.stats['passed_count'] = len(filtered_df)
+            self.stats['filter_source'] = self.validator.filter_source
+
+            if len(filtered_df) == 0:
+                logger.warning("警告：没有终评结果为'通过'的图书")
+                return 0
+
+            logger.info(f"开始处理 {len(filtered_df)} 本通过终评的图书...")
+
+            # 5. 批量并发下载封面图片(性能优化)
+            logger.info("步骤1: 批量下载封面图片...")
+            download_start = time.time()
+            download_results = self.batch_download_covers(filtered_df)
+            download_time = time.time() - download_start
+            logger.info(f"封面图片下载完成,耗时: {download_time:.2f}秒")
+
+            # 6. 启动浏览器实例(性能优化:一次性启动,复用于所有卡片)
+            logger.info("步骤2: 启动浏览器实例...")
+            if not self.html_to_image_converter.start_browser():
+                logger.error("浏览器启动失败,无法继续处理")
+                return 1
+
+            # 7. 逐本生成卡片(封面图片已下载,跳过下载步骤)
+            logger.info("步骤3: 生成卡片...")
+            for index, row in filtered_df.iterrows():
+                barcode = str(row.get('书目条码', 'Unknown')).strip()
+                # 检查封面是否下载成功
+                cover_downloaded = download_results.get(barcode, False)
+                self.process_single_book(row, skip_cover_download=True, cover_downloaded=cover_downloaded)
+
+            # 8. 生成汇总报告
+            elapsed_time = time.time() - start_time
+            report = self.generate_summary_report(excel_path, elapsed_time)
+            logger.info("\n" + report)
+
+            # 9. 保存报告
+            report_path = os.path.join(
+                self.config.get('output', {}).get('base_dir', 'runtime/outputs'),
+                f'card_generation_report_{time.strftime("%Y%m%d_%H%M%S")}.txt'
+            )
+            self.save_report(report, report_path)
+
+            # 10. 返回结果
+            if self.stats['success_count'] > 0:
+                logger.info("=" * 60)
+                logger.info("[成功] 模块5执行完成!")
+                logger.info(f"成功生成 {self.stats['success_count']} 张图书卡片")
+                logger.info("=" * 60)
+                return 0
+            else:
+                logger.error("=" * 60)
+                logger.error("[失败] 模块5执行失败!")
+                logger.error("所有图书卡片生成均失败")
+                logger.error("=" * 60)
+                return 1
+
+        except Exception as e:
+            logger.critical(f"模块5执行异常：{e}", exc_info=True)
+            return 1
+
+        finally:
+            # 关闭浏览器实例(性能优化:统一关闭)
+            logger.info("正在关闭浏览器实例...")
+            self.html_to_image_converter.stop_browser()
+
+    def batch_download_covers(self, filtered_df: pd.DataFrame) -> Dict[str, bool]:
+        """
+        批量并发下载所有封面图片
+        
+        Args:
+            filtered_df: 筛选后的DataFrame
+        
+        Returns:
+            Dict[str, bool]: 书目条码 -> 是否下载成功的映射
+        """
+        download_tasks = []
+        barcode_to_task = {}
+        
+        # 准备下载任务
+        for index, row in filtered_df.iterrows():
+            barcode = str(row.get('书目条码', 'Unknown')).strip()
+            
+            # 提取图书数据
+            book_data = self.extract_book_data(row)
+            if not book_data:
+                continue
+            
+            # 创建目录
+            output_paths = self.directory_manager.create_book_directory(barcode)
+            if not output_paths:
+                continue
+            
+            # 检查封面是否已存在
+            files_status = self.check_existing_files(output_paths)
+            if not files_status['cover_exists']:
+                # 需要下载
+                download_tasks.append((book_data.cover_image_url, output_paths.cover_image))
+                barcode_to_task[len(download_tasks) - 1] = barcode
+        
+        # 批量并发下载
+        if download_tasks:
+            results = self.image_downloader.download_covers_batch(download_tasks)
+            
+            # 构建结果映射
+            download_results = {}
+            for task_index, (success, actual_path, url) in enumerate(results):
+                if task_index in barcode_to_task:
+                    barcode = barcode_to_task[task_index]
+                    download_results[barcode] = success
+            
+            return download_results
+        
+        return {}
+
+    def process_single_book(self, row: pd.Series, skip_cover_download: bool = False, 
+                           cover_downloaded: bool = True) -> bool:
+        """
+        处理单本图书
+
+        Args:
+            row: DataFrame行数据
+
+        Returns:
+            bool: 处理成功返回True，否则返回False
+        """
+        barcode = str(row.get('书目条码', 'Unknown')).strip()
+        
+        # 性能计时
+        book_start_time = time.time()
+        step_times = {}
+
+        logger.debug(f"开始处理书目条码：{barcode}")
+
+        try:
+            # 1. 提取图书数据
+            step_start = time.time()
+            book_data = self.extract_book_data(row)
+            step_times['数据提取'] = time.time() - step_start
+
+            if not book_data:
+                self.stats['failed_count'] += 1
+                self.stats['failed_records'].append({
+                    'barcode': barcode,
+                    'reason': '数据提取失败或验证失败'
+                })
+                return False
+
+            # 2. 创建目录结构
+            step_start = time.time()
+            output_paths = self.directory_manager.create_book_directory(barcode)
+            step_times['创建目录'] = time.time() - step_start
+
+            if not output_paths:
+                self.stats['failed_count'] += 1
+                self.stats['failed_records'].append({
+                    'barcode': barcode,
+                    'reason': '目录创建失败'
+                })
+                return False
+
+            # 3. 检查已有文件，决定需要执行哪些操作
+            step_start = time.time()
+            files_status = self.check_existing_files(output_paths)
+            step_times['检查文件'] = time.time() - step_start
+
+            # 3.1 复制Logo文件（如果缺失）
+            step_start = time.time()
+            if not files_status['logo_complete']:
+                if not self.directory_manager.copy_logo_files(output_paths.pic_dir):
+                    self.stats['warning_count'] += 1
+                    self.stats['warning_records'].append({
+                        'barcode': barcode,
+                        'warning': 'Logo文件复制失败'
+                    })
+            else:
+                logger.info(f"Logo文件已存在，跳过复制，书目条码：{barcode}")
+            step_times['复制Logo'] = time.time() - step_start
+
+            # 4. 下载封面图片(如果不存在且未跳过下载)
+            step_start = time.time()
+            if skip_cover_download:
+                # 批量下载模式:检查下载结果
+                if not cover_downloaded:
+                    self.stats['failed_count'] += 1
+                    self.stats['failed_records'].append({
+                        'barcode': barcode,
+                        'reason': '封面图片下载失败(批量下载)'
+                    })
+                    return False
+                logger.debug(f"封面图片已批量下载,书目条码:{barcode}")
+            else:
+                # 传统模式:逐个下载
+                if not files_status['cover_exists']:
+                    success, cover_path = self.image_downloader.download_cover_image(
+                        book_data.cover_image_url,
+                        output_paths.cover_image
+                    )
+
+                    if not success:
+                        self.stats['failed_count'] += 1
+                        self.stats['failed_records'].append({
+                            'barcode': barcode,
+                            'reason': '封面图片下载失败'
+                        })
+                        return False
+                else:
+                    logger.info(f"封面图片已存在，跳过下载，书目条码：{barcode}")
+            step_times['下载封面'] = time.time() - step_start
+
+            # 5. 生成二维码（如果不存在）
+            step_start = time.time()
+            if not files_status['qrcode_exists']:
+                success, qr_path = self.qrcode_generator.generate_qrcode(
+                    book_data.call_number,
+                    output_paths.qrcode_image
+                )
+
+                if not success:
+                    self.stats['failed_count'] += 1
+                    self.stats['failed_records'].append({
+                        'barcode': barcode,
+                        'reason': '二维码生成失败'
+                    })
+                    return False
+            else:
+                logger.info(f"二维码已存在，跳过生成，书目条码：{barcode}")
+            step_times['生成二维码'] = time.time() - step_start
+
+            # 6. 生成HTML（总是生成以确保数据最新）
+            step_start = time.time()
+            success, html_path = self.html_generator.generate_html(
+                book_data,
+                output_paths.html_file
+            )
+            step_times['生成HTML'] = time.time() - step_start
+
+            if not success:
+                self.stats['failed_count'] += 1
+                self.stats['failed_records'].append({
+                    'barcode': barcode,
+                    'reason': 'HTML生成失败'
+                })
+                return False
+
+            # 7. HTML转图片（总是生成以确保与HTML同步）
+            step_start = time.time()
+            success, image_path = self.html_to_image_converter.convert_html_to_image(
+                output_paths.html_file,
+                output_paths.image_file
+            )
+            step_times['HTML转图片'] = time.time() - step_start
+
+            if not success:
+                self.stats['failed_count'] += 1
+                self.stats['failed_records'].append({
+                    'barcode': barcode,
+                    'reason': 'HTML转图片失败'
+                })
+                return False
+
+            # 8. 成功完成
+            total_time = time.time() - book_start_time
+            self.stats['success_count'] += 1
+            
+            # 输出性能统计
+            logger.info(f"成功生成卡片,书目条码:{barcode}, 总耗时:{total_time:.2f}秒")
+            logger.debug(f"  步骤耗时: {', '.join([f'{k}:{v:.2f}s' for k, v in step_times.items()])}")
+            
+            return True
+
+        except Exception as e:
+            logger.error(f"处理图书时发生异常,书目条码:{barcode},错误:{e}", exc_info=True)
+            self.stats['failed_count'] += 1
+            self.stats['failed_records'].append({
+                'barcode': barcode,
+                'reason': f'异常:{str(e)}'
+            })
+            return False
+
+    def check_existing_files(self, output_paths) -> Dict[str, bool]:
+        """
+        检查已有文件,判断哪些资源需要重新生成
+
+        Args:
+            output_paths: 输出路径集合
+
+        Returns:
+            Dict[str, bool]: 文件状态字典
+                - cover_exists: 封面图片是否存在(cover.jpg 或 cover.png)
+                - qrcode_exists: 二维码是否存在
+                - logo_complete: Logo文件是否完整(三个文件都存在:logo_shl.png, logozi_shl.jpg, b.png)
+        """
+        # 检查封面图片(可能是 jpg 或 png)
+        cover_jpg = output_paths.cover_image.replace('.jpg', '.jpg')
+        cover_png = output_paths.cover_image.replace('.jpg', '.png')
+        cover_exists = os.path.exists(cover_jpg) or os.path.exists(cover_png)
+
+        # 检查二维码
+        qrcode_exists = os.path.exists(output_paths.qrcode_image)
+
+        # 检查Logo文件(需要三个文件都存在:logo_shl.png, logozi_shl.jpg, b.png)
+        logo_shl = os.path.join(output_paths.pic_dir, 'logo_shl.png')
+        logozi_shl = os.path.join(output_paths.pic_dir, 'logozi_shl.jpg')
+        b_png = os.path.join(output_paths.pic_dir, 'b.png')
+        logo_complete = os.path.exists(logo_shl) and os.path.exists(logozi_shl) and os.path.exists(b_png)
+
+        return {
+            'cover_exists': cover_exists,
+            'qrcode_exists': qrcode_exists,
+            'logo_complete': logo_complete
+        }
+
+    def _get_recommendation_text(self, row: pd.Series) -> Tuple[str, int]:
+        """
+        获取推荐语文本及对应的截取长度
+        优先使用人工推荐语,如果不存在则使用默认推荐语
+
+        Args:
+            row: DataFrame行数据
+
+        Returns:
+            Tuple[str, int]: (推荐语文本, 截取长度)
+        """
+        # 1. 尝试优先列（人工推荐语）
+        if self.recommendation_priority_column and self.recommendation_priority_column in row:
+            val = row[self.recommendation_priority_column]
+            if pd.notna(val) and str(val).strip():
+                # 获取优先列的截取长度，默认为50
+                length = self.truncate_config.get(self.recommendation_priority_column, 50)
+                return str(val).strip(), length
+
+        # 2. 使用默认列
+        if self.recommendation_column in row:
+            val = row[self.recommendation_column]
+            if pd.notna(val):
+                # 获取默认列的截取长度，默认为50
+                length = self.truncate_config.get(self.recommendation_column, 50)
+                return str(val).strip(), length
+            
+        return "", 50
+
+    def extract_book_data(self, row: pd.Series) -> Optional[BookCardData]:
+        """
+        从Excel行数据提取图书卡片数据
+
+        Args:
+            row: DataFrame行数据
+
+        Returns:
+            Optional[BookCardData]: 图书卡片数据，失败返回None
+        """
+        try:
+            # 书名处理（优先豆瓣书名）
+            if pd.notna(row.get('豆瓣书名')) and str(row.get('豆瓣书名')).strip():
+                title = str(row['豆瓣书名']).strip()
+            else:
+                title = str(row['书名']).strip() if pd.notna(row.get('书名')) else ""
+
+            # 副标题处理
+            subtitle = None
+            if pd.notna(row.get('豆瓣副标题')) and str(row.get('豆瓣副标题')).strip():
+                subtitle = str(row['豆瓣副标题']).strip()
+
+            # 可选字段处理
+            author = str(row['豆瓣作者']).strip() if pd.notna(row.get('豆瓣作者')) else None
+            publisher = str(row['豆瓣出版社']).strip() if pd.notna(row.get('豆瓣出版社')) else None
+            pub_year = str(row['豆瓣出版年']).strip() if pd.notna(row.get('豆瓣出版年')) else None
+
+            # 获取推荐语和对应的截取长度
+            rec_text, rec_length = self._get_recommendation_text(row)
+
+            # 创建数据对象
+            book_data = BookCardData(
+                barcode=str(row['书目条码']).strip(),
+                call_number=str(row['索书号']).strip(),
+                douban_rating=float(row['豆瓣评分']),
+                final_review_reason=rec_text,
+                cover_image_url=str(row['豆瓣封面图片链接']).strip(),
+                title=title,
+                subtitle=subtitle,
+                author=author,
+                publisher=publisher,
+                pub_year=pub_year,
+                max_length=rec_length
+            )
+
+            # 验证数据
+            if not book_data.validate():
+                logger.warning(f"图书数据验证失败，书目条码：{book_data.barcode}")
+                return None
+
+            return book_data
+
+        except Exception as e:
+            logger.error(f"提取图书数据时发生错误：{e}")
+            return None
+
+    def generate_summary_report(self, excel_path: str, elapsed_time: float) -> str:
+        """
+        生成汇总报告
+
+        Args:
+            excel_path: Excel文件路径
+            elapsed_time: 执行时间（秒）
+
+        Returns:
+            str: 汇总报告文本
+        """
+        lines = [
+            "=" * 60,
+            "模块5执行汇总报告",
+            "=" * 60,
+            "",
+            "输入信息：",
+            f"  Excel文件: {excel_path}",
+            f"  总记录数: {self.stats['total_count']}",
+            f"  筛选依据: {self.stats.get('filter_source', '未知')}",
+            f"  终评通过数: {self.stats['passed_count']}",
+            "",
+            "执行结果：",
+            f"  成功生成: {self.stats['success_count']} 张卡片",
+            f"  失败记录: {self.stats['failed_count']} 条",
+            f"  警告记录: {self.stats['warning_count']} 条",
+            "",
+        ]
+
+        # 失败详情
+        if self.stats['failed_records']:
+            lines.append("失败详情：")
+            for i, record in enumerate(self.stats['failed_records'][:20], 1):
+                lines.append(f"  {i}. 书目条码：{record['barcode']}，原因：{record['reason']}")
+            if len(self.stats['failed_records']) > 20:
+                lines.append(f"  ... 还有 {len(self.stats['failed_records']) - 20} 条失败记录")
+            lines.append("")
+
+        # 警告详情
+        if self.stats['warning_records']:
+            lines.append("警告详情：")
+            for i, record in enumerate(self.stats['warning_records'][:20], 1):
+                lines.append(f"  {i}. 书目条码：{record['barcode']}，警告：{record['warning']}")
+            if len(self.stats['warning_records']) > 20:
+                lines.append(f"  ... 还有 {len(self.stats['warning_records']) - 20} 条警告记录")
+            lines.append("")
+
+        lines.append(f"执行时间: {elapsed_time:.2f} 秒")
+        lines.append("=" * 60)
+
+        return "\n".join(lines)
+
+    def save_report(self, report: str, output_path: str) -> bool:
+        """
+        保存报告文件
+
+        Args:
+            report: 报告内容
+            output_path: 输出路径
+
+        Returns:
+            bool: 保存成功返回True，否则返回False
+        """
+        try:
+            # 确保目录存在
+            output_dir = os.path.dirname(output_path)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir, exist_ok=True)
+
+            # 保存报告
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(report)
+
+            logger.info(f"汇总报告已保存：{output_path}")
+            return True
+
+        except Exception as e:
+            logger.error(f"保存报告失败：{output_path}，错误：{e}")
+            return False
+
+
+def main():
+    """命令行入口函数"""
+    parser = argparse.ArgumentParser(description='图书卡片生成模块')
+    parser.add_argument(
+        '--excel-file',
+        type=str,
+        required=True,
+        help='模块4生成的终评结果Excel文件路径'
+    )
+
+    args = parser.parse_args()
+
+    # 加载配置
+    config_manager = get_config_manager()
+    config = config_manager.get_config()
+    card_config = config.get('card_generator', {})
+
+    # 创建并运行模块
+    module = CardGeneratorModule(card_config)
+    exit_code = module.run(args.excel_file)
+
+    sys.exit(exit_code)
+
+
+if __name__ == '__main__':
+    main()

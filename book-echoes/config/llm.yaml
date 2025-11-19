@@ -1,0 +1,190 @@
+﻿# ----------------------------------------------------------------------------------
+# LLM 统一配置文件
+# ----------------------------------------------------------------------------------
+# 本文件集中管理所有对大语言模型 (LLM) 的调用配置。
+#
+# 核心机制:
+# 1. ConfigLoader 读取本文件，解析 env:VAR 环境变量。
+# 2. UnifiedLLMClient (src/utils/llm/client.py) 根据任务名加载配置。
+# 3. 业务代码 (src/core/recommendation/config.py) 通过 helper 函数读取 parameters 中的业务参数。
+#
+# 结构说明:
+# - api_providers: 定义底层模型服务商 (OneAPI, Cerebras 等)。
+# - tasks: 定义各个业务场景的具体配置 (如初评、终评)。
+# - defaults: 全局默认配置，会被 tasks 继承。
+# - langfuse: 全局 Langfuse 监控配置。
+# ----------------------------------------------------------------------------------
+
+api_providers:
+  # 文本生成模型服务商配置
+  # RetryManager 会根据 primary -> secondary 的顺序进行故障转移
+  text:
+    primary:
+      name: "oneapi"
+      api_key: env:ONEAPI_API_KEY
+      base_url: "http://47.103.50.106:3000/v1"
+      model: "gemini-2.5-pro"
+      timeout_seconds: 120
+    secondary:
+      name: "cerebras"
+      api_key: env:CEREBRAS_API_KEY
+      base_url: "https://api.cerebras.ai/v1"
+      model: "zai-glm-4.6"
+      timeout_seconds: 120
+
+tasks:
+  # ----------------------------------------------------------------------------
+  # 任务: 书目初评 (theme_initial)
+  # 逻辑位置: src/core/recommendation/executor.py -> initial_review
+  # ----------------------------------------------------------------------------
+  theme_initial:
+    provider_type: text
+    temperature: 0.45
+    top_p: 0.9
+    prompt:
+      type: langfuse
+      langfuse_name: "书目初评" # 对应 Langfuse 中的 Prompt 名称
+    
+    # 业务参数 (由 src/core/recommendation/config.py 读取)
+    parameters:
+      # 批次大小: 控制并发处理的书目数量
+      max_batch_size: 20
+      
+      # 推荐配额: 根据分组内的书目数量(group_size)决定推荐几本书
+      # 逻辑: recommend_quota(group_size)
+      recommend_quota:
+        gt20: 6    # group_size > 20
+        g15_20: 5  # 15 <= group_size <= 20
+        g10_15: 4  # 10 <= group_size < 15
+        g5_10: 3   # 5 <= group_size < 10
+        lt5: 2     # group_size < 5
+        
+    retry:
+      max_retries: 3
+      base_delay: 1.2
+      max_delay: 12
+      enable_provider_switch: true # 允许切换到 secondary provider
+      jitter: true
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "llm初筛"
+      tags: ["book-echoes", "模块4"]
+      metadata:
+        project: "book-echoes"
+        module: "模块4"
+
+  # ----------------------------------------------------------------------------
+  # 任务: 书目终评 (theme_final)
+  # 逻辑位置: src/core/recommendation/executor.py -> final_review
+  # ----------------------------------------------------------------------------
+  theme_final:
+    provider_type: text
+    temperature: 0.35
+    top_p: 0.85
+    prompt:
+      type: langfuse
+      langfuse_name: "书目终评"
+      
+    # 业务参数 (由 src/core/recommendation/config.py 读取)
+    parameters:
+      # 最终推荐数量: 终评阶段期望输出的 Top N 书目
+      top_n: 20
+      # 批次大小: 超过此数量将触发锦标赛海选(Semifinal)流程
+      max_batch_size: 30
+      
+    retry:
+      max_retries: 3
+      base_delay: 1.5
+      max_delay: 15
+      enable_provider_switch: true
+      jitter: true
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "llm终评"
+      tags: ["book-echoes", "模块4"]
+      metadata:
+        project: "book-echoes"
+        module: "模块4"
+
+  # ----------------------------------------------------------------------------
+  # 任务: 主题内决选 (theme_runoff)
+  # 逻辑位置: src/core/recommendation/executor.py -> theme_runoff
+  # ----------------------------------------------------------------------------
+  theme_runoff:
+    provider_type: text
+    temperature: 0.40
+    top_p: 0.9
+    prompt:
+      type: langfuse
+      langfuse_name: "书目主题内决选"
+      
+    # 业务参数 (由 src/core/recommendation/config.py 读取)
+    parameters:
+      # 决选配额: 每个主题最多晋级多少本书进入终评
+      finalist_quota: 8
+      
+    retry:
+      max_retries: 3
+      base_delay: 1.2
+      max_delay: 12
+      enable_provider_switch: true
+      jitter: true
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "llm主题决选"
+      tags: ["book-echoes", "模块4", "主题内决选"]
+      metadata:
+        project: "book-echoes"
+        module: "模块4"
+
+  # ----------------------------------------------------------------------------
+  # 任务: 半决赛评选 (theme_semifinal)
+  # 逻辑位置: src/core/recommendation/executor.py -> 锦标赛模式相关逻辑
+  # ----------------------------------------------------------------------------
+  theme_semifinal:
+    provider_type: text
+    temperature: 0.35
+    top_p: 0.85
+    prompt:
+      type: langfuse
+      langfuse_name: "书目半决赛评选"
+    retry:
+      max_retries: 3
+      base_delay: 1.2
+      max_delay: 12
+      enable_provider_switch: true
+      jitter: true
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "llm半决赛"
+      tags: ["book-echoes", "模块4", "锦标赛"]
+      metadata:
+        project: "book-echoes"
+        module: "模块4"
+
+defaults:
+  temperature: 0.45
+  top_p: 0.9
+
+langfuse:
+  enabled: true
+  host: env:LANGFUSE_HOST
+  public_key: env:LANGFUSE_PUBLIC_KEY
+  secret_key: env:LANGFUSE_SECRET_KEY
+  debug: false

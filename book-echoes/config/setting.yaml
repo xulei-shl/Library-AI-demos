@@ -1,0 +1,550 @@
+﻿paths:
+  outputs_dir: runtime/outputs
+  logs_dir: runtime/logs
+  
+  # Excel数据文件路径配置
+  excel_files:
+    # 月归还数据文件路径
+    monthly_return_file: "data/月归还.xlsx"
+    # 近三月借阅数据文件路径
+    recent_three_months_borrowing_file: "data/近三月借阅.xlsx"
+
+# 借阅统计配置
+statistics:
+  # 基于哪个月份计算近三个月（用于近三月借阅数据统计）
+  # 格式：YYYY-MM，例如2025-09表示基于9月归还数据计算7-8-9月的借阅统计
+  target_month: "2025-09"
+  
+  # 月份计算方式
+  month_calculation:
+    # true表示基于target_month的上个月计算近三月，false表示基于当前时间
+    use_target_month_previous: false
+
+# 第二模块筛选配置
+filtering:
+  # 规则A：排除顶流热门图书
+  # 目的：识别并排除借阅频率最高的"顶流热门"图书，专注于长尾和冷门图书的分析
+  # 适用场景：当需要分析非热门图书的借阅模式，或避免热门图书对统计结果的过度影响时
+  rule_a:
+    enabled: true
+    target_column: "近三个月总次数"  # 基于哪个列进行筛选（借阅次数列）
+    methods:
+      # 方法1：分位数方法（推荐使用）
+      # 逻辑：计算借阅次数的分位数，排除前N%最高借阅次数的图书
+      # 优势：自适应数据集大小，能根据数据分布动态调整阈值
+      percentile:
+        enabled: true
+        threshold_percentile: 15  # 排除前15%最高借阅次数的图书（保留后85%）
+        fallback_count: 20  # 后备方案：当数据全为0时，使用固定阈值20次
+      
+      # 方法2：绝对次数方法（备用）
+      # 逻辑：设置固定的借阅次数阈值，超过该阈值的图书被视为热门
+      # 适用：数据分布相对稳定，或有明确的业务阈值标准
+      absolute_count:
+        enabled: false  # 当前禁用，启用后将优先于分位数方法
+        threshold_borrowing_count: 20  # 固定阈值：借阅次数≥20次的图书被视为热门
+  
+  # 规则B：排除特定类型（整合后版本）
+  rule_b:
+    # 题名关键词筛选
+    title_keywords:
+      enabled: true
+      description: "题名关键词排除"
+      target_column: "书名"
+      file: "config/filters/title_keywords.txt"
+      match_type: "contains"  # contains, starts_with, ends_with, regex
+    
+    # 索书号/CLC号筛选
+    call_number_clc:
+      enabled: true
+      description: "索书号和CLC号模式排除"
+      # 支持多个列名映射
+      target_columns: ["索书号", "CLC号"]
+      file: "config/filters/call_number_clc.txt"
+      match_type: "regex"  # regex, contains, starts_with, ends_with
+  
+  # 规则C：Excel列值筛选
+  rule_c:
+    # 附加信息列筛选
+    additional_info_format:
+      enabled: true
+      description: "附加信息9位数字格式校验"
+      target_column: "附加信息"
+      filter_type: "regex"
+      pattern: "^[0-9]{9}"
+      action: "keep_only"  # keep_only 或 exclude
+    
+    # 备注列筛选
+    remarks_keywords:
+      enabled: true
+      description: "备注列排除指定关键词"
+      target_column: "备注"
+      filter_type: "exclude_contains"
+      exclude_patterns: ["不要", "废书", "损坏", "散页"]
+      action: "exclude"
+
+# 第三模块豆瓣配置
+# 整个模块采用流水线（Pipeline）架构，分为几个主要步骤：
+# 1. ISBN解析 (folio_isbn_async_processor.py): 从图书馆FOLIO系统获取图书的ISBN号。
+# 2. 豆瓣链接解析 (src/core/douban/link_resolver/): 根据书名或ISBN在豆瓣上搜索，找到对应的图书主页链接。
+# 3. 豆瓣信息获取 (src/core/douban/api/): 通过豆瓣移动版API，根据图书ID高效获取评分、作者、简介等详细信息。
+# 4. 数据分析与报告 (src/core/douban/analytics/, report_generator.py): 对获取的数据进行统计分析，如主题评分报告。
+# 5. 进度与历史数据管理 (progress_manager.py, src/core/douban/database/): 保存处理进度，并将历史结果存入数据库以备查重和增量更新。
+douban:
+  # ISBN获取器配置 (folio_isbn_async_processor.py)
+  # 功能：通过访问图书馆FOLIO文献历史接口，根据附加信息（如图书馆系统ID）查询ISBN号。
+  isbn_resolver:
+    enabled: true  # 是否启用此功能。如果禁用，后续流程将无法获取ISBN。
+    base_url: "https://circ-folio.library.sh.cn/shlcirculation-query/literatureHistory" # FOLIO系统接口地址
+    timeout: 30  # 请求超时时间（秒）
+    delay: 2.0  # 每次请求之间的固定延迟（秒），用于控制请求频率
+    # FOLIO系统登录凭证，将从环境变量或.env文件读取
+    username_env_var: "FOLIO_USERNAME"
+    password_env_var: "FOLIO_PASSWORD"
+    
+  # ISBN处理器配置 (folio_isbn_async_processor.py, isbn_processor_config.py)
+  # 功能：管理和调度整个异步处理流程，包括浏览器启动、任务分配、延迟控制和进度保存。
+  isbn_processor:
+    # 策略选择：'custom'（使用下面的自定义配置）或 'auto'（根据数据量自动选择预设配置）
+    strategy: "custom"
+
+    # 自定义配置 (当 strategy='custom' 时生效)
+    # 用于精细控制浏览器行为和请求模式，适用于需要手动调优的场景。
+    custom:
+      max_concurrent: 3          # 最大并发浏览器实例数。增加此值可加快处理速度，但会消耗更多内存和CPU。
+      min_delay: 1.5             # 随机延迟范围的最小值（秒），模拟人类操作，避免被封禁。
+      max_delay: 2.5             # 随机延迟范围的最大值（秒）。
+      retry_times: 3             # 单个任务（如获取一个ISBN）失败后的重试次数。
+      timeout: 15                # Playwright页面加载或操作的默认超时时间（秒）。
+      browser_startup_timeout: 180 # 启动浏览器实例的超时时间（秒）。如果系统较慢，可适当增加。
+      page_navigation_timeout: 60  # 页面导航（如跳转到新URL）的超时时间（秒）。
+
+    # 自动选择配置 (当 strategy='auto' 时生效)
+    # 根据待处理的数据量自动切换到不同的预设性能配置。
+    auto_select:
+      enabled: true
+      small: 100          # 小于100条数据，使用'emergency'配置（速度最慢，最稳定）。
+      medium: 1000        # 100-1000条，使用'balanced'配置（速度与稳定性均衡）。
+      large: 10000        # 1000-10000条，使用'aggressive'配置（速度较快，风险稍高）。
+      huge: 50000         # 大于50000条，使用'conservative'配置（速度慢，最保守，适合超大规模任务）。
+    
+    # 性能与可靠性配置 (由 progress_manager.py 等模块使用)
+    performance:
+      enable_estimates: true     # 是否在任务开始前估算预计完成时间。
+      enable_validation: true    # 是否在启动前验证配置的有效性（如延迟、并发数是否合理）。
+      log_performance: true      # 是否记录每个任务的耗时等性能指标。
+      enable_progress_save: true # 是否启用进度自动保存功能。启用后，程序意外中断可从上次保存点恢复。
+      save_interval: 25          # 每处理N条记录就保存一次进度。
+      save_interval_seconds: 180 # 或者，距离上次保存超过N秒，也强制保存一次进度。
+      reuse_sessions: true       # 是否重用浏览器会话/页面，减少重复创建和销毁的开销。
+      enable_detailed_log: true  # 是否启用更详细的调试日志，记录每个步骤的输入输出。
+    
+    # 配置优先级说明：命令行参数 > 自定义配置(custom) > 预设配置(auto_select) > 代码中的硬编码默认值
+    
+  # 豆瓣爬虫配置 (已废弃，功能被 link_resolver 和 subject_api 取代)
+  # 注意：此部分为旧版爬虫配置，当前代码优先使用 link_resolver 和 subject_api 组合。
+  # 保留此配置可能用于兼容旧版脚本或作为后备方案。
+  douban_crawler:
+    enabled: true
+    base_url: "https://book.douban.com"
+    headless: false  # 无头模式，生产环境建议设为 true
+    delay: 1.0  # 请求间隔
+
+    # 登录配置
+    login:
+      auto_login: false  # 是否启用自动登录
+      timeout: 30  # 登录超时时间（秒）
+      # 豆瓣账号密码将从环境变量DOUBAN_USERNAME和DOUBAN_PASSWORD读取
+
+    # 爬取配置
+    crawl:
+      retry_times: 3  # 失败重试次数
+      timeout: 6  # 页面加载超时（秒）
+      enable_stealth: true  # 启用反爬虫检测规避
+
+    # 进度保存配置
+    save_interval: 10  # 每10条记录保存一次进度
+
+  # 豆瓣链接解析器配置 (src/core/douban/link_resolver/)
+  # 功能：接收 ISBN，通过豆瓣搜索页面找到最匹配的图书主页URL。
+  link_resolver:
+    max_concurrent: 2 # 并发搜索的浏览器实例数
+    headless: false   # 是否以无头模式运行浏览器
+    search_delay: 1.2 # 每次搜索操作之间的延迟（秒）
+    retry_times: 3    # 搜索失败（如未找到结果）的重试次数
+    max_restarts: 3   # 浏览器实例崩溃后的最大重启次数
+
+  # 豆瓣主题API配置 (src/core/douban/api/)
+  # 功能：在通过 link_resolver 获得图书ID后，调用此移动版API获取图书的详细信息（评分、作者等）。
+  # 相比直接爬取网页，API速度更快、更稳定。
+  subject_api:
+    base_url: "https://m.douban.com/rexxar/api/v2/subject" # 豆瓣移动版API地址
+    max_concurrent: 2 # 并发API请求数
+    qps: 2            # 每秒请求数限制（Query Per Second），用于API速率控制
+    timeout: 10       # API请求超时时间（秒）
+    retry:
+      max_times: 3    # API请求失败（如网络错误、超时）后的最大重试次数
+      backoff: [1, 3, 5] # 重试的退避策略（秒），第一次失败等1秒，第二次等3秒，以此类推
+
+  # 数据分析配置 (src/core/douban/analytics/ 和 report_generator.py)
+  # 功能：对获取的豆瓣评分数据进行统计分析，生成主题报告。
+  analytics:
+    theme_rating:
+      min_sample_size: 30        # 一个主题（如CLC分类"I"）至少需要多少本书才进行统计
+      review_lower_percentile: 40 # 评价人数的下限百分位，过滤掉评价人数过少的冷门书
+      review_upper_percentile: 80 # 评价人数的上限百分位，过滤掉评价人数过多的热门书
+      rating_percentile_large: 75 # 评分达到前75%的被认为是高分书
+      top_n_per_category: 20     # 每个分类报告Top N本书
+      # 各CLC分类的最低及格分，用于评估该分类下的图书质量
+      category_min_scores:
+        B: 8.2
+        C: 7.5
+        D: 7.1
+        E: 7.4
+        F: 7.1
+        G: 7.3
+        H: 7.2
+        I: 7.3
+        J: 7.7
+        K: 8.0
+        N: 7.6
+        S: 7.4
+        T: 7.6             
+        default: 7.5 # 其他未列出分类的默认及格分
+      
+      # 列值验证过滤规则
+      # 功能: 在评分和评论人数过滤的基础上,额外检查Excel列值是否满足要求
+      # 用途: 排除缺少关键信息(如封面图片、内容简介)的图书
+      column_filters:
+        enabled: true  # 总开关,设为false可禁用所有列值验证
+        rules:
+          # 规则1: 豆瓣封面图片链接必须有值
+          - name: "豆瓣封面图片验证"
+            enabled: true
+            column: "豆瓣封面图片链接"  # 列名需与fields_mapping.douban中的映射一致
+            filter_type: "not_empty"  # 验证类型: not_empty(非空) 或 regex(正则表达式)
+            description: "排除没有封面图片的图书"
+          
+          # 规则2: 豆瓣内容简介必须有值
+          - name: "豆瓣内容简介验证"
+            enabled: true
+            column: "豆瓣内容简介"
+            filter_type: "not_empty"
+            description: "排除没有内容简介的图书"
+          
+          # 规则3(示例): 使用正则表达式验证 - 默认禁用
+          # 取消注释并启用后,可验证ISBN格式是否正确
+          # - name: "ISBN格式验证"
+          #   enabled: false
+          #   column: "豆瓣ISBN"
+          #   filter_type: "regex"
+          #   pattern: "^\\d{10}(\\d{3})?$"  # ISBN-10或ISBN-13格式
+          #   description: "验证ISBN格式是否正确"
+
+  # 通用配置
+  # 功能：适用于整个豆瓣模块的全局设置。
+  general:
+    max_retry: 3         # 全局性的操作重试次数
+    log_level: "INFO"    # 日志级别 (DEBUG, INFO, WARNING, ERROR)
+    backup_enabled: true # 是否启用定期备份
+    backup_interval: 24  # 备份间隔（小时）
+
+  # 数据库配置 (src/core/douban/database/)
+  # 功能：用于缓存已处理过的图书数据，实现历史数据查重和增量更新。
+  database:
+    # 数据库文件路径
+    db_path: "runtime/database/books_history.db"
+
+    # 查重策略：在处理前检查数据是否已存在于数据库
+    duplicate_check:
+      enabled: true
+      key_field: "barcode" # 用于查重的主键字段，通常是图书条码
+      batch_query: true    # 是否启用批量查询，一次性检查多条记录，性能更优
+
+    # 数据刷新策略：决定是否需要为已存在的记录重新获取数据
+    refresh_strategy:
+      enabled: true
+      stale_days: 180      # 如果记录的更新时间超过180天，则认为数据“陈旧”，需要重新获取
+      force_update: false  # 是否强制更新所有记录，忽略 stale_days 限制
+      update_mode: "merge" # 更新数据的方式：'merge'（合并新旧数据，保留旧记录字段）或 'overwrite'（完全用新数据覆盖）
+
+    # 写入策略：控制数据如何写入数据库
+    write_strategy:
+      # 批量写入大小（提高性能）
+      batch_size: 100
+      # 是否启用事务（保证数据一致性）
+      use_transaction: true
+      # 写入完成后是否创建备份
+      create_backup: true
+
+    # 日志策略
+    logging:
+      # 是否记录详细的SQL操作
+      log_sql: false
+      # 是否记录性能统计
+      log_performance: true
+
+# =============================================================================
+# 统一字段映射配置
+# =============================================================================
+# 说明：所有Excel、数据库和豆瓣爬虫的字段映射统一在此配置
+# 目的：避免硬编码，便于维护和修改
+# =============================================================================
+
+fields_mapping:
+  # 【豆瓣爬虫字段映射】- 豆瓣内部字段名 → Excel列名
+  # 用途：豆瓣爬虫获取数据后写入Excel
+  # 来源：douban_rating_processor.py 中通过 config.fields 读取
+  # 备注：此映射与 douban.douban_crawler.fields 功能相同，保留以保持向后兼容
+  douban:
+    url: "豆瓣链接"
+    rating: "豆瓣评分"
+    title: "豆瓣书名"
+    subtitle: "豆瓣副标题"
+    original_title: "豆瓣原作名"
+    author: "豆瓣作者"
+    translator: "豆瓣译者"
+    publisher: "豆瓣出版社"
+    producer: "豆瓣出品方"
+    series: "豆瓣丛书"
+    series_link: "豆瓣丛书链接"
+    price: "豆瓣定价"
+    isbn: "豆瓣ISBN"
+    pages: "豆瓣页数"
+    binding: "豆瓣装帧"
+    pub_year: "豆瓣出版年"
+    rating_count: "豆瓣评价人数"
+    summary: "豆瓣内容简介"
+    author_intro: "豆瓣作者简介"
+    catalog: "豆瓣目录"
+    cover_image: "豆瓣封面图片链接"
+
+  # 【Excel到数据库映射】- Excel列名 → 数据库字段名
+  # 用途：Excel导入工具（excel_import.py）读取此映射将数据导入数据库
+  excel_to_database:
+    # books表字段映射
+    books:
+      "书目条码": "barcode"
+      "索书号": "call_no"
+      "清理后索书号": "cleaned_call_no"
+      "书名": "book_title"
+      "附加信息": "additional_info"
+      "ISBN号": "isbn"
+      "豆瓣链接": "douban_url"
+      "豆瓣评分": "douban_rating"
+      "豆瓣书名": "douban_title"
+      "豆瓣副标题": "douban_subtitle"
+      "豆瓣原作名": "douban_original_title"
+      "豆瓣作者": "douban_author"
+      "豆瓣译者": "douban_translator"
+      "豆瓣出版社": "douban_publisher"
+      "豆瓣出品方": "douban_producer"
+      "豆瓣丛书": "douban_series"
+      "豆瓣丛书链接": "douban_series_link"
+      "豆瓣定价": "douban_price"
+      "豆瓣ISBN": "douban_isbn"
+      "豆瓣页数": "douban_pages"
+      "豆瓣装帧": "douban_binding"
+      "豆瓣出版年": "douban_pub_year"
+      "豆瓣评价人数": "douban_rating_count"
+      "豆瓣封面图片链接": "douban_cover_image"
+      "豆瓣内容简介": "douban_summary"
+      "豆瓣作者简介": "douban_author_intro"
+      "豆瓣目录": "douban_catalog"
+
+    # borrow_records表字段映射
+    borrow_records:
+      "书目条码": "barcode"
+      "读者卡号": "reader_card_no"
+      "提交时间": "submit_time"
+      "归还时间": "return_time"
+      "入库时间": "storage_time"
+
+    # borrow_statistics表字段映射
+    borrow_statistics:
+      "书目条码": "barcode"
+      "近三个月总次数": "borrow_count_3m"
+      "第一个月借阅次数": "borrow_count_m1"
+      "第二个月借阅次数": "borrow_count_m2"
+      "第三个月借阅次数": "borrow_count_m3"
+      "借阅人数": "unique_reader_count_3m"
+
+  # 【数据库到Excel映射】- 数据库字段名 → Excel列名
+  # 用途：豆瓣评分处理器等工具读取此映射将数据库数据导出到Excel
+  database_to_excel:
+    # books表字段映射
+    books:
+      # 基础字段
+      "barcode": "书目条码"
+      "call_no": "索书号"
+      "cleaned_call_no": "清理后索书号"
+      "book_title": "书名"
+      "additional_info": "附加信息"
+      "isbn": "ISBN号"
+      # 豆瓣字段
+      "douban_url": "豆瓣链接"
+      "douban_rating": "豆瓣评分"
+      "douban_title": "豆瓣书名"
+      "douban_subtitle": "豆瓣副标题"
+      "douban_original_title": "豆瓣原作名"
+      "douban_author": "豆瓣作者"
+      "douban_translator": "豆瓣译者"
+      "douban_publisher": "豆瓣出版社"
+      "douban_producer": "豆瓣出品方"
+      "douban_series": "豆瓣丛书"
+      "douban_series_link": "豆瓣丛书链接"
+      "douban_price": "豆瓣定价"
+      "douban_isbn": "豆瓣ISBN"
+      "douban_pages": "豆瓣页数"
+      "douban_binding": "豆瓣装帧"
+      "douban_pub_year": "豆瓣出版年"
+      "douban_rating_count": "豆瓣评价人数"
+      "douban_cover_image": "豆瓣封面图片链接"
+      "douban_summary": "豆瓣内容简介"
+      "douban_author_intro": "豆瓣作者简介"
+      "douban_catalog": "豆瓣目录"
+
+    # borrow_records表字段映射
+    borrow_records:
+      "barcode": "书目条码"
+      "reader_card_no": "读者卡号"
+      "submit_time": "提交时间"
+      "return_time": "归还时间"
+      "created_time": "入库时间"
+
+    # borrow_statistics表字段映射
+    borrow_statistics:
+      "barcode": "书目条码"
+      "borrow_count_3m": "近三个月总次数"
+      "borrow_count_m1": "第一个月借阅次数"
+      "borrow_count_m2": "第二个月借阅次数"
+      "borrow_count_m3": "第三个月借阅次数"
+      "unique_reader_count_3m": "借阅人数"
+
+# =============================================================================
+# 模块5：图书卡片生成配置
+# =============================================================================
+card_generator:
+  # HTML模板文件路径
+  template_path: "config/card_template.html"
+
+  # 输出配置
+  output:
+    # 输出根目录
+    base_dir: "runtime/outputs"
+    # HTML文件扩展名
+    html_extension: ".html"
+    # 图片文件扩展名
+    image_extension: ".png"
+
+  # 图片下载配置
+  image_download:
+    # 封面图片名称(不含扩展名)
+    cover_filename: "cover"
+    # 支持的图片格式
+    supported_formats: ["jpg", "png", "jpeg"]
+    # 请求超时时间(秒)
+    timeout: 30
+    # 最大重试次数
+    max_retries: 3
+    # 重试延迟(秒)
+    retry_delay: 2
+    # User-Agent
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    # 豆瓣图片URL替换规则
+    url_replacements:
+      - old: "subject/s/public"
+        new: "subject/l/public"
+    # 并发下载配置(性能优化)
+    max_concurrent_downloads: 2  # 最大并发下载数,建议2-3,避免触发反爬
+    download_delay: 0.5  # 下载间隔(秒),避免请求过快
+
+  # 二维码生成配置
+  qrcode:
+    # 二维码文件名（固定）
+    filename: "qrcode.png"
+    # URL模板
+    url_template: "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor={call_number}&type=CallNumber"
+    # 索书号URL编码规则（特殊字符映射）
+    url_encoding:
+      "/": "%2F"
+      "#": "%23"
+      "*": "%2A"
+      " ": "%20"
+      "+": "%2B"
+      "=": "%3D"
+      "?": "%3F"
+      "&": "%26"
+    # 二维码生成参数
+    box_size: 10
+    border: 4
+    error_correction: "H"  # L, M, Q, H
+
+  # HTML转图片配置
+  html_to_image:
+    # 浏览器设置
+    headless: true
+    # 视窗宽度
+    viewport_width: 1200
+    # 视窗高度
+    viewport_height: 800
+    # 设备缩放因子
+    device_scale_factor: 2
+    # 图片格式
+    image_format: "png"
+    # 图片质量(仅用于jpg)
+    quality: 90
+    # 是否全页截图
+    full_page: false
+    # 是否裁剪元素
+    clip_element: true
+    # 圆角半径(像素)
+    border_radius: 8
+    # 页面加载超时(毫秒) - 性能优化:本地HTML文件加载快,从60000ms减少到30000ms
+    timeout: 30000
+    # 等待时间(毫秒) - 性能优化:本地HTML文件渲染快,从2000ms减少到500ms
+    wait_time: 500
+
+  # Logo资源配置
+  logo:
+    # Logo源目录
+    source_dir: "data/logo"
+
+  # 字段配置
+  fields:
+    # 必填字段(缺失则终止处理)
+    required:
+      - "索书号"
+      - "豆瓣评分"
+      - "终评理由"
+      - "豆瓣封面图片链接"
+
+    # 可选字段(缺失时使用默认值或替代字段)
+    optional:
+      - "豆瓣作者"
+      - "豆瓣出版社"
+      - "豆瓣出版年"
+      - "豆瓣副标题"
+
+    # 字段替代规则
+    fallback:
+      "豆瓣书名": "书名"  # 豆瓣书名缺失时使用书名
+
+    # 过滤条件字段
+    filter:
+      column: "终评结果"
+      value: "通过"
+      # 优先规则:如果此列存在且有匹配值,则优先使用
+      priority_rule:
+        column: "人工评选"
+        value: "通过"
+
+    # 推荐语来源列配置
+    recommendation_column: "初评理由"
+    # 推荐语优先规则:如果此列存在且有值,则优先使用
+    recommendation_priority_column: "人工推荐语"
+
+    # 字段长度限制(注:实际截取逻辑在 models.py 中实现,会智能在标点处截断)
+    truncate:
+      "初评理由": 50  # 推荐语字段,智能截取约50个字符
+
