@@ -8,6 +8,7 @@ from .hot_books_filter import HotBooksFilter
 from .title_keywords_filter import TitleKeywordsFilter
 from .call_number_filter import CallNumberFilter
 from .column_value_filter import ColumnValueFilter
+from .db_duplicate_filter import DbDuplicateFilter
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -46,6 +47,7 @@ class FilterRegistry:
         cls.register('title_keywords', TitleKeywordsFilter)
         cls.register('call_number', CallNumberFilter)
         cls.register('column_value', ColumnValueFilter)
+        cls.register('db_duplicate', DbDuplicateFilter)
         
         logger.info(f"已注册 {len(cls._filters)} 种筛选器类型: {list(cls._filters.keys())}")
 

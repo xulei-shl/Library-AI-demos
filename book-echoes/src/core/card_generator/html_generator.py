@@ -141,6 +141,19 @@ class HTMLGenerator:
                 return str(int(value))
             return str(value)
         
+        # 处理字符串类型：如果是类似"2025.0"的字符串，转换为整数
+        if isinstance(value, str):
+            # 尝试转换为浮点数再判断是否为整数
+            try:
+                float_value = float(value)
+                if float_value.is_integer():
+                    return str(int(float_value))
+                else:
+                    return value  # 保持原值（如"2025.5"）
+            except (ValueError, TypeError):
+                # 无法转换为浮点数，保持原字符串
+                return value
+        
         return str(value)
 
     def save_html(self, content: str, output_path: str) -> bool:

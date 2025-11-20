@@ -58,6 +58,19 @@ class BookFilterFinal:
                         logger.warning(f"创建筛选器 'hot_books' 失败: {e}")
                 continue
                 
+
+            # 特殊处理rule_db_duplicate
+            if rule_name == 'rule_db_duplicate':
+                if rule_config.get('enabled', False):
+                    try:
+                        filter_type = self._determine_filter_type(rule_name, 'db_duplicate')
+                        filter_instance = FilterRegistry.create_filter(filter_type, rule_config)
+                        self.filters.append(('db_duplicate', filter_instance))
+                        logger.info(f"创建筛选器成功: db_duplicate ({filter_type})")
+                    except Exception as e:
+                        logger.warning(f"创建筛选器 'db_duplicate' 失败: {e}")
+                continue     
+
             # 处理rule_b和rule_c的嵌套结构
             for filter_name, filter_config in rule_config.items():
                 if isinstance(filter_config, dict) and filter_config.get('enabled', False):
@@ -81,7 +94,9 @@ class BookFilterFinal:
                 return 'call_number'
         elif rule_name == 'rule_c':
             return 'column_value'
-        
+        elif rule_name == 'rule_db_duplicate':
+            return 'db_duplicate'            
+                
         return 'column_value'  # 默认类型
     
     def _get_filter_reason_description(self, filter_name: str, filter_result: Dict[str, Any], filter_instance) -> str:
@@ -260,7 +275,7 @@ class BookFilterFinal:
         Returns:
             Tuple[pd.DataFrame, pd.DataFrame, Dict[str, Any]]: (筛选后数据, 被过滤数据, 统计信息)
         """
-        logger.info(f"开始智能降噪筛选，原始数据: {len(data)} 条记录")
+        logger.info(f"开始降噪筛选，原始数据: {len(data)} 条记录")
         
         # 验证输入数据
         if data is None or len(data) == 0:
@@ -337,7 +352,7 @@ class BookFilterFinal:
             'exclusion_reasons': exclusion_reasons
         }
         
-        logger.info(f"智能降噪筛选完成: {len(original_data)} -> {len(result_data)} 条记录 (排除 {len(excluded_data)} 条)")
+        logger.info(f"降噪筛选完成: {len(original_data)} -> {len(result_data)} 条记录 (排除 {len(excluded_data)} 条)")
         
         return result_data, excluded_data, summary
     
@@ -348,7 +363,7 @@ class BookFilterFinal:
         
         report = []
         report.append("=" * 60)
-        report.append("书海回响 - 智能降噪筛选报告")
+        report.append("书海回响 - 降噪筛选报告")
         report.append("=" * 60)
         report.append(f"生成时间: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}")
         report.append(f"筛选后数据: {len(data)} 条记录")

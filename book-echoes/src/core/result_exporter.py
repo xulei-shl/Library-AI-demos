@@ -179,7 +179,7 @@ class ResultExporter:
         filter_info = []
         filter_info.append(['=== 过滤信息概览 ===', ''])
         filter_info.append(['过滤时间', datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
-        filter_info.append(['过滤模块', '智能降噪筛选器（最终版）'])
+        filter_info.append(['过滤模块', '降噪筛选器（最终版）'])
         filter_info.append(['', ''])
         
         # 统计各筛选器结果
@@ -318,7 +318,7 @@ class ResultExporter:
         process_info = [
             ['=== 数据处理信息 ===', ''],
             ['处理时间', datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
-            ['处理模块', '智能降噪筛选器（最终版）'],
+            ['处理模块', '降噪筛选器（最终版）'],
             ['版本', 'v2.0.0'],
             ['', ''],
             ['=== 处理步骤 ===', ''],

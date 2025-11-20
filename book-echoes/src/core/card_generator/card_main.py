@@ -7,6 +7,8 @@ import os
 import sys
 import time
 import argparse
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Tuple, Optional
 import pandas as pd
 
@@ -23,6 +25,7 @@ from src.core.card_generator.image_downloader import ImageDownloader
 from src.core.card_generator.qrcode_generator import QRCodeGenerator
 from src.core.card_generator.html_generator import HTMLGenerator
 from src.core.card_generator.html_to_image_converter import HTMLToImageConverter
+from src.core.card_generator.recommendation_writer import RecommendationResultsWriter
 
 logger = get_logger(__name__)
 
@@ -111,26 +114,30 @@ class CardGeneratorModule:
 
             logger.info(f"开始处理 {len(filtered_df)} 本通过终评的图书...")
 
-            # 5. 批量并发下载封面图片(性能优化)
-            logger.info("步骤1: 批量下载封面图片...")
-            download_start = time.time()
-            download_results = self.batch_download_covers(filtered_df)
-            download_time = time.time() - download_start
-            logger.info(f"封面图片下载完成,耗时: {download_time:.2f}秒")
+            # 5. 并行执行两个独立任务
+            logger.info("=" * 60)
+            logger.info("启动并行任务:")
+            logger.info("  任务1: 图书卡片生成")
+            logger.info("  任务2: 推荐结果数据库写入")
+            logger.info("=" * 60)
 
-            # 6. 启动浏览器实例(性能优化:一次性启动,复用于所有卡片)
-            logger.info("步骤2: 启动浏览器实例...")
-            if not self.html_to_image_converter.start_browser():
-                logger.error("浏览器启动失败,无法继续处理")
-                return 1
+            # 使用ThreadPoolExecutor并行执行
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                # 任务1: 图书卡片生成
+                card_future = executor.submit(self._generate_cards_task, filtered_df)
+                
+                # 任务2: 推荐结果数据库写入
+                db_future = executor.submit(self._write_recommendation_results_task, df)
 
-            # 7. 逐本生成卡片(封面图片已下载,跳过下载步骤)
-            logger.info("步骤3: 生成卡片...")
-            for index, row in filtered_df.iterrows():
-                barcode = str(row.get('书目条码', 'Unknown')).strip()
-                # 检查封面是否下载成功
-                cover_downloaded = download_results.get(barcode, False)
-                self.process_single_book(row, skip_cover_download=True, cover_downloaded=cover_downloaded)
+                # 等待两个任务完成
+                card_result = card_future.result()
+                db_result = db_future.result()
+
+            logger.info("=" * 60)
+            logger.info("并行任务执行完成")
+            logger.info(f"  任务1结果: {'成功' if card_result else '失败'}")
+            logger.info(f"  任务2结果: 写入 {db_result} 条记录")
+            logger.info("=" * 60)
 
             # 8. 生成汇总报告
             elapsed_time = time.time() - start_time
@@ -149,6 +156,7 @@ class CardGeneratorModule:
                 logger.info("=" * 60)
                 logger.info("[成功] 模块5执行完成!")
                 logger.info(f"成功生成 {self.stats['success_count']} 张图书卡片")
+                logger.info(f"成功写入 {db_result} 条推荐结果到数据库")
                 logger.info("=" * 60)
                 return 0
             else:
@@ -167,6 +175,87 @@ class CardGeneratorModule:
             logger.info("正在关闭浏览器实例...")
             self.html_to_image_converter.stop_browser()
 
+    def _generate_cards_task(self, filtered_df: pd.DataFrame) -> bool:
+        """
+        任务1: 图书卡片生成任务(在独立线程中执行)
+
+        Args:
+            filtered_df: 筛选后的DataFrame
+
+        Returns:
+            bool: 是否成功
+        """
+        try:
+            logger.info("[任务1] 开始生成图书卡片...")
+            task_start = time.time()
+
+            # 5. 批量并发下载封面图片(性能优化)
+            logger.info("[任务1] 步骤1: 批量下载封面图片...")
+            download_start = time.time()
+            download_results = self.batch_download_covers(filtered_df)
+            download_time = time.time() - download_start
+            logger.info(f"[任务1] 封面图片下载完成,耗时: {download_time:.2f}秒")
+
+            # 6. 启动浏览器实例(性能优化:一次性启动,复用于所有卡片)
+            logger.info("[任务1] 步骤2: 启动浏览器实例...")
+            if not self.html_to_image_converter.start_browser():
+                logger.error("[任务1] 浏览器启动失败,无法继续处理")
+                return False
+
+            # 7. 逐本生成卡片(封面图片已下载,跳过下载步骤)
+            logger.info("[任务1] 步骤3: 生成卡片...")
+            for index, row in filtered_df.iterrows():
+                barcode = str(row.get('书目条码', 'Unknown')).strip()
+                # 修复: 改为检查封面是否已存在，而不是下载结果
+                output_paths = self.directory_manager.create_book_directory(barcode)
+                if output_paths:
+                    files_status = self.check_existing_files(output_paths)
+                    cover_exists = files_status['cover_exists']
+                else:
+                    cover_exists = False
+                self.process_single_book(row, skip_cover_download=True, cover_downloaded=cover_exists)
+
+            task_time = time.time() - task_start
+            logger.info(f"[任务1] 图书卡片生成完成,耗时: {task_time:.2f}秒")
+            return True
+
+        except Exception as e:
+            logger.error(f"[任务1] 图书卡片生成任务异常: {e}", exc_info=True)
+            return False
+
+    def _write_recommendation_results_task(self, df: pd.DataFrame) -> int:
+        """
+        任务2: 推荐结果数据库写入任务(在独立线程中执行)
+
+        Args:
+            df: 完整的DataFrame(包含所有数据)
+
+        Returns:
+            int: 成功写入的记录数
+        """
+        try:
+            logger.info("[任务2] 开始写入推荐结果到数据库...")
+            task_start = time.time()
+
+            # 获取完整配置(包含fields_mapping)
+            config_manager = get_config_manager()
+            full_config = config_manager.get_config()
+
+            # 创建写入器
+            writer = RecommendationResultsWriter(full_config)
+
+            # 写入数据(只写入初评结果为"通过"的记录)
+            success_count = writer.write_recommendation_results(df)
+
+            task_time = time.time() - task_start
+            logger.info(f"[任务2] 推荐结果写入完成,成功 {success_count} 条,耗时: {task_time:.2f}秒")
+            return success_count
+
+        except Exception as e:
+            logger.error(f"[任务2] 推荐结果写入任务异常: {e}", exc_info=True)
+            return 0
+
+
     def batch_download_covers(self, filtered_df: pd.DataFrame) -> Dict[str, bool]:
         """
         批量并发下载所有封面图片
@@ -179,6 +268,7 @@ class CardGeneratorModule:
         """
         download_tasks = []
         barcode_to_task = {}
+        download_results = {}  # 初始化结果字典
         
         # 准备下载任务
         for index, row in filtered_df.iterrows():
@@ -200,21 +290,22 @@ class CardGeneratorModule:
                 # 需要下载
                 download_tasks.append((book_data.cover_image_url, output_paths.cover_image))
                 barcode_to_task[len(download_tasks) - 1] = barcode
+            else:
+                # 封面已存在,记录为成功
+                download_results[barcode] = True
+                logger.debug(f"封面图片已存在,跳过下载,书目条码:{barcode}")
         
         # 批量并发下载
         if download_tasks:
             results = self.image_downloader.download_covers_batch(download_tasks)
             
-            # 构建结果映射
-            download_results = {}
+            # 构建结果映射(合并到已有结果中)
             for task_index, (success, actual_path, url) in enumerate(results):
                 if task_index in barcode_to_task:
                     barcode = barcode_to_task[task_index]
                     download_results[barcode] = success
-            
-            return download_results
         
-        return {}
+        return download_results
 
     def process_single_book(self, row: pd.Series, skip_cover_download: bool = False, 
                            cover_downloaded: bool = True) -> bool:
@@ -395,8 +486,8 @@ class CardGeneratorModule:
                 - logo_complete: Logo文件是否完整(三个文件都存在:logo_shl.png, logozi_shl.jpg, b.png)
         """
         # 检查封面图片(可能是 jpg 或 png)
-        cover_jpg = output_paths.cover_image.replace('.jpg', '.jpg')
-        cover_png = output_paths.cover_image.replace('.jpg', '.png')
+        cover_jpg = f"{output_paths.cover_image}.jpg"
+        cover_png = f"{output_paths.cover_image}.png"
         cover_exists = os.path.exists(cover_jpg) or os.path.exists(cover_png)
 
         # 检查二维码

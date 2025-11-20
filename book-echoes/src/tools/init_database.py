@@ -241,6 +241,68 @@ class DatabaseInitializer:
         self.conn.commit()
         print("[成功] borrow_statistics表创建成功")
 
+    def create_recommendation_results_table(self):
+        """创建recommendation_results表(书目推荐评选结果)"""
+        sql = """
+        CREATE TABLE IF NOT EXISTS recommendation_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            barcode TEXT NOT NULL,  -- 外键,关联books表
+
+            -- ============ 评选批次信息 ============
+            evaluation_batch TEXT,             -- 评选批次标识(如"2025-01"、"2025春季"等)
+            evaluation_date TEXT,              -- 评选日期
+
+            -- ============ 初评信息 ============
+            preliminary_result TEXT,           -- 初评结果
+            preliminary_score REAL,            -- 初评分数
+            preliminary_reason TEXT,           -- 初评理由
+            preliminary_elimination_reason TEXT,  -- 初评淘汰原因
+            preliminary_elimination_note TEXT,    -- 初评淘汰说明
+
+            -- ============ 主题内决选信息 ============
+            theme_final_result TEXT,           -- 主题内决选结果
+            theme_final_reason TEXT,           -- 主题内决选理由
+
+            -- ============ 终评信息 ============
+            final_result TEXT,                 -- 终评结果
+            final_score REAL,                  -- 终评分数
+            final_reason TEXT,                 -- 终评理由
+            final_elimination_reason TEXT,     -- 终评淘汰原因
+            final_elimination_note TEXT,       -- 终评淘汰说明
+
+            -- ============ 人工评选信息 ============
+            manual_selection TEXT,             -- 人工评选
+            manual_recommendation TEXT,        -- 人工推荐语
+
+            -- ============ 元数据 ============
+            created_at TEXT NOT NULL,          -- 记录创建时间
+            updated_at TEXT,                   -- 记录更新时间
+
+            -- 外键
+            FOREIGN KEY (barcode) REFERENCES books(barcode) ON DELETE CASCADE,
+            
+            -- 确保同一本书在同一评选批次只有一条记录
+            UNIQUE(barcode, evaluation_batch)
+        );
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+
+        # 创建索引
+        indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_recommendation_results_barcode ON recommendation_results(barcode)",
+            "CREATE INDEX IF NOT EXISTS idx_recommendation_results_batch ON recommendation_results(evaluation_batch)",
+            "CREATE INDEX IF NOT EXISTS idx_recommendation_results_barcode_batch ON recommendation_results(barcode, evaluation_batch)",
+            "CREATE INDEX IF NOT EXISTS idx_recommendation_results_preliminary ON recommendation_results(preliminary_result)",
+            "CREATE INDEX IF NOT EXISTS idx_recommendation_results_final ON recommendation_results(final_result)",
+            "CREATE INDEX IF NOT EXISTS idx_recommendation_results_manual ON recommendation_results(manual_selection)"
+        ]
+        for index_sql in indexes:
+            cursor.execute(index_sql)
+
+        self.conn.commit()
+        print("[成功] recommendation_results表创建成功")
+
     def create_tables(self):
         """创建所有表"""
         try:
@@ -252,6 +314,7 @@ class DatabaseInitializer:
             self.create_books_table()
             self.create_borrow_records_table()
             self.create_borrow_statistics_table()
+            self.create_recommendation_results_table()
 
             print("\n" + "="*50)
             print("[成功] 所有表创建完成！")
@@ -272,7 +335,7 @@ class DatabaseInitializer:
 
         print("\n数据库表验证:")
         print("-" * 50)
-        expected_tables = ['books', 'borrow_records', 'borrow_statistics']
+        expected_tables = ['books', 'borrow_records', 'borrow_statistics', 'recommendation_results']
         for table_name in expected_tables:
             if (table_name,) in tables:
                 # 获取表结构
@@ -333,6 +396,7 @@ def init_database(db_path: str = None):
             print("  - books: 书籍基础信息和豆瓣信息")
             print("  - borrow_records: 借阅记录历史")
             print("  - borrow_statistics: 每月统计汇总")
+            print("  - recommendation_results: 书目推荐评选结果")
             print("\n现在可以在主程序中使用此数据库了。")
 
     except Exception as e:

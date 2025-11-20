@@ -101,6 +101,8 @@ def export_filtered_results(filtered_data, excluded_data, filter_engine, filter_
     """输出筛选结果（包括被过滤的数据）"""
     import pandas as pd
     from pathlib import Path
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
     from src.utils.time_utils import get_timestamp
     from src.core.result_exporter import ResultExporter
     
@@ -111,14 +113,27 @@ def export_filtered_results(filtered_data, excluded_data, filter_engine, filter_
     # 生成时间戳
     timestamp = get_timestamp()
     
+    # 读取评选批次配置,如果不存在则使用运行日期的前一个月
+    target_month = get_config('statistics.target_month', None)
+    if not target_month:
+        # 计算前一个月:当前日期减去1个月
+        current_date = datetime.now()
+        previous_month = current_date - relativedelta(months=1)
+        target_month = previous_month.strftime('%Y-%m')
+        logger.info(f"未配置statistics.target_month,使用运行日期前一个月作为评选批次: {target_month}")
+    
     output_files = {}
     
     try:
+        # 在筛选数据中添加"评选批次"字段(插入到第一列)
+        filtered_data_copy = filtered_data.copy()
+        filtered_data_copy.insert(0, '评选批次', target_month)
+        
         # 1. 输出筛选后的Excel数据
         excel_file = outputs_dir / f"月归还数据筛选结果_{timestamp}.xlsx"
-        filtered_data.to_excel(excel_file, index=False)
+        filtered_data_copy.to_excel(excel_file, index=False)
         output_files['筛选结果Excel'] = str(excel_file)
-        logger.info(f"筛选结果已保存到: {excel_file}")
+        logger.info(f"筛选结果已保存到: {excel_file} (评选批次: {target_month})")
         
         # 2. 输出被过滤的数据到独立Excel文件
         if not excluded_data.empty:
@@ -229,8 +244,8 @@ def process_monthly_return_data_corrected():
         output_files = export_borrowing_analysis_results(final_data)
         logger.info(f"结果输出完成: {len(output_files)} 个文件")
         
-        # 步骤7: 智能降噪筛选
-        logger.info("步骤7: 智能降噪筛选")
+        # 步骤7: 降噪筛选
+        logger.info("步骤7: 降噪筛选")
         filter_engine = BookFilterFinal()
         filtered_data, excluded_data, filter_summary = filter_engine.filter_books(final_data)
         
@@ -267,7 +282,7 @@ def process_monthly_return_data_corrected():
         
         # 筛选结果统计信息
         if filter_summary:
-            logger.info(f"智能降噪筛选摘要:")
+            logger.info(f"降噪筛选摘要:")
             logger.info(f"  原始数据: {filter_summary['original_count']} 条")
             logger.info(f"  筛选后数据: {filter_summary['filtered_count']} 条")
             logger.info(f"  被过滤数据: {filter_summary.get('excluded_count', 0)} 条")
@@ -353,8 +368,8 @@ def run_module1():
         print("[成功] 模块1数据处理完成!")
         print("请查看 runtime/outputs/ 目录下的结果文件")
         print("请查看 runtime/logs/ 目录下的详细日志")
-        print("修正: 现在使用近三月借阅数据进行统计计算")
-        print("新增: 智能降噪筛选功能")
+        print("使用近三月借阅数据进行统计计算")
+        print("使用降噪筛选功能")
         print("=" * 60)
         return 0
     else:
@@ -515,6 +530,37 @@ def run_data_collection_pipeline():
     return module3_exit
 
 
+def run_data_analysis_and_evaluation_pipeline():
+    """运行数据分析与评选流程：模块1 -> 模块2 -> 模块3 -> 模块4"""
+    print("=" * 60)
+    print("数据分析与评选流程: 模块1 -> 模块2 -> 模块3 -> 模块4")
+    print("=" * 60)
+
+    # 执行模块1
+    module1_exit = run_module1()
+    if module1_exit != 0:
+        print("数据分析与评选流程中止：模块1/2 执行失败。")
+        return module1_exit
+
+    # 执行模块3
+    print("\n模块1/2 执行完成，即将进入模块3 (豆瓣爬取)...")
+    module3_exit = run_module3()
+    if module3_exit != 0:
+        print("数据分析与评选流程中止：模块3 执行失败。")
+        return module3_exit
+
+    # 执行模块4（完整评选流程）
+    print("\n模块3 执行完成，即将进入模块4 (主题推荐评选)...")
+    module4_exit = run_theme_module_full()
+    if module4_exit == 0:
+        print("\n数据分析与评选流程执行完成！")
+        print("注意：模块4完成后会进入人工筛选阶段")
+        print("完成人工筛选后，可单独运行模块5生成图书卡片")
+    else:
+        print("\n数据分析与评选流程执行完成，但模块4失败。")
+    return module4_exit
+
+
 def run_complete_pipeline():
     """依次运行所有模块：模块1 -> 模块2 -> 模块3 -> 模块4（初评+终评） -> 模块5"""
     print("=" * 60)
@@ -564,8 +610,8 @@ def main():
         print("3. 数据采集流程: 模块1 -> 模块2 -> 模块3")
         print("4. 模块4: 初评（海选阶段）")
         print("5. 模块4: 完整评选（初评→决选→终评）")
-        print("6. 模块5: 图书卡片生成")
-        print("7. 完整流程: 模块1 -> 模块2 -> 模块3 -> 模块4 -> 模块5")
+        print("6. 数据分析与评选流程: 模块1 -> 模块2 -> 模块3 -> 模块4")
+        print("7. 模块5: 图书卡片生成")
         print("8. 退出程序")
 
         choice = input("\n请输入选择 (1-8): ").strip()
@@ -581,9 +627,9 @@ def main():
         elif choice == '5':
             return run_theme_module_full()
         elif choice == '6':
-            return run_module5()
+            return run_data_analysis_and_evaluation_pipeline()
         elif choice == '7':
-            return run_complete_pipeline()
+            return run_module5()
         elif choice == '8':
             print("感谢使用 书海回响 脚本!")
             return 0

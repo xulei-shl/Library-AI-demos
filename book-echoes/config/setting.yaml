@@ -82,6 +82,19 @@ filtering:
       filter_type: "exclude_contains"
       exclude_patterns: ["不要", "废书", "损坏", "散页"]
       action: "exclude"
+  
+  # 规则D:数据库查重过滤器
+  # 目的:过滤已在评选阶段入选的书目,避免重复推荐
+  # 查重逻辑:查询recommendation_results表中manual_selection='通过'的记录
+  rule_db_duplicate:
+    enabled: true
+    description: "数据库查重-过滤已入选书目"
+    target_column: "书目条码"
+    db_table: "recommendation_results"
+    db_column: "barcode"
+    filter_condition:
+      column: "manual_selection"
+      value: "通过"
 
 # 第三模块豆瓣配置
 # 整个模块采用流水线（Pipeline）架构，分为几个主要步骤：
@@ -369,6 +382,25 @@ fields_mapping:
       "第三个月借阅次数": "borrow_count_m3"
       "借阅人数": "unique_reader_count_3m"
 
+    # recommendation_results表字段映射
+    recommendation_results:
+      "书目条码": "barcode"
+      "评选批次": "evaluation_batch"
+      "初评结果": "preliminary_result"
+      "初评分数": "preliminary_score"
+      "初评理由": "preliminary_reason"
+      "初评淘汰原因": "preliminary_elimination_reason"
+      "初评淘汰说明": "preliminary_elimination_note"
+      "主题内决选结果": "theme_final_result"
+      "主题内决选理由": "theme_final_reason"
+      "终评结果": "final_result"
+      "终评分数": "final_score"
+      "终评理由": "final_reason"
+      "终评淘汰原因": "final_elimination_reason"
+      "终评淘汰说明": "final_elimination_note"
+      "人工评选": "manual_selection"
+      "人工推荐语": "manual_recommendation"
+
   # 【数据库到Excel映射】- 数据库字段名 → Excel列名
   # 用途：豆瓣评分处理器等工具读取此映射将数据库数据导出到Excel
   database_to_excel:
@@ -420,6 +452,26 @@ fields_mapping:
       "borrow_count_m2": "第二个月借阅次数"
       "borrow_count_m3": "第三个月借阅次数"
       "unique_reader_count_3m": "借阅人数"
+
+    # recommendation_results表字段映射
+    recommendation_results:
+      "barcode": "书目条码"
+      "evaluation_batch": "评选批次"
+      "evaluation_date": "评选日期"  # 系统自动生成,仅用于导出显示
+      "preliminary_result": "初评结果"
+      "preliminary_score": "初评分数"
+      "preliminary_reason": "初评理由"
+      "preliminary_elimination_reason": "初评淘汰原因"
+      "preliminary_elimination_note": "初评淘汰说明"
+      "theme_final_result": "主题内决选结果"
+      "theme_final_reason": "主题内决选理由"
+      "final_result": "终评结果"
+      "final_score": "终评分数"
+      "final_reason": "终评理由"
+      "final_elimination_reason": "终评淘汰原因"
+      "final_elimination_note": "终评淘汰说明"
+      "manual_selection": "人工评选"
+      "manual_recommendation": "人工推荐语"
 
 # =============================================================================
 # 模块5：图书卡片生成配置
@@ -531,6 +583,7 @@ card_generator:
       "豆瓣书名": "书名"  # 豆瓣书名缺失时使用书名
 
     # 过滤条件字段
+    # 当前强制使用 人工评选 ，但保留了原有的智能筛选代码以备后用
     filter:
       column: "终评结果"
       value: "通过"

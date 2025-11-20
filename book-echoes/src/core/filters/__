@@ -1,5 +1,5 @@
 """
-筛选器模块 - 模块化智能降噪筛选器
+筛选器模块 - 模块化降噪筛选器
 """
 
 from .base_filter import BaseFilter
