@@ -511,14 +511,14 @@ class ISBNAsyncProcessor:
             categories = None
             if self.database_enabled and self.data_checker:
                 logger.info("=" * 80)
-                logger.info("执行数据库查重...")
+                logger.info("执行ISBN数据库查重...")
                 logger.info("=" * 80)
 
                 # 将DataFrame转换为字典列表
                 excel_data = df.iloc[pending_indices].to_dict('records')
 
-                # 执行查重分类
-                categories = self.data_checker.check_and_categorize_books(excel_data)
+                # 执行ISBN查重分类(只检查isbn字段)
+                categories = self.data_checker.check_and_categorize_isbn_books(excel_data)
 
                 # 记录查重统计
                 self.stats['existing_valid_count'] = len(categories['existing_valid'])
@@ -526,19 +526,78 @@ class ISBNAsyncProcessor:
                 self.stats['new_count'] = len(categories['new'])
 
                 logger.info(
-                    f"查重完成: "
-                    f"有效={self.stats['existing_valid_count']}, "
-                    f"过期={self.stats['existing_stale_count']}, "
-                    f"新数据={self.stats['new_count']}"
+                    f"ISBN查重完成: "
+                    f"已有ISBN={self.stats['existing_valid_count']}, "
+                    f"需爬取ISBN={self.stats['new_count']}"
                 )
 
-                # 处理已有有效数据（从数据库获取，不爬取）
+                # 处理已有ISBN数据（从数据库获取，不爬取）
                 if categories['existing_valid']:
                     await self._process_existing_valid_books(
                         categories['existing_valid'], df, excel_file_path, output_column
                     )
 
-            # 启动工作器
+            # ============================================================
+            # 第一轮处理
+            # ============================================================
+            logger.info("=" * 80)
+            logger.info("第一轮处理:批量获取ISBN")
+            logger.info("=" * 80)
+
+            # 需要处理的数据:只有新数据(ISBN查重不会产生existing_stale)
+            data_to_process = []
+            if categories:
+                # ISBN查重只需要处理new分类的数据
+                all_books_to_process = categories['new']
+
+                # 从字典数据中提取barcode,然后查找对应的索引
+                for book_data in all_books_to_process:
+                    barcode = book_data.get('barcode') or book_data.get('书目条码')
+                    if barcode:
+                        # 查找barcode对应的Excel索引
+                        index = self._find_row_index(df, barcode)
+                        if index != -1 and index in pending_index_set:
+                            data_to_process.append(index)
+
+                logger.info(f"需要爬取ISBN的记录数: {len(data_to_process)} 条")
+            else:
+                # 所有待处理的数据都来自剩余索引
+                data_to_process = pending_indices.copy()
+
+            # ============================================================
+            # 检查是否有需要爬取的数据
+            # ============================================================
+            if not data_to_process:
+                logger.info("=" * 80)
+                logger.info("无需爬取的数据,跳过浏览器启动和爬取流程")
+                logger.info("=" * 80)
+                
+                # 生成统计信息
+                stats = {
+                    'total_records': total_records,
+                    'success_count': self.stats['successful_isbn'],
+                    'failed_count': self.stats['failed_isbn'],
+                    'skipped_count': self.stats['skipped_count'],
+                    'success_rate': 100.0 if total_records > 0 else 0,
+                    'processing_time': time.time() - start_time,
+                    'retry_enabled': retry_failed,
+                    'failed_after_retry': 0
+                }
+                
+                logger.info("=" * 80)
+                logger.info("处理完成(无需爬取):")
+                logger.info("=" * 80)
+                logger.info(f"  总记录数: {stats['total_records']}")
+                logger.info(f"  已有ISBN: {self.stats.get('existing_valid_count', 0)}")
+                logger.info(f"  跳过记录: {stats['skipped_count']}")
+                logger.info(f"  处理时间: {stats['processing_time']:.2f}秒")
+                logger.info("=" * 80)
+                
+                return excel_file_path, stats
+
+            # ============================================================
+            # 启动工作器(只有在有需要爬取的数据时才启动)
+            # ============================================================
             if not await self.start_workers():
                 raise Exception("工作器启动失败")
 
@@ -548,34 +607,6 @@ class ISBNAsyncProcessor:
             self._final_only_indices.clear()
             self._db_result_cache.clear()
             self._last_flush_ts = time.monotonic()
-
-            # ============================================================
-            # 第一轮处理
-            # ============================================================
-            logger.info("=" * 80)
-            logger.info("第一轮处理：批量获取ISBN")
-            logger.info("=" * 80)
-
-            # 需要处理的数据：过期数据 + 新数据
-            data_to_process = []
-            if categories:
-                # 🔧 修复：需要处理的数据（已有过期数据 + 新数据）
-                # 构建需要处理的索引列表
-                all_books_to_process = categories['existing_stale'] + categories['new']
-
-                # 从字典数据中提取barcode，然后查找对应的索引
-                for book_data in all_books_to_process:
-                    barcode = book_data.get('barcode') or book_data.get('书目条码')
-                    if barcode:
-                        # 查找barcode对应的Excel索引
-                        index = self._find_row_index(df, barcode)
-                        if index != -1 and index in pending_index_set:
-                            data_to_process.append(index)
-
-                logger.info(f"需要重新爬取的记录数: {len(data_to_process)} 条")
-            else:
-                # 所有待处理的数据都来自剩余索引
-                data_to_process = pending_indices.copy()
 
             skip_existing_isbn = categories is None
             failed_barcodes_first_round = await self._process_batch(

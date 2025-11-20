@@ -216,13 +216,14 @@ class DatabaseManager:
 
         logger.debug(f"创建了 {len(indexes)} 个索引")
 
-    def batch_check_duplicates(self, barcodes: List[str], stale_days: int = 30) -> Dict:
+    def batch_check_duplicates(self, barcodes: List[str], stale_days: int = 30, crawl_empty_url: bool = True) -> Dict:
         """
-        批量查重，返回分类结果
+        批量查重，返回分类结果 (优化版 - 支持大批量)
 
         Args:
             barcodes: 条码列表
             stale_days: 过期天数（超过该天数的数据需要重新爬取）
+            crawl_empty_url: 当douban_url为空时是否需要重新爬取（默认True）
 
         Returns:
             Dict: 分类结果
@@ -235,23 +236,31 @@ class DatabaseManager:
         Note:
             分类逻辑：
             - existing_valid: 数据库中存在，豆瓣URL有值，且未过期
-            - existing_stale: 数据库中存在但豆瓣URL无值，或已过期需要重新爬取
+            - existing_stale: 数据库中存在但豆瓣URL无值(根据crawl_empty_url配置)，或已过期需要重新爬取
             - new: 数据库中不存在
         """
         try:
-            # 批量查询所有barcode
-            placeholders = ','.join(['?' for _ in barcodes])
-            sql = f"""
-                SELECT * FROM books
-                WHERE barcode IN ({placeholders})
-                ORDER BY created_at DESC
-            """
+            # 优化: 处理SQLite参数限制,分批查询
+            BATCH_SIZE = 999
+            all_existing_books = []
 
-            cursor = self.conn.execute(sql, barcodes)
-            existing_books = cursor.fetchall()
+            for i in range(0, len(barcodes), BATCH_SIZE):
+                batch = barcodes[i:i+BATCH_SIZE]
+                placeholders = ','.join(['?' for _ in batch])
+                sql = f"""
+                    SELECT * FROM books
+                    WHERE barcode IN ({placeholders})
+                    ORDER BY created_at DESC
+                """
+
+                cursor = self.conn.execute(sql, batch)
+                batch_books = cursor.fetchall()
+                all_existing_books.extend(batch_books)
+
+                logger.debug(f"查重批次 {i//BATCH_SIZE + 1}: 查询 {len(batch)} 条,找到 {len(batch_books)} 条")
 
             # 转换为字典以便快速查找
-            existing_dict = {book['barcode']: dict(book) for book in existing_books}
+            existing_dict = {book['barcode']: dict(book) for book in all_existing_books}
 
             # 分类结果
             result = {
@@ -260,51 +269,67 @@ class DatabaseManager:
                 'new': []
             }
 
-            # 计算过期时间（日期格式参考excel_import.py：%Y-%m-%d %H:%M:%S）
+            # 计算过期时间
             stale_threshold = (datetime.now() - timedelta(days=stale_days)).strftime('%Y-%m-%d %H:%M:%S')
+
+            # 统计计数器
+            stats = {
+                'url_empty': 0,      # douban_url为空
+                'time_stale': 0,     # 时间过期
+            }
 
             for barcode in barcodes:
                 if barcode in existing_dict:
                     book_data = existing_dict[barcode]
+                    # 使用 updated_at 判断数据是否过期，如果 updated_at 为空则回退使用 created_at
+                    updated_at = book_data.get('updated_at', '')
                     created_at = book_data.get('created_at', '')
+                    check_time = updated_at if updated_at else created_at
                     douban_url = book_data.get('douban_url')
 
-                    # 检查是否需要重新爬取
                     needs_update = False
+                    stale_reason = None  # 记录过期原因
 
-                    # 1. 检查豆瓣URL是否存在（新增逻辑）
+                    # 检查豆瓣URL是否存在
                     if not douban_url or douban_url.strip() == '':
-                        # 豆瓣URL为空，需要重新爬取
-                        logger.debug(f"条码 {barcode}: douban_url为空，需要重新爬取")
-                        needs_update = True
-                    # 2. 检查是否过期
-                    elif created_at > stale_threshold:
-                        # 未过期且有豆瓣URL
+                        if crawl_empty_url:
+                            # 配置为需要爬取URL为空的记录
+                            logger.debug(f"条码 {barcode}: douban_url为空,需要重新爬取")
+                            needs_update = True
+                            stale_reason = 'url_empty'
+                            stats['url_empty'] += 1
+                        else:
+                            # 配置为跳过URL为空的记录
+                            logger.debug(f"条码 {barcode}: douban_url为空,但配置为跳过(crawl_empty_url=False)")
+                            needs_update = False
+                    # 检查是否过期
+                    elif check_time > stale_threshold:
                         needs_update = False
+                        logger.debug(f"条码 {barcode}: 数据未过期 - updated_at={updated_at}, created_at={created_at}, stale_threshold={stale_threshold}")
                     else:
-                        # 已过期，需要重新爬取
-                        logger.debug(f"条码 {barcode}: 数据已过期（{stale_days}天），需要重新爬取")
+                        logger.info(f"条码 {barcode}: 数据已过期({stale_days}天) - updated_at={updated_at}, created_at={created_at}, stale_threshold={stale_threshold}")
                         needs_update = True
+                        stale_reason = 'time_stale'
+                        stats['time_stale'] += 1
 
                     if needs_update:
-                        # 需要重新爬取
                         result['existing_stale'].append({
                             'barcode': barcode,
                             'data': book_data
                         })
                     else:
-                        # 数据库中存在且有有效豆瓣URL，直接使用
                         result['existing_valid'].append({
                             'barcode': barcode,
                             'data': book_data
                         })
                 else:
-                    # 不存在，需要完整流程
                     result['new'].append(barcode)
 
+            # 输出详细的统计信息
             logger.info(
                 f"查重完成: {len(result['existing_valid'])}条有效, "
-                f"{len(result['existing_stale'])}条需爬取, "
+                f"{len(result['existing_stale'])}条需爬取 "
+                f"(URL为空:{stats['url_empty']}条, 时间过期:{stats['time_stale']}条), "
                 f"{len(result['new'])}条新数据"
             )
 
@@ -312,6 +337,87 @@ class DatabaseManager:
 
         except Exception as e:
             logger.error(f"批量查重失败: {e}")
+            raise
+
+    def batch_check_isbn_duplicates(self, barcodes: List[str]) -> Dict:
+        """
+        批量查重ISBN数据 (专用于ISBN爬取阶段)
+
+        Args:
+            barcodes: 条码列表
+
+        Returns:
+            Dict: 分类结果
+            {
+                'existing_valid': [{'barcode': 'B001', 'data': book_data}, ...],
+                'existing_stale': [],  # ISBN查重不使用此分类
+                'new': ['B003', 'B004', ...]
+            }
+
+        Note:
+            分类逻辑：
+            - existing_valid: 数据库中存在且isbn字段有值
+            - existing_stale: 空列表(ISBN查重不需要此分类)
+            - new: 数据库中不存在或isbn字段为空
+        """
+        try:
+            # 优化: 处理SQLite参数限制,分批查询
+            BATCH_SIZE = 999
+            all_existing_books = []
+
+            for i in range(0, len(barcodes), BATCH_SIZE):
+                batch = barcodes[i:i+BATCH_SIZE]
+                placeholders = ','.join(['?' for _ in batch])
+                sql = f"""
+                    SELECT * FROM books
+                    WHERE barcode IN ({placeholders})
+                    ORDER BY created_at DESC
+                """
+
+                cursor = self.conn.execute(sql, batch)
+                batch_books = cursor.fetchall()
+                all_existing_books.extend(batch_books)
+
+                logger.debug(f"ISBN查重批次 {i//BATCH_SIZE + 1}: 查询 {len(batch)} 条,找到 {len(batch_books)} 条")
+
+            # 转换为字典以便快速查找
+            existing_dict = {book['barcode']: dict(book) for book in all_existing_books}
+
+            # 分类结果
+            result = {
+                'existing_valid': [],
+                'existing_stale': [],  # ISBN查重不使用
+                'new': []
+            }
+
+            for barcode in barcodes:
+                if barcode in existing_dict:
+                    book_data = existing_dict[barcode]
+                    isbn = book_data.get('isbn', '')
+
+                    # 只检查isbn字段是否有值
+                    if isbn and str(isbn).strip() not in ['', 'nan', 'None']:
+                        result['existing_valid'].append({
+                            'barcode': barcode,
+                            'data': book_data
+                        })
+                        logger.debug(f"条码 {barcode}: ISBN已存在 - {isbn}")
+                    else:
+                        result['new'].append(barcode)
+                        logger.debug(f"条码 {barcode}: ISBN为空,需要爬取")
+                else:
+                    result['new'].append(barcode)
+                    logger.debug(f"条码 {barcode}: 数据库中不存在")
+
+            logger.info(
+                f"ISBN查重完成: {len(result['existing_valid'])}条有效, "
+                f"{len(result['new'])}条需爬取"
+            )
+
+            return result
+
+        except Exception as e:
+            logger.error(f"ISBN批量查重失败: {e}")
             raise
 
     def batch_save_data(self, books_data: List[Dict], borrow_records_list: List[Dict],
@@ -356,15 +462,73 @@ class DatabaseManager:
             self.conn.rollback()
             raise
 
+    def batch_get_books_by_barcodes(self, barcodes: List[str]) -> Dict[str, Dict]:
+        """
+        批量查询书籍信息
+
+        Args:
+            barcodes: 条码列表
+
+        Returns:
+            Dict[str, Dict]: barcode → 书籍信息的映射
+        """
+        if not barcodes:
+            return {}
+
+        try:
+            # 处理SQLite参数限制
+            BATCH_SIZE = 999
+            all_books = {}
+
+            for i in range(0, len(barcodes), BATCH_SIZE):
+                batch = barcodes[i:i+BATCH_SIZE]
+                placeholders = ','.join(['?' for _ in batch])
+                sql = f"SELECT * FROM books WHERE barcode IN ({placeholders})"
+
+                cursor = self.conn.execute(sql, batch)
+                rows = cursor.fetchall()
+
+                for row in rows:
+                    book_dict = dict(row)
+                    all_books[book_dict['barcode']] = book_dict
+
+            logger.debug(f"批量查询完成: {len(all_books)}/{len(barcodes)} 条记录")
+            return all_books
+
+        except Exception as e:
+            logger.error(f"批量查询书籍信息失败: {e}")
+            return {}
+
+    def _increment_version_in_memory(self, current_version: str) -> str:
+        """
+        在内存中递增版本号 (无需数据库查询)
+
+        Args:
+            current_version: 当前版本号
+
+        Returns:
+            str: 递增后的版本号
+        """
+        try:
+            version_num = float(current_version)
+            new_version_num = round(version_num + 0.1, 1)
+            return f"{new_version_num:.1f}"
+        except (ValueError, TypeError):
+            logger.warning(f"无法解析版本号 {current_version},使用默认版本")
+            return '1.0'
+
     def _increment_data_version(self, barcode: str) -> str:
         """
-        递增data_version字段
+        递增data_version字段 (已废弃,保留用于向后兼容)
 
         Args:
             barcode: 条码
 
         Returns:
             str: 递增后的版本号
+
+        Note:
+            此方法已废弃,建议使用_increment_version_in_memory()避免数据库查询
         """
         try:
             # 查询现有记录
@@ -390,47 +554,59 @@ class DatabaseManager:
 
     def _batch_save_books(self, books_data: List[Dict], batch_size: int, update_mode: str = "merge"):
         """
-        批量保存books数据
+        批量保存books数据 (优化版)
 
         Args:
             books_data: books表数据列表
             batch_size: 批量写入大小
             update_mode: 更新模式（merge保留原字段，overwrite完全覆盖）
         """
+        if not books_data:
+            return
+
+        # 优化: 批量预查询所有barcode
+        all_barcodes = [b['barcode'] for b in books_data if 'barcode' in b]
+        existing_books_map = self.batch_get_books_by_barcodes(all_barcodes)
+
+        logger.debug(f"预查询完成: {len(existing_books_map)} 条已存在记录")
+
         for i in range(0, len(books_data), batch_size):
             batch = books_data[i:i + batch_size]
 
             for book_data in batch:
-                # 确保必要字段存在（日期格式参考excel_import.py：%Y-%m-%d %H:%M:%S）
+                # 确保必要字段存在
                 book_data.setdefault('updated_at', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-                # 获取现有的created_at（如果存在）
+                # 优化: 从内存映射中获取现有记录 (无需查询)
                 existing_book = None
                 if 'barcode' in book_data:
                     barcode = book_data['barcode']
-                    existing_book = self.get_book_by_barcode(barcode)
+                    existing_book = existing_books_map.get(barcode)
 
-                    # 处理data_version字段 - 递增版本号
-                    book_data['data_version'] = self._increment_data_version(barcode)
+                    # 优化: 在内存中处理版本号 (无需查询)
+                    if existing_book:
+                        current_version = existing_book.get('data_version', '1.0')
+                        book_data['data_version'] = self._increment_version_in_memory(current_version)
+                    else:
+                        book_data['data_version'] = '1.0'
                 else:
-                    # 没有barcode的新记录
                     book_data.setdefault('data_version', '1.0')
 
-                # 如果已存在，保留原有的created_at；否则使用当前时间
+                # 保留原有created_at
                 if existing_book and existing_book.get('created_at'):
                     book_data['created_at'] = existing_book['created_at']
                 else:
                     book_data.setdefault('created_at', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-                # 根据更新模式构建不同的UPSERT语句
+                # 根据更新模式构建UPSERT语句 (逻辑不变)
                 if update_mode == "overwrite" or not existing_book:
-                    # 完全覆盖模式或新记录：更新所有字段
+                    # 完全覆盖模式
                     placeholders = ','.join(['?' for _ in book_data.keys()])
                     columns = ','.join(book_data.keys())
 
                     set_clauses = []
                     for key in book_data.keys():
-                        if key != 'barcode':  # barcode在WHERE子句中使用
+                        if key != 'barcode':
                             set_clauses.append(f"{key} = excluded.{key}")
 
                     sql = f"""
@@ -442,39 +618,25 @@ class DatabaseManager:
                     """
                     self.conn.execute(sql, list(book_data.values()))
                 else:
-                    # 合并模式：只更新非空字段（保留数据库中已有但新数据中为空的字段）
-                    # 关键修复：确保INSERT的字段与UPDATE的字段匹配
-                    insert_columns = ['barcode']  # 总是包含barcode
+                    # 合并模式
+                    insert_columns = ['barcode']
                     insert_values = [book_data['barcode']]
                     set_clauses = []
-                    update_values = []
 
-                    # 只处理非空字段
                     for key, value in book_data.items():
                         if key == 'barcode':
-                            continue  # 已处理
+                            continue
 
                         if value is not None and str(value).strip() != "":
-                            # 插入时包含这个字段
                             insert_columns.append(key)
                             insert_values.append(value)
-
-                            # 更新时也包含这个字段
                             set_clauses.append(f"{key} = excluded.{key}")
-                            update_values.append(value)
 
-                    # 添加updated_at字段（总是更新）
                     set_clauses.append("updated_at = excluded.updated_at")
-                    update_values.append(book_data['updated_at'])
-
-                    # 添加data_version字段（总是更新）
                     set_clauses.append("data_version = excluded.data_version")
-                    update_values.append(book_data['data_version'])
 
-                    # 生成SQL，确保INSERT和UPDATE的列数匹配
                     placeholders = ','.join(['?' for _ in insert_columns])
                     columns = ','.join(insert_columns)
-                    all_values = insert_values + update_values
 
                     sql = f"""
                         INSERT INTO books ({columns})
@@ -483,7 +645,6 @@ class DatabaseManager:
                             {', '.join(set_clauses)}
                         WHERE books.barcode = excluded.barcode
                     """
-                    # 修复参数绑定数量问题：merge模式使用excluded引用，不需要绑定update_values
                     self.conn.execute(sql, insert_values)
 
             logger.debug(f"已保存books批次 {i // batch_size + 1}/{(len(books_data) - 1) // batch_size + 1} ({update_mode}模式)")

@@ -98,12 +98,12 @@ class ExcelUpdater:
 
     def update_from_database(self, books_data: List[Dict]):
         """
-        从数据库更新数据到Excel
+        从数据库更新数据到Excel (优化版)
 
         Args:
             books_data: 从数据库获取的书籍数据列表
         """
-        if not self.df is None and len(self.df) == 0:
+        if self.df is None or len(self.df) == 0:
             logger.warning("Excel数据为空，跳过更新")
             return
 
@@ -114,27 +114,38 @@ class ExcelUpdater:
         logger.info(f"开始从数据库更新 {len(books_data)} 条记录到Excel")
 
         try:
+            # 优化: 一次性构建barcode索引 O(n)
+            barcode_to_idx = self._build_barcode_index()
+
             updated_count = 0
+            not_found_count = 0
+
+            # 优化: 直接查找更新 O(m)
             for book_data in books_data:
-                # 根据barcode定位Excel行
                 barcode = book_data.get('barcode') or book_data.get('书目条码')
                 if not barcode:
                     logger.warning("跳过没有barcode的记录")
                     continue
 
-                # 查找对应的Excel行
-                excel_index = self._find_row_index(barcode)
-                if excel_index == -1:
-                    logger.warning(f"在Excel中未找到条码 {barcode}，跳过")
-                    continue
+                barcode = str(barcode).strip()
 
-                # 更新豆瓣字段
-                fields_updated = self._update_douban_fields(self.df, excel_index, book_data)
+                # O(1)查找
+                if barcode in barcode_to_idx:
+                    excel_index = barcode_to_idx[barcode]
+                    fields_updated = self._update_douban_fields(
+                        self.df, excel_index, book_data
+                    )
 
-                if fields_updated > 0:
-                    updated_count += 1
+                    if fields_updated > 0:
+                        updated_count += 1
+                else:
+                    not_found_count += 1
+                    logger.debug(f"在Excel中未找到条码 {barcode}")
 
-            logger.info(f"从数据库更新完成: {updated_count} 条记录")
+            logger.info(
+                f"从数据库更新完成: {updated_count} 条成功, "
+                f"{not_found_count} 条未找到"
+            )
 
         except Exception as e:
             logger.error(f"从数据库更新Excel失败: {e}")
@@ -142,12 +153,12 @@ class ExcelUpdater:
 
     def update_from_crawler(self, books_data: List[Dict]):
         """
-        从爬虫更新数据到Excel
+        从爬虫更新数据到Excel (优化版)
 
         Args:
             books_data: 爬虫获取的书籍数据列表
         """
-        if not self.df is not None and len(self.df) == 0:
+        if self.df is None or len(self.df) == 0:
             logger.warning("Excel数据为空，跳过更新")
             return
 
@@ -158,41 +169,79 @@ class ExcelUpdater:
         logger.info(f"开始从爬虫更新 {len(books_data)} 条记录到Excel")
 
         try:
+            # 优化: 一次性构建barcode索引
+            barcode_to_idx = self._build_barcode_index()
+
             updated_count = 0
+            not_found_count = 0
+
             for book_data in books_data:
-                # 根据barcode定位Excel行
                 barcode = book_data.get('barcode') or book_data.get('书目条码')
                 if not barcode:
                     logger.warning("跳过没有barcode的记录")
                     continue
 
-                # 查找对应的Excel行
-                excel_index = self._find_row_index(barcode)
-                if excel_index == -1:
-                    logger.warning(f"在Excel中未找到条码 {barcode}，跳过")
-                    continue
+                barcode = str(barcode).strip()
 
-                # 更新豆瓣字段
-                fields_updated = self._update_douban_fields(self.df, excel_index, book_data)
+                # O(1)查找
+                if barcode in barcode_to_idx:
+                    excel_index = barcode_to_idx[barcode]
+                    fields_updated = self._update_douban_fields(
+                        self.df, excel_index, book_data
+                    )
 
-                if fields_updated > 0:
-                    updated_count += 1
+                    if fields_updated > 0:
+                        updated_count += 1
+                else:
+                    not_found_count += 1
+                    logger.debug(f"在Excel中未找到条码 {barcode}")
 
-            logger.info(f"从爬虫更新完成: {updated_count} 条记录")
+            logger.info(
+                f"从爬虫更新完成: {updated_count} 条成功, "
+                f"{not_found_count} 条未找到"
+            )
 
         except Exception as e:
             logger.error(f"从爬虫更新Excel失败: {e}")
             raise
 
+    def _build_barcode_index(self) -> Dict[str, int]:
+        """
+        构建barcode到行索引的映射
+
+        Returns:
+            Dict[str, int]: barcode → DataFrame行索引的映射
+        """
+        barcode_column = None
+        if 'barcode' in self.df.columns:
+            barcode_column = 'barcode'
+        elif '书目条码' in self.df.columns:
+            barcode_column = '书目条码'
+        else:
+            raise ValueError("Excel中未找到barcode列")
+
+        # 构建映射: O(n)复杂度,但只执行一次
+        barcode_to_idx = {}
+        for idx, row in self.df.iterrows():
+            barcode = str(row[barcode_column]).strip()
+            if barcode:
+                barcode_to_idx[barcode] = idx
+
+        logger.debug(f"构建barcode索引完成: {len(barcode_to_idx)} 条记录")
+        return barcode_to_idx
+
     def _find_row_index(self, barcode: str) -> int:
         """
-        根据barcode查找Excel行索引
+        根据barcode查找Excel行索引 (已废弃,保留用于向后兼容)
 
         Args:
             barcode: 条码
 
         Returns:
             int: 行索引，如果未找到返回-1
+
+        Note:
+            此方法已废弃,建议使用_build_barcode_index()构建索引后直接查找
         """
         # 检查barcode列
         barcode_column = None

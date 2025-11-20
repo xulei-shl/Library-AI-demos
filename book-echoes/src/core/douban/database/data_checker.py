@@ -42,8 +42,9 @@ class DataChecker:
         self.enabled = self.refresh_config.get('enabled', True)
         self.stale_days = self.refresh_config.get('stale_days', 30)
         self.force_update = self.refresh_config.get('force_update', False)
+        self.crawl_empty_url = self.refresh_config.get('crawl_empty_url', True)
 
-        logger.info(f"查重处理器初始化完成: enabled={self.enabled}, stale_days={self.stale_days}, force_update={self.force_update}")
+        logger.info(f"查重处理器初始化完成: enabled={self.enabled}, stale_days={self.stale_days}, force_update={self.force_update}, crawl_empty_url={self.crawl_empty_url}")
 
     def check_and_categorize_books(self, excel_data: List[Dict]) -> Dict:
         """
@@ -92,7 +93,11 @@ class DataChecker:
             logger.info(f"开始批量查重，共 {len(barcodes)} 个条码")
 
             # 2. 调用数据库管理器进行批量查重
-            duplicate_result = self.db_manager.batch_check_duplicates(barcodes, self.stale_days)
+            duplicate_result = self.db_manager.batch_check_duplicates(
+                barcodes, 
+                stale_days=self.stale_days,
+                crawl_empty_url=self.crawl_empty_url
+            )
 
             # 3. 转换为统一格式
             result = {
@@ -153,6 +158,102 @@ class DataChecker:
             logger.error(f"查重和分类失败: {e}")
             # 降级处理：返回所有数据为新数据
             logger.warning("查重失败，降级到无数据库模式")
+            return {
+                'existing_valid': [],
+                'existing_stale': [],
+                'new': excel_data
+            }
+
+    def check_and_categorize_isbn_books(self, excel_data: List[Dict]) -> Dict:
+        """
+        检查并分类书籍 (专用于ISBN爬取阶段)
+
+        Args:
+            excel_data: Excel数据列表，每个元素是一个字典
+
+        Returns:
+            Dict: 分类结果
+            {
+                'existing_valid': [book_data1, book_data2, ...],  # ISBN已存在,从DB直接获取
+                'existing_stale': [],  # ISBN查重不使用此分类
+                'new': [book_data3, book_data4, ...]  # ISBN不存在,需要爬取
+            }
+
+        Note:
+            existing_valid: 数据库中isbn字段有值,直接返回,无需爬取
+            existing_stale: 空列表(ISBN查重不使用)
+            new: 数据库中不存在或isbn字段为空,需要爬取
+        """
+        if not self.enabled:
+            logger.info("查重功能已禁用，直接处理所有数据")
+            return {
+                'existing_valid': [],
+                'existing_stale': [],
+                'new': excel_data
+            }
+
+        try:
+            # 1. 提取所有barcode
+            barcodes = []
+            for row in excel_data:
+                barcode = str(row.get('barcode') or row.get('书目条码', '')).strip()
+                if barcode and barcode != 'nan':
+                    barcodes.append(barcode)
+
+            if not barcodes:
+                logger.warning("没有有效的barcode数据")
+                return {
+                    'existing_valid': [],
+                    'existing_stale': [],
+                    'new': []
+                }
+
+            logger.info(f"开始ISBN批量查重，共 {len(barcodes)} 个条码")
+
+            # 2. 调用数据库管理器进行ISBN批量查重
+            duplicate_result = self.db_manager.batch_check_isbn_duplicates(barcodes)
+
+            # 3. 转换为统一格式
+            result = {
+                'existing_valid': [],
+                'existing_stale': [],  # ISBN查重不使用
+                'new': []
+            }
+
+            # 处理已有ISBN数据
+            for item in duplicate_result['existing_valid']:
+                book_data = item['data']
+                barcode = item['barcode']
+
+                # 查找对应的Excel行
+                excel_row = self._find_excel_row_by_barcode(excel_data, barcode)
+                if excel_row:
+                    # 合并数据库的ISBN数据到Excel行
+                    merged_data = excel_row.copy()
+                    merged_data['isbn'] = book_data.get('isbn')
+                    merged_data['_data_source'] = 'database_isbn'
+                    result['existing_valid'].append(merged_data)
+
+            # 处理需要爬取ISBN的数据
+            for barcode in duplicate_result['new']:
+                excel_row = self._find_excel_row_by_barcode(excel_data, barcode)
+                if excel_row:
+                    result['new'].append(excel_row)
+
+            # 4. 记录统计信息
+            logger.info(
+                f"ISBN查重分类完成: "
+                f"已有ISBN={len(result['existing_valid'])}, "
+                f"需爬取ISBN={len(result['new'])}, "
+                f"总计={len(excel_data)}"
+            )
+
+            return result
+
+        except Exception as e:
+            logger.error(f"ISBN查重和分类失败: {e}")
+            # 降级处理：返回所有数据为新数据
+            logger.warning("ISBN查重失败，降级到无数据库模式")
             return {
                 'existing_valid': [],
                 'existing_stale': [],

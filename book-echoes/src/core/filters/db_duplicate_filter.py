@@ -101,7 +101,12 @@ class DbDuplicateFilter(BaseFilter):
                 logger.error(f"关闭数据库连接失败: {e}")
     
     def _batch_query_duplicates(self, barcodes: List[str]) -> set:
-        """批量查询已入选的书目条码
+        """批量查询已入选的书目条码(支持10W级数据)
+        
+        优化说明:
+        - 处理SQLite 999参数限制,自动分批查询
+        - 支持10W级别数据查重
+        - 增加分批日志便于监控
         
         Args:
             barcodes: 条码列表
@@ -117,24 +122,34 @@ class DbDuplicateFilter(BaseFilter):
             condition_column = self.filter_condition.get('column', 'manual_selection')
             condition_value = self.filter_condition.get('value', '通过')
             
-            # 批量查询(使用IN子句)
-            placeholders = ','.join(['?' for _ in barcodes])
-            sql = f"""
-                SELECT DISTINCT {self.db_column}
-                FROM {self.db_table}
-                WHERE {condition_column} = ?
-                AND {self.db_column} IN ({placeholders})
-            """
-            
-            params = [condition_value] + barcodes
-            cursor = self.conn.execute(sql, params)
-            
-            # 获取所有匹配的条码
+            # 优化: 处理SQLite参数限制,分批查询
+            # SQLite最多支持999个参数,减去1个condition_value,实际可用998个
+            BATCH_SIZE = 998
             duplicate_barcodes = set()
-            for row in cursor.fetchall():
-                barcode = row[self.db_column]
-                if barcode:
-                    duplicate_barcodes.add(str(barcode).strip())
+            
+            # 分批查询
+            for i in range(0, len(barcodes), BATCH_SIZE):
+                batch = barcodes[i:i+BATCH_SIZE]
+                placeholders = ','.join(['?' for _ in batch])
+                sql = f"""
+                    SELECT DISTINCT {self.db_column}
+                    FROM {self.db_table}
+                    WHERE {condition_column} = ?
+                    AND {self.db_column} IN ({placeholders})
+                """
+                
+                params = [condition_value] + batch
+                cursor = self.conn.execute(sql, params)
+                
+                # 收集本批次的重复条码
+                batch_count = 0
+                for row in cursor.fetchall():
+                    barcode = row[self.db_column]
+                    if barcode:
+                        duplicate_barcodes.add(str(barcode).strip())
+                        batch_count += 1
+                
+                logger.debug(f"查重批次 {i//BATCH_SIZE + 1}: 查询 {len(batch)} 条, 找到 {batch_count} 条重复")
             
             logger.info(f"数据库查重完成: 查询 {len(barcodes)} 条记录, 发现 {len(duplicate_barcodes)} 条已入选")
             return duplicate_barcodes
