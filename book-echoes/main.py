@@ -469,6 +469,7 @@ def run_module5():
     print("=" * 60)
     print("模块5: 图书卡片生成模块")
     print("生成精美的HTML图书卡片和PNG图片")
+    print("同时生成复古风格的图书馆借书卡（如配置启用）")
     print("=" * 60)
 
     latest_excel = find_latest_module4_excel()
@@ -496,6 +497,7 @@ def run_module5():
             print("\n" + "=" * 60)
             print("[成功] 模块5执行完成!")
             print("请查看 runtime/outputs/ 目录下的图书卡片")
+            print("（如配置启用，同时生成了图书馆借书卡）")
             print("=" * 60)
             return 0
         else:
@@ -611,7 +613,7 @@ def main():
         print("4. 模块4: 初评（海选阶段）")
         print("5. 模块4: 完整评选（初评→决选→终评）")
         print("6. 数据分析与评选流程: 模块1 -> 模块2 -> 模块3 -> 模块4")
-        print("7. 模块5: 图书卡片生成")
+        print("7. 模块5: 图书卡片生成（含借书卡）")
         print("8. 退出程序")
 
         choice = input("\n请输入选择 (1-8): ").strip()

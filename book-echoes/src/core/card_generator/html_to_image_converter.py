@@ -5,6 +5,7 @@ HTML转图片转换器模块
 
 import os
 import time
+import threading
 from typing import Dict, Tuple, Optional
 from playwright.sync_api import sync_playwright, Browser, Page, TimeoutError as PlaywrightTimeoutError
 from src.utils.logger import get_logger
@@ -15,12 +16,13 @@ logger = get_logger(__name__)
 class HTMLToImageConverter:
     """HTML转图片转换器类"""
 
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, thread_safe: bool = False):
         """
         初始化转换器
 
         Args:
             config: 配置字典
+            thread_safe: 是否启用线程安全模式（为每个线程创建独立的浏览器实例）
         """
         self.config = config.get('html_to_image', {})
         self.headless = self.config.get('headless', True)
@@ -35,48 +37,91 @@ class HTMLToImageConverter:
         self.timeout = self.config.get('timeout', 60000)
         self.wait_time = self.config.get('wait_time', 2000)
         
-        # 浏览器实例复用(性能优化)
-        self.playwright = None
-        self.browser = None
+        # 线程安全模式
+        self.thread_safe = thread_safe
+        
+        if thread_safe:
+            # 线程安全模式：使用线程本地存储，每个线程有独立的浏览器实例
+            self._thread_local = threading.local()
+        else:
+            # 传统模式：共享浏览器实例
+            self.playwright = None
+            self.browser = None
+            # 线程锁，用于同步多线程访问browser.new_page()
+            self._page_creation_lock = threading.Lock()
 
     def start_browser(self) -> bool:
         """
-        启动浏览器实例(复用模式)
+        启动浏览器实例
         
         Returns:
             bool: 启动成功返回True,否则返回False
         """
-        if self.browser is not None:
-            logger.debug("浏览器实例已存在,无需重复启动")
-            return True
-        
-        try:
-            self.playwright = sync_playwright().start()
-            self.browser = self.playwright.chromium.launch(headless=self.headless)
-            logger.info("浏览器实例已启动(复用模式)")
-            return True
-        except Exception as e:
-            logger.error(f"启动浏览器失败：{e}")
-            return False
+        if self.thread_safe:
+            # 线程安全模式：为当前线程创建独立的浏览器实例
+            if hasattr(self._thread_local, 'browser') and self._thread_local.browser is not None:
+                logger.debug(f"线程 {threading.current_thread().name} 的浏览器实例已存在")
+                return True
+            
+            try:
+                self._thread_local.playwright = sync_playwright().start()
+                self._thread_local.browser = self._thread_local.playwright.chromium.launch(headless=self.headless)
+                logger.info(f"线程 {threading.current_thread().name} 的浏览器实例已启动")
+                return True
+            except Exception as e:
+                logger.error(f"线程 {threading.current_thread().name} 启动浏览器失败：{e}")
+                return False
+        else:
+            # 传统模式：共享浏览器实例
+            if self.browser is not None:
+                logger.debug("浏览器实例已存在,无需重复启动")
+                return True
+            
+            try:
+                self.playwright = sync_playwright().start()
+                self.browser = self.playwright.chromium.launch(headless=self.headless)
+                logger.info("浏览器实例已启动(复用模式)")
+                return True
+            except Exception as e:
+                logger.error(f"启动浏览器失败：{e}")
+                return False
     
     def stop_browser(self) -> None:
         """
         关闭浏览器实例
         """
-        if self.browser:
-            try:
-                self.browser.close()
-                self.browser = None
-                logger.info("浏览器实例已关闭")
-            except Exception as e:
-                logger.warning(f"关闭浏览器时发生错误：{e}")
-        
-        if self.playwright:
-            try:
-                self.playwright.stop()
-                self.playwright = None
-            except Exception as e:
-                logger.warning(f"关闭Playwright时发生错误：{e}")
+        if self.thread_safe:
+            # 线程安全模式：关闭当前线程的浏览器实例
+            if hasattr(self._thread_local, 'browser') and self._thread_local.browser:
+                try:
+                    self._thread_local.browser.close()
+                    self._thread_local.browser = None
+                    logger.info(f"线程 {threading.current_thread().name} 的浏览器实例已关闭")
+                except Exception as e:
+                    logger.warning(f"关闭线程 {threading.current_thread().name} 的浏览器时发生错误：{e}")
+            
+            if hasattr(self._thread_local, 'playwright') and self._thread_local.playwright:
+                try:
+                    self._thread_local.playwright.stop()
+                    self._thread_local.playwright = None
+                except Exception as e:
+                    logger.warning(f"关闭线程 {threading.current_thread().name} 的Playwright时发生错误：{e}")
+        else:
+            # 传统模式：关闭共享浏览器实例
+            if self.browser:
+                try:
+                    self.browser.close()
+                    self.browser = None
+                    logger.info("浏览器实例已关闭")
+                except Exception as e:
+                    logger.warning(f"关闭浏览器时发生错误：{e}")
+            
+            if self.playwright:
+                try:
+                    self.playwright.stop()
+                    self.playwright = None
+                except Exception as e:
+                    logger.warning(f"关闭Playwright时发生错误：{e}")
     
     def convert_html_to_image(
         self, html_path: str, output_path: str
@@ -98,18 +143,34 @@ class HTMLToImageConverter:
         page = None
         try:
             # 确保浏览器已启动
-            if self.browser is None:
-                if not self.start_browser():
-                    return False, ""
-            
-            # 只创建新页面,不启动新浏览器
-            page = self.browser.new_page(
-                viewport={
-                    'width': self.viewport_width,
-                    'height': self.viewport_height
-                },
-                device_scale_factor=self.device_scale_factor
-            )
+            if self.thread_safe:
+                # 线程安全模式：使用当前线程的浏览器实例
+                if not hasattr(self._thread_local, 'browser') or self._thread_local.browser is None:
+                    if not self.start_browser():
+                        return False, ""
+                
+                page = self._thread_local.browser.new_page(
+                    viewport={
+                        'width': self.viewport_width,
+                        'height': self.viewport_height
+                    },
+                    device_scale_factor=self.device_scale_factor
+                )
+            else:
+                # 传统模式：使用共享浏览器实例
+                if self.browser is None:
+                    if not self.start_browser():
+                        return False, ""
+                
+                # 使用线程锁保护页面创建，防止多线程并发调用导致协议错误
+                with self._page_creation_lock:
+                    page = self.browser.new_page(
+                        viewport={
+                            'width': self.viewport_width,
+                            'height': self.viewport_height
+                        },
+                        device_scale_factor=self.device_scale_factor
+                    )
 
             # 加载HTML页面
             if not self.load_html_page(page, html_path):

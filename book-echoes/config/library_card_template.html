@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>借书卡片</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Cutive+Mono&family=Noto+Serif+SC:wght@400;700&family=Special+Elite&family=Zhi+Mang+Xing&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* --- 字体定义 --- */
+        .font-shangtu {
+            font-family: '上图东观体', 'Noto Serif SC', serif;
+        }
+
+        .font-youyouyisong {
+            font-family: '又又意宋', 'Noto Serif SC', serif;
+        }
+
+        .font-handwriting-cn {
+            font-family: 'Zhi Mang Xing', cursive;
+        }
+
+        .font-typewriter {
+            font-family: 'Cutive Mono', 'Courier New', monospace;
+        }
+
+        .font-stamp {
+            font-family: 'Special Elite', cursive;
+        }
+
+        .font-handwriting-en {
+            font-family: 'Caveat', cursive;
+        }
+
+        /* --- 卡片主体 --- */
+        .library-card-vertical {
+            position: relative;
+            width: 100%;
+            max-width: 380px;
+            min-height: 720px;
+            background-color: #fdfbf6;
+            border: 1px solid #d1d5db;
+            filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.15));
+            overflow: hidden;
+            /* 底部切角 */
+            -webkit-mask-image: radial-gradient(circle 12px at 50% calc(100% - 25px), transparent 11px, black 12px);
+            mask-image: radial-gradient(circle 12px at 50% calc(100% - 25px), transparent 11px, black 12px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- 1. 全局背景插图 --- */
+        .full-bg-illustration {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('pic/b.png');
+            background-repeat: no-repeat;
+            /* 位置：保持原来的布局 */
+            background-position: 60% 70%;
+            background-size: 80%;
+
+            /* --- 这里的修改实现了"柔和彩色" --- */
+            mix-blend-mode: multiply;
+            /* 正片叠底：让颜色像是印在纸上，而不是浮在上面 */
+            /* 
+               saturate(60%): 降低饱和度，避免颜色过于刺眼，制造褪色感
+               sepia(15%): 加入少许复古黄褐色，与纸张融合
+               brightness(1.05): 稍微提亮，防止叠加后太暗
+               blur(0.5px): 极轻微的模糊，模拟墨水晕染/水印质感
+            */
+            filter: saturate(60%) sepia(15%) brightness(1.05) blur(0.5px);
+            opacity: 0.12;
+            /* 稍微提高不透明度，让彩色能显现出来 */
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 纹理层 */
+        .paper-texture {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.12'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 40;
+            mix-blend-mode: overlay;
+        }
+
+        /* --- 格线系统 --- */
+        .grid-container {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            z-index: 30;
+        }
+
+        .grid-row {
+            display: flex;
+            border-bottom: 1px solid rgba(147, 197, 253, 0.8);
+            height: 44px;
+            position: relative;
+        }
+
+        .grid-divider {
+            position: absolute;
+            top: -36px;
+            bottom: 0;
+            left: 32%;
+            width: 2px;
+            background-color: #ef4444;
+            opacity: 0.6;
+            z-index: 5;
+        }
+
+        .col-date {
+            width: 32%;
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .col-name {
+            width: 68%;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* --- 底部区域 --- */
+        .bottom-section {
+            position: relative;
+            padding: 10px 20px 25px 20px;
+            border-top: 3px double #1e3a8a;
+            z-index: 20;
+            /* 底部渐变稍微加了一点点不透明度，防止背景图干扰小字阅读 */
+            background: linear-gradient(to bottom, rgba(253, 251, 246, 0.75), rgba(253, 251, 246, 0.95));
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .rules-block {
+            width: 68%;
+            text-align: justify;
+        }
+
+        .rules-cn {
+            font-size: 10px;
+            line-height: 1.5;
+            color: #4b5563;
+            font-weight: 500;
+        }
+
+        .rules-en {
+            margin-top: 4px;
+            font-size: 8px;
+            line-height: 1.2;
+            color: #1e3a8a;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .bottom-logo {
+            width: 120px;
+            opacity: 0.85;
+            mix-blend-mode: multiply;
+            position: absolute;
+            bottom: 50px;
+            right: 20px;
+            z-index: 25;
+        }
+
+        .bottom-logo img {
+            width: 100%;
+            height: auto;
+            mix-blend-mode: multiply;
+            filter: saturate(50%) contrast(1.2) brightness(1.05);
+            opacity: 0.85;
+        }
+
+        .stamp-text {
+            color: #1e3a8a;
+            opacity: 0.85;
+        }
+
+        .hole-ring {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.05);
+            box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.2), 0 1px 0 rgba(255, 255, 255, 0.8);
+            z-index: 50;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-300 flex items-center justify-center min-h-screen p-4">
+
+    <div class="library-card-vertical">
+
+        <!-- 全局背景插图 -->
+        <div class="full-bg-illustration"></div>
+
+        <!-- 头部信息区 -->
+        <div class="p-5 pb-3 relative z-10 bg-[#fdfbf6]/85"> <!-- 稍微增加头部背景不透明度，保证标题清晰 -->
+            <div
+                class="absolute top-4 right-4 text-gray-400 font-typewriter text-base tracking-widest border border-gray-300 px-1 rounded">
+                No. {{CARD_NUMBER}}</div>
+
+            <div class="text-center mb-3 mt-1">
+                <h1 class="text-3xl font-shangtu text-gray-800 tracking-[0.2em] font-bold mb-1">書海回响</h1>
+                <div class="flex items-center justify-center gap-2 opacity-60">
+                    <div class="h-[1px] w-8 bg-gray-400"></div>
+                    <p class="text-[10px] font-shangtu text-gray-600 uppercase tracking-widest">SHANGHAI Library</p>
+                    <div class="h-[1px] w-8 bg-gray-400"></div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <div class="flex items-baseline border-b border-blue-200 pb-1">
+                    <label
+                        class="w-12 text-[10px] text-blue-800 font-typewriter uppercase tracking-wider shrink-0">Author</label>
+                    <div class="text-base font-youyouyisong text-gray-800 truncate">{{AUTHOR}}</div>
+                </div>
+
+                <div class="flex items-baseline border-b border-blue-200 pb-1">
+                    <label
+                        class="w-12 text-[10px] text-blue-800 font-typewriter uppercase tracking-wider shrink-0">Title</label>
+                    <div class="text-lg font-youyouyisong text-gray-900 truncate tracking-wide">{{TITLE}}</div>
+                </div>
+
+                <div class="flex gap-4 pt-1">
+                    <div class="flex-1 px-2 py-0.5">
+                        <label class="block text-[9px] text-blue-800 font-typewriter uppercase opacity-70">Call
+                            No.</label>
+                        <div class="text-sm font-typewriter text-gray-600 font-bold">{{CALL_NO}}</div>
+                    </div>
+                    <div class="w-20 px-2 py-0.5">
+                        <label class="block text-[9px] text-blue-800 font-typewriter uppercase opacity-70">Year</label>
+                        <div class="text-sm font-typewriter text-gray-600 font-bold">{{YEAR}}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中段：表头 -->
+        <div class="border-y-2 border-blue-800 h-9 bg-[#eff6ff] flex relative z-20">
+            <div class="w-[32%] flex items-center justify-center">
+                <span class="text-[10px] font-bold text-blue-900 font-typewriter uppercase">Date Due</span>
+            </div>
+            <div class="w-[68%] flex items-center justify-center">
+                <span class="text-[10px] font-bold text-blue-900 font-typewriter uppercase">Borrower's Name</span>
+            </div>
+        </div>
+
+        <!-- 借阅记录网格区 -->
+        <div class="grid-container">
+            <div class="grid-divider"></div>
+
+            {{BORROWER_RECORDS}}
+        </div>
+
+        <!-- 底部区域 -->
+        <div class="bottom-section">
+
+            <div class="rules-block">
+                <div class="rules-cn font-youyouyisong">
+                    <span class="font-bold text-blue-900">借阅须知 RULES:</span><br>
+                    1. 请爱护书籍，如有损坏照价赔偿。<br>
+                    2. 借阅期为30天，可续借一次。<br>
+                    3. 此卡仅限本人使用，请妥善保管。
+                </div>
+                <div class="rules-en font-typewriter">
+                    Please return this book on or before the last date stamped.
+                </div>
+            </div>
+
+            <div class="bottom-logo">
+                <img src="pic/logozi_shl.jpg" alt="Logo">
+            </div>
+        </div>
+
+        <!-- 纹理层 -->
+        <div class="paper-texture"></div>
+        <!-- 打孔 -->
+        <div class="hole-ring"></div>
+    </div>
+
+</body>
+
+</html>

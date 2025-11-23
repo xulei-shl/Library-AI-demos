@@ -602,3 +602,27 @@ card_generator:
     truncate:
       "初评理由": 50  # 推荐语字段,智能截取约50个字符
 
+# =============================================================================
+# 图书馆借书卡生成配置
+# =============================================================================
+library_card_generator:
+  # 是否启用借书卡生成功能
+  enabled: true
+  
+  # HTML模板文件路径
+  template_path: "config/library_card_template.html"
+  
+  # 借阅记录生成配置
+  borrower_records_count: 4  # 每张卡片随机生成1到此数值条借阅记录（例如：3表示随机生成1-3条）
+  
+  # 借阅者姓名配置
+  chinese_name_ratio: 0.8  # 中文名占比（0.8表示80%中文名，20%英文名）
+  
+  # 日期范围配置
+  date_range:
+    start: "auto"  # "auto"表示当前年份1月1日，或指定"YYYY-MM-DD"格式
+    end: "auto"    # "auto"表示当前日期，或指定"YYYY-MM-DD"格式
+  
+  # 输出文件后缀
+  output_suffix: "-S"  # 借书卡文件名后缀（例如：123456-S.html, 123456-S.png）
+

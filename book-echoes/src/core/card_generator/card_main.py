@@ -26,6 +26,8 @@ from src.core.card_generator.qrcode_generator import QRCodeGenerator
 from src.core.card_generator.html_generator import HTMLGenerator
 from src.core.card_generator.html_to_image_converter import HTMLToImageConverter
 from src.core.card_generator.recommendation_writer import RecommendationResultsWriter
+from src.core.card_generator.library_card_models import LibraryCardData, BorrowerRecord
+from src.core.card_generator.library_card_html_generator import LibraryCardHTMLGenerator
 
 logger = get_logger(__name__)
 
@@ -46,7 +48,15 @@ class CardGeneratorModule:
         self.image_downloader = ImageDownloader(config)
         self.qrcode_generator = QRCodeGenerator(config)
         self.html_generator = HTMLGenerator(config)
-        self.html_to_image_converter = HTMLToImageConverter(config)
+        # 注意：不再在主线程创建html_to_image_converter，而是在各个任务线程中创建
+        
+        # 初始化图书馆借书卡生成器（如果启用）
+        self.library_card_enabled = False
+        library_card_config = config.get('library_card_generator', {})
+        if library_card_config.get('enabled', False):
+            self.library_card_enabled = True
+            self.library_card_html_generator = LibraryCardHTMLGenerator(library_card_config)
+            logger.info("图书馆借书卡生成器已启用")
 
         # 获取字段配置
         self.fields_config = config.get('fields', {})
@@ -64,7 +74,9 @@ class CardGeneratorModule:
             'failed_count': 0,
             'warning_count': 0,
             'failed_records': [],
-            'warning_records': []
+            'warning_records': [],
+            'library_card_success_count': 0,
+            'library_card_failed_count': 0
         }
 
     def run(self, excel_path: str) -> int:
@@ -114,29 +126,40 @@ class CardGeneratorModule:
 
             logger.info(f"开始处理 {len(filtered_df)} 本通过终评的图书...")
 
-            # 5. 并行执行两个独立任务
+            # 5. 并行执行独立任务（每个任务使用独立的浏览器实例）
             logger.info("=" * 60)
             logger.info("启动并行任务:")
             logger.info("  任务1: 图书卡片生成")
             logger.info("  任务2: 推荐结果数据库写入")
+            if self.library_card_enabled:
+                logger.info("  任务3: 图书馆借书卡生成")
             logger.info("=" * 60)
 
             # 使用ThreadPoolExecutor并行执行
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                # 任务1: 图书卡片生成
+            max_workers = 3 if self.library_card_enabled else 2
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # 任务1: 图书卡片生成（使用线程安全的converter）
                 card_future = executor.submit(self._generate_cards_task, filtered_df)
                 
                 # 任务2: 推荐结果数据库写入
                 db_future = executor.submit(self._write_recommendation_results_task, df)
+                
+                # 任务3: 图书馆借书卡生成（如果启用，使用线程安全的converter）
+                library_card_future = None
+                if self.library_card_enabled:
+                    library_card_future = executor.submit(self._generate_library_cards_task, filtered_df)
 
-                # 等待两个任务完成
+                # 等待任务完成
                 card_result = card_future.result()
                 db_result = db_future.result()
+                library_card_result = library_card_future.result() if library_card_future else 0
 
             logger.info("=" * 60)
             logger.info("并行任务执行完成")
             logger.info(f"  任务1结果: {'成功' if card_result else '失败'}")
             logger.info(f"  任务2结果: 写入 {db_result} 条记录")
+            if self.library_card_enabled:
+                logger.info(f"  任务3结果: 成功生成 {library_card_result} 张借书卡")
             logger.info("=" * 60)
 
             # 8. 生成汇总报告
@@ -171,9 +194,8 @@ class CardGeneratorModule:
             return 1
 
         finally:
-            # 关闭浏览器实例(性能优化:统一关闭)
-            logger.info("正在关闭浏览器实例...")
-            self.html_to_image_converter.stop_browser()
+            # 浏览器实例由各个任务线程自行管理，无需在此关闭
+            pass
 
     def _generate_cards_task(self, filtered_df: pd.DataFrame) -> bool:
         """
@@ -185,24 +207,27 @@ class CardGeneratorModule:
         Returns:
             bool: 是否成功
         """
+        # 创建线程安全的HTML转图片转换器
+        html_to_image_converter = HTMLToImageConverter(self.config, thread_safe=True)
+        
         try:
             logger.info("[任务1] 开始生成图书卡片...")
             task_start = time.time()
 
-            # 5. 批量并发下载封面图片(性能优化)
+            # 1. 批量并发下载封面图片(性能优化)
             logger.info("[任务1] 步骤1: 批量下载封面图片...")
             download_start = time.time()
             download_results = self.batch_download_covers(filtered_df)
             download_time = time.time() - download_start
             logger.info(f"[任务1] 封面图片下载完成,耗时: {download_time:.2f}秒")
 
-            # 6. 启动浏览器实例(性能优化:一次性启动,复用于所有卡片)
+            # 2. 启动浏览器实例
             logger.info("[任务1] 步骤2: 启动浏览器实例...")
-            if not self.html_to_image_converter.start_browser():
+            if not html_to_image_converter.start_browser():
                 logger.error("[任务1] 浏览器启动失败,无法继续处理")
                 return False
 
-            # 7. 逐本生成卡片(封面图片已下载,跳过下载步骤)
+            # 3. 逐本生成卡片(封面图片已下载,跳过下载步骤)
             logger.info("[任务1] 步骤3: 生成卡片...")
             for index, row in filtered_df.iterrows():
                 barcode = str(row.get('书目条码', 'Unknown')).strip()
@@ -213,7 +238,7 @@ class CardGeneratorModule:
                     cover_exists = files_status['cover_exists']
                 else:
                     cover_exists = False
-                self.process_single_book(row, skip_cover_download=True, cover_downloaded=cover_exists)
+                self.process_single_book(row, html_to_image_converter, skip_cover_download=True, cover_downloaded=cover_exists)
 
             task_time = time.time() - task_start
             logger.info(f"[任务1] 图书卡片生成完成,耗时: {task_time:.2f}秒")
@@ -222,6 +247,10 @@ class CardGeneratorModule:
         except Exception as e:
             logger.error(f"[任务1] 图书卡片生成任务异常: {e}", exc_info=True)
             return False
+        finally:
+            # 关闭浏览器实例
+            logger.info("[任务1] 关闭浏览器实例...")
+            html_to_image_converter.stop_browser()
 
     def _write_recommendation_results_task(self, df: pd.DataFrame) -> int:
         """
@@ -254,6 +283,117 @@ class CardGeneratorModule:
         except Exception as e:
             logger.error(f"[任务2] 推荐结果写入任务异常: {e}", exc_info=True)
             return 0
+
+    def _generate_library_cards_task(self, filtered_df: pd.DataFrame) -> int:
+        """
+        任务3: 图书馆借书卡生成任务(在独立线程中执行)
+        
+        Args:
+            filtered_df: 筛选后的DataFrame
+        
+        Returns:
+            int: 成功生成的借书卡数量
+        """
+        # 创建线程安全的HTML转图片转换器
+        html_to_image_converter = HTMLToImageConverter(self.config, thread_safe=True)
+        
+        try:
+            logger.info("[任务3] 开始生成图书馆借书卡...")
+            task_start = time.time()
+            
+            # 启动浏览器实例
+            logger.info("[任务3] 启动浏览器实例...")
+            if not html_to_image_converter.start_browser():
+                logger.error("[任务3] 浏览器启动失败,无法继续处理")
+                return 0
+            
+            success_count = 0
+            
+            for index, row in filtered_df.iterrows():
+                barcode = str(row.get('书目条码', 'Unknown')).strip()
+                
+                try:
+                    # 提取图书数据
+                    author = str(row.get('豆瓣作者', '')).strip() if pd.notna(row.get('豆瓣作者')) else ''
+                    title = str(row.get('豆瓣书名', '')).strip() if pd.notna(row.get('豆瓣书名')) else str(row.get('书名', '')).strip()
+                    call_no = str(row.get('索书号', '')).strip()
+                    year = str(row.get('豆瓣出版年', '')).strip() if pd.notna(row.get('豆瓣出版年')) else ''
+                    
+                    # 提取副标题
+                    subtitle = None
+                    if pd.notna(row.get('豆瓣副标题')) and str(row.get('豆瓣副标题')).strip():
+                        subtitle = str(row['豆瓣副标题']).strip()
+                    
+                    # 生成随机借阅记录
+                    borrower_records = self.library_card_html_generator.generate_random_borrower_records()
+                    
+                    # 创建借书卡数据对象
+                    library_card_data = LibraryCardData(
+                        barcode=barcode,
+                        author=author,
+                        title=title,
+                        call_no=call_no,
+                        year=year,
+                        borrower_records=borrower_records,
+                        subtitle=subtitle
+                    )
+                    
+                    # 验证数据
+                    if not library_card_data.validate():
+                        logger.warning(f"[任务3] 借书卡数据验证失败，书目条码：{barcode}")
+                        self.stats['library_card_failed_count'] += 1
+                        continue
+                    
+                    # 获取输出路径
+                    output_paths = self.directory_manager.create_book_directory(barcode)
+                    if not output_paths:
+                        logger.warning(f"[任务3] 无法创建输出目录，书目条码：{barcode}")
+                        self.stats['library_card_failed_count'] += 1
+                        continue
+                    
+                    # 生成HTML（会自动添加-S后缀）
+                    html_success, html_path = self.library_card_html_generator.generate_html(
+                        library_card_data,
+                        output_paths.html_file
+                    )
+                    
+                    if not html_success:
+                        logger.warning(f"[任务3] HTML生成失败，书目条码：{barcode}")
+                        self.stats['library_card_failed_count'] += 1
+                        continue
+                    
+                    # 转换为图片（需要添加-S后缀到输出路径）
+                    image_output_path = output_paths.image_file.replace('.png', '-S.png')
+                    image_success, image_path = html_to_image_converter.convert_html_to_image(
+                        html_path,
+                        image_output_path
+                    )
+                    
+                    if not image_success:
+                        logger.warning(f"[任务3] 图片生成失败，书目条码：{barcode}")
+                        self.stats['library_card_failed_count'] += 1
+                        continue
+                    
+                    success_count += 1
+                    self.stats['library_card_success_count'] += 1
+                    logger.debug(f"[任务3] 成功生成借书卡，书目条码：{barcode}")
+                
+                except Exception as e:
+                    logger.error(f"[任务3] 处理借书卡时发生异常，书目条码：{barcode}，错误：{e}")
+                    self.stats['library_card_failed_count'] += 1
+                    continue
+            
+            task_time = time.time() - task_start
+            logger.info(f"[任务3] 图书馆借书卡生成完成，成功 {success_count} 张，耗时: {task_time:.2f}秒")
+            return success_count
+        
+        except Exception as e:
+            logger.error(f"[任务3] 图书馆借书卡生成任务异常: {e}", exc_info=True)
+            return 0
+        finally:
+            # 关闭浏览器实例
+            logger.info("[任务3] 关闭浏览器实例...")
+            html_to_image_converter.stop_browser()
 
 
     def batch_download_covers(self, filtered_df: pd.DataFrame) -> Dict[str, bool]:
@@ -307,8 +447,8 @@ class CardGeneratorModule:
         
         return download_results
 
-    def process_single_book(self, row: pd.Series, skip_cover_download: bool = False, 
-                           cover_downloaded: bool = True) -> bool:
+    def process_single_book(self, row: pd.Series, html_to_image_converter: HTMLToImageConverter,
+                           skip_cover_download: bool = False, cover_downloaded: bool = True) -> bool:
         """
         处理单本图书
 
@@ -439,7 +579,7 @@ class CardGeneratorModule:
 
             # 7. HTML转图片（总是生成以确保与HTML同步）
             step_start = time.time()
-            success, image_path = self.html_to_image_converter.convert_html_to_image(
+            success, image_path = html_to_image_converter.convert_html_to_image(
                 output_paths.html_file,
                 output_paths.image_file
             )
@@ -613,11 +753,21 @@ class CardGeneratorModule:
             f"  终评通过数: {self.stats['passed_count']}",
             "",
             "执行结果：",
-            f"  成功生成: {self.stats['success_count']} 张卡片",
+            f"  成功生成: {self.stats['success_count']} 张图书卡片",
             f"  失败记录: {self.stats['failed_count']} 条",
             f"  警告记录: {self.stats['warning_count']} 条",
-            "",
         ]
+        
+        # 添加借书卡统计（如果启用）
+        if self.library_card_enabled:
+            lines.extend([
+                "",
+                "借书卡生成结果：",
+                f"  成功生成: {self.stats['library_card_success_count']} 张借书卡",
+                f"  失败记录: {self.stats['library_card_failed_count']} 条",
+            ])
+        
+        lines.append("")
 
         # 失败详情
         if self.stats['failed_records']:
@@ -687,6 +837,9 @@ def main():
     config_manager = get_config_manager()
     config = config_manager.get_config()
     card_config = config.get('card_generator', {})
+    
+    # 将 library_card_generator 配置合并到 card_config 中
+    card_config['library_card_generator'] = config.get('library_card_generator', {})
 
     # 创建并运行模块
     module = CardGeneratorModule(card_config)
