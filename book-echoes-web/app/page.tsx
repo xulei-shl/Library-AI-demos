@@ -84,10 +84,10 @@ export default async function Home() {
       <Header showHomeButton={false} aboutContent={aboutContent} />
 
       {/* 主内容区域 */}
-      <div className="relative z-10 py-12 px-4">
+      <div className="relative z-10 pt-16 md:pt-20 pb-16 md:pb-20 px-4">
         {/* 最新期封面展示 */}
         {latestMonths.length > 0 && (
-          <section className="mb-16">
+          <section className="magazine-cover-wrapper mb-8">
             <MagazineCover latestMonths={latestMonths} />
           </section>
         )}
@@ -96,7 +96,7 @@ export default async function Home() {
         <div className="max-w-6xl mx-auto mb-12">
           <div className="flex items-center gap-4">
             <div className="flex-1 h-px bg-gray-300" />
-            <h2 className="font-display text-2xl text-gray-600">往期回顾</h2>
+            <h2 className="font-display text-base md:text-lg tracking-[0.35em] text-gray-500">往期回顾</h2>
             <div className="flex-1 h-px bg-gray-300" />
           </div>
         </div>

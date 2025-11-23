@@ -69,3 +69,20 @@ body {
 .about-overlay-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
 }
+
+/* 首页封面区统一容器，避免卡片无限拉伸 */
+.magazine-cover-wrapper {
+  max-width: min(1040px, 92vw);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(0.75rem, 4vw, 1.5rem);
+  padding-right: clamp(0.75rem, 4vw, 1.5rem);
+}
+
+@media (max-width: 768px) {
+  /* 移动端进一步压缩封面高度与间距 */
+  .magazine-cover-wrapper {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}

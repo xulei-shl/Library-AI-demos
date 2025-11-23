@@ -49,7 +49,7 @@ export default function MagazineCover({ latestMonths }: MagazineCoverProps) {
         const month = latestMonths[0];
         return (
             <motion.div
-                className="relative w-full max-w-md mx-auto cursor-pointer"
+                className="relative w-full max-w-2xl mx-auto cursor-pointer h-[clamp(380px,60vw,540px)]"
                 onMouseEnter={() => setHoveredIndex(0)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 onClick={() => router.push(`/${month.id}`)}
@@ -66,11 +66,11 @@ export default function MagazineCover({ latestMonths }: MagazineCoverProps) {
         return (
             <div
                 ref={containerRef}
-                className="relative w-full max-w-4xl mx-auto"
+                className="relative w-full"
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
             >
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                     {latestMonths.map((month, index) => (
                         <DoubleCard
                             key={month.id}
@@ -89,16 +89,16 @@ export default function MagazineCover({ latestMonths }: MagazineCoverProps) {
         );
     }
 
-    // 三卡片布局(最高级动效) - 优化：缩小尺寸
+    // 三卡片布局(最高级动效) - 优化：缩小尺寸，限制高度
     return (
         <div
             ref={containerRef}
-            className="relative w-full max-w-4xl mx-auto perspective-1000"
+            className="relative w-full perspective-1000"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            style={{ perspective: '1500px' }}
+            style={{ perspective: '1500px', maxHeight: '45vh' }}
         >
-            <div className="relative flex items-center justify-center gap-4 md:gap-6">
+            <div className="relative flex items-center justify-center gap-2 md:gap-4">
                 {latestMonths.map((month, index) => (
                     <TripleCard
                         key={month.id}
@@ -123,7 +123,7 @@ function SingleCard({ month, isHovered, isLatest }: { month: Month; isHovered: b
     const previewCards = month.previewCards;
 
     return (
-        <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-2xl"
+        <div className="relative h-full rounded-[30px] overflow-hidden shadow-[0_35px_95px_-40px_rgba(40,22,12,0.65)]"
             style={{ backgroundColor: '#E8E6DC' }}>
             {/* 纸质纹理背景 */}
             <div className="absolute inset-0 opacity-30">
@@ -148,7 +148,7 @@ function SingleCard({ month, isHovered, isLatest }: { month: Month; isHovered: b
 
             {/* 书籍封面拼贴 - 多图层叠效果 */}
             {previewCards.length > 0 ? (
-                <div className="absolute inset-0 flex items-center justify-center p-8">
+                <div className="absolute inset-0 flex items-center justify-center px-10 pt-12 pb-24">
                     {/* 根据图片数量创建拼贴布局 - 优化位置避免重叠 */}
                     {previewCards.length >= 4 && (
                         <motion.div
@@ -248,11 +248,11 @@ function SingleCard({ month, isHovered, isLatest }: { month: Month; isHovered: b
 
             {/* 半透明遮罩 - 确保文字可读，使用网站配色 */}
             <div className="absolute inset-0 pointer-events-none"
-                style={{ background: 'linear-gradient(to top, rgba(44, 44, 44, 0.95) 0%, rgba(44, 44, 44, 0.7) 35%, rgba(44, 44, 44, 0.3) 55%, transparent 100%)' }} />
+                style={{ background: 'linear-gradient(to top, rgba(44, 44, 44, 0.92) 0%, rgba(44, 44, 44, 0.55) 45%, transparent 80%)' }} />
 
             {/* 文字信息层 */}
-            <div className="absolute inset-0 flex flex-col justify-end p-8 pointer-events-none"
-                style={{ color: '#F2F0E9', zIndex: 20 }}>
+            <div className="absolute inset-0 flex flex-col justify-end p-8 pb-11 pointer-events-none"
+                style={{ color: '#F2F0E9', zIndex: 30 }}>
                 {isLatest && (
                     <motion.div
                         className="inline-flex items-center gap-2 mb-4 w-fit"
@@ -365,7 +365,7 @@ function DoubleCard({
                 rotateY: isHovered ? rotateY : 0,
             }}
         >
-            <div className="relative aspect-[3/4] rounded-lg overflow-hidden shadow-xl"
+            <div className="relative w-full h-[clamp(360px,48vw,460px)] rounded-[28px] overflow-hidden shadow-[0_25px_80px_-30px_rgba(52,28,20,0.55)]"
                 style={{ backgroundColor: '#E8E6DC' }}>
                 {/* 纸质纹理背景 */}
                 <div className="absolute inset-0 opacity-20">
@@ -390,7 +390,7 @@ function DoubleCard({
 
                 {/* 封面展示 - 多图拼贴 */}
                 {previewCards.length > 0 ? (
-                    <div className="absolute inset-0 flex items-center justify-center p-6">
+                    <div className="absolute inset-0 flex items-center justify-center px-8 pt-12 pb-20">
                         {/* 背景书籍层 */}
                         {previewCards.length >= 3 && (
                             <div className="absolute w-2/5 aspect-[2/3] rounded-md shadow-md"
@@ -458,11 +458,11 @@ function DoubleCard({
 
                 {/* 渐变遮罩 */}
                 <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: 'linear-gradient(to top, rgba(44, 44, 44, 0.85) 0%, rgba(44, 44, 44, 0.3) 50%, transparent 100%)' }} />
+                    style={{ background: 'linear-gradient(to top, rgba(44, 44, 44, 0.9) 0%, rgba(44, 44, 44, 0.45) 45%, transparent 85%)' }} />
 
                 {/* 文字信息 */}
-                <div className="absolute inset-0 flex flex-col justify-end p-6 pointer-events-none"
-                    style={{ color: '#F2F0E9' }}>
+                <div className="absolute inset-0 flex flex-col justify-end px-7 pt-6 pb-10 pointer-events-none"
+                    style={{ color: '#F2F0E9', zIndex: 20 }}>
                     {isLatest && (
                         <span className="inline-flex items-center gap-2 mb-3 w-fit px-2 py-1 backdrop-blur-sm rounded-full text-xs font-medium border"
                             style={{
@@ -513,12 +513,13 @@ function TripleCard({
     mouseY: any;
 }) {
     const isCenter = index === 0;
+    const widthClass = isCenter ? 'w-[clamp(220px,26vw,280px)]' : 'w-[clamp(180px,22vw,240px)]';
 
     const getCardStyle = () => {
         if (totalCount === 3) {
-            if (index === 0) return { scale: 1.2, rotate: 0, zIndex: 3 };
-            if (index === 1) return { scale: 0.85, rotate: -8, zIndex: 1, x: -20 };
-            if (index === 2) return { scale: 0.85, rotate: 8, zIndex: 1, x: 20 };
+            if (index === 0) return { scale: 1.05, rotate: 0, zIndex: 3 };
+            if (index === 1) return { scale: 0.88, rotate: -8, zIndex: 1, x: -20 };
+            if (index === 2) return { scale: 0.88, rotate: 8, zIndex: 1, x: 20 };
         }
         return { scale: 1, rotate: 0, zIndex: 1 };
     };
@@ -563,7 +564,7 @@ function TripleCard({
                 style={{ transform: 'translateZ(-50px)' }}
             />
 
-            <div className={`relative ${isCenter ? 'w-40 md:w-48' : 'w-32 md:w-40'} aspect-[3/4] rounded-lg overflow-hidden shadow-2xl`}
+            <div className={`relative ${widthClass} aspect-[3/4] max-h-[36vh] rounded-[24px] overflow-hidden shadow-[0_25px_70px_-35px_rgba(30,20,12,0.55)]`}
                 style={{ backgroundColor: '#E8E6DC' }}>
                 {/* 纸质纹理背景 */}
                 <div className="absolute inset-0 opacity-15">
@@ -594,7 +595,7 @@ function TripleCard({
                     }}
                 >
                     {month.previewCards.length > 0 ? (
-                        <div className={`absolute inset-0 flex items-center justify-center ${isCenter ? 'p-6' : 'p-4'}`}>
+                        <div className={`absolute inset-0 flex items-center justify-center ${isCenter ? 'px-6 pt-8 pb-14' : 'px-5 pt-7 pb-12'}`}>
                             {/* 背景书籍层 - 根据卡片大小调整 */}
                             {month.previewCards.length >= 3 && (
                                 <div className={`absolute ${isCenter ? 'w-2/5' : 'w-1/3'} aspect-[2/3] rounded-md shadow-md`}
@@ -663,7 +664,7 @@ function TripleCard({
 
                 {/* 渐变遮罩 */}
                 <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: 'linear-gradient(to top, rgba(44, 44, 44, 0.85) 0%, rgba(44, 44, 44, 0.3) 50%, transparent 100%)' }} />
+                    style={{ background: 'linear-gradient(to top, rgba(44, 44, 44, 0.88) 0%, rgba(44, 44, 44, 0.42) 45%, transparent 85%)' }} />
 
                 {/* 光效 - 轻微提升hover时的亮度 */}
                 <motion.div
@@ -675,8 +676,8 @@ function TripleCard({
                 />
 
                 {/* 文字信息 */}
-                <div className={`absolute inset-0 flex flex-col justify-end ${isCenter ? 'p-4 md:p-6' : 'p-3 md:p-4'} pointer-events-none`}
-                    style={{ color: '#F2F0E9' }}>
+                <div className={`absolute inset-0 flex flex-col justify-end ${isCenter ? 'px-4 pt-3 pb-8 md:px-5 md:pb-9' : 'px-3 pt-2 pb-7 md:px-4 md:pb-8'} pointer-events-none`}
+                    style={{ color: '#F2F0E9', zIndex: 15 }}>
                     {isLatest && (
                         <motion.span
                             className="inline-flex items-center gap-1 mb-1.5 w-fit px-1.5 py-0.5 backdrop-blur-sm rounded-full text-[10px] font-medium border"
