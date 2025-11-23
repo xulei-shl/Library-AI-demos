@@ -1,0 +1,256 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F2F0E9;
+  --foreground: #2C2C2C;
+  --accent: #8B3A3A;
+  /* Rust Red */
+
+  /* Font Families - 添加系统字体作为回退 */
+  --font-display: "上图东观体", "ShangTuDongGuan", "Playfair Display", "Noto Serif SC", "Source Han Serif SC", serif;
+  --font-body: "又又意宋", "YouYouYiSong", "EB Garamond", "Noto Serif SC", "Source Han Serif SC", serif;
+  --font-accent: "润植家如印奏章楷", "RunZhiJiaRuYinZouZhangKai", "Cormorant Garamond", "KaiTi", "STKaiti", serif;
+  --font-dock: "汇文明朝体", "Noto Serif SC", "Source Han Serif SC", serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-accent: var(--font-accent);
+  --font-dock: var(--font-dock);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+/* Noise Texture */
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.font-dock {
+  font-family: var(--font-dock);
+}
+
+.about-overlay-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+.about-overlay-scroll::-webkit-scrollbar {
+  width: 0.45rem;
+}
+
+.about-overlay-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.about-overlay-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), var(--accent));
+  border-radius: 999px;
+}
+
+.about-overlay-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* 首页封面区统一容器,避免卡片无限拉伸 */
+.magazine-cover-wrapper {
+  max-width: min(1040px, 92vw);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(0.75rem, 4vw, 1.5rem);
+  padding-right: clamp(0.75rem, 4vw, 1.5rem);
+}
+
+@media (max-width: 768px) {
+
+  /* 移动端进一步压缩封面高度与间距 */
+  .magazine-cover-wrapper {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
+/* ========================================
+   首页背景系统 - 重构版
+   设计理念: 优雅 · 克制 · 呼吸感
+   ======================================== */
+
+.home-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 基础层 - 柔和的放射渐变 */
+.home-bg__gradient {
+  position: absolute;
+  inset: -10%;
+  background: radial-gradient(
+      ellipse 80% 60% at 35% 25%,
+      rgba(255, 252, 248, 0.9) 0%,
+      rgba(242, 240, 233, 0.7) 35%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 65% 75%,
+      rgba(230, 223, 211, 0.4) 0%,
+      transparent 60%
+    ),
+    linear-gradient(
+      135deg,
+      #FAF9F6 0%,
+      #F2F0E9 25%,
+      #E8E6DC 50%,
+      #DDD8CC 75%,
+      #D4CFC3 100%
+    );
+  animation: homeGradientDrift 50s ease-in-out infinite alternate;
+}
+
+/* 微妙网格 - 降低视觉权重 */
+.home-bg__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(139, 58, 58, 0.02) 0 1px, transparent 1px 180px),
+    repeating-linear-gradient(0deg, rgba(44, 44, 44, 0.025) 0 1px, transparent 1px 160px);
+  mix-blend-mode: multiply;
+  opacity: 0.3;
+}
+
+/* 光晕效果 - 柔和的视觉焦点 */
+.home-bg__radial {
+  position: absolute;
+  filter: blur(60px);
+  opacity: 0;
+  animation: radialPulse 8s ease-in-out infinite;
+}
+
+.home-bg__radial--hero {
+  width: min(65vw, 800px);
+  height: min(65vw, 800px);
+  top: 5%;
+  left: 5%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 248, 240, 0.6) 0%,
+    rgba(242, 240, 233, 0.3) 40%,
+    transparent 70%
+  );
+  animation-delay: 0s;
+}
+
+.home-bg__radial--secondary {
+  width: min(50vw, 600px);
+  height: min(50vw, 600px);
+  bottom: 10%;
+  right: 10%;
+  background: radial-gradient(
+    circle,
+    rgba(166, 124, 82, 0.08) 0%,
+    rgba(139, 58, 58, 0.04) 40%,
+    transparent 70%
+  );
+  animation-delay: 2s;
+}
+
+/* 水印文字 - 移至右下角 */
+.home-bg__watermark {
+  position: absolute;
+  right: clamp(2rem, 5vw, 5rem);
+  bottom: clamp(2.5rem, 6vh, 5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: clamp(0.5rem, 1.5vh, 1rem);
+}
+
+.home-bg__watermark-main {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 300;
+  line-height: 0.9;
+  letter-spacing: 0.2em;
+  color: rgba(44, 44, 44, 0.08);
+  user-select: none;
+  display: flex;
+}
+
+.home-bg__watermark-main span {
+  display: inline-block;
+}
+
+.home-bg__watermark-sub {
+  font-family: var(--font-body);
+  font-size: clamp(0.75rem, 1.2vw, 1rem);
+  letter-spacing: 0.4em;
+  color: rgba(44, 44, 44, 0.12);
+  padding-right: 0.3em;
+  border-right: 1.5px solid rgba(139, 58, 58, 0.15);
+}
+
+/* 动画定义 */
+@keyframes homeGradientDrift {
+  0% {
+    transform: translate3d(-2%, -1.5%, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(3%, 2.5%, 0) scale(1.03);
+  }
+}
+
+@keyframes radialPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+}
+
+/* 响应式优化 */
+@media (max-width: 1024px) {
+  .home-bg__watermark {
+    right: clamp(1.5rem, 4vw, 3rem);
+    bottom: clamp(2rem, 5vh, 4rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .home-bg__watermark {
+    right: clamp(1.5rem, 4vw, 2.5rem);
+    bottom: clamp(1.5rem, 4vh, 3rem);
+  }
+
+  .home-bg__watermark-main {
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+    letter-spacing: 0.15em;
+  }
+
+  .home-bg__watermark-sub {
+    font-size: clamp(0.65rem, 1vw, 0.85rem);
+    letter-spacing: 0.3em;
+  }
+}
