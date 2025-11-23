@@ -2,6 +2,7 @@ import MagazineCover from '@/components/MagazineCover';
 import ArchiveTimeline from '@/components/ArchiveTimeline';
 import Header from '@/components/Header';
 import AboutOverlay from '@/components/AboutOverlay';
+import HomeBackground from '@/components/HomeBackground';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -77,29 +78,37 @@ export default async function Home() {
   const aboutContent = await getAboutContent();
 
   return (
-    <main className="min-h-screen bg-[var(--background)]">
+    <main className="relative min-h-screen overflow-hidden bg-[var(--background)]">
+      <HomeBackground
+        institutionName="那些被悄悄归还的一本好书"
+        projectName="书海回响"
+      />
       <div className="noise-overlay" />
 
       {/* Header with About button */}
       <Header showHomeButton={false} aboutContent={aboutContent} />
 
-      {/* 主内容区域 */}
-      <div className="relative z-10 pt-16 md:pt-20 pb-16 md:pb-20 px-4">
+      {/* 主内容区域 - 优化布局与间距 */}
+      <div className="relative z-10 pt-24 md:pt-32 pb-20 md:pb-28 px-4">
         {/* 最新期封面展示 */}
         {latestMonths.length > 0 && (
-          <section className="magazine-cover-wrapper mb-8">
+          <section className="magazine-cover-wrapper mb-16 md:mb-24">
             <MagazineCover latestMonths={latestMonths} />
           </section>
         )}
 
-        {/* 分隔线 */}
-        <div className="max-w-6xl mx-auto mb-12">
-          <div className="flex items-center gap-4">
-            <div className="flex-1 h-px bg-gray-300" />
-            <h2 className="font-display text-base md:text-lg tracking-[0.35em] text-gray-500">往期回顾</h2>
-            <div className="flex-1 h-px bg-gray-300" />
+        {/* 优雅的分隔线 */}
+        {archiveMonths.length > 0 && (
+          <div className="max-w-6xl mx-auto mb-16 md:mb-20">
+            <div className="flex items-center gap-6 md:gap-8">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent opacity-50" />
+              <h2 className="font-display text-sm md:text-base tracking-[0.4em] text-gray-400 uppercase px-2">
+                往期回顾
+              </h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent opacity-50" />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 往期归档时间线 */}
         {archiveMonths.length > 0 && (
