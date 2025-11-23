@@ -4,6 +4,9 @@ import Canvas from '@/components/Canvas';
 import { Book } from '@/types';
 import { transformMetadataToBook } from '@/lib/utils';
 
+export const revalidate = 3600;
+export const dynamic = 'force-static';
+
 interface PageProps {
     params: Promise<{
         month: string;

@@ -1,5 +1,37 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'ShangTuDongGuan';
+  src: url('https://book-echoes.xulei-shl.asia/data/fonts/上图东观体.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'YouYouYiSong';
+  src: url('https://book-echoes.xulei-shl.asia/data/fonts/又又意宋.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HuiWenMingChao';
+  src: url('https://book-echoes.xulei-shl.asia/data/fonts/汇文明朝体.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RunZhiJiaRuYinZouZhangKai';
+  src: url('https://book-echoes.xulei-shl.asia/data/fonts/润植家如印奏章楷.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #F2F0E9;
   --foreground: #2C2C2C;

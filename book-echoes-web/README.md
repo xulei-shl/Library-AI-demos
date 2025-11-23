@@ -43,3 +43,8 @@ node s脚本会自动处理 sources_data/2025-09 并输出到 public/content/202
 
 node scripts/build-content.mjs 2025-09
 
+2. # 运行字体初始化脚本
+npm run init-fonts
+
+运行脚本后，按照输出的 CSS 示例更新 app/globals.css，将字体 URL 替换为 R2 地址即可完成字体 Web 化！
+

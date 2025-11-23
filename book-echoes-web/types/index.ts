@@ -1,5 +1,6 @@
 export interface Book {
     id: string; // Barcode
+    month: string;
     title: string;
     subtitle?: string;
     author: string;
@@ -20,6 +21,7 @@ export interface Book {
     coverUrl: string;
     coverThumbnailUrl: string;
     cardImageUrl: string;
+    cardThumbnailUrl?: string;
 }
 
 export interface MonthData {

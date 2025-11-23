@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2025-11-23T06:34:29.124Z",
+  "totalFonts": 4,
+  "fonts": [
+    {
+      "fontFamily": "ShangTuDongGuan",
+      "filename": "上图东观体.woff2",
+      "originalFilename": "上图东观体.woff",
+      "format": "woff2",
+      "url": "https://book-echoes.xulei-shl.asia/data/fonts/上图东观体.woff2",
+      "size": 4746032,
+      "sizeFormatted": "4.53 MB",
+      "converted": true,
+      "r2Key": "data/fonts/上图东观体.woff2"
+    },
+    {
+      "fontFamily": "YouYouYiSong",
+      "filename": "又又意宋.woff2",
+      "originalFilename": "又又意宋.woff",
+      "format": "woff2",
+      "url": "https://book-echoes.xulei-shl.asia/data/fonts/又又意宋.woff2",
+      "size": 12271700,
+      "sizeFormatted": "11.7 MB",
+      "converted": true,
+      "r2Key": "data/fonts/又又意宋.woff2"
+    },
+    {
+      "fontFamily": "HuiWenMingChao",
+      "filename": "汇文明朝体.woff2",
+      "originalFilename": "汇文明朝体.woff",
+      "format": "woff2",
+      "url": "https://book-echoes.xulei-shl.asia/data/fonts/汇文明朝体.woff2",
+      "size": 8025728,
+      "sizeFormatted": "7.65 MB",
+      "converted": true,
+      "r2Key": "data/fonts/汇文明朝体.woff2"
+    },
+    {
+      "fontFamily": "RunZhiJiaRuYinZouZhangKai",
+      "filename": "润植家如印奏章楷.woff2",
+      "originalFilename": "润植家如印奏章楷.woff",
+      "format": "woff2",
+      "url": "https://book-echoes.xulei-shl.asia/data/fonts/润植家如印奏章楷.woff2",
+      "size": 1920312,
+      "sizeFormatted": "1.83 MB",
+      "converted": true,
+      "r2Key": "data/fonts/润植家如印奏章楷.woff2"
+    }
+  ]
+}

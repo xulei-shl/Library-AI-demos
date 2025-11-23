@@ -3,14 +3,22 @@
 import { motion } from 'framer-motion';
 import { Book } from '@/types';
 import { useStore } from '@/store/useStore';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface InfoPanelProps {
     book: Book;
     books: Book[];
 }
 
+const PREVIEW_WIDTH = 480;
+const PREVIEW_HEIGHT = 680;
+const PREVIEW_OFFSET = 16;
+
 export default function InfoPanel({ book, books }: InfoPanelProps) {
     const { setFocusedBookId } = useStore();
+    const [isHovered, setIsHovered] = useState(false);
+    const [previewPosition, setPreviewPosition] = useState({ x: 0, y: 0 });
+    const metadataRef = useRef<HTMLDivElement | null>(null);
 
     const handleNavigate = (direction: 'prev' | 'next') => {
         if (!books?.length) {
@@ -23,6 +31,47 @@ export default function InfoPanel({ book, books }: InfoPanelProps) {
         const delta = direction === 'next' ? 1 : -1;
         const nextIndex = (currentIndex + delta + books.length) % books.length;
         setFocusedBookId(books[nextIndex].id);
+    };
+
+    const updatePreviewPosition = useCallback(() => {
+        if (typeof window === 'undefined' || !metadataRef.current) {
+            return;
+        }
+        const rect = metadataRef.current.getBoundingClientRect();
+        let left = rect.left - PREVIEW_WIDTH - PREVIEW_OFFSET;
+        if (left < PREVIEW_OFFSET) {
+            left = rect.right + PREVIEW_OFFSET;
+        }
+        let top = rect.top;
+        if (window.innerHeight - rect.top < PREVIEW_HEIGHT + PREVIEW_OFFSET) {
+            top = window.innerHeight - PREVIEW_HEIGHT - PREVIEW_OFFSET;
+        }
+        top = Math.max(PREVIEW_OFFSET, top);
+        left = Math.max(PREVIEW_OFFSET, left);
+        setPreviewPosition({ x: left, y: top });
+    }, []);
+
+    useEffect(() => {
+        if (!isHovered) {
+            return;
+        }
+        updatePreviewPosition();
+        const handleReposition = () => updatePreviewPosition();
+        window.addEventListener('scroll', handleReposition);
+        window.addEventListener('resize', handleReposition);
+        return () => {
+            window.removeEventListener('scroll', handleReposition);
+            window.removeEventListener('resize', handleReposition);
+        };
+    }, [isHovered, updatePreviewPosition]);
+
+    const handleHoverStart = () => {
+        setIsHovered(true);
+        updatePreviewPosition();
+    };
+
+    const handleHoverEnd = () => {
+        setIsHovered(false);
     };
 
     return (
@@ -77,13 +126,9 @@ export default function InfoPanel({ book, books }: InfoPanelProps) {
 
                     {/* Download current book button */}
                     <button
-                        onClick={async () => {
+                        onClick={() => {
                             try {
-                                // Import JSZip dynamically
-                                const JSZip = (await import('jszip')).default;
-                                const zip = new JSZip();
-
-                                // Add book JSON data
+                                // 准备书籍 JSON 数据
                                 const bookData = {
                                     书目条码: book.id,
                                     豆瓣书名: book.title,
@@ -103,20 +148,16 @@ export default function InfoPanel({ book, books }: InfoPanelProps) {
                                     豆瓣内容简介: book.summary,
                                     豆瓣作者简介: book.authorIntro,
                                     豆瓣目录: book.catalog,
+                                    条码图片: book.cardImageUrl,
+                                    缩略图: book.cardThumbnailUrl,
                                 };
-                                zip.file('book_data.json', JSON.stringify(bookData, null, 2));
 
-                                // Fetch and add barcode image
-                                const barcodeResponse = await fetch(book.cardImageUrl);
-                                const barcodeBlob = await barcodeResponse.blob();
-                                zip.file('barcode.png', barcodeBlob);
-
-                                // Generate and download zip
-                                const content = await zip.generateAsync({ type: 'blob' });
-                                const url = URL.createObjectURL(content);
+                                // 直接下载 JSON 文件
+                                const blob = new Blob([JSON.stringify(bookData, null, 2)], { type: 'application/json' });
+                                const url = URL.createObjectURL(blob);
                                 const a = document.createElement('a');
                                 a.href = url;
-                                a.download = `book_${book.id}.zip`;
+                                a.download = `book_${book.id}.json`;
                                 document.body.appendChild(a);
                                 a.click();
                                 document.body.removeChild(a);
@@ -139,13 +180,11 @@ export default function InfoPanel({ book, books }: InfoPanelProps) {
                     <button
                         onClick={async () => {
                             try {
-                                // Extract month from book's cardImageUrl (format: /api/images/YYYY-MM/...)
-                                const monthMatch = book.cardImageUrl.match(/\/api\/images\/(\d{4}-\d{2})\//);
-                                if (!monthMatch) {
+                                const month = book.month;
+                                if (!month) {
                                     alert('无法确定月份路径');
                                     return;
                                 }
-                                const month = monthMatch[1];
 
                                 // Fetch metadata.json
                                 const response = await fetch(`/content/${month}/metadata.json`);
@@ -178,13 +217,13 @@ export default function InfoPanel({ book, books }: InfoPanelProps) {
             </div>
 
             <motion.div
-                className="fixed right-0 top-0 bottom-28 w-[60%] bg-[var(--background)]/95 backdrop-blur-md p-12 overflow-y-auto shadow-[-10px_0_30px_rgba(0,0,0,0.05)] z-[120]"
+                className="fixed right-0 top-0 bottom-0 w-[60%] bg-[var(--background)]/95 backdrop-blur-md p-12 overflow-y-auto shadow-[-10px_0_30px_rgba(0,0,0,0.05)] z-[120]"
                 initial={{ y: '100%' }}
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             >
-                <div className="max-w-2xl mx-auto space-y-8 pb-32">
+                <div className="max-w-2xl mx-auto space-y-8 pb-40">
                     {/* Header */}
                     <div className="space-y-2">
                         <h1 className="font-display text-4xl md:text-5xl text-[var(--foreground)]">{book.title}</h1>
@@ -231,9 +270,35 @@ export default function InfoPanel({ book, books }: InfoPanelProps) {
                         </p>
                     </div>
 
+                    {/* 悬浮预览图片 */}
+                    {isHovered && (
+                        <motion.div
+                            className="pointer-events-none fixed z-[200] drop-shadow-2xl"
+                            style={{ left: previewPosition.x, top: previewPosition.y }}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                        >
+                            <div
+                                className="rounded-2xl border border-black/5 bg-[var(--background)]/95 p-3 backdrop-blur"
+                                style={{ width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT }}
+                            >
+                                <img
+                                    src={book.cardThumbnailUrl || book.cardImageUrl}
+                                    alt={`${book.title} cover preview`}
+                                    className="w-full h-full object-contain rounded-xl bg-black/5"
+                                />
+                            </div>
+                        </motion.div>
+                    )}
+
                     {/* Metadata */}
                     <div className="space-y-6">
-                        <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-4 text-sm">
+                        <div
+                            ref={metadataRef}
+                            className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-4 text-sm"
+                            onMouseEnter={handleHoverStart}
+                            onMouseLeave={handleHoverEnd}
+                        >
                             <span className="text-gray-400 font-light">作者</span>
                             <span className="font-body text-[var(--foreground)]">{book.author}</span>
 

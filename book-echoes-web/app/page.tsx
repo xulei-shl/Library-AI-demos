@@ -1,10 +1,13 @@
 import MagazineCover from '@/components/MagazineCover';
 import ArchiveTimeline from '@/components/ArchiveTimeline';
 import Header from '@/components/Header';
-import AboutOverlay from '@/components/AboutOverlay';
 import HomeBackground from '@/components/HomeBackground';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { legacyCardThumbnailPath, resolveImageUrl } from '@/lib/assets';
+
+export const revalidate = 3600;
+export const dynamic = 'force-static';
 
 async function getMonths() {
   const contentDir = path.join(process.cwd(), 'public', 'content');
@@ -36,9 +39,10 @@ async function getMonths() {
         const shuffled = [...books].sort(() => Math.random() - 0.5);
         const booksToShow = shuffled.slice(0, numToShow);
 
-        previewCards = booksToShow.map((book: { '书目条码': string }) => {
-          const bookId = book['书目条码'];
-          return `/content/${id}/${bookId}/${bookId}_thumb.jpg`;
+        previewCards = booksToShow.map((book: { '书目条码': string; cardThumbnailUrl?: string; cardImageUrl?: string }) => {
+          const bookId = String(book['书目条码']);
+          const candidate = book.cardThumbnailUrl || book.cardImageUrl;
+          return resolveImageUrl(candidate, legacyCardThumbnailPath(id, bookId));
         });
       } catch (e) {
         console.warn(`Could not load metadata for ${id}:`, e);

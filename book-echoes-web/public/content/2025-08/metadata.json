@@ -20,7 +20,13 @@
     "豆瓣定价": "98.00元",
     "豆瓣装帧": "精装",
     "豆瓣丛书": "论衡",
-    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=D829.15%2F4672-1&type=CallNumber"
+    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=D829.15%2F4672-1&type=CallNumber",
+    "cardImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111850722/54121111850722.png",
+    "cardThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111850722/54121111850722_thumb.jpg",
+    "coverImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111850722/pic/cover.jpg",
+    "coverThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111850722/pic/cover_thumb.jpg",
+    "originalImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111850722/54121111850722_original.png",
+    "originalThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111850722/54121111850722_original_thumb.jpg"
   },
   {
     "书目条码": "54121110899847",
@@ -40,7 +46,13 @@
     "豆瓣链接": "https://book.douban.com/subject/36096496/",
     "豆瓣封面图片链接": "https://img2.doubanio.com/view/subject/l/public/s34311991.jpg",
     "豆瓣定价": "68.00元",
-    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=S68%2F8721&type=CallNumber"
+    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=S68%2F8721&type=CallNumber",
+    "cardImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110899847/54121110899847.png",
+    "cardThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110899847/54121110899847_thumb.jpg",
+    "coverImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110899847/pic/cover.jpg",
+    "coverThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110899847/pic/cover_thumb.jpg",
+    "originalImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110899847/54121110899847_original.png",
+    "originalThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110899847/54121110899847_original_thumb.jpg"
   },
   {
     "书目条码": "54121110002569",
@@ -62,7 +74,13 @@
     "豆瓣封面图片链接": "https://img1.doubanio.com/view/subject/l/public/s35246679.jpg",
     "豆瓣定价": "58.00元",
     "豆瓣出品方": "时代光华",
-    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=I106.2%2F1649&type=CallNumber"
+    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=I106.2%2F1649&type=CallNumber",
+    "cardImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110002569/54121110002569.png",
+    "cardThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110002569/54121110002569_thumb.jpg",
+    "coverImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110002569/pic/cover.jpg",
+    "coverThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110002569/pic/cover_thumb.jpg",
+    "originalImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110002569/54121110002569_original.png",
+    "originalThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110002569/54121110002569_original_thumb.jpg"
   },
   {
     "书目条码": "54121109953518",
@@ -84,7 +102,13 @@
     "豆瓣封面图片链接": "https://img3.doubanio.com/view/subject/l/public/s34016872.jpg",
     "豆瓣定价": "49元",
     "豆瓣丛书": "行者系列",
-    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=F129%2F0442&type=CallNumber"
+    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=F129%2F0442&type=CallNumber",
+    "cardImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121109953518/54121109953518.png",
+    "cardThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121109953518/54121109953518_thumb.jpg",
+    "coverImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121109953518/pic/cover.jpg",
+    "coverThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121109953518/pic/cover_thumb.jpg",
+    "originalImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121109953518/54121109953518_original.png",
+    "originalThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121109953518/54121109953518_original_thumb.jpg"
   },
   {
     "书目条码": "54121110559914",
@@ -105,7 +129,13 @@
     "豆瓣封面图片链接": "https://img9.doubanio.com/view/subject/l/public/s33982376.jpg",
     "豆瓣定价": "49.80",
     "豆瓣出品方": "磨铁图书",
-    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=TS971.21%2F4915-1&type=CallNumber"
+    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=TS971.21%2F4915-1&type=CallNumber",
+    "cardImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110559914/54121110559914.png",
+    "cardThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110559914/54121110559914_thumb.jpg",
+    "coverImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110559914/pic/cover.jpg",
+    "coverThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110559914/pic/cover_thumb.jpg",
+    "originalImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110559914/54121110559914_original.png",
+    "originalThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110559914/54121110559914_original_thumb.jpg"
   },
   {
     "书目条码": "54121111073795",
@@ -129,7 +159,13 @@
     "豆瓣定价": "148.00",
     "豆瓣丛书": "雅众·音乐",
     "豆瓣出品方": "雅众文化",
-    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=J60-53%2F2264&type=CallNumber"
+    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=J60-53%2F2264&type=CallNumber",
+    "cardImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111073795/54121111073795.png",
+    "cardThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111073795/54121111073795_thumb.jpg",
+    "coverImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111073795/pic/cover.jpg",
+    "coverThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111073795/pic/cover_thumb.jpg",
+    "originalImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111073795/54121111073795_original.png",
+    "originalThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111073795/54121111073795_original_thumb.jpg"
   },
   {
     "书目条码": "54121110987224",
@@ -153,7 +189,13 @@
     "豆瓣定价": "128.00元",
     "豆瓣丛书": "译林方尖碑",
     "豆瓣出品方": "译林方尖碑",
-    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=E194.3%2F6044&type=CallNumber"
+    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=E194.3%2F6044&type=CallNumber",
+    "cardImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110987224/54121110987224.png",
+    "cardThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110987224/54121110987224_thumb.jpg",
+    "coverImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110987224/pic/cover.jpg",
+    "coverThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110987224/pic/cover_thumb.jpg",
+    "originalImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110987224/54121110987224_original.png",
+    "originalThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121110987224/54121110987224_original_thumb.jpg"
   },
   {
     "书目条码": "54121111198180",
@@ -174,7 +216,13 @@
     "豆瓣链接": "https://book.douban.com/subject/36393020/",
     "豆瓣封面图片链接": "https://img1.doubanio.com/view/subject/l/public/s34614868.jpg",
     "豆瓣定价": "68.00",
-    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=G322-49%2F3105&type=CallNumber"
+    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=G322-49%2F3105&type=CallNumber",
+    "cardImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111198180/54121111198180.png",
+    "cardThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111198180/54121111198180_thumb.jpg",
+    "coverImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111198180/pic/cover.jpg",
+    "coverThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111198180/pic/cover_thumb.jpg",
+    "originalImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111198180/54121111198180_original.png",
+    "originalThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111198180/54121111198180_original_thumb.jpg"
   },
   {
     "书目条码": "54121111512122",
@@ -197,7 +245,13 @@
     "豆瓣封面图片链接": "https://img9.doubanio.com/view/subject/l/public/s34876524.jpg",
     "豆瓣定价": "48",
     "豆瓣丛书": "弗洛姆作品系列",
-    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=C912.6-0%2F5034-3&type=CallNumber"
+    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=C912.6-0%2F5034-3&type=CallNumber",
+    "cardImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111512122/54121111512122.png",
+    "cardThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111512122/54121111512122_thumb.jpg",
+    "coverImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111512122/pic/cover.jpg",
+    "coverThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111512122/pic/cover_thumb.jpg",
+    "originalImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111512122/54121111512122_original.png",
+    "originalThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111512122/54121111512122_original_thumb.jpg"
   },
   {
     "书目条码": "54121111066011",
@@ -219,6 +273,12 @@
     "豆瓣封面图片链接": "https://img9.doubanio.com/view/subject/l/public/s34889926.jpg",
     "豆瓣定价": "78.00",
     "豆瓣出品方": "理想国",
-    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=K815.1%2F5441&type=CallNumber"
+    "索书号链接": "https://vufind.library.sh.cn/Search/Results?searchtype=vague&lookfor=K815.1%2F5441&type=CallNumber",
+    "cardImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111066011/54121111066011.png",
+    "cardThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111066011/54121111066011_thumb.jpg",
+    "coverImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111066011/pic/cover.jpg",
+    "coverThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111066011/pic/cover_thumb.jpg",
+    "originalImageUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111066011/54121111066011_original.png",
+    "originalThumbnailUrl": "https://book-echoes.xulei-shl.asia/data/content/2025-08/54121111066011/54121111066011_original_thumb.jpg"
   }
 ]

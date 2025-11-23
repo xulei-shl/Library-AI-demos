@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e:*)",
+      "Bash(findstr:*)",
+      "Bash(Select-Object -First 1)",
+      "Bash(node check-config.mjs:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -108,7 +108,10 @@ export default function BookCard({ book, state, index = 0 }: BookCardProps) {
         }
     };
 
-    const previewImageSrc = book.cardImageUrl || book.coverUrl;
+    // dock 状态下显示卡片图，scatter 状态下显示封面图
+    const previewImageSrc = state === 'dock'
+        ? (book.cardThumbnailUrl || book.cardImageUrl)
+        : (book.cardImageUrl || book.coverUrl);
 
     const hoverPreview = isHovered ? (
         <motion.div
