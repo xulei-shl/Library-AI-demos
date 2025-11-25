@@ -66,6 +66,11 @@ class CardGeneratorModule:
         # 截取长度配置
         self.truncate_config = self.fields_config.get('truncate', {})
 
+        # 重试配置
+        retry_config = config.get('retry', {})
+        self.max_retry_attempts = retry_config.get('max_attempts', 3)
+        self.retry_delay = retry_config.get('delay_seconds', 2)
+        
         # 统计信息
         self.stats = {
             'total_count': 0,
@@ -76,7 +81,9 @@ class CardGeneratorModule:
             'failed_records': [],
             'warning_records': [],
             'library_card_success_count': 0,
-            'library_card_failed_count': 0
+            'library_card_failed_count': 0,
+            'retry_success_count': 0,
+            'retry_failed_records': []
         }
 
     def run(self, excel_path: str) -> int:
@@ -161,6 +168,22 @@ class CardGeneratorModule:
             if self.library_card_enabled:
                 logger.info(f"  任务3结果: 成功生成 {library_card_result} 张借书卡")
             logger.info("=" * 60)
+
+            # 6. 失败重试机制
+            if self.stats['failed_records']:
+                logger.info("=" * 60)
+                logger.info(f"检测到 {len(self.stats['failed_records'])} 条失败记录，开始重试流程...")
+                logger.info("=" * 60)
+                self._retry_failed_records(filtered_df)
+
+            # 7. 如果重试后仍有失败，生成错误报告
+            if self.stats['retry_failed_records']:
+                error_report_path = os.path.join(
+                    self.config.get('output', {}).get('base_dir', 'runtime/outputs'),
+                    f'card_generation_errors_{time.strftime("%Y%m%d_%H%M%S")}.txt'
+                )
+                self._generate_error_report(error_report_path)
+                logger.error(f"重试后仍有 {len(self.stats['retry_failed_records'])} 条记录失败，错误报告已生成：{error_report_path}")
 
             # 8. 生成汇总报告
             elapsed_time = time.time() - start_time
@@ -758,6 +781,18 @@ class CardGeneratorModule:
             f"  警告记录: {self.stats['warning_count']} 条",
         ]
         
+        # 添加重试统计（如果有重试）
+        if self.stats['retry_success_count'] > 0 or self.stats['retry_failed_records']:
+            lines.extend([
+                "",
+                "重试结果：",
+                f"  重试成功: {self.stats['retry_success_count']} 条",
+                f"  重试后仍失败: {len(self.stats['retry_failed_records'])} 条",
+            ])
+        
+        # 继续原有的统计
+        lines.append("")
+        
         # 添加借书卡统计（如果启用）
         if self.library_card_enabled:
             lines.extend([
@@ -819,6 +854,155 @@ class CardGeneratorModule:
         except Exception as e:
             logger.error(f"保存报告失败：{output_path}，错误：{e}")
             return False
+
+    def _retry_failed_records(self, filtered_df: pd.DataFrame) -> None:
+        """
+        对失败的记录进行重试
+        
+        Args:
+            filtered_df: 筛选后的DataFrame
+        """
+        # 创建线程安全的HTML转图片转换器
+        html_to_image_converter = HTMLToImageConverter(self.config, thread_safe=True)
+        
+        try:
+            # 启动浏览器实例
+            if not html_to_image_converter.start_browser():
+                logger.error("[重试] 浏览器启动失败，无法进行重试")
+                self.stats['retry_failed_records'] = self.stats['failed_records'].copy()
+                return
+            
+            # 获取失败记录的条码列表
+            failed_barcodes = {record['barcode'] for record in self.stats['failed_records']}
+            
+            # 筛选出失败的记录
+            failed_df = filtered_df[filtered_df['书目条码'].astype(str).str.strip().isin(failed_barcodes)]
+            
+            logger.info(f"[重试] 准备重试 {len(failed_df)} 条失败记录，最大重试次数：{self.max_retry_attempts}")
+            
+            # 对每条失败记录进行重试
+            for attempt in range(1, self.max_retry_attempts + 1):
+                if not failed_barcodes:
+                    break
+                    
+                logger.info(f"[重试] 第 {attempt}/{self.max_retry_attempts} 次重试，剩余 {len(failed_barcodes)} 条记录")
+                
+                # 当前轮次成功的条码
+                current_success = set()
+                
+                for index, row in failed_df.iterrows():
+                    barcode = str(row.get('书目条码', 'Unknown')).strip()
+                    
+                    # 跳过已经成功的记录
+                    if barcode not in failed_barcodes:
+                        continue
+                    
+                    logger.info(f"[重试] 第 {attempt} 次重试，书目条码：{barcode}")
+                    
+                    # 等待一段时间再重试
+                    if self.retry_delay > 0:
+                        time.sleep(self.retry_delay)
+                    
+                    # 重新处理
+                    success = self.process_single_book(row, html_to_image_converter, skip_cover_download=False)
+                    
+                    if success:
+                        current_success.add(barcode)
+                        self.stats['retry_success_count'] += 1
+                        self.stats['failed_count'] -= 1
+                        logger.info(f"[重试] 成功，书目条码：{barcode}")
+                    else:
+                        logger.warning(f"[重试] 第 {attempt} 次重试失败，书目条码：{barcode}")
+                
+                # 从失败列表中移除成功的记录
+                failed_barcodes -= current_success
+                
+                if current_success:
+                    logger.info(f"[重试] 第 {attempt} 次重试成功 {len(current_success)} 条记录")
+            
+            # 更新最终失败记录列表
+            self.stats['retry_failed_records'] = [
+                record for record in self.stats['failed_records']
+                if record['barcode'] in failed_barcodes
+            ]
+            
+            # 从原失败记录中移除重试成功的
+            self.stats['failed_records'] = self.stats['retry_failed_records'].copy()
+            
+            if self.stats['retry_success_count'] > 0:
+                logger.info(f"[重试] 重试完成，成功恢复 {self.stats['retry_success_count']} 条记录")
+            
+            if self.stats['retry_failed_records']:
+                logger.warning(f"[重试] 重试完成，仍有 {len(self.stats['retry_failed_records'])} 条记录失败")
+        
+        except Exception as e:
+            logger.error(f"[重试] 重试过程发生异常：{e}", exc_info=True)
+            self.stats['retry_failed_records'] = self.stats['failed_records'].copy()
+        
+        finally:
+            # 关闭浏览器实例
+            logger.info("[重试] 关闭浏览器实例...")
+            html_to_image_converter.stop_browser()
+    
+    def _generate_error_report(self, output_path: str) -> None:
+        """
+        生成详细的错误报告
+        
+        Args:
+            output_path: 报告输出路径
+        """
+        try:
+            lines = [
+                "=" * 80,
+                "图书卡片生成 - 错误报告",
+                "=" * 80,
+                "",
+                f"生成时间：{time.strftime('%Y-%m-%d %H:%M:%S')}",
+                "",
+                "=" * 80,
+                "重试统计信息",
+                "=" * 80,
+                f"最大重试次数：{self.max_retry_attempts}",
+                f"重试成功数量：{self.stats['retry_success_count']}",
+                f"最终失败数量：{len(self.stats['retry_failed_records'])}",
+                "",
+                "=" * 80,
+                "失败记录详情",
+                "=" * 80,
+                ""
+            ]
+            
+            for i, record in enumerate(self.stats['retry_failed_records'], 1):
+                lines.append(f"{i}. 书目条码：{record['barcode']}")
+                lines.append(f"   失败原因：{record['reason']}")
+                lines.append("")
+            
+            lines.extend([
+                "=" * 80,
+                "建议处理方案",
+                "=" * 80,
+                "1. 检查失败原因，确认是否为数据问题（如封面链接失效、必填字段缺失等）",
+                "2. 对于数据问题，请在Excel中修正后重新运行",
+                "3. 对于网络问题，请检查网络连接后重新运行",
+                "4. 对于浏览器问题，请检查Playwright是否正确安装",
+                "=" * 80
+            ])
+            
+            report_content = "\n".join(lines)
+            
+            # 确保目录存在
+            output_dir = os.path.dirname(output_path)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir, exist_ok=True)
+            
+            # 保存报告
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(report_content)
+            
+            logger.info(f"错误报告已生成：{output_path}")
+        
+        except Exception as e:
+            logger.error(f"生成错误报告失败：{e}", exc_info=True)
 
 
 def main():
