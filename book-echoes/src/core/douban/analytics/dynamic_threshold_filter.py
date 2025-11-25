@@ -148,10 +148,9 @@ class DynamicThresholdFilter:
                 candidate_mask &= group["rating_count"].le(review_upper_bound).fillna(False)
                 candidate_mask &= group["rating"].ge(score_threshold).fillna(False)
                 
-                # 应用列值验证过滤
-                for idx in group.index:
-                    if candidate_mask.at[idx] and not self._apply_column_filters(idx):
-                        candidate_mask.at[idx] = False
+                # 注意：列值验证已移至card_generator模块
+                # 此处不再进行列值过滤，因为在API调用前这些字段可能还没有数据
+                # 列值验证应该在获取完整豆瓣数据后，由card_generator模块执行
                 
                 matched_indexes = candidate_mask[candidate_mask].index.tolist()
                 candidate_indexes.update(matched_indexes)

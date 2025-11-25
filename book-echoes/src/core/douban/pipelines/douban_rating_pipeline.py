@@ -174,8 +174,6 @@ class DoubanRatingPipeline:
 
                 logger.info("暂停模式下跳过豆瓣任务分析报告生成，待 API 阶段执行完毕再生成最终报告")
 
-            resume_from_partial = False
-
         except Exception:
             resume_from_partial = False
 
@@ -530,6 +528,8 @@ class DoubanRatingPipeline:
 
         api_candidate_rows = 0
 
+        candidate_already_done = 0  # 候选项中已完成的数量
+
         for idx in df.index:
 
             is_candidate = idx in candidate_indexes
@@ -544,7 +544,12 @@ class DoubanRatingPipeline:
 
             total_link_rows += 1
 
+            # 检查是否已经是终止状态
             if progress.should_skip_barcode(df, idx):
+
+                if is_candidate:
+
+                    candidate_already_done += 1
 
                 continue
 
@@ -558,17 +563,36 @@ class DoubanRatingPipeline:
 
                 progress.mark_link_ready(df, idx)
 
-        logger.info(
+        # 改进日志信息，明确说明候选项的分布情况
+        if candidate_already_done > 0:
 
-            "动态过滤完成：候选 %s / 已获取链接 %s（待补 API %s）",
+            logger.info(
 
-            candidate_total,
+                "动态过滤完成：候选 %s（其中已完成 %s）/ 已获取链接 %s / 待补 API %s",
 
-            total_link_rows,
+                candidate_total,
 
-            api_candidate_rows,
+                candidate_already_done,
 
-        )
+                total_link_rows,
+
+                api_candidate_rows,
+
+            )
+
+        else:
+
+            logger.info(
+
+                "动态过滤完成：候选 %s / 已获取链接 %s / 待补 API %s",
+
+                candidate_total,
+
+                total_link_rows,
+
+                api_candidate_rows,
+
+            )
 
     def _mark_link_rows_ready(self, context: StageContext) -> None:
 

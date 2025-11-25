@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>瑞士主义风格书目推荐卡</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #dbd8c5; 
+            --accent-color: #FF3B30;
+            --text-color: #1a1a1a;
+        }
+
+        body {
+            background-color: #111;
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+        }
+
+        .swiss-card {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mega-title {
+            font-weight: 900;
+            line-height: 0.85;
+            letter-spacing: -0.06em;
+            text-transform: uppercase;
+            word-break: break-word;
+        }
+
+        .mono-data {
+            font-family: 'Space Mono', monospace;
+            letter-spacing: -0.02em;
+        }
+
+        /* 幽灵文字/错位阴影样式 */
+        .ghost-text {
+            position: absolute;
+            font-weight: 900;
+            opacity: 0.15; /* 稍微加深一点，让错位更明显 */
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 0; /* 放在主文字后面 */
+            mix-blend-mode: multiply; /* 正片叠底 */
+            user-select: none;
+            color: #000; /* 纯黑配合透明度 */
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* 弹性动画 */
+        }
+        
+        /* 鼠标悬停时，阴影会稍微"归位"一点，增加互动感 */
+        .swiss-card:hover .ghost-text {
+            transform: translate(-4px, 4px); 
+        }
+
+        .sticker-badge {
+            background-color: var(--accent-color);
+            color: white;
+            transform: rotate(-2deg);
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+            /* 添加文字阴影增强可读性 */
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .sticker-badge:hover {
+            transform: rotate(0deg) scale(1.02);
+        }
+
+        .cover-blend {
+            transition: all 0.5s ease;
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="swiss-card w-full max-w-[420px] flex flex-col p-5 sm:p-8 gap-6">
+        
+        <!-- 头部区域 -->
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-2">
+                <span class="mono-data text-xs font-bold border border-black px-1.5 py-0.5 rounded-sm">BOOK REC.</span>
+                <span class="mono-data text-xs font-bold">(01)</span>
+            </div>
+            
+            <!-- 标题区域 -->
+            <h1 class="mega-title text-[4rem] leading-[0.8] relative">
+                <!-- 主标题文字：层级设为 z-20 盖住阴影 -->
+                <span class="relative z-20">
+                    LIBRARY<br>
+                    <span class="text-[3.7rem]">BOOK</span><br>
+                    CATALOG
+                </span>
+
+                <!-- 背景错位阴影 (偏上偏右) -->
+                <!-- 计算逻辑：
+                     Left: 正数 (向右)
+                     Top:  负偏移 (向上)
+                     行高是 0.8em
+                -->
+                <div class="ghost-text text-[4rem] -top-[0.19em] left-[0.09em]">
+                    LIBRARY
+                </div>
+                <div class="ghost-text text-[3.7rem] top-[0.70em] left-[0.09em]">
+                    BOOK
+                </div>
+               
+                <div class="ghost-text text-[4rem] top-[1.42em] left-[0.09em]">
+                    CATALOG
+                </div>
+            </h1>
+            <p class="font-bold text-lg mt-1 tracking-tight relative z-20">日本 : 文化核心日本</p>
+        </div>
+
+        <!-- 中部数据 -->
+        <div class="grid grid-cols-12 gap-4 border-t-2 border-black pt-6 relative z-10">
+            <div class="col-span-7 flex flex-col justify-between space-y-6">
+                <div class="space-y-4">
+                    <div>
+                        <p class="mono-data text-[10px] uppercase text-gray-600 mb-0.5">Author / 作者</p>
+                        <p class="font-bold text-lg leading-none">[日]松冈正刚</p>
+                    </div>
+                    <div>
+                        <p class="mono-data text-[10px] uppercase text-gray-600 mb-0.5">Publisher / 出版</p>
+                        <p class="font-bold text-base leading-none">岳麓书社</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <p class="mono-data text-[10px] uppercase text-gray-600 mb-0.5">Year</p>
+                            <p class="font-bold text-sm">2023</p>
+                        </div>
+                        <div>
+                            <p class="mono-data text-[10px] uppercase text-gray-600 mb-0.5">Rate</p>
+                            <p class="font-bold text-sm">7.6</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <p class="mono-data text-[10px] uppercase text-gray-600 mb-1">Call Number</p>
+                    <p class="font-mono text-2xl font-bold tracking-tighter border-b-2 border-black inline-block pb-1">G131.3/4971</p>
+                </div>
+            </div>
+
+            <div class="col-span-5 relative h-full min-h-[180px] bg-gray-200 rounded-sm overflow-hidden border-2 border-black">
+                <img src="pic/cover.jpg" alt="Cover" class="cover-blend w-full h-full object-cover absolute inset-0">
+            </div>
+        </div>
+
+        <!-- 底部 -->
+        <div class="relative mt-auto pt-4 z-10">
+            <div class="sticker-badge absolute -right-4 bottom-16 w-40 p-3 rounded-lg z-20">
+                <div class="flex justify-between items-center mb-1 border-b border-white/30 pb-1">
+                    <span class="text-[10px] font-mono font-bold">RECOMMEND</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <p class="text-xs font-bold leading-tight">
+                    一位编辑泰斗对日本文化基因的冷静解剖...
+                </p>
+            </div>
+
+            <div class="bg-black text-[var(--bg-color)] p-4 rounded-lg flex items-center justify-between relative z-10">
+                <div>
+                    <p class="mono-data text-[10px] opacity-60 mb-1">SCAN TO BORROW</p>
+                    <p class="font-bold text-xl tracking-widest">扫码借阅</p>
+                </div>
+                <div class="bg-white p-1 rounded-sm">
+                    <img src="pic/qrcode.png" alt="QR" class="w-10 h-10 mix-blend-multiply">
+                </div>
+            </div>
+        </div>
+
+        <div class="absolute -bottom-10 -left-10 text-[13rem] font-black text-black opacity-[0.03] pointer-events-none select-none z-0 leading-none">
+            书海
+        </div>
+    </div>
+
+</body>
+</html>

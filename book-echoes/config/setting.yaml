@@ -13,7 +13,7 @@
 statistics:
   # 基于哪个月份计算近三个月（用于近三月借阅数据统计）
   # 格式：YYYY-MM，例如2025-09表示基于9月归还数据计算7-8-9月的借阅统计
-  target_month: "2025-09"
+  target_month: "2025-10"
   
   # 月份计算方式
   month_calculation:
@@ -224,35 +224,6 @@ douban:
         S: 7.4
         T: 7.6             
         default: 7.5 # 其他未列出分类的默认及格分
-      
-      # 列值验证过滤规则
-      # 功能: 在评分和评论人数过滤的基础上,额外检查Excel列值是否满足要求
-      # 用途: 排除缺少关键信息(如封面图片、内容简介)的图书
-      column_filters:
-        enabled: true  # 总开关,设为false可禁用所有列值验证
-        rules:
-          # 规则1: 豆瓣封面图片链接必须有值
-          - name: "豆瓣封面图片验证"
-            enabled: true
-            column: "豆瓣封面图片链接"  # 列名需与fields_mapping.douban中的映射一致
-            filter_type: "not_empty"  # 验证类型: not_empty(非空) 或 regex(正则表达式)
-            description: "排除没有封面图片的图书"
-          
-          # 规则2: 豆瓣内容简介必须有值
-          - name: "豆瓣内容简介验证"
-            enabled: true
-            column: "豆瓣内容简介"
-            filter_type: "not_empty"
-            description: "排除没有内容简介的图书"
-          
-          # 规则3(示例): 使用正则表达式验证 - 默认禁用
-          # 取消注释并启用后,可验证ISBN格式是否正确
-          # - name: "ISBN格式验证"
-          #   enabled: false
-          #   column: "豆瓣ISBN"
-          #   filter_type: "regex"
-          #   pattern: "^\\d{10}(\\d{3})?$"  # ISBN-10或ISBN-13格式
-          #   description: "验证ISBN格式是否正确"
 
   # 通用配置
   # 功能：适用于整个豆瓣模块的全局设置。
@@ -261,6 +232,7 @@ douban:
     log_level: "INFO"    # 日志级别 (DEBUG, INFO, WARNING, ERROR)
     backup_enabled: true # 是否启用定期备份
     backup_interval: 24  # 备份间隔（小时）
+
 
   # 数据库配置 (src/core/douban/database/)
   # 功能：用于缓存已处理过的图书数据，实现历史数据查重和增量更新。
@@ -278,7 +250,7 @@ douban:
     refresh_strategy:
       enabled: true
       stale_days: 180      # 如果记录的更新时间超过180天，则认为数据“陈旧”，需要重新获取
-      force_update: false  # 是否强制更新所有记录，忽略 stale_days 限制
+      force_update: true  # 是否强制更新所有记录，忽略 stale_days 限制
       update_mode: "merge" # 更新数据的方式：'merge'（合并新旧数据，保留旧记录字段）或 'overwrite'（完全用新数据覆盖）
       crawl_empty_url: false  # 当douban_url为空时是否需要重新爬取（true=爬取，false=跳过）
 
@@ -601,6 +573,36 @@ card_generator:
     # 字段长度限制(注:实际截取逻辑在 models.py 中实现,会智能在标点处截断)
     truncate:
       "初评理由": 50  # 推荐语字段,智能截取约50个字符
+    
+    # 列值验证过滤规则
+    # 功能: 在生成卡片前检查Excel列值是否满足要求
+    # 用途: 排除缺少关键信息(如封面图片、内容简介)的图书
+    column_filters:
+      enabled: true  # 总开关,设为false可禁用所有列值验证
+      rules:
+        # 规则1: 豆瓣封面图片链接必须有值
+        - name: "豆瓣封面图片验证"
+          enabled: true
+          column: "豆瓣封面图片链接"
+          filter_type: "not_empty"  # 验证类型: not_empty(非空) 或 regex(正则表达式)
+          description: "排除没有封面图片的图书"
+        
+        # 规则2: 豆瓣内容简介必须有值
+        - name: "豆瓣内容简介验证"
+          enabled: true
+          column: "豆瓣内容简介"
+          filter_type: "not_empty"
+          description: "排除没有内容简介的图书"
+        
+        # 规则3(示例): 使用正则表达式验证 - 默认禁用
+        # 取消注释并启用后,可验证ISBN格式是否正确
+        # - name: "ISBN格式验证"
+        #   enabled: false
+        #   column: "豆瓣ISBN"
+        #   filter_type: "regex"
+        #   pattern: "^\\d{10}(\\d{3})?$"  # ISBN-10或ISBN-13格式
+        #   description: "验证ISBN格式是否正确"
+
 
 # =============================================================================
 # 图书馆借书卡生成配置

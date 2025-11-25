@@ -24,6 +24,7 @@ class DataValidator:
         self.config = config
         self.required_fields = config.get('fields', {}).get('required', [])
         self.filter_config = config.get('fields', {}).get('filter', {})
+        self.column_filters_config = config.get('fields', {}).get('column_filters', {})
         self.filter_source = "未执行"
 
     def validate_excel_file(self, excel_path: str) -> bool:
@@ -116,6 +117,7 @@ class DataValidator:
         2. 如果列不存在，记录错误日志并返回空DataFrame
         3. 如果列存在，筛选值为"通过"的记录
         4. 如果筛选结果为空，记录警告日志并返回空DataFrame
+        5. 应用列值过滤规则（如果启用）
         """
         # 强制使用"人工评选"列
         mandatory_column = "人工评选"
@@ -143,8 +145,113 @@ class DataValidator:
         logger.info(
             f"筛选 '{mandatory_column}' 为 '{mandatory_value}' 的图书：{len(filtered_df)} / {len(df)}"
         )
+        
+        # 应用列值过滤规则
+        filtered_df = self.apply_column_filters(filtered_df)
+        
         self.filter_source = f"强制规则列 '{mandatory_column}'"
         return filtered_df
+    
+    def apply_column_filters(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        应用列值过滤规则
+        
+        Args:
+            df: 待过滤的DataFrame
+            
+        Returns:
+            pd.DataFrame: 过滤后的DataFrame
+        """
+        if not self.column_filters_config.get('enabled', False):
+            logger.debug("列值过滤未启用，跳过")
+            return df
+        
+        rules = self.column_filters_config.get('rules', [])
+        if not rules:
+            logger.debug("没有配置列值过滤规则")
+            return df
+        
+        logger.info("=" * 60)
+        logger.info("开始应用列值过滤规则")
+        logger.info("=" * 60)
+        
+        initial_count = len(df)
+        filtered_indexes = []
+        
+        for index, row in df.iterrows():
+            if self._check_row_column_filters(row, rules):
+                filtered_indexes.append(index)
+        
+        filtered_df = df.loc[filtered_indexes].copy()
+        filtered_count = len(filtered_df)
+        removed_count = initial_count - filtered_count
+        
+        logger.info(f"列值过滤完成：")
+        logger.info(f"  初始数量: {initial_count}")
+        logger.info(f"  过滤后数量: {filtered_count}")
+        logger.info(f"  移除数量: {removed_count}")
+        logger.info("=" * 60)
+        
+        return filtered_df
+    
+    def _check_row_column_filters(self, row: pd.Series, rules: list) -> bool:
+        """
+        检查单行数据是否通过所有列值过滤规则
+        
+        Args:
+            row: DataFrame行数据
+            rules: 过滤规则列表
+            
+        Returns:
+            bool: True表示通过所有规则，False表示被过滤
+        """
+        for rule in rules:
+            if not rule.get('enabled', False):
+                continue
+            
+            column = rule.get('column')
+            if not column or column not in row.index:
+                continue
+            
+            filter_type = rule.get('filter_type', 'not_empty')
+            value = row[column]
+            
+            if filter_type == 'not_empty':
+                if not self._check_not_empty(value):
+                    barcode = row.get('书目条码', 'Unknown')
+                    logger.debug(
+                        f"书目条码 {barcode} 被过滤：列 '{column}' 为空"
+                    )
+                    return False
+            elif filter_type == 'regex':
+                pattern = rule.get('pattern')
+                if pattern and not self._check_regex(value, pattern):
+                    barcode = row.get('书目条码', 'Unknown')
+                    logger.debug(
+                        f"书目条码 {barcode} 被过滤：列 '{column}' 不匹配正则表达式 '{pattern}'"
+                    )
+                    return False
+        
+        return True
+    
+    def _check_not_empty(self, value) -> bool:
+        """检查值是否非空"""
+        if value is None or pd.isna(value):
+            return False
+        str_value = str(value).strip()
+        return bool(str_value)
+    
+    def _check_regex(self, value, pattern: str) -> bool:
+        """检查值是否匹配正则表达式"""
+        if value is None or pd.isna(value):
+            return False
+        try:
+            import re
+            str_value = str(value)
+            return bool(re.match(pattern, str_value))
+        except re.error:
+            logger.warning(f"无效的正则表达式: {pattern}")
+            return False
     
     # =========================================================================
     # 以下为原智能筛选逻辑，已注释保留，如需恢复可取消注释
