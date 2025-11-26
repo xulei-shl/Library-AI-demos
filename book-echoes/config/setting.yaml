@@ -451,7 +451,48 @@ fields_mapping:
 # =============================================================================
 card_generator:
   # HTML模板文件路径
-  template_path: "config/card_template.html"
+  template_path: "config/green_bigtext_template.html"
+
+  # 字段转换器配置
+  # 功能: 为不同模板提供灵活的字段处理规则
+  # 用途: 根据模板需求动态调整字段的显示方式(如只显示第一作者、只显示主标题等)
+  field_transformers:
+    # 示例1: AUTHOR字段 - 使用完整作者信息(默认行为)
+    # 如果不配置,则使用默认逻辑(显示所有作者)
+    # AUTHOR:
+    #   type: "direct"              # 转换器类型: direct(直接使用)
+    #   source_field: "豆瓣作者"     # 源字段名
+    #   default: ""                 # 默认值(当字段为空时)
+    
+    # 示例2: AUTHOR字段 - 只显示第一作者 + "等"
+    # 取消下面的注释即可启用此配置
+    AUTHOR:
+      type: "first_author"        # 转换器类型: first_author(提取第一作者)
+      source_field: "豆瓣作者"     # 源字段名
+      separator: "/"              # 作者分隔符
+      suffix: " 等"               # 多作者时的后缀
+      default: ""                 # 默认值
+    
+    # 示例3: TITLE字段 - 使用完整标题(主标题 + 副标题,默认行为)
+    # 如果不配置,则使用默认逻辑(显示主标题和副标题)
+    # TITLE:
+    #   type: "full_title"          # 转换器类型: full_title(完整标题)
+    #   source_field: "豆瓣书名"     # 主标题字段
+    #   subtitle_field: "豆瓣副标题" # 副标题字段
+    #   separator: " : "            # 主副标题分隔符
+    #   default: ""                 # 默认值
+    
+    # 示例4: TITLE字段 - 只显示主标题(不含副标题)
+    # 取消下面的注释即可启用此配置
+    TITLE:
+      type: "main_title_only"     # 转换器类型: main_title_only(仅主标题)
+      source_field: "豆瓣书名"     # 源字段名
+      default: ""                 # 默认值
+    
+    # 其他字段也可以配置转换器:
+    # PUBLISHER, PUB_YEAR, CALL_NUMBER, DOUBAN_RATING, RECOMMENDATION
+    # 如果不配置,则使用默认逻辑
+
 
   # 重试配置
   retry:

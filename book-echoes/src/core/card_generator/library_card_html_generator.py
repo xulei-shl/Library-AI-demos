@@ -39,6 +39,18 @@ class LibraryCardHTMLGenerator:
         # 初始化Faker
         self.faker_cn = Faker('zh_CN')
         self.faker_en = Faker('en_US')
+        self.handwriting_fonts = config.get(
+            'handwriting_fonts',
+            [
+                'font-handwriting-cn',
+                'font-handwriting-yunfeng',
+                'font-handwriting-pingfang',
+                'font-handwriting-hetang',
+                'font-handwriting-jinnian',
+                'font-handwriting-yangrendong',
+                'font-handwriting-en',
+            ],
+        )
         
         # 模板缓存
         self.template_cache = None
@@ -198,12 +210,13 @@ class LibraryCardHTMLGenerator:
         """
         html_parts = []
         
-        for record in records:
+        font_sequence = self._generate_font_sequence(len(records))
+        
+        for record, font_class in zip(records, font_sequence):
             display_date = record.format_date_for_display()
             
             # 随机选择字体样式和旋转角度
             rotation = random.choice(['', 'transform rotate-1', 'transform -rotate-2'])
-            font_class = 'font-handwriting-cn' if self._is_chinese_name(record.name) else 'font-handwriting-en'
             text_size = random.choice(['text-xl', 'text-2xl'])
             padding = random.choice(['pl-1', 'pl-2', 'pl-4', 'pl-6'])
             
@@ -226,6 +239,22 @@ class LibraryCardHTMLGenerator:
             html_parts.append('<div class="grid-row"></div>')
         
         return '\n'.join(html_parts)
+    
+    def _generate_font_sequence(self, count: int) -> List[str]:
+        """
+        为单张卡片生成字体序列，尽量保证不重复
+        """
+        fonts = list(self.handwriting_fonts) if self.handwriting_fonts else ['font-handwriting-cn']
+        random.shuffle(fonts)
+        sequence: List[str] = []
+        
+        while len(sequence) < count:
+            if not fonts:
+                fonts = list(self.handwriting_fonts) if self.handwriting_fonts else ['font-handwriting-cn']
+                random.shuffle(fonts)
+            sequence.append(fonts.pop())
+        
+        return sequence
     
     def _is_chinese_name(self, name: str) -> bool:
         """

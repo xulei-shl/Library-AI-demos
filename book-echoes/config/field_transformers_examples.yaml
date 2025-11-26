@@ -1,0 +1,145 @@
+# 字段转换器配置示例
+# 正式配置在 setting.yaml
+
+## 示例1: 简化模板配置
+# 适用场景: 新模板只需要显示第一作者和主标题
+
+card_generator:
+  template_path: "config/simple_card_template.html"
+  
+  field_transformers:
+    # 作者字段: 只显示第一作者,多作者时添加"等"
+    AUTHOR:
+      type: "first_author"        # 使用第一作者转换器
+      source_field: "豆瓣作者"     # 从"豆瓣作者"字段获取数据
+      separator: "/"              # 作者之间用"/"分隔
+      suffix: " 等"               # 多作者时添加" 等"后缀
+      default: ""                 # 字段为空时显示空字符串
+    
+    # 标题字段: 只显示主标题,不显示副标题
+    TITLE:
+      type: "main_title_only"     # 使用主标题转换器
+      source_field: "豆瓣书名"     # 从"豆瓣书名"字段获取数据
+      default: ""                 # 字段为空时显示空字符串
+
+---
+
+## 示例2: 完整模板配置(默认行为)
+# 适用场景: 显示所有作者和完整标题(含副标题)
+
+card_generator:
+  template_path: "config/full_card_template.html"
+  
+  field_transformers:
+    # 作者字段: 显示所有作者
+    AUTHOR:
+      type: "direct"              # 直接使用字段值
+      source_field: "豆瓣作者"
+      default: ""
+    
+    # 标题字段: 显示完整标题(主标题 + 副标题)
+    TITLE:
+      type: "full_title"          # 使用完整标题转换器
+      source_field: "豆瓣书名"     # 主标题字段
+      subtitle_field: "豆瓣副标题" # 副标题字段
+      separator: " : "            # 主副标题之间用" : "分隔
+      default: ""
+
+---
+
+## 示例3: 混合配置
+# 适用场景: 作者简化显示,标题完整显示
+
+card_generator:
+  template_path: "config/mixed_card_template.html"
+  
+  field_transformers:
+    # 作者: 只显示第一作者
+    AUTHOR:
+      type: "first_author"
+      source_field: "豆瓣作者"
+      separator: "/"
+      suffix: " 等"
+      default: ""
+    
+    # 标题: 显示完整标题
+    TITLE:
+      type: "full_title"
+      source_field: "豆瓣书名"
+      subtitle_field: "豆瓣副标题"
+      separator: " : "
+      default: ""
+    
+    # 其他字段使用默认逻辑(不配置即可)
+
+---
+
+## 示例4: 自定义分隔符
+# 适用场景: 使用不同的分隔符
+
+card_generator:
+  template_path: "config/custom_separator_template.html"
+  
+  field_transformers:
+    # 作者: 使用"、"作为分隔符,后缀为"等著"
+    AUTHOR:
+      type: "first_author"
+      source_field: "豆瓣作者"
+      separator: "、"             # 使用中文顿号
+      suffix: "等著"              # 使用"等著"作为后缀
+      default: "佚名"             # 空值时显示"佚名"
+    
+    # 标题: 使用"——"作为主副标题分隔符
+    TITLE:
+      type: "full_title"
+      source_field: "豆瓣书名"
+      subtitle_field: "豆瓣副标题"
+      separator: "——"            # 使用破折号
+      default: "未知书名"
+
+---
+
+## 示例5: 最小配置(使用默认逻辑)
+# 适用场景: 不需要特殊处理,使用系统默认行为
+
+card_generator:
+  template_path: "config/default_template.html"
+  
+  # 不配置field_transformers,或配置为空
+  field_transformers: {}
+
+# 说明: 如果不配置field_transformers,系统会使用默认逻辑:
+# - AUTHOR: 显示所有作者
+# - TITLE: 显示主标题 + 副标题(如果有)
+# - 其他字段: 直接显示
+
+---
+
+## 字段转换器类型速查表
+
+| 转换器类型 | 说明 | 主要参数 | 示例输入 | 示例输出 |
+|-----------|------|---------|---------|---------|
+| `direct` | 直接使用字段值 | `source_field`, `default` | `"张三"` | `"张三"` |
+| `first_author` | 提取第一作者 | `source_field`, `separator`, `suffix`, `default` | `"张三 / 李四"` | `"张三 等"` |
+| `main_title_only` | 只显示主标题 | `source_field`, `default` | `"人类简史"` | `"人类简史"` |
+| `full_title` | 完整标题 | `source_field`, `subtitle_field`, `separator`, `default` | 主:`"人类简史"` 副:`"从动物到上帝"` | `"人类简史 : 从动物到上帝"` |
+
+---
+
+## 配置步骤
+
+1. **确定模板需求**: 明确新模板需要哪些字段,以及如何显示
+2. **选择转换器类型**: 根据需求选择合适的转换器类型
+3. **配置参数**: 设置源字段、分隔符、后缀等参数
+4. **测试验证**: 生成样例卡片,检查字段显示是否符合预期
+5. **调整优化**: 根据实际效果调整配置参数
+
+---
+
+## 注意事项
+
+1. **字段名大小写**: 占位符名称(如`AUTHOR`)必须大写
+2. **源字段名**: 源字段名(如`豆瓣作者`)必须与Excel列名或数据库字段名完全一致
+3. **默认值**: 建议为所有字段配置`default`参数,避免空值导致显示异常
+4. **分隔符**: 注意分隔符的前后空格,会影响最终显示效果
+5. **向后兼容**: 如果不确定,可以先不配置,使用默认逻辑

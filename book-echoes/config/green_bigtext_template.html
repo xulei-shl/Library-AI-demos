@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avant Garde Book Design</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'League Spartan', sans-serif;
+        }
+
+        .layout-wrapper {
+            display: flex;
+            width: 920px;
+            height: 700px;
+            background-color: #050505;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+        }
+
+        .poster {
+            position: relative;
+            width: 500px;
+            height: 700px;
+            background-color: #050505;
+            overflow: visible;
+            z-index: 2;
+            flex-shrink: 0;
+        }
+
+        .cover-section {
+            position: relative;
+            width: 420px;
+            height: 100%;
+            background-color: #d0f37d;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(100%) contrast(1.2);
+            mix-blend-mode: multiply;
+            opacity: 0.9;
+            transition: all 0.5s ease;
+        }
+
+        .layout-wrapper:hover .cover-image {
+            filter: grayscale(0%);
+            mix-blend-mode: normal;
+            opacity: 1;
+        }
+
+        .pattern-bg {
+            position: absolute;
+            top: -20px;
+            left: -60px;
+            width: 360px;
+            height: 400px;
+            background: repeating-linear-gradient(50deg,
+                    transparent,
+                    transparent 12px,
+                    #ea0078 12px,
+                    #ea0078 24px);
+            z-index: 1;
+            opacity: 0.8;
+            transform: rotate(-10deg);
+        }
+
+        .main-title {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .title-wrapper {
+            display: flex;
+            flex-direction: column;
+            transform: rotate(90deg);
+            transform-origin: top left;
+            position: absolute;
+            top: -28px;
+            left: 100%;
+            width: 700px;
+            height: 250px;
+            align-items: flex-start;
+            padding-left: 20px;
+        }
+
+        .big-text {
+            font-size: 220px;
+            line-height: 0.75;
+            color: #aadd33;
+            text-transform: uppercase;
+            letter-spacing: -10px;
+            white-space: nowrap;
+            font-weight: 800;
+            text-shadow: -5px 5px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        .text-garde {
+            color: transparent;
+            -webkit-text-stroke: 4px #aadd33;
+        }
+
+        .info-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .book-info {
+            margin-top: 20px;
+            max-width: 80%;
+        }
+
+        .book-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.1;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 0px #000;
+            width: 100%;
+        }
+
+        .book-author {
+            font-size: 20px;
+            font-weight: 700;
+            color: #aadd33;
+            margin-bottom: 6px;
+            text-shadow: 1px 1px 0px #000;
+            background: #000;
+            display: inline-block;
+            padding: 0 5px;
+            width: 80%;
+        }
+
+        .book-publisher-time {
+            font-family: "League Spartan", sans-serif;
+            font-size: 16px;
+            color: #ddd;
+            font-weight: 500;
+            text-shadow: 1px 1px 0px #000;
+        }
+
+        .bottom-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .credits {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            height: 250px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            transform: translateY(40px);
+        }
+
+        .rec-label {
+            display: inline-block;
+            background-color: #ea0078;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            margin-left: 8px;
+            writing-mode: horizontal-tb;
+        }
+
+        .rec-text {
+            font-family: "League Spartan", sans-serif;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #ccc;
+            letter-spacing: 2px;
+        }
+
+        .rating {
+            text-align: right;
+            margin-right: 6px;
+        }
+
+        .rating-group {
+            margin-bottom: 15px;
+        }
+
+        .rating-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .rating-label {
+            font-size: 10px;
+            color: #ea0078;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .rating-value {
+            font-size: 20px;
+            color: #fff;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <div class="poster">
+            <div class="pattern-bg"></div>
+
+            <div class="main-title">
+                <div class="title-wrapper">
+                    <div class="big-text text-avant">BOOK</div>
+                    <div class="big-text text-garde">ECHOES</div>
+                </div>
+            </div>
+
+            <div class="info-layer">
+                <div class="book-info">
+                    <div class="book-title">{{TITLE}}</div>
+                    <div class="book-author">{{AUTHOR}}</div>
+                    <div class="book-publisher-time">{{PUBLISHER}} / {{PUB_YEAR}}</div>
+                </div>
+
+                <div class="bottom-section">
+                    <div class="credits">
+                        <div class="rec-label">REC.</div>
+                        <div class="rec-text">
+                            {{RECOMMENDATION}}
+                        </div>
+                    </div>
+
+                    <div class="rating">
+                        <div class="rating-group">
+                            <div class="rating-label">CALL NO.</div>
+                            <div class="rating-value">{{CALL_NUMBER}}</div>
+                        </div>
+                        <div class="rating-group">
+                            <div class="rating-label">DOUBAN RATING</div>
+                            <div class="rating-value">{{DOUBAN_RATING}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cover-section">
+            <img src="pic/cover.jpg" alt="Book Cover" class="cover-image">
+        </div>
+    </div>
+</body>
+
+</html>

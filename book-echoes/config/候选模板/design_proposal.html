@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书目推荐卡 - 极简冲击力版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+SC:wght@100;300;400;500;700;900&family=Noto+Serif+SC:wght@400;700&family=Oswald:wght@200;400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* 基础字体定义 */
+        .font-sans-sc {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        .font-serif-sc {
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .font-impact {
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .font-heavy {
+            font-family: 'Anton', sans-serif;
+        }
+
+        /* 卡片基础样式 */
+        .library-card {
+            position: relative;
+            background-color: #fdfbf6;
+            /* 稍微暖一点的米白 */
+            border: 1px solid #e5e5e5;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        /* 纹理背景 */
+        .texture-overlay {
+            position: absolute;
+            inset: 0;
+            opacity: 0.4;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 装饰性线条 */
+        .decorative-line {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #000, transparent);
+            opacity: 0.2;
+        }
+
+        /* 评语区域背景 */
+        .review-section {
+            background-color: #f4f4f5;
+            position: relative;
+        }
+
+        .review-section::before {
+            content: '"';
+            position: absolute;
+            top: -20px;
+            left: 20px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 120px;
+            line-height: 1;
+            color: #e5e7eb;
+            z-index: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 flex items-center justify-center min-h-screen p-4 font-sans-sc">
+
+    <div class="library-card w-full max-w-5xl bg-white flex flex-col md:flex-row min-h-[600px]">
+        <div class="texture-overlay"></div>
+
+        <!-- 左侧：信息展示区 -->
+        <div class="relative z-10 w-full md:w-[65%] p-8 md:p-12 flex flex-col justify-between">
+
+            <!-- 顶部 Logo 区域 -->
+            <div
+                class="flex items-center space-x-3 mb-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                <img src="pic/logo_shl.png" alt="Logo" class="h-8 object-contain">
+                <div class="h-4 w-[1px] bg-gray-400"></div>
+                <span class="text-xs tracking-[0.2em] uppercase font-impact text-gray-500">Library Collection</span>
+            </div>
+
+            <!-- 核心信息区域：极具视觉冲击力的排版 -->
+            <div class="flex-grow flex flex-col justify-center space-y-6">
+
+                <!-- 标题 -->
+                <div class="group">
+                    <div class="flex items-baseline border-b-2 border-black pb-2">
+                        <h1 class="text-6xl md:text-7xl font-black text-gray-900 tracking-tight leading-none mr-4">生育制度
+                        </h1>
+                        <span
+                            class="text-xs font-bold text-gray-400 uppercase tracking-widest font-impact self-end mb-2">Title</span>
+                    </div>
+                </div>
+
+                <!-- 作者 -->
+                <div class="flex items-baseline group">
+                    <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mr-4">费孝通</h2>
+                    <span
+                        class="text-xs font-bold text-gray-400 uppercase tracking-widest font-impact self-end mb-1">Author</span>
+                </div>
+
+                <!-- 出版信息 (组合) -->
+                <div class="grid grid-cols-2 gap-8 pt-4">
+                    <div class="flex flex-col border-l-4 border-gray-200 pl-4">
+                        <span class="text-2xl font-bold text-gray-700">中信出版社</span>
+                        <span
+                            class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-impact mt-1">Publisher</span>
+                    </div>
+                    <div class="flex flex-col border-l-4 border-gray-200 pl-4">
+                        <span class="text-2xl font-bold text-gray-700">2018</span>
+                        <span
+                            class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-impact mt-1">Year</span>
+                    </div>
+                </div>
+
+                <!-- 评分与索书号 -->
+                <div class="flex items-center justify-between pt-6">
+                    <div class="flex items-center">
+                        <span class="text-5xl font-heavy text-gray-900 mr-2">8.7</span>
+                        <div class="flex flex-col">
+                            <div class="flex text-yellow-500 text-xs">★★★★★</div>
+                            <span
+                                class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-impact">Douban
+                                Rating</span>
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <span class="block text-xl font-mono text-gray-600 tracking-wider">C913.11/5843-3</span>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-impact">Call
+                            Number</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 评语区域设计方案 -->
+            <div class="mt-10 relative">
+                <div class="review-section p-6 rounded-sm border-l-4 border-blue-900">
+                    <div class="relative z-10">
+                        <h3 class="text-xs font-bold text-blue-900 uppercase tracking-widest mb-2 font-impact">Curator's
+                            Review</h3>
+                        <p class="font-serif-sc text-lg text-gray-700 leading-relaxed text-justify">
+                            “费孝通先生的这部作品是中国社会学的奠基石，属于学科内的必读经典与通识教材。鉴于其极高的知名度、深刻的洞察力以及对中国乡土社会结构的精准剖析，它不仅是一本学术著作，更是一把理解中国传统家庭与社会关系的钥匙。”
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 右侧：封面图区域 -->
+        <div class="w-full md:w-[35%] relative bg-gray-100 overflow-hidden group">
+            <!-- 背景模糊处理 -->
+            <div class="absolute inset-0 bg-cover bg-center blur-xl opacity-50 scale-110"
+                style="background-image: url('pic/cover.jpg');"></div>
+
+            <!-- 封面图本体 -->
+            <div class="absolute inset-0 flex items-center justify-center p-8">
+                <div
+                    class="relative w-full aspect-[2/3] shadow-2xl transform transition-transform duration-700 group-hover:scale-105 group-hover:-rotate-1">
+                    <img src="pic/cover.jpg" alt="Book Cover" class="w-full h-full object-cover rounded-sm">
+
+                    <!-- 纹理叠加 -->
+                    <div class="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部二维码 -->
+            <div
+                class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white/90 to-transparent flex justify-between items-end">
+                <div class="flex flex-col items-center bg-white p-2 shadow-sm rounded-sm">
+                    <img src="pic/qrcode.png" alt="QR Code" class="w-16 h-16">
+                    <span class="text-[10px] uppercase tracking-widest mt-1 font-impact text-gray-500">Scan to
+                        Borrow</span>
+                </div>
+                <div class="text-right">
+                    <span
+                        class="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-impact writing-vertical-rl h-20">Library
+                        Collection No. 2025</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

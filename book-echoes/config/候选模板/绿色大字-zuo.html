@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avant Garde Poster Replica</title>
+    <!-- 引入几何风格字体以接近原版设计 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'League Spartan', sans-serif;
+        }
+
+        /* 海报容器 */
+        .poster {
+            position: relative;
+            width: 500px;
+            height: 700px;
+            background-color: #050505;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 1. 背景粉色同心圆 
+
+        .pattern-bg {
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: 400px;
+            height: 450px;
+            background: repeating-radial-gradient(circle at 50% 50%,
+                    transparent 0,
+                    transparent 12px,
+                    #ea0078 12px,
+                    #ea0078 24px);
+            z-index: 1;
+            opacity: 0.8;
+        }*/
+        /* 1. 背景粉色斜线 
+        .pattern-bg {
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: 400px;
+            height: 450px;
+            background: repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 12px,
+                    #ea0078 12px,
+                    #ea0078 24px);
+            z-index: 1;
+            opacity: 0.8;
+        }*/
+
+        .pattern-bg {
+            position: absolute;
+            top: -20px;
+            left: -60px;
+            width: 360px;
+            height: 400px;
+            background: repeating-linear-gradient(50deg,
+                    transparent,
+                    transparent 12px,
+                    #ea0078 12px,
+                    #ea0078 24px);
+            z-index: 1;
+            opacity: 0.8;
+            transform: rotate(-10deg);
+        }
+
+
+        /* 2. 主标题大字区域 */
+        .main-title {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* 包含两个大词的容器，整体旋转90度 */
+        .title-wrapper {
+            display: flex;
+            flex-direction: column;
+            transform: rotate(90deg);
+            transform-origin: top left;
+            position: absolute;
+            top: -28px;
+            left: 100%;
+            width: 700px;
+            height: 250px;
+            align-items: flex-start;
+            padding-left: 20px;
+        }
+
+        .big-text {
+            font-size: 220px;
+            line-height: 0.75;
+            color: #aadd33;
+            text-transform: uppercase;
+            letter-spacing: -10px;
+            white-space: nowrap;
+            font-weight: 800;
+        }
+
+        /* 3. 细节信息区域 - 提高层级 */
+        .info-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* 顶部图书信息 */
+        .book-info {
+            margin-top: 20px;
+            max-width: 60%;
+        }
+
+        .book-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.1;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .book-author {
+            font-size: 20px;
+            font-weight: 700;
+            color: #aadd33;
+            margin-bottom: 6px;
+            text-shadow: 1px 1px 0px #000;
+            background: #000;
+            display: inline-block;
+            padding: 0 5px;
+        }
+
+        .book-publisher-time {
+            font-family: "致一黑體_傅承形", "ZhiyiSans-regular", "League Spartan", sans-serif;
+            font-size: 16px;
+            color: #ddd;
+            font-weight: 500;
+            text-shadow: 1px 1px 0px #000;
+        }
+
+        /* 底部区域容器 */
+        .bottom-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 10px;
+        }
+
+        /* 推荐语 (左下) */
+        .credits {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            height: 250px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            transform: translateY(40px);
+        }
+
+        .rec-label {
+            display: inline-block;
+            background-color: #ea0078;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            margin-left: 8px;
+            writing-mode: horizontal-tb;
+        }
+
+        .rec-text {
+            font-family: "致一黑體_傅承形", "ZhiyiSans-regular", "League Spartan", sans-serif;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #ccc;
+            letter-spacing: 2px;
+        }
+
+        /* call no， rating (右下) */
+        .rating {
+            text-align: right;
+            margin-right: 14px;
+        }
+
+        .rating-group {
+            margin-bottom: 15px;
+        }
+
+        .rating-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .rating-label {
+            font-size: 10px;
+            color: #ea0078;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+
+        }
+
+        .rating-value {
+            font-size: 20px;
+            color: #fff;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="poster">
+        <!-- 背景圆环图案 -->
+        <div class="pattern-bg"></div>
+
+        <!-- 巨大文字 -->
+        <div class="main-title">
+            <div class="title-wrapper">
+                <div class="big-text text-avant">BOOK</div>
+                <div class="big-text text-garde">ECHOES</div>
+            </div>
+        </div>
+
+        <!-- 信息层 -->
+        <div class="info-layer">
+
+            <!-- 顶部：书名作者 -->
+            <div class="book-info">
+                <div class="book-title">生育制度</div>
+                <div class="book-author">费孝通</div>
+                <div class="book-publisher-time">中信出版社 / 2018</div>
+            </div>
+
+            <!-- 底部：推荐语与参数 -->
+            <div class="bottom-section">
+                <!-- 推荐语 -->
+                <div class="credits">
+                    <div class="rec-label">REC.</div>
+                    <div class="rec-text">
+                        费孝通先生的这部作品是中国社会学的奠基石，属于学科内的必读经典与通识教材。鉴于其极高的知名度、 ......
+                    </div>
+                </div>
+
+                <!-- call no，rating -->
+                <div class="rating">
+                    <div class="rating-group">
+                        <div class="rating-label">CALL NO.</div>
+                        <div class="rating-value">C913.11/5843-3</div>
+                    </div>
+                    <div class="rating-group">
+                        <div class="rating-label">DOUBAN RATING</div>
+                        <div class="rating-value">8.7</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>
