@@ -1,0 +1,526 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Wave Book Archive - Final Polish</title>
+    <style>
+        /* =========================================
+           全局变量
+           ========================================= */
+        :root {
+            --bg-color: #FFF200;
+            --text-color: #000000;
+            --font-display: 'Impact', 'Haettenschweiler', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif;
+            --font-body: 'Helvetica Neue', 'Helvetica', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Arial', sans-serif;
+
+            --poster-width: 600px;
+            --border-thick: 3px;
+            --border-thin: 1.5px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: var(--font-body);
+            -webkit-font-smoothing: antialiased;
+            padding: 40px;
+        }
+
+        .archive-wrapper {
+            display: flex;
+            flex-direction: row;
+            background-color: var(--bg-color);
+            border: var(--border-thick) solid var(--text-color);
+            box-shadow: 20px 20px 0px rgba(0, 0, 0, 0.5);
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        /* =========================================
+           左侧封面区域
+           ========================================= */
+        .cover-container {
+            width: 500px;
+            position: relative;
+            border-right: var(--border-thick) solid var(--text-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+            background-color: var(--bg-color);
+        }
+
+        .image-box {
+            flex: 1;
+            position: relative;
+            background-color: var(--bg-color);
+            overflow: hidden;
+        }
+
+        /* 保留：电光蓝风格滤镜 */
+        .book-cover-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            /* 反相差值生成电光蓝 */
+            filter: grayscale(100%) contrast(1.5) invert(100%);
+            mix-blend-mode: difference;
+            opacity: 0.9;
+        }
+
+        .cover-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* [修改点] ARCHIVE 文字设计优化 */
+        .vertical-deco-text {
+            position: absolute;
+            top: 30px;
+            left: 20px;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-family: var(--font-display);
+            font-size: 110px;
+            line-height: 0.8;
+            font-weight: 900;
+
+            /* 颜色策略： */
+            /* 因为图片是“电光蓝(高亮)”，我们必须用黑色描边才能看清 */
+            color: transparent;
+            -webkit-text-stroke: 3px #000000;
+
+            /* 增加黄色投影，让它与黑色描边形成波普风格的立体感 */
+            filter: drop-shadow(4px 4px 0px var(--bg-color));
+
+            letter-spacing: -4px;
+            text-transform: uppercase;
+        }
+
+        .barcode-deco {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 180px;
+            height: 60px;
+            background: repeating-linear-gradient(90deg,
+                    #000,
+                    #000 2px,
+                    transparent 2px,
+                    transparent 4px,
+                    #000 4px,
+                    #000 8px,
+                    transparent 8px,
+                    transparent 9px);
+            z-index: 10;
+        }
+
+        .scan-label {
+            position: absolute;
+            bottom: 85px;
+            left: 20px;
+            font-size: 10px;
+            font-weight: 900;
+            font-family: 'Courier New', monospace;
+            transform: rotate(-90deg);
+            transform-origin: bottom left;
+            z-index: 10;
+        }
+
+        /* =========================================
+           右侧区域 (保持 Sidebar 布局)
+           ========================================= */
+        .poster {
+            width: var(--poster-width);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            display: flex;
+            flex-direction: row;
+        }
+
+        .poster-main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 0 40px 40px;
+        }
+
+        .poster-sidebar {
+            width: 60px;
+            border-left: var(--border-thick) solid var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+            background-color: var(--bg-color);
+            flex-shrink: 0;
+        }
+
+        .sidebar-pattern {
+            width: 100%;
+            height: 100px;
+            background: repeating-linear-gradient(-45deg,
+                    var(--text-color),
+                    var(--text-color) 2px,
+                    transparent 2px,
+                    transparent 8px);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-text {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .header-section {
+            position: relative;
+            margin-bottom: 50px;
+            z-index: 1;
+            padding-right: 20px;
+        }
+
+        .distorted-title {
+            font-family: var(--font-display);
+            font-size: 130px;
+            line-height: 0.8;
+            letter-spacing: -4px;
+            text-transform: uppercase;
+            filter: url('#wave-filter');
+            user-select: none;
+            width: 100%;
+            word-wrap: break-word;
+        }
+
+        .smiley-face {
+            position: absolute;
+            top: 0;
+            right: 10px;
+            width: 140px;
+            height: 140px;
+            z-index: 2;
+            filter: url('#wave-filter');
+        }
+
+        .info-container {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            border-top: var(--border-thick) solid var(--text-color);
+            margin-right: 0;
+        }
+
+        .primary-info {
+            padding: 20px 20px 20px 0;
+            border-bottom: var(--border-thick) solid var(--text-color);
+        }
+
+        .meta-label {
+            font-family: var(--font-body);
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            opacity: 0.7;
+        }
+
+        .text-clamp-title {
+            font-family: var(--font-display);
+            font-size: 42px;
+            font-weight: 900;
+            line-height: 1.1;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .text-clamp-author {
+            font-family: var(--font-body);
+            font-size: 26px;
+            font-weight: 700;
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            border-bottom: var(--border-thick) solid var(--text-color);
+        }
+
+        .grid-cell {
+            padding: 12px 10px 12px 0;
+            border-right: var(--border-thin) solid var(--text-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .grid-cell:nth-child(2n) {
+            border-right: none;
+            padding-left: 20px;
+        }
+
+        .grid-cell:nth-child(1),
+        .grid-cell:nth-child(2) {
+            border-bottom: var(--border-thin) solid var(--text-color);
+        }
+
+        .data-value {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-top: 4px;
+            word-break: break-word;
+        }
+
+        .font-mono {
+            font-family: 'Courier New', Consolas, Monaco, 'Microsoft YaHei', monospace;
+            letter-spacing: -0.5px;
+        }
+
+        .rating-box {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .rating-score {
+            font-size: 32px;
+            font-weight: 900;
+            font-family: var(--font-display);
+        }
+
+        .blurb-section {
+            padding: 20px 20px 20px 0;
+            position: relative;
+        }
+
+        .blurb-content {
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.7;
+            text-align: justify;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            overflow: hidden;
+        }
+
+        .quote-mark {
+            font-family: var(--font-display);
+            font-size: 60px;
+            line-height: 0;
+            position: absolute;
+            top: 25px;
+            left: -15px;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .footer-bar {
+            margin-top: 10px;
+            padding-top: 10px;
+            padding-right: 20px;
+            border-top: var(--border-thick) solid var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        svg.icon {
+            fill: var(--bg-color);
+            stroke: var(--text-color);
+            stroke-width: 6px;
+        }
+
+        @media (max-width: 900px) {
+            .archive-wrapper {
+                flex-direction: column;
+                max-width: 600px;
+            }
+
+            .cover-container {
+                width: 100%;
+                height: 500px;
+                border-right: none;
+                border-bottom: var(--border-thick) solid var(--text-color);
+            }
+
+            .poster {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .poster-main-content {
+                padding: 40px;
+            }
+
+            .poster-sidebar {
+                display: none;
+            }
+
+            .distorted-title {
+                font-size: 100px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <svg style="position: absolute; width: 0; height: 0;" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <filter id="wave-filter">
+                <feTurbulence type="turbulence" baseFrequency="0.015 0.01" numOctaves="1" result="turbulence" />
+                <feDisplacementMap in2="turbulence" in="SourceGraphic" scale="25" xChannelSelector="R"
+                    yChannelSelector="G" />
+            </filter>
+        </defs>
+    </svg>
+
+    <div class="archive-wrapper">
+
+        <!-- 左侧封面区 -->
+        <div class="cover-container">
+            <div class="image-box">
+                <!-- 图片应用电光蓝反相滤镜 -->
+                <img src="pic/cover.jpg" alt="Book Cover" class="book-cover-img">
+            </div>
+
+            <div class="cover-overlay">
+                <!-- 优化后的 ARCHIVE：白色描边 + 黑色硬投影，确保在任何背景下都可见 
+                <div class="vertical-deco-text">ARCHIVE</div>-->
+
+                <div class="scan-label">SCAN_OBJ_01</div>
+                <div class="barcode-deco"></div>
+            </div>
+        </div>
+
+        <!-- 右侧信息区 -->
+        <div class="poster">
+
+            <div class="poster-main-content">
+                <div class="header-section">
+                    <div class="smiley-face">
+                        <svg viewBox="0 0 100 100" class="icon" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="45" />
+                            <ellipse cx="35" cy="35" rx="5" ry="12" style="fill:black; stroke:none;" />
+                            <ellipse cx="65" cy="35" rx="5" ry="12" style="fill:black; stroke:none;" />
+                            <path d="M 30 65 Q 50 85 70 65"
+                                style="fill:none; stroke:black; stroke-width:5; stroke-linecap:round;" />
+                        </svg>
+                    </div>
+
+                    <div class="distorted-title">
+                        BOOK<br>ECHOES
+                    </div>
+                </div>
+
+                <div class="info-container">
+
+                    <div class="primary-info">
+                        <div class="meta-label">Title</div>
+                        <div id="book-title" class="text-clamp-title">
+                            乡土中国
+                        </div>
+
+                        <div class="meta-label" style="text-align: right; margin-top: 5px;">Author</div>
+                        <div id="book-author" class="text-clamp-author">
+                            费孝通
+                        </div>
+                    </div>
+
+                    <div class="data-grid">
+                        <div class="grid-cell">
+                            <div class="meta-label">PUBLISHER</div>
+                            <div id="book-publisher" class="data-value">
+                                生活·读书·新知三联书店
+                            </div>
+                        </div>
+
+                        <div class="grid-cell">
+                            <div class="meta-label">YEAR</div>
+                            <div id="pub-year" class="data-value font-mono">
+                                2018
+                            </div>
+                        </div>
+
+                        <div class="grid-cell">
+                            <div class="meta-label">CALL NO.</div>
+                            <div id="call-number" class="data-value font-mono">
+                                C913.11/5843-3
+                            </div>
+                        </div>
+
+                        <div class="grid-cell">
+                            <div class="meta-label">DOUBAN RATING</div>
+                            <div class="rating-box">
+                                <span id="douban-rating" class="rating-score">9.2</span>
+                                <span class="rating-max">/ 10</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="blurb-section">
+                        <div class="quote-mark">"</div>
+                        <div class="meta-label">EDITOR'S PICK</div>
+                        <div id="recommendation-text" class="blurb-content">
+                            费孝通先生的这部作品是中国社会学的奠基石,属于学科内的必读经典与通识教材。鉴于其极高的知名度、深刻的洞察力以及对中国乡土社会结构的精准剖析,它不仅是一本学术著作,更是一把理解中国传统家庭与社会关系的钥匙。
+                        </div>
+                    </div>
+
+                    <div class="footer-bar">
+                        <div>LIBRARY COLLECTION</div>
+                        <div>REF: NEW-WAVE-2025</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧装饰边栏 -->
+            <div class="poster-sidebar">
+                <div class="sidebar-pattern"></div>
+                <div class="sidebar-text">/// SYSTEM_READY</div>
+                <div style="flex:1"></div>
+                <div class="sidebar-text">NO.8592-A</div>
+                <div class="sidebar-pattern" style="margin-top: 20px;"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

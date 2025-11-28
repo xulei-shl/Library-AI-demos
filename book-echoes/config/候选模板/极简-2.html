@@ -96,12 +96,17 @@
             <div class="flex-grow flex flex-col justify-center space-y-6">
 
                 <!-- 标题 -->
-                <div class="group">
-                    <div class="flex items-baseline border-b-2 border-black pb-2">
-                        <h1 class="text-6xl md:text-7xl font-black text-gray-900 tracking-tight leading-none mr-4">生育制度
+                <div class="group w-full">
+                    <div class="flex items-end border-b-2 border-black pb-2 w-full"> <!-- 改为 items-end 对齐 -->
+                        
+                        <!-- 使用 line-clamp-2 实现最多两行，超出省略 -->
+                        <h1 class="text-5xl md:text-6xl font-black text-gray-900 tracking-tight leading-none mr-4 line-clamp-2 flex-1">
+                            生育制度与中国乡土社会结构的深层剖析
                         </h1>
-                        <span
-                            class="text-xs font-bold text-gray-400 uppercase tracking-widest font-impact self-end mb-2">Title</span>
+                        
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest font-impact mb-2 flex-shrink-0 whitespace-nowrap">
+                            Title
+                        </span>
                     </div>
                 </div>
 
