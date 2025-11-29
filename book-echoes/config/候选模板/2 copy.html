@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Echoes Card</title>
+    <!-- 引入外部字体以还原设计风格 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ================== 全局重置与变量 ================== */
+        :root {
+            --bg-color: #F2F0E9; /* 仿旧米纸色，参考原图背景 */
+            --ink-color: #111111; /* 深邃黑，接近印刷油墨 */
+            --grid-line: 2px solid var(--ink-color);
+            --thick-line: 6px solid var(--ink-color);
+            
+            /* 字体定义 */
+            --font-display: 'Oswald', 'Impact', sans-serif; /* 标题粗体 */
+            --font-mono: 'Space Mono', 'Courier New', monospace; /* 数据等宽体 */
+            --font-std: 'Helvetica Neue', 'Arial', sans-serif; /* 正文阅读体 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #333;
+            font-family: var(--font-std);
+        }
+
+        /* ================== 卡片容器 ================== */
+        .card {
+            width: 600px; /* 固定宽度，适合海报/卡片输出 */
+            height: 850px; /* 纵向长方形 */
+            background-color: var(--bg-color);
+            color: var(--ink-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* ================== 顶部：项目名与评分 ================== */
+        .header {
+            height: 140px;
+            border-bottom: var(--thick-line);
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding: 20px 30px;
+        }
+
+        .project-meta {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .project-name {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--ink-color);
+            padding-bottom: 4px;
+            margin-bottom: auto;
+            width: fit-content;
+        }
+
+        .year-badge {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid var(--ink-color);
+            padding: 2px 8px;
+            display: inline-block;
+        }
+
+        /* 巨大的评分，模仿原图的 "NR.3" 或 "29" */
+        .rate-box {
+            font-family: var(--font-display);
+            font-size: 120px;
+            line-height: 0.8;
+            font-weight: 700;
+            letter-spacing: -4px;
+            text-align: right;
+            position: relative;
+            top: 10px; /* 视觉微调 */
+        }
+        
+        .rate-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            position: absolute;
+            top: 10px;
+            right: 105%;
+            transform: rotate(-90deg);
+            transform-origin: right top;
+        }
+
+        /* ================== 中部：网格内容区 ================== */
+        .grid-section {
+            display: grid;
+            grid-template-columns: 240px 1fr; /* 左窄右宽 */
+            flex-grow: 1;
+        }
+
+        /* 左侧：封面区 */
+        .cover-area {
+            border-right: var(--grid-line);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        /* 封面图片容器 - 保持比例 */
+        .cover-wrapper {
+            width: 100%;
+            height: 300px;
+            background-color: #ddd;
+            border: 1px solid var(--ink-color);
+            overflow: hidden;
+            filter: grayscale(100%) contrast(110%); /* 增加黑白质感 */
+            transition: filter 0.3s;
+        }
+        
+        .book-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 索书号 - 模仿原图中的黑色块 */
+        .call-number {
+            margin-top: 20px;
+            background-color: var(--ink-color);
+            color: var(--bg-color);
+            padding: 15px;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            /* 装饰线条 */
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 5px,
+                rgba(255,255,255,0.1) 5px,
+                rgba(255,255,255,0.1) 10px
+            );
+        }
+        
+        .cn-label {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        /* 右侧：信息区 */
+        .info-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 标题区 */
+        .title-box {
+            padding: 30px;
+            border-bottom: var(--grid-line);
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+        }
+
+        .book-title {
+            font-family: var(--font-display);
+            font-size: 42px;
+            line-height: 1.1;
+            text-transform: uppercase;
+            /* 超过3行省略 */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* 作者出版社信息 */
+        .meta-box {
+            padding: 20px 30px;
+            border-bottom: var(--grid-line);
+            font-family: var(--font-mono);
+            font-size: 14px;
+        }
+
+        .meta-row {
+            display: flex;
+            margin-bottom: 12px;
+            align-items: baseline;
+        }
+
+        .meta-label {
+            font-weight: bold;
+            width: 80px;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+        
+        .meta-value {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ================== 底部：推荐语与二维码 ================== */
+        .footer-section {
+            height: 280px;
+            display: flex;
+        }
+
+        /* 推荐语区域 - 模仿日历的小字排版 */
+        .recommendation {
+            flex: 1;
+            padding: 30px;
+            font-family: var(--font-std);
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: justify;
+            border-right: var(--grid-line);
+            
+            /* 装饰：首字母下沉或装饰 */
+            position: relative;
+        }
+        
+        .rec-label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+
+        .rec-content {
+            /* 文本截断 */
+            display: -webkit-box;
+            -webkit-line-clamp: 8;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* 二维码区域 */
+        .qr-area {
+            width: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 底部对齐 */
+            padding: 20px;
+            background: repeating-linear-gradient(
+                0deg,
+                var(--bg-color),
+                var(--bg-color) 2px,
+                #e0ded8 2px,
+                #e0ded8 4px
+            );
+        }
+
+        .qrcode-img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1/1;
+            border: 4px solid var(--ink-color);
+            display: block;
+            background: #fff; /* 确保二维码有白底 */
+            padding: 5px;
+        }
+        
+        .scan-hint {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            text-align: center;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        /* ================== 装饰性细节 ================== */
+        /* 左下角的圆圈装饰，致敬海报中的圆形元素 */
+        .deco-circle {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 0; 
+            height: 0; 
+            /* 此处不做额外装饰，保持极简，避免喧宾夺主 */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- 头部：包含项目名和巨大的评分 -->
+        <header class="header">
+            <div class="project-meta">
+                <div class="project-name">Project: Book Echoes</div>
+                <div class="year-badge">NO. 2023</div> <!-- 使用年份作为编号感 -->
+            </div>
+            <div class="rate-box">
+                <span class="rate-label">RATING</span>
+                7.6
+            </div>
+        </header>
+
+        <!-- 中部网格 -->
+        <div class="grid-section">
+            <!-- 左栏：封面与索书号 -->
+            <div class="cover-area">
+                <div class="cover-wrapper">
+                    <!-- 封面图片 -->
+                    <img src="pic/cover.jpg" alt="Book Cover" class="book-cover">
+                </div>
+                
+                <!-- 索书号设计成类似印章或黑色档案块 -->
+                <div class="call-number">
+                    <span class="cn-label">CALL NUMBER</span>
+                    G131.3<br>4971
+                </div>
+            </div>
+
+            <!-- 右栏：图书元数据 -->
+            <div class="info-area">
+                <div class="title-box">
+                    <h1 class="book-title">日本 : 文化核心日本</h1>
+                </div>
+                
+                <div class="meta-box">
+                    <div class="meta-row">
+                        <span class="meta-label">AUTHOR</span>
+                        <span class="meta-value">[日] 松冈正刚</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">PUBLISHER</span>
+                        <span class="meta-value">岳麓书社</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">DATE</span>
+                        <span class="meta-value">2023</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部：推荐语与二维码 -->
+        <div class="footer-section">
+            <div class="recommendation">
+                <span class="rec-label">EDITOR'S REVIEW</span>
+                <p class="rec-content">
+                    一位编辑泰斗对日本文化基因的冷静解剖。松冈正刚以其惊人的阅读量和独特的“编辑工学”视角，重新梳理了日本文化的底层代码。字字珠玑，直击“缩小”意识的核心，是理解东方美学的必读之作。
+                </p>
+            </div>
+            
+            <div class="qr-area">
+                <img src="pic/qrcode.png" alt="QR Code" class="qrcode-img">
+                <div class="scan-hint">SCAN TO READ</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

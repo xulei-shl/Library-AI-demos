@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Echoes Card - Swiss Style</title>
+    <!-- 引入专业设计字体：Oswald(标题), Space Mono(数据), Inter(正文) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Oswald:wght@500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ================== 核心变量定义 ================== */
+        :root {
+            /* 配色：米白纸张色 + 印刷深黑 */
+            --bg-paper: #F2F0E9; 
+            --ink-black: #1a1a1a; 
+            
+            /* 线条系统 */
+            --border-thin: 1px solid var(--ink-black);
+            --border-medium: 2px solid var(--ink-black);
+            --border-heavy: 6px solid var(--ink-black);
+            
+            /* 字体栈 */
+            --font-head: 'Oswald', sans-serif;       /* 标题：冲击力 */
+            --font-tech: 'Space Mono', monospace;    /* 数据：机械感 */
+            --font-body: 'Inter', sans-serif;        /* 正文：阅读性 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #2c2c2c; /* 网页背景，为了衬托卡片 */
+            padding: 20px;
+        }
+
+        /* ================== 卡片容器 ================== */
+        .card-container {
+            width: 600px;
+            height: 900px; /* 3:2 比例拉长，符合海报构图 */
+            background-color: var(--bg-paper);
+            color: var(--ink-black);
+            display: flex;
+            flex-direction: column;
+            border: var(--border-thin);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 顶部边框装饰条 */
+        .card-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: var(--ink-black);
+        }
+
+        /* ================== 1. 头部区域 (Header) ================== */
+        .header {
+            height: 160px;
+            border-bottom: var(--border-medium);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end; /* 底部对齐 */
+            padding: 0 30px 20px 30px;
+            position: relative;
+        }
+
+        /* 左上角项目信息 */
+        .project-info {
+            font-family: var(--font-tech);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .project-title {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 700;
+            border-bottom: 1px solid var(--ink-black);
+            padding-bottom: 2px;
+            width: fit-content;
+        }
+
+        .project-year {
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        /* === 核心设计：丝网印刷风格评分 === */
+        .rating-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        .rating-number {
+            font-family: var(--font-head);
+            font-size: 140px;
+            line-height: 0.75;
+            font-weight: 700;
+            letter-spacing: -6px;
+            
+            /* 丝网印刷特效核心代码 */
+            color: transparent; /* 文字本身透明 */
+            /* 黑色圆点网纹背景 */
+            background-image: radial-gradient(circle, var(--ink-black) 45%, transparent 50%);
+            background-size: 5px 5px; /* 网点密度 */
+            -webkit-background-clip: text;
+            background-clip: text;
+            
+            /* 错位硬投影，模拟套印不准 */
+            text-shadow: 5px 5px 0px rgba(0,0,0,0.15);
+            
+            /* 混合模式增强质感 */
+            mix-blend-mode: multiply;
+        }
+
+        .rating-label {
+            font-family: var(--font-tech);
+            font-size: 10px;
+            position: absolute;
+            top: 10px;
+            right: 100%; /* 在数字左侧 */
+            transform-origin: right top;
+            transform: rotate(-90deg) translateY(-15px);
+            white-space: nowrap;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        /* ================== 2. 主体网格 (Main Grid) ================== */
+        .main-body {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 260px 1fr; /* 左侧封面栏较窄 */
+        }
+
+        /* --- 左侧栏 --- */
+        .col-visual {
+            border-right: var(--border-medium);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .cover-box {
+            width: 100%;
+            aspect-ratio: 2/3;
+            border: var(--border-thin);
+            padding: 5px; /* 内边框留白 */
+            background: #fff;
+        }
+
+        .book-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(100%) contrast(1.1); /* 黑白风格，如需彩色可去掉此行 */
+            display: block;
+        }
+
+        /* 索书号：黑底白字块 */
+        .call-number-box {
+            margin-top: 20px;
+            background-color: var(--ink-black);
+            color: var(--bg-paper);
+            padding: 15px;
+            font-family: var(--font-tech);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 增加斜线纹理装饰 */
+        .call-number-box::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 5px,
+                rgba(255,255,255,0.05) 5px,
+                rgba(255,255,255,0.05) 10px
+            );
+            pointer-events: none;
+        }
+
+        .cn-label {
+            font-size: 9px;
+            display: block;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .cn-code {
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.2;
+            word-break: break-all;
+        }
+
+        /* --- 右侧栏 --- */
+        .col-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 书名区域 */
+        .title-section {
+            padding: 30px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            border-bottom: var(--border-thin);
+        }
+
+        .book-title {
+            font-family: var(--font-head);
+            font-size: 46px; /* 巨大字号 */
+            line-height: 1.1;
+            text-transform: uppercase;
+            
+            /* 超过4行省略 */
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* 作者出版社信息表 */
+        .meta-section {
+            padding: 25px 30px;
+            font-family: var(--font-tech);
+            font-size: 13px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 12px 10px; /* 行间距 列间距 */
+            align-items: baseline;
+        }
+
+        .meta-key {
+            font-weight: 700;
+            opacity: 0.6;
+        }
+
+        .meta-val {
+            /* 单行截断 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ================== 3. 底部区域 (Footer) ================== */
+        .footer {
+            height: 260px;
+            border-top: var(--border-medium);
+            display: flex;
+        }
+
+        /* 推荐语 */
+        .review-box {
+            flex: 1;
+            padding: 30px;
+            border-right: var(--border-thin);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .review-header {
+            font-family: var(--font-tech);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .review-header::before {
+            content: '';
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--ink-black);
+            margin-right: 8px;
+        }
+
+        .review-text {
+            font-family: var(--font-body);
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: justify;
+            color: #333;
+            
+            /* 多行截断 */
+            display: -webkit-box;
+            -webkit-line-clamp: 6;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* 二维码 */
+        .qr-box {
+            width: 180px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            background-color: #e8e6df; /* 稍深的背景区分 */
+        }
+
+        .qr-img {
+            width: 100%;
+            height: auto;
+            border: 2px solid var(--ink-black);
+            mix-blend-mode: multiply; /* 让白底变透明融合背景 */
+            margin-bottom: 10px;
+        }
+
+        .scan-text {
+            font-family: var(--font-tech);
+            font-size: 10px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="card-container">
+        
+        <!-- 头部 -->
+        <header class="header">
+            <div class="project-info">
+                <div class="project-title">Project: Book Echoes</div>
+                <div class="project-year">ARCHIVE NO. 2023</div>
+            </div>
+            
+            <div class="rating-wrapper">
+                <div class="rating-label">RATING INDEX</div>
+                <!-- 丝网印刷效果数字 -->
+                <div class="rating-number">7.6</div>
+            </div>
+        </header>
+
+        <!-- 主体 -->
+        <div class="main-body">
+            <!-- 左栏 -->
+            <aside class="col-visual">
+                <div class="cover-box">
+                    <!-- 封面图片 -->
+                    <img src="pic/cover.jpg" alt="封面" class="book-cover">
+                </div>
+                
+                <div class="call-number-box">
+                    <span class="cn-label">CALL NUMBER</span>
+                    <div class="cn-code">G131.3<br>4971</div>
+                </div>
+            </aside>
+
+            <!-- 右栏 -->
+            <main class="col-info">
+                <div class="title-section">
+                    <h1 class="book-title">[日] 日本 : 文化核心日本</h1>
+                </div>
+                
+                <div class="meta-section">
+                    <div class="meta-grid">
+                        <div class="meta-key">AUTHOR</div>
+                        <div class="meta-val">[日] 松冈正刚</div>
+                        
+                        <div class="meta-key">PUBLISHER</div>
+                        <div class="meta-val">岳麓书社</div>
+                        
+                        <div class="meta-key">YEAR</div>
+                        <div class="meta-val">2023</div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- 底部 -->
+        <footer class="footer">
+            <div class="review-box">
+                <div class="review-header">Editor's Recommendation</div>
+                <p class="review-text">
+                    一位编辑泰斗对日本文化基因的冷静解剖。松冈正刚以其惊人的阅读量和独特的“编辑工学”视角，重新梳理了日本文化的底层代码。字字珠玑，直击“缩小”意识的核心，是理解东方美学的必读之作。
+                </p>
+            </div>
+            
+            <div class="qr-box">
+                <!-- 二维码图片 -->
+                <img src="pic/qrcode.png" alt="QR" class="qr-img">
+                <div class="scan-text">SCAN TO READ</div>
+            </div>
+        </footer>
+
+    </div>
+
+</body>
+</html>
