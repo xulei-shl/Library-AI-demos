@@ -225,9 +225,9 @@ douban:
     # 批次冷却配置（避免持续请求触发反爬）
     batch_cooldown:
       enabled: true
-      interval: 20        # 每处理 N 条触发冷却
-      min: 30             # 冷却最小时间（秒）
-      max: 60             # 冷却最大时间（秒）
+      interval: 100        # 每处理 N 条触发冷却
+      min: 10             # 冷却最小时间（秒）
+      max: 30             # 冷却最大时间（秒）
 
     # 重试配置（指数退避）
     retry:
