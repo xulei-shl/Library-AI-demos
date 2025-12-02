@@ -53,6 +53,24 @@ class FolioIsbnPipeline:
     def run(self, options: FolioIsbnPipelineOptions) -> Tuple[str, Dict[str, Any]]:
         """执行 FOLIO 流程"""
         excel_path = self._validate_excel(options.excel_file)
+        douban_config = self.config_manager.get_douban_config()
+        resolver_conf = (douban_config.get("isbn_resolver") or {})
+
+        if not resolver_conf.get("enabled", True):
+            logger.info("FOLIO ISBN 功能已在配置中禁用，跳过该阶段，直接返回原Excel: %s", excel_path)
+            skipped_stats = {
+                "pipeline": "folio_isbn",
+                "input_file": str(excel_path),
+                "output_file": str(excel_path),
+                "skipped": True,
+                "reason": "disabled_in_config",
+                "total_records": 0,
+                "success_count": 0,
+                "failed_count": 0,
+                "success_rate": 0.0,
+            }
+            return str(excel_path), skipped_stats
+
         config = self._resolve_processing_config(options, excel_path)
         db_config = self._build_db_config(options)
         username, password = self._resolve_credentials(options)

@@ -43,6 +43,17 @@ class ISBNSupplementStep(PipelineStep):
         Returns:
             统计信息字典
         """
+        resolver_conf = (context.douban_config.get('isbn_resolver') if context.douban_config else {}) or {}
+        if not resolver_conf.get('enabled', True):
+            logger.info("[ISBN补充] 配置禁止了FOLIO ISBN检索，跳过补充阶段")
+            return {
+                "total": 0,
+                "success": 0,
+                "failed": 0,
+                "skipped": 0,
+                "disabled": True,
+            }
+
         df = context.df
         progress = context.progress_manager
         isbn_column = context.isbn_column

@@ -883,6 +883,8 @@ class DoubanRatingPipeline:
         resume_mode = bool(context.extra.get("resume_from_partial"))
 
         db_enabled = not options.disable_database and options.enable_db_stage
+        crawler_conf = (context.douban_config.get("douban_crawler") if context.douban_config else {}) or {}
+        crawler_enabled = crawler_conf.get("enabled", True)
 
         if db_enabled:
 
@@ -891,7 +893,10 @@ class DoubanRatingPipeline:
             # 在数据库查重之后,插入ISBN补充步骤
             steps.append(ISBNSupplementStep(min_threshold=5))
 
-        if options.enable_link_stage:
+        if options.enable_link_stage and not crawler_enabled:
+            logger.info("配置禁止豆瓣爬虫执行，跳过链接阶段")
+
+        if options.enable_link_stage and crawler_enabled:
 
             # partial 模式下 link 阶段只处理 needs_link + source_column 为空的数据
 
