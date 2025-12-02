@@ -6,12 +6,11 @@
 
 from __future__ import annotations
 
+import numbers
 import sys
-
+from decimal import Decimal, InvalidOperation
 from dataclasses import dataclass
-
 from pathlib import Path
-
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -198,6 +197,14 @@ class DoubanRatingPipeline:
             link_column=link_column,
 
             extra_columns=[options.call_number_column] if options.call_number_column else None,
+
+        )
+
+        self._normalize_identifier_columns(
+
+            df=df,
+
+            columns=[options.barcode_column, options.isbn_column],
 
         )
 
@@ -845,6 +852,76 @@ class DoubanRatingPipeline:
         except Exception:
 
             pass
+
+    def _normalize_identifier_columns(self, df: pd.DataFrame, columns: List[Optional[str]]) -> None:
+
+        """将需要用作标识符的列统一标准化为字符串，避免浮点类型导致的尾部小数."""
+
+        for column in columns:
+
+            if not column or column not in df.columns:
+
+                continue
+
+            df[column] = df[column].apply(self._normalize_identifier_value)
+
+    @staticmethod
+
+    def _normalize_identifier_value(value: Any) -> str:
+
+        """将 Excel 读取出的条码/ISBN 值转换成可靠的字符串表示."""
+
+        if pd.isna(value):
+
+            return ""
+
+        if isinstance(value, numbers.Number):
+
+            return DoubanRatingPipeline._decimal_to_plain_text(Decimal(str(value)))
+
+        text = str(value).strip()
+
+        if not text or text.lower() == "nan":
+
+            return ""
+
+        lowered = text.lower()
+
+        if "." not in text and "e" not in lowered:
+
+            return text
+
+        return DoubanRatingPipeline._normalize_numeric_text(text)
+
+    @staticmethod
+
+    def _normalize_numeric_text(text: str) -> str:
+
+        """对于包含小数或科学计数法的文本，尝试转换为整数字符串."""
+
+        try:
+
+            decimal_value = Decimal(text)
+
+        except (InvalidOperation, ValueError):
+
+            return text
+
+        return DoubanRatingPipeline._decimal_to_plain_text(decimal_value)
+
+    @staticmethod
+
+    def _decimal_to_plain_text(value: Decimal) -> str:
+
+        """将 Decimal 安全转换为无尾随零的字符串."""
+
+        normalized = format(value.normalize(), "f")
+
+        if "." in normalized:
+
+            normalized = normalized.rstrip("0").rstrip(".")
+
+        return normalized or "0"
 
     def _build_db_config(self, options: DoubanRatingPipelineOptions) -> Dict[str, Any]:
 
