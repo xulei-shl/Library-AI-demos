@@ -27,7 +27,8 @@ class HTMLGenerator:
         self.template_cache = None
         
         # 解析字段转换器配置
-        self.field_transformers_config = config.get('field_transformers', {})
+        # 允许配置中省略或留空字段转换器,避免None造成迭代异常
+        self.field_transformers_config = config.get('field_transformers') or {}
         self._init_field_transformers()
 
     def generate_html(
