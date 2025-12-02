@@ -3,7 +3,9 @@
 import yaml
 import os
 import argparse
-from typing import Dict, Any, List, Optional
+from datetime import datetime
+from typing import Dict, Any, List, Optional, Tuple
+from dateutil import parser as date_parser
 from src.utils.logger import get_logger
 from .rss_fetcher import RSSFetcher
 from .processor import ArticleProcessor
@@ -37,6 +39,40 @@ class SubjectBibliographyPipeline:
             logger.error(f"加载配置文件失败: {e}")
             return {}
 
+    def _extract_time_range(
+        self, fetch_conf: Dict[str, Any]
+    ) -> Tuple[Optional[datetime], Optional[datetime]]:
+        """解析抓取时间范围配置。"""
+        if not fetch_conf:
+            return None, None
+
+        time_range_conf = fetch_conf.get("time_range") or {}
+        start_time = self._parse_datetime(time_range_conf.get("start"))
+        end_time = self._parse_datetime(time_range_conf.get("end"))
+
+        if start_time and end_time and start_time > end_time:
+            logger.warning("time_range.start 晚于 end，忽略该配置，回退到 hours_lookback。")
+            return None, None
+
+        return start_time, end_time
+
+    def _parse_datetime(self, value: Optional[str]) -> Optional[datetime]:
+        """解析配置中的日期时间字符串。"""
+        if not value or not isinstance(value, str):
+            return None
+
+        text = value.strip()
+        if not text:
+            return None
+
+        try:
+            # 去除时区信息，保持与抓取结果一致的本地时间
+            parsed = date_parser.parse(text, fuzzy=True)
+            return parsed.replace(tzinfo=None)
+        except Exception:
+            logger.warning(f"无法解析抓取时间配置: {value}")
+            return None
+
     def run_stage_fetch(self) -> Optional[str]:
         """
         阶段1: RSS获取
@@ -54,10 +90,17 @@ class SubjectBibliographyPipeline:
         
         # 获取配置
         feeds = self.config.get("rss_feeds", [])
-        hours_lookback = self.config.get("fetch_settings", {}).get("hours_lookback", 24)
+        fetch_conf = self.config.get("fetch_settings", {})
+        hours_lookback = fetch_conf.get("hours_lookback", 24)
+        start_time, end_time = self._extract_time_range(fetch_conf)
         
         # 抓取文章
-        articles = fetcher.fetch_recent_articles(feeds, hours_lookback)
+        articles = fetcher.fetch_recent_articles(
+            feeds,
+            hours_lookback=hours_lookback,
+            start_time=start_time,
+            end_time=end_time,
+        )
         
         if not articles:
             logger.info("未发现新文章，阶段1结束。")
