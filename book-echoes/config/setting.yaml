@@ -204,6 +204,48 @@ douban:
       max_times: 3    # API请求失败（如网络错误、超时）后的最大重试次数
       backoff: [1, 3, 5] # 重试的退避策略（秒），第一次失败等1秒，第二次等3秒，以此类推
 
+  # 新增：豆瓣 ISBN API 配置 (src/core/douban/api/isbn_client.py)
+  # 功能：通过 ISBN 直接调用豆瓣移动版 API 获取图书信息，无需经过爬虫搜索获取链接。
+  # 适用场景：ISBN 数据质量较高时，相比原流程速度更快。
+  isbn_api:
+    enabled: true
+    base_url: "https://m.douban.com/rexxar/api/v2/book/isbn"
+
+    # 并发与限流（保守配置，避免触发反爬）
+    max_concurrent: 2      # 最大并发数
+    qps: 0.5              # 每秒请求数（0.5 = 每 2 秒 1 次）
+    timeout: 15           # 请求超时（秒）
+
+    # 随机延迟配置（模拟人类操作）
+    random_delay:
+      enabled: true
+      min: 1.5            # 最小延迟（秒）
+      max: 3.5            # 最大延迟（秒）
+
+    # 批次冷却配置（避免持续请求触发反爬）
+    batch_cooldown:
+      enabled: true
+      interval: 20        # 每处理 N 条触发冷却
+      min: 30             # 冷却最小时间（秒）
+      max: 60             # 冷却最大时间（秒）
+
+    # 重试配置（指数退避）
+    retry:
+      max_times: 3
+      backoff: [2, 5, 10]
+
+    # User-Agent 池（移动端 UA，自动轮换）
+    user_agents:
+      - "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15"
+      - "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15"
+      - "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36"
+      - "Mozilla/5.0 (Linux; Android 11; Pixel 4) AppleWebKit/537.36"
+
+    # ISBN 补充配置（在调用 ISBN API 前，对缺失 ISBN 的记录进行 FOLIO 补充检索）
+    isbn_supplement:
+      enabled: true           # 是否启用 ISBN 补充检索
+      min_threshold: 5        # 最小阈值，只有当需要补充的记录数 >= 此值时才启动 FOLIO 处理器
+
   # 数据分析配置 (src/core/douban/analytics/ 和 report_generator.py)
   # 功能：对获取的豆瓣评分数据进行统计分析，生成主题报告。
   analytics:

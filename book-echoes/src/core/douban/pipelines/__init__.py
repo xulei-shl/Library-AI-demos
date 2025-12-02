@@ -6,6 +6,7 @@
 
 from .folio_isbn_pipeline import FolioIsbnPipeline, FolioIsbnPipelineOptions
 from .douban_rating_pipeline import DoubanRatingPipeline, DoubanRatingPipelineOptions
+from .douban_isbn_api_pipeline import DoubanIsbnApiPipeline, DoubanIsbnApiPipelineOptions
 from .pipeline_runner import PipelineExecutionOptions, PipelineRunner
 
 __all__ = [
@@ -13,6 +14,8 @@ __all__ = [
     "FolioIsbnPipelineOptions",
     "DoubanRatingPipeline",
     "DoubanRatingPipelineOptions",
+    "DoubanIsbnApiPipeline",
+    "DoubanIsbnApiPipelineOptions",
     "PipelineRunner",
     "PipelineExecutionOptions",
 ]

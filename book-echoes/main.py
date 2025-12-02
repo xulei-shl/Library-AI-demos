@@ -58,21 +58,30 @@ def find_latest_screening_result_excel():
 def find_latest_module3_excel():
     """
     查找模块3生成的最终豆瓣结果Excel：
-    格式严格为：数据筛选结果_YYYYMMDD_HHMMSS_豆瓣结果_YYYYMMDD_HHMMSS.xlsx
+    支持两种格式：
+    - 模块3: 数据筛选结果_YYYYMMDD_HHMMSS_豆瓣结果_YYYYMMDD_HHMMSS.xlsx
+    - 模块3-B: 数据筛选结果_YYYYMMDD_HHMMSS_ISBN_API结果_YYYYMMDD_HHMMSS.xlsx
     （过滤掉任何"partial""副本"等临时或中间文件）
     """
     outputs_dir = get_outputs_dir()
     if not outputs_dir.exists():
         return None
 
-    candidates = sorted(
-        outputs_dir.glob("数据筛选结果_*豆瓣结果*.xlsx"),
+    # 同时查找两种格式的文件
+    candidates_douban = list(outputs_dir.glob("数据筛选结果_*豆瓣结果*.xlsx"))
+    candidates_isbn_api = list(outputs_dir.glob("数据筛选结果_*ISBN_API结果*.xlsx"))
+
+    # 合并并按修改时间排序
+    all_candidates = sorted(
+        candidates_douban + candidates_isbn_api,
         key=lambda p: p.stat().st_mtime,
         reverse=True
     )
+
     import re
-    pattern = re.compile(r"^数据筛选结果_\d{8}_\d{6}_豆瓣结果_\d{8}_\d{6}\.xlsx$")
-    for p in candidates:
+    # 匹配两种格式：豆瓣结果 或 ISBN_API结果
+    pattern = re.compile(r"^数据筛选结果_\d{8}_\d{6}_(豆瓣结果|ISBN_API结果)_\d{8}_\d{6}\.xlsx$")
+    for p in all_candidates:
         if pattern.match(p.name):
             return p
     return None
@@ -611,7 +620,7 @@ def run_module7():
     print("=" * 60)
     print("模块7: 主题书目每日追踪")
     print("=" * 60)
-    
+
     while True:
         print("\n请选择运行阶段:")
         print("1. 阶段1: RSS获取")
@@ -619,16 +628,16 @@ def run_module7():
         print("3. 阶段3: LLM评估")
         print("4. 完整流程 (1→2→3)")
         print("5. 返回主菜单")
-        
+
         choice = input("\n请输入选择 (1-5): ").strip()
-        
+
         if choice == '5':
             return 0
-        
+
         try:
             from src.core.subject_bibliography.pipeline import SubjectBibliographyPipeline
             pipeline = SubjectBibliographyPipeline()
-            
+
             if choice == '1':
                 print("\n执行阶段1: RSS获取...")
                 output_file = pipeline.run_stage_fetch()
@@ -636,7 +645,7 @@ def run_module7():
                     print(f"\n[成功] 阶段1完成! 输出文件: {output_file}")
                 else:
                     print("\n[提示] 阶段1完成，但未发现新文章")
-                    
+
             elif choice == '2':
                 print("\n执行阶段2: 全文解析...")
                 # 可以选择指定输入文件
@@ -644,13 +653,13 @@ def run_module7():
                 input_file = None
                 if use_latest not in ('', 'y', 'yes'):
                     input_file = input("请输入阶段1输出文件路径: ").strip()
-                
+
                 output_file = pipeline.run_stage_extract(input_file)
                 if output_file:
                     print(f"\n[成功] 阶段2完成! 输出文件: {output_file}")
                 else:
                     print("\n[失败] 阶段2执行失败")
-                    
+
             elif choice == '3':
                 print("\n执行阶段3: LLM评估...")
                 # 可以选择指定输入文件
@@ -658,27 +667,90 @@ def run_module7():
                 input_file = None
                 if use_latest not in ('', 'y', 'yes'):
                     input_file = input("请输入阶段2输出文件路径: ").strip()
-                
+
                 output_file = pipeline.run_stage_analyze(input_file)
                 if output_file:
                     print(f"\n[成功] 阶段3完成! 输出文件: {output_file}")
                 else:
                     print("\n[失败] 阶段3执行失败")
-                    
+
             elif choice == '4':
                 print("\n执行完整流程 (1→2→3)...")
                 pipeline.run_all_stages()
                 print("\n[成功] 完整流程执行完成!")
-                
+
             else:
                 print("无效选择，请重新输入")
                 continue
-                
+
         except Exception as e:
             logger.error(f"运行模块7时出错: {str(e)}", exc_info=True)
             print(f"\n" + "=" * 60)
             print(f"X 模块7执行失败: {str(e)}")
             print("=" * 60)
+
+
+def run_module3b():
+    """运行模块3-B：豆瓣ISBN API模块"""
+    print("=" * 60)
+    print("模块3-B: 豆瓣ISBN API模块")
+    print("FOLIO ISBN获取 + 豆瓣ISBN API + 评分过滤")
+    print("=" * 60)
+
+    # 1. 检查是否有中断的 partial 文件
+    partial_excel = find_latest_partial_excel()
+    target_excel = None
+
+    if partial_excel and "_ISBN_API" in partial_excel.name:
+        print(f"\n发现中断的 ISBN API 进度文件: {partial_excel.name}")
+        choice = input("是否继续处理此文件? (y/n, 默认y): ").strip().lower()
+        if choice in ('', 'y', 'yes'):
+            target_excel = partial_excel
+            print(f"已选择继续处理: {partial_excel.name}")
+        else:
+            print("已跳过中断文件，将查找最新的筛选结果。")
+
+    # 2. 如果没有选择 partial 文件，则查找最新的筛选结果
+    if not target_excel:
+        target_excel = find_latest_screening_result_excel()
+        if not target_excel:
+            print("错误: 未找到筛选结果 Excel 文件。")
+            print("请先运行模块1完成筛选，或将结果文件放到 runtime/outputs 目录。")
+            return 1
+
+    print(f"使用输入文件: {target_excel}")
+
+    # 3. 调用 ISBN API 模块
+    try:
+        isbn_api_script = Path(__file__).parent / "src" / "core" / "douban" / "douban_isbn_main.py"
+
+        if not isbn_api_script.exists():
+            print("错误: 找不到豆瓣 ISBN API 模块主程序文件")
+            return 1
+
+        cmd = [sys.executable, str(isbn_api_script), "run", "--excel-file", str(target_excel)]
+
+        # 执行模块
+        result = subprocess.run(cmd, capture_output=False, text=True)
+
+        if result.returncode == 0:
+            print("\n" + "=" * 60)
+            print("[成功] 模块3-B执行完成!")
+            print("请查看 runtime/outputs/ 目录下的结果文件")
+            print("=" * 60)
+            return 0
+        else:
+            print("\n" + "=" * 60)
+            print(f"X 模块3-B执行失败 (退出码: {result.returncode})")
+            print("=" * 60)
+            return 1
+
+    except Exception as e:
+        logger.error(f"运行模块3-B时出错: {str(e)}", exc_info=True)
+        print(f"\n" + "=" * 60)
+        print(f"X 运行模块3-B时出错: {str(e)}")
+        print("=" * 60)
+        return 1
 
 
 
@@ -779,36 +851,39 @@ def main():
         print("\n请选择要运行的功能模块:")
         print("1. 模块1/2: 月归还数据分析 + 智能筛选")
         print("2. 模块3: 豆瓣模块（FOLIO ISBN + 豆瓣链接 + 评分过滤 + 豆瓣 API）")
-        print("3. 数据采集流程: 模块1 -> 模块2 -> 模块3")
-        print("4. 模块4: 初评（海选阶段）")
-        print("5. 模块4: 完整评选（初评→决选→终评）")
-        print("6. 数据分析与评选流程: 模块1 -> 模块2 -> 模块3 -> 模块4")
-        print("7. 模块5: 图书卡片生成（含借书卡）")
-        print("8. 模块6: 新书零借阅（睡美人）筛选")
-        print("9. 模块7: 主题书目每日追踪")
-        print("10. 退出程序")
+        print("3. 模块3-B: 豆瓣模块（FOLIO ISBN + 豆瓣 ISBN API + 评分过滤）")
+        print("4. 数据采集流程: 模块1 -> 模块2 -> 模块3")
+        print("5. 模块4: 初评（海选阶段）")
+        print("6. 模块4: 完整评选（初评→决选→终评）")
+        print("7. 数据分析与评选流程: 模块1 -> 模块2 -> 模块3 -> 模块4")
+        print("8. 模块5: 图书卡片生成（含借书卡）")
+        print("9. 模块6: 新书零借阅（睡美人）筛选")
+        print("10. 模块7: 主题书目每日追踪")
+        print("11. 退出程序")
 
-        choice = input("\n请输入选择 (1-9): ").strip()
+        choice = input("\n请输入选择 (1-11): ").strip()
 
         if choice == '1':
             return run_module1()
         elif choice == '2':
             return run_module3()
         elif choice == '3':
-            return run_data_collection_pipeline()
+            return run_module3b()
         elif choice == '4':
-            return run_theme_module_initial()
+            return run_data_collection_pipeline()
         elif choice == '5':
-            return run_theme_module_full()
+            return run_theme_module_initial()
         elif choice == '6':
-            return run_data_analysis_and_evaluation_pipeline()
+            return run_theme_module_full()
         elif choice == '7':
-            return run_module5()
+            return run_data_analysis_and_evaluation_pipeline()
         elif choice == '8':
-            return run_module6()
+            return run_module5()
         elif choice == '9':
-            return run_module7()
+            return run_module6()
         elif choice == '10':
+            return run_module7()
+        elif choice == '11':
             print("感谢使用 书海回响 脚本!")
             return 0
         else:
