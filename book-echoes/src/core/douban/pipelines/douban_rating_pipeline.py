@@ -42,6 +42,8 @@ from .douban_link_pipeline import DoubanLinkStep
 
 from .douban_subject_pipeline import DoubanSubjectStep
 
+from .isbn_supplement_pipeline import ISBNSupplementStep
+
 logger = get_logger(__name__)
 
 StepsBuilder = Callable[[StageContext, "DoubanRatingPipelineOptions"], List[PipelineStep]]
@@ -885,6 +887,9 @@ class DoubanRatingPipeline:
         if db_enabled:
 
             steps.append(DoubanDatabaseStage(enabled=True, db_config=db_config))
+            
+            # 在数据库查重之后,插入ISBN补充步骤
+            steps.append(ISBNSupplementStep(min_threshold=5))
 
         if options.enable_link_stage:
 

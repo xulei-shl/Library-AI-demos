@@ -51,7 +51,8 @@ class DoubanLinkResolver:
     async def resolve(self, df: pd.DataFrame, tasks: List[LinkResolveTask]) -> Dict[str, int]:
         stats = {"total": len(tasks), "success": 0, "no_data": 0, "failed": 0}
         for idx, task in enumerate(tasks, 1):
-            if not task.isbn:
+            # 过滤空值和 pandas NaN 转换的字符串 "nan"
+            if not task.isbn or task.isbn.lower() == "nan":
                 logger.debug("跳过空 ISBN - row=%s", task.index)
                 continue
             try:

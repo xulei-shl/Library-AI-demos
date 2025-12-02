@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Echoes - Mini Card</title>
+    <title>Book Echoes - 瑞士灰色网格风格</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&family=Noto+Sans+SC:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&family=Noto+Sans+SC:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
     <script>
         tailwind.config = {
             theme: {
@@ -34,6 +37,7 @@
             --poster-w: 580px;
             --poster-h: 780px;
         }
+
         body {
             background-color: #222;
             display: flex;
@@ -48,10 +52,10 @@
             width: var(--poster-w);
             height: var(--poster-h);
             background-color: var(--grid-line);
-            padding: 2px; 
+            padding: 2px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
             flex-shrink: 0;
         }
 
@@ -59,7 +63,7 @@
             display: grid;
             grid-template-columns: repeat(12, 1fr);
             grid-template-rows: repeat(12, 1fr);
-            gap: 2px; 
+            gap: 2px;
             width: 100%;
             height: 100%;
             background-color: var(--grid-line);
@@ -88,17 +92,33 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .lines-1 { -webkit-line-clamp: 1; }
-        .lines-2 { -webkit-line-clamp: 2; }
-        .lines-3 { -webkit-line-clamp: 3; }
-        .lines-6 { -webkit-line-clamp: 6; }
+
+        .lines-1 {
+            -webkit-line-clamp: 1;
+        }
+
+        .lines-2 {
+            -webkit-line-clamp: 2;
+        }
+
+        .lines-3 {
+            -webkit-line-clamp: 3;
+        }
+
+        .lines-6 {
+            -webkit-line-clamp: 6;
+        }
 
         /* --- 修复垂直文字显示 --- */
         .vertical-text-container {
-            writing-mode: vertical-rl; /* 从右向左垂直排列 */
-            text-orientation: mixed;   /* 混合方向，英文侧倒 */
-            transform: rotate(180deg); /* 调整方向为从下到上，或者不旋转从上到下 */
+            writing-mode: vertical-rl;
+            /* 从右向左垂直排列 */
+            text-orientation: mixed;
+            /* 混合方向，英文侧倒 */
+            transform: rotate(180deg);
+            /* 调整方向为从下到上，或者不旋转从上到下 */
         }
+
         /* 方案B：更加稳妥的从上到下 */
         .vertical-mode-simple {
             writing-mode: vertical-lr;
@@ -118,14 +138,16 @@
             object-fit: cover;
             filter: grayscale(100%) contrast(110%);
         }
-        
+
         .duotone-red {
-            background-color: #000;
+            background-color: #424242;
         }
+
         .duotone-red img {
-            opacity: 0.6;
+            opacity: 0.2;
             mix-blend-mode: hard-light;
         }
+
         .duotone-red::after {
             content: '';
             position: absolute;
@@ -136,12 +158,13 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="poster-container">
         <div class="texture-overlay"></div>
         <div class="bento-grid">
-            
+
             <!-- 1. Header (Span 12, Rows 2) -->
             <div class="cell col-span-12 row-span-2 px-4 py-3 flex justify-between items-start bg-archival-paper">
                 <div class="flex flex-col justify-between h-full w-1/3">
@@ -153,54 +176,57 @@
                         Archival Sys.<br>Ref. 2025
                     </p>
                 </div>
-                
+
                 <div class="flex flex-col items-center justify-center h-full w-1/3 border-x-2 border-black mx-2">
-                    <span class="font-black text-4xl tracking-tighter leading-none">NO.1</span>
+                    <span class="font-black text-4xl tracking-tighter leading-none">NO.4</span>
                     <span class="font-mono text-[8px] bg-black text-white px-1 mt-0.5">CATALOG</span>
                 </div>
 
                 <div class="flex flex-col justify-between items-end h-full w-1/3 text-right">
+                    <!-- 索书号 -->
                     <div class="font-mono text-[9px] font-bold border border-black px-1 py-0.5 inline-block bg-white">
-                        C913.11
+                        {{CALL_NUMBER}}
                     </div>
                     <p class="font-mono text-[8px] opacity-50 leading-tight">
-                        STANDARD<br>VERSION
+                        CALL<br>NO.
                     </p>
                 </div>
             </div>
 
-            <!-- 2. 图片A (Span 4, Rows 4) -->
             <div class="cell col-span-4 row-span-4 border-r border-black relative">
-                <img src="pic/cover.jpg" class="cover-fragment" style="object-position: 20% 50%; transform: scale(1.1);" alt="Cover">
-                <div class="absolute bottom-0 left-0 bg-white px-1.5 py-0.5 font-mono text-[8px] z-10 border-t border-r border-black">
+                <img src="pic/cover.jpg" class="cover-fragment" style="object-fit: contain; transform: scale(1.0);"
+                    alt="Cover">
+                <div
+                    class="absolute bottom-0 left-0 bg-white px-1.5 py-0.5 font-mono text-[8px] z-10 border-t border-r border-black">
                     FIG. A
                 </div>
             </div>
-            <!-- 3. 标题区 (Span 8, Rows 4) -->
-            <div class="cell col-span-8 row-span-4 p-4 bg-swiss-red flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -right-2 -bottom-6 text-[6rem] font-black opacity-10 leading-none select-none pointer-events-none">
+            <div
+                class="cell col-span-8 row-span-4 p-4 bg-swiss-red flex flex-col justify-between relative overflow-hidden">
+                <div
+                    class="absolute -right-2 -bottom-6 text-[6rem] font-black opacity-10 leading-none select-none pointer-events-none">
                     BOOK
                 </div>
-                
+
                 <div class="z-10 relative">
-                    <span class="font-mono text-[8px] text-white border border-white px-1.5 py-0.5 mb-1.5 inline-block">TITLE</span>
-                    <!-- 
-                        修改说明：
-                        将 leading-[0.95] 改为 leading-tight (或者 leading-[1.2]) 
-                        以增加行间距。
-                    -->
-                    <h1 class="text-4xl font-black text-ink-black leading-tight tracking-tight uppercase mt-1 line-clamp-fix lines-3 mix-blend-multiply">
-                        生育制度与中国乡土社会结构的剖析构的剖析构的剖析构的剖析构的剖析构的剖析
+                    <span
+                        class="font-mono text-[8px] text-white border border-white px-1.5 py-0.5 mb-1.5 inline-block">TITLE</span>
+                    <!-- 图书题名 -->
+                    <h1
+                        class="text-4xl font-black text-ink-black leading-tight tracking-tight uppercase mt-1 line-clamp-fix lines-3 mix-blend-multiply">
+                        {{TITLE}}
                     </h1>
                 </div>
-                
+
                 <div class="z-10 mt-auto flex items-center gap-2 border-t border-black/10 pt-2">
-                    <div class="w-7 h-7 bg-black rounded-full flex items-center justify-center text-white font-black text-xs flex-shrink-0">
+                    <div
+                        class="w-7 h-7 bg-black rounded-full flex items-center justify-center text-white font-black text-xs flex-shrink-0">
                         CP
                     </div>
                     <div class="flex flex-col">
                         <span class="font-mono text-[8px] text-white/80 uppercase">Author</span>
-                        <span class="font-bold text-white text-base leading-none">费孝通</span>
+                        <!-- 作者 -->
+                        <span class="font-bold text-white text-base leading-none">{{AUTHOR}}</span>
                     </div>
                 </div>
             </div>
@@ -212,23 +238,27 @@
                 <!-- 确保 flex 居中，移除 padding 防止挤压 -->
                 <div class="w-7 bg-black text-white flex items-center justify-center flex-shrink-0 overflow-hidden">
                     <!-- 使用 vertical-mode-simple: 简单的从上到下垂直排列 -->
-                    <span class="vertical-mode-simple font-mono text-[8px] tracking-widest whitespace-nowrap">METADATA</span>
+                    <span
+                        class="vertical-mode-simple font-mono text-[8px] tracking-widest whitespace-nowrap">METADATA</span>
                 </div>
-                
+
                 <!-- 数据区：缩小间距 -->
                 <div class="flex-grow px-3 py-2 grid grid-cols-3 gap-2 items-center">
                     <div class="border-r border-gray-300 h-full flex flex-col justify-center">
                         <span class="block font-mono text-[8px] text-gray-500 uppercase mb-0.5">Publisher</span>
-                        <span class="block font-bold text-sm leading-tight line-clamp-fix lines-2">中信出版社</span>
+                        <!-- 出版社 -->
+                        <span class="block font-bold text-sm leading-tight line-clamp-fix lines-2">{{PUBLISHER}}</span>
                     </div>
                     <div class="border-r border-gray-300 h-full flex flex-col justify-center pl-2">
                         <span class="block font-mono text-[8px] text-gray-500 uppercase mb-0.5">Year</span>
-                        <span class="block font-bold text-lg font-mono tracking-tighter">2018</span>
+                        <!-- 出版时间 -->
+                        <span class="block font-bold text-lg font-mono tracking-tighter">{{PUB_YEAR}}</span>
                     </div>
                     <div class="pl-2 h-full flex flex-col justify-center">
                         <span class="block font-mono text-[8px] text-gray-500 uppercase mb-0.5">Rating</span>
+                        <!-- 评分结果 -->
                         <div class="flex items-baseline gap-1">
-                            <span class="font-black text-lg text-swiss-red">8.7</span>
+                            <span class="font-black text-lg text-swiss-red">{{DOUBAN_RATING}}</span>
                             <span class="text-[8px] text-gray-400">/10</span>
                         </div>
                     </div>
@@ -247,14 +277,15 @@
             <!-- 5. 简介 (Span 5, Rows 4) -->
             <div class="cell col-span-5 row-span-4 p-3 bg-archival-paper flex flex-col relative">
                 <div class="absolute top-0 left-0 w-2.5 h-2.5 border-t-[3px] border-l-[3px] border-swiss-red"></div>
-                
+
                 <span class="font-mono text-[8px] uppercase tracking-widest text-gray-500 mb-1">Curator's Note</span>
-                
-                <!-- 正文字号缩小至 13px -->
-                <p class="font-serif font-bold text-[13px] leading-[1.6] text-justify line-clamp-fix lines-6 text-ink-black/90 flex-grow">
-                    “费孝通先生的这部作品是中国社会学的奠基石，属于学科内的必读经典与通识教材。鉴于其极高的知名度...”
+
+                <!-- 评语 -->
+                <p
+                    class="font-serif font-bold text-[13px] leading-[1.6] text-justify line-clamp-fix lines-6 text-ink-black/90 flex-grow">
+                    {{RECOMMENDATION}}...
                 </p>
-                
+
                 <div class="mt-1 pt-1 border-t border-black/10 flex justify-between items-center">
                     <div class="flex gap-1">
                         <div class="w-1 h-1 bg-black rounded-full"></div>
@@ -266,24 +297,25 @@
 
             <!-- 6. 图片B (Span 4, Rows 4) -->
             <div class="cell col-span-4 row-span-4 bg-black duotone-red overflow-hidden">
-                <img src="pic/cover.jpg" 
-                     class="cover-fragment opacity-60" 
-                     style="object-position: 80% 80%; transform: scale(2) rotate(15deg);" 
-                     alt="Texture">
+                <img src="pic/cover.jpg" class="cover-fragment opacity-80"
+                    style="object-position: 80% 80%; transform: scale(2) rotate(15deg);" alt="Texture">
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                     <div class="w-10 h-10 border border-white/40 rounded-full flex items-center justify-center">
-                         <div class="w-1 h-1 bg-white"></div>
-                     </div>
+                    <div class="w-10 h-10 border border-white/40 rounded-full flex items-center justify-center">
+                        <div class="w-1 h-1 bg-white"></div>
+                    </div>
                 </div>
             </div>
 
             <!-- 7. 二维码区 (Span 3, Rows 4) -->
             <div class="cell col-span-3 row-span-4 flex flex-col">
                 <div class="flex-grow bg-gray-100 p-1 flex items-center justify-center relative overflow-hidden">
-                     <div class="absolute inset-0" style="background: repeating-linear-gradient(45deg, transparent, transparent 4px, #e5e5e5 4px, #e5e5e5 5px);"></div>
-                     <span class="font-mono text-sm font-black text-gray-400 -rotate-90 relative z-10">SCAN</span>
+                    <div class="absolute inset-0"
+                        style="background: repeating-linear-gradient(45deg, transparent, transparent 4px, #e5e5e5 4px, #e5e5e5 5px);">
+                    </div>
+                    <span class="font-mono text-sm font-black text-gray-400 -rotate-90 relative z-10">SCAN</span>
                 </div>
-                <div class="aspect-square bg-white p-1.5 flex items-center justify-center border-t-2 border-black relative">
+                <div
+                    class="aspect-square bg-white p-1.5 flex items-center justify-center border-t-2 border-black relative">
                     <div class="absolute top-0.5 right-0.5 w-1 h-1 bg-swiss-red"></div>
                     <img src="pic/qrcode.png" class="w-full h-full object-contain mix-blend-multiply" alt="QR">
                 </div>
@@ -293,4 +325,5 @@
     </div>
 
 </body>
+
 </html>

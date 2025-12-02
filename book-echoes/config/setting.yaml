@@ -8,6 +8,11 @@
     monthly_return_file: "data/月归还.xlsx"
     # 近三月借阅数据文件路径
     recent_three_months_borrowing_file: "data/近三月借阅.xlsx"
+    # 新书验收数据文件路径（模块6）
+    new_books_file: "data/new/验收.xlsx"
+    # 近四月借阅数据文件路径（模块6）
+    borrowing_4months_file: "data/new/近四月借阅.xlsx"
+
 
 # 借阅统计配置
 statistics:
@@ -451,7 +456,7 @@ fields_mapping:
 # =============================================================================
 card_generator:
   # HTML模板文件路径
-  template_path: "config/green_bigtext_template.html"
+  template_path: "config/瑞士灰色网格风格.html"
 
   # 字段转换器配置
   # 功能: 为不同模板提供灵活的字段处理规则
@@ -466,12 +471,12 @@ card_generator:
     
     # 示例2: AUTHOR字段 - 只显示第一作者 + "等"
     # 取消下面的注释即可启用此配置
-    AUTHOR:
-      type: "first_author"        # 转换器类型: first_author(提取第一作者)
-      source_field: "豆瓣作者"     # 源字段名
-      separator: "/"              # 作者分隔符
-      suffix: " 等"               # 多作者时的后缀
-      default: ""                 # 默认值
+    # AUTHOR:
+    #   type: "first_author"        # 转换器类型: first_author(提取第一作者)
+    #   source_field: "豆瓣作者"     # 源字段名
+    #   separator: "/"              # 作者分隔符
+    #   suffix: " 等"               # 多作者时的后缀
+    #   default: ""                 # 默认值
     
     # 示例3: TITLE字段 - 使用完整标题(主标题 + 副标题,默认行为)
     # 如果不配置,则使用默认逻辑(显示主标题和副标题)
@@ -484,10 +489,10 @@ card_generator:
     
     # 示例4: TITLE字段 - 只显示主标题(不含副标题)
     # 取消下面的注释即可启用此配置
-    TITLE:
-      type: "main_title_only"     # 转换器类型: main_title_only(仅主标题)
-      source_field: "豆瓣书名"     # 源字段名
-      default: ""                 # 默认值
+    # TITLE:
+    #   type: "main_title_only"     # 转换器类型: main_title_only(仅主标题)
+    #   source_field: "豆瓣书名"     # 源字段名
+    #   default: ""                 # 默认值
     
     # 其他字段也可以配置转换器:
     # PUBLISHER, PUB_YEAR, CALL_NUMBER, DOUBAN_RATING, RECOMMENDATION
@@ -620,7 +625,7 @@ card_generator:
 
     # 字段长度限制(注:实际截取逻辑在 models.py 中实现,会智能在标点处截断)
     truncate:
-      "初评理由": 50  # 推荐语字段,智能截取约50个字符
+      "初评理由": 70  # 推荐语字段,智能截取约50个字符
     
     # 列值验证过滤规则
     # 功能: 在生成卡片前检查Excel列值是否满足要求

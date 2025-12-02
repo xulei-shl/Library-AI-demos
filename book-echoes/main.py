@@ -29,44 +29,49 @@ logger = get_logger(__name__)
 def get_outputs_dir():
     """获取运行输出目录"""
     outputs_dir = Path(get_config('paths.outputs_dir', 'runtime/outputs'))
-    outputs_dir.mkdir(parents=True, exist_ok=True)
     return outputs_dir
 
-
-def find_latest_module2_excel():
+def find_latest_screening_result_excel():
     """
-    查找模块2生成的原始筛选结果Excel：
-    格式严格为：月归还数据筛选结果_YYYYMMDD_HHMMSS.xlsx
-    （不包含“豆瓣结果”“partial”“副本”等后缀）
+    查找最新的数据筛选结果Excel（模块1或模块6的输出）：
+    格式：数据筛选结果_YYYYMMDD_HHMMSS.xlsx
+    排除包含"豆瓣结果"的文件
     """
     outputs_dir = get_outputs_dir()
+    if not outputs_dir.exists():
+        return None
+        
+    # Find files starting with "数据筛选结果_" and ending with ".xlsx"
     candidates = sorted(
-        outputs_dir.glob("月归还数据筛选结果_*.xlsx"),
+        outputs_dir.glob("数据筛选结果_*.xlsx"),
         key=lambda p: p.stat().st_mtime,
         reverse=True
     )
-    import re
-    pattern = re.compile(r"^月归还数据筛选结果_\d{8}_\d{6}\.xlsx$")
+    
     for p in candidates:
-        if pattern.match(p.name):
-            return p
+        # Exclude files that are actually Module 3 output (containing "豆瓣结果")
+        # Also exclude temporary files
+        if "豆瓣结果" not in p.name and not p.name.startswith("~$"):
+             return p
     return None
-
 
 def find_latest_module3_excel():
     """
     查找模块3生成的最终豆瓣结果Excel：
-    格式严格为：月归还数据筛选结果_YYYYMMDD_HHMMSS_豆瓣结果_YYYYMMDD_HHMMSS.xlsx
+    格式严格为：数据筛选结果_YYYYMMDD_HHMMSS_豆瓣结果_YYYYMMDD_HHMMSS.xlsx
     （过滤掉任何"partial""副本"等临时或中间文件）
     """
     outputs_dir = get_outputs_dir()
+    if not outputs_dir.exists():
+        return None
+
     candidates = sorted(
-        outputs_dir.glob("月归还数据筛选结果_*豆瓣结果*.xlsx"),
+        outputs_dir.glob("数据筛选结果_*豆瓣结果*.xlsx"),
         key=lambda p: p.stat().st_mtime,
         reverse=True
     )
     import re
-    pattern = re.compile(r"^月归还数据筛选结果_\d{8}_\d{6}_豆瓣结果_\d{8}_\d{6}\.xlsx$")
+    pattern = re.compile(r"^数据筛选结果_\d{8}_\d{6}_豆瓣结果_\d{8}_\d{6}\.xlsx$")
     for p in candidates:
         if pattern.match(p.name):
             return p
@@ -79,8 +84,11 @@ def find_latest_module4_excel():
     查找包含"终评"的最新Excel文件
     """
     outputs_dir = get_outputs_dir()
+    if not outputs_dir.exists():
+        return None
+
     candidates = sorted(
-        outputs_dir.glob("月归还数据筛选结果_*豆瓣结果*.xlsx"),
+        outputs_dir.glob("数据筛选结果_*豆瓣结果*.xlsx"),
         key=lambda p: p.stat().st_mtime,
         reverse=True
     )
@@ -128,9 +136,10 @@ def export_filtered_results(filtered_data, excluded_data, filter_engine, filter_
         # 在筛选数据中添加"评选批次"字段(插入到第一列)
         filtered_data_copy = filtered_data.copy()
         filtered_data_copy.insert(0, '评选批次', target_month)
+        filtered_data_copy.insert(1, '数据来源', '月归还借阅')
         
         # 1. 输出筛选后的Excel数据
-        excel_file = outputs_dir / f"月归还数据筛选结果_{timestamp}.xlsx"
+        excel_file = outputs_dir / f"数据筛选结果_{timestamp}.xlsx"
         filtered_data_copy.to_excel(excel_file, index=False)
         output_files['筛选结果Excel'] = str(excel_file)
         logger.info(f"筛选结果已保存到: {excel_file} (评选批次: {target_month})")
@@ -379,6 +388,25 @@ def run_module1():
         print("=" * 60)
         return 1
 
+def find_latest_partial_excel():
+    """
+    查找最新的豆瓣模块中断文件：
+    格式：数据筛选结果_YYYYMMDD_HHMMSS_partial.xlsx
+    """
+    outputs_dir = get_outputs_dir()
+    if not outputs_dir.exists():
+        return None
+        
+    candidates = sorted(
+        outputs_dir.glob("*_partial.xlsx"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True
+    )
+    
+    if candidates:
+        return candidates[0]
+    return None
+
 def run_module3():
     """运行模块3：豆瓣模块"""
     print("=" * 60)
@@ -386,13 +414,29 @@ def run_module3():
     print("ISBN获取、豆瓣评分等功能")
     print("=" * 60)
     
-    latest_excel = find_latest_module2_excel()
-    if not latest_excel:
-        print("错误: 未找到模块2生成的筛选结果 Excel 文件。")
-        print("请先运行模块1完成筛选，或将结果文件放到 runtime/outputs 目录。")
-        return 1
+    # 1. 检查是否有中断的 partial 文件
+    partial_excel = find_latest_partial_excel()
+    target_excel = None
+    
+    if partial_excel:
+        print(f"\n发现中断的进度文件: {partial_excel.name}")
+        print("这通常是上次运行豆瓣模块时暂停或中断产生的。")
+        choice = input("是否继续处理此文件? (y/n, 默认y): ").strip().lower()
+        if choice in ('', 'y', 'yes'):
+            target_excel = partial_excel
+            print(f"已选择继续处理: {partial_excel.name}")
+        else:
+            print("已跳过中断文件，将查找最新的筛选结果。")
+    
+    # 2. 如果没有选择 partial 文件，则查找最新的筛选结果
+    if not target_excel:
+        target_excel = find_latest_screening_result_excel()
+        if not target_excel:
+            print("错误: 未找到模块2生成的筛选结果 Excel 文件。")
+            print("请先运行模块1完成筛选，或将结果文件放到 runtime/outputs 目录。")
+            return 1
 
-    success = run_douban_module(excel_file=latest_excel)
+    success = run_douban_module(excel_file=target_excel)
     
     if success:
         print("\n" + "=" * 60)
@@ -512,6 +556,56 @@ def run_module5():
         print(f"X 运行模块5时出错: {str(e)}")
         print("=" * 60)
         return 1
+def run_module6():
+    """运行模块6：新书零借阅（睡美人）"""
+    print("=" * 60)
+    print("模块6: 新书零借阅（睡美人）模块")
+    print("筛选近期验收但零借阅的新书")
+    print("=" * 60)
+    
+    # 检查配置指定的输入文件是否存在
+    from pathlib import Path
+    new_books_file = Path(app_config.get(
+        'paths.excel_files.new_books_file',
+        'data/new/验收.xlsx'
+    ))
+    borrowing_4m_file = Path(app_config.get(
+        'paths.excel_files.borrowing_4months_file',
+        'data/new/近四月借阅.xlsx'
+    ))
+    
+    missing_files = [path for path in (new_books_file, borrowing_4m_file) if not path.exists()]
+    if missing_files:
+        print("错误: 找不到以下配置指定的输入文件:")
+        for missing in missing_files:
+            print(f"  - {missing}")
+        print("请检查 config/setting.yaml 中 paths.excel_files 的配置，或确认文件路径正确")
+        return 1
+    
+    try:
+        from src.core.new_sleeping.pipeline import run_new_sleeping_pipeline
+        success = run_new_sleeping_pipeline()
+        
+        if success:
+            print("\n" + "=" * 60)
+            print("[成功] 模块6执行完成!")
+            print("请查看 runtime/outputs/ 目录下的结果文件")
+            print("=" * 60)
+            return 0
+        else:
+            print("\n" + "=" * 60)
+            print("X 模块6执行失败!")
+            print("请查看 runtime/logs/error.log 获取详细错误信息")
+            print("=" * 60)
+            return 1
+    except Exception as e:
+        logger.error(f"运行模块6时出错: {str(e)}", exc_info=True)
+        print(f"\n" + "=" * 60)
+        print(f"X 运行模块6时出错: {str(e)}")
+        print("=" * 60)
+        return 1
+
+
 def run_data_collection_pipeline():
     """依次运行模块1（含模块2）和模块3 - 数据采集流程"""
     print("=" * 60)
@@ -614,9 +708,10 @@ def main():
         print("5. 模块4: 完整评选（初评→决选→终评）")
         print("6. 数据分析与评选流程: 模块1 -> 模块2 -> 模块3 -> 模块4")
         print("7. 模块5: 图书卡片生成（含借书卡）")
-        print("8. 退出程序")
+        print("8. 模块6: 新书零借阅（睡美人）筛选")
+        print("9. 退出程序")
 
-        choice = input("\n请输入选择 (1-8): ").strip()
+        choice = input("\n请输入选择 (1-9): ").strip()
 
         if choice == '1':
             return run_module1()
@@ -633,6 +728,8 @@ def main():
         elif choice == '7':
             return run_module5()
         elif choice == '8':
+            return run_module6()
+        elif choice == '9':
             print("感谢使用 书海回响 脚本!")
             return 0
         else:

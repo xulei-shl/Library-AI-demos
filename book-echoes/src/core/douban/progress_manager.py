@@ -59,6 +59,12 @@ class ProgressManager:
         output_dir.mkdir(parents=True, exist_ok=True)
         suffix = self.original_path.suffix or ".xlsx"
         stem = self.original_path.stem
+
+        # 如果输入文件本身就是 partial 文件，则直接使用它作为 partial 路径
+        # 避免生成 _partial_partial.xlsx
+        if stem.endswith("_partial"):
+            return output_dir / f"{stem}{suffix}"
+
         return output_dir / f"{stem}_partial{suffix}"
 
     def _resolve_db_meta_path(self) -> Path:

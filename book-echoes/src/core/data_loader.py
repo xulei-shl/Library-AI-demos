@@ -209,6 +209,48 @@ def load_recent_three_months_borrowing_data(file_path: Optional[str] = None) -> 
     return data
 
 
+def load_new_books_data(file_path: Optional[str] = None) -> pd.DataFrame:
+    """
+    便捷函数：加载新书验收数据（模块6）
+    
+    Args:
+        file_path: 新书验收文件路径，如果为None则从配置文件读取
+        
+    Returns:
+        DataFrame: 新书验收数据
+    """
+    if file_path is None:
+        file_path = config.get('paths.excel_files.new_books_file', 'data/new/验收.xlsx')
+        logger.info(f"从配置文件读取新书验收数据路径: {file_path}")
+    
+    loader = DataLoader()
+    data = loader.load_excel_file(file_path)
+    
+    logger.info(f"新书验收数据加载完成: {len(data)} 条记录")
+    return data
+
+
+def load_borrowing_data_4months(file_path: Optional[str] = None) -> pd.DataFrame:
+    """
+    便捷函数：加载近四月借阅数据（模块6）
+    
+    Args:
+        file_path: 近四月借阅文件路径，如果为None则从配置文件读取
+        
+    Returns:
+        DataFrame: 近四月借阅数据
+    """
+    if file_path is None:
+        file_path = config.get('paths.excel_files.borrowing_4months_file', 'data/new/近四月借阅.xlsx')
+        logger.info(f"从配置文件读取近四月借阅数据路径: {file_path}")
+    
+    loader = DataLoader()
+    data = loader.load_excel_file(file_path)
+    
+    logger.info(f"近四月借阅数据加载完成: {len(data)} 条记录")
+    return data
+
+
 if __name__ == "__main__":
     # 测试数据加载器
     try:

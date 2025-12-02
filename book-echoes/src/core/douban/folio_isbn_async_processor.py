@@ -446,7 +446,8 @@ class ISBNAsyncProcessor:
                                 excel_file_path: str,
                                 barcode_column: str = "书目条码",
                                 output_column: str = "ISBN号",
-                                retry_failed: bool = True) -> Tuple[str, Dict]:
+                                retry_failed: bool = True,
+                                target_indices: Optional[List[int]] = None) -> Tuple[str, Dict]:
         """
         批量处理Excel文件
 
@@ -454,7 +455,8 @@ class ISBNAsyncProcessor:
             excel_file_path: Excel文件路径
             barcode_column: 书目条码列名
             output_column: 输出ISBN列名
-            retry_failed: 是否在第一轮处理完后重试失败的条码（默认True）
+            retry_failed: 是否在第一轮处理完后重试失败的条码(默认True)
+            target_indices: 可选,指定需要处理的行索引列表,如果为None则处理所有行
 
         Returns:
             Tuple[str, Dict]: (输出文件路径, 统计信息)
@@ -563,6 +565,11 @@ class ISBNAsyncProcessor:
             else:
                 # 所有待处理的数据都来自剩余索引
                 data_to_process = pending_indices.copy()
+            
+            # 如果指定了 target_indices,则只处理这些索引
+            if target_indices is not None:
+                data_to_process = [idx for idx in data_to_process if idx in target_indices]
+                logger.info(f"应用 target_indices 过滤后,需要处理的记录数: {len(data_to_process)} 条")
 
             # ============================================================
             # 检查是否有需要爬取的数据

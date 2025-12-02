@@ -83,7 +83,7 @@
                     <span class="font-mono text-xs font-bold tracking-widest text-ink-black">LIBRARY REF.</span>
                 </div>
                 <div class="font-mono text-xs border border-black px-2 py-1 bg-white">
-                    CALL NO: <span class="font-bold">C913.11/5843-3</span>
+                    CALL NO: <span class="font-bold">{{CALL_NUMBER}}</span>
                 </div>
             </div>
 
@@ -105,7 +105,7 @@
                     -->
                     <h1
                         class="text-6xl md:text-7xl font-black text-ink-black leading-none tracking-tight mix-blend-darken line-clamp-2 break-words">
-                        生育制度与中国乡土社会结构的深层剖析风格
+                        {{TITLE}}
                     </h1>
                 </div>
 
@@ -115,7 +115,7 @@
                     <div class="col-span-2 md:col-span-1">
                         <span
                             class="block font-mono text-[10px] text-gray-500 uppercase mb-1 border-b border-gray-300 pb-1">Author</span>
-                        <span class="text-3xl font-bold text-ink-black font-serif-sc">费孝通</span>
+                        <span class="text-3xl font-bold text-ink-black font-serif-sc">{{AUTHOR}}</span>
                     </div>
 
                     <!-- 评分 -->
@@ -123,7 +123,7 @@
                         <div class="mr-4">
                             <span
                                 class="block font-mono text-[10px] text-gray-500 uppercase mb-1 border-b border-gray-300 pb-1">Rating</span>
-                            <span class="text-4xl font-heavy text-signal-red">8.7</span>
+                            <span class="text-4xl font-heavy text-signal-red">{{DOUBAN_RATING}}</span>
                         </div>
                         <div class="pb-2">
                             <span class="text-signal-red text-xs tracking-widest">★★★★★</span>
@@ -133,13 +133,13 @@
                     <!-- 出版社 -->
                     <div>
                         <span class="block font-mono text-[10px] text-gray-500 uppercase mb-1">Publisher</span>
-                        <span class="text-base font-bold text-gray-800">中信出版社</span>
+                        <span class="text-base font-bold text-gray-800">{{PUBLISHER}}</span>
                     </div>
 
                     <!-- 年份 -->
                     <div>
                         <span class="block font-mono text-[10px] text-gray-500 uppercase mb-1">Year</span>
-                        <span class="text-base font-bold font-mono text-gray-800">2018</span>
+                        <span class="text-base font-bold font-mono text-gray-800">{{PUB_YEAR}}</span>
                     </div>
                 </div>
             </div>
@@ -151,7 +151,7 @@
                     Review</span>
                 <p
                     class="font-serif-sc text-lg md:text-xl text-ink-black leading-relaxed font-bold text-justify mt-2 line-clamp-4">
-                    “费孝通先生的这部作品是中国社会学的奠基石，属于学科内的必读经典与通识教材。鉴于其极高的知名度、深刻的洞察力以及对中国乡土社会结构的精准剖析，它不仅是一本学术著作，更是一把理解中国传统家庭与社会关系的钥匙。”
+                    {{RECOMMENDATION}}...
                 </p>
             </div>
         </div>

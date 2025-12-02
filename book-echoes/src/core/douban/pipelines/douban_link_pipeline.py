@@ -33,7 +33,8 @@ class DoubanLinkStep(PipelineStep):
             tasks = []
             for index in filtered_indices:
                 isbn_value = str(df.at[index, context.isbn_column] or "").strip()
-                if not isbn_value:
+                # 过滤空值和 pandas NaN 转换的字符串 "nan"
+                if not isbn_value or isbn_value.lower() == "nan":
                     continue
                 tasks.append(LinkResolveTask(
                     index=index,
@@ -76,11 +77,16 @@ class DoubanLinkStep(PipelineStep):
             if not progress.needs_link(df, index):
                 continue
             existing_url = str(row.get(url_column, "") or "").strip()
+            # 如果链接无效（如"获取失败"），则视为未获取，需要重新爬取
+            if existing_url and not existing_url.startswith("http"):
+                existing_url = ""
+            
             if existing_url:
                 progress.mark_link_ready(df, index)
                 continue
             isbn_value = str(row.get(context.isbn_column, "") or "").strip()
-            if not isbn_value:
+            # 过滤空值和 pandas NaN 转换的字符串 "nan"
+            if not isbn_value or isbn_value.lower() == "nan":
                 continue
             tasks.append(
                 LinkResolveTask(
