@@ -255,13 +255,21 @@ def generate_report(
             report.append("三、各筛选器详情")
             report.append("-" * 60)
             for filter_name, result in filter_summary['filter_results'].items():
-                if result.get('excluded_count', 0) > 0:
-                    report.append(f"\n{filter_name}:")
-                    report.append(f"  排除数量: {result['excluded_count']} 条")
-                    if result.get('patterns_count'):
-                        report.append(f"  模式数量: {result['patterns_count']}")
-                    if result.get('target_column'):
-                        report.append(f"  目标列: {result['target_column']}")
+                status = result.get('status', 'unknown')
+                excluded_count = result.get('excluded_count', 0)
+                exclusion_ratio = result.get('excluded_ratio', 0.0)
+                report.append(f"\n{filter_name}:")
+                report.append(f"  状态: {status}")
+                report.append(f"  排除数量: {excluded_count} 条")
+                report.append(f"  排除比例: {exclusion_ratio:.2%}")
+                if result.get('patterns_count'):
+                    report.append(f"  模式数量: {result['patterns_count']}")
+                if result.get('target_column'):
+                    report.append(f"  目标列: {result['target_column']}")
+                elif result.get('target_columns'):
+                    report.append(f"  目标列: {', '.join(result['target_columns'])}")
+                if result.get('reason'):
+                    report.append(f"  备注: {result['reason']}")
             report.append("")
     
     # 最终结果统计

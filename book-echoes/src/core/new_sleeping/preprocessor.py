@@ -16,7 +16,7 @@ def preprocess_new_books_data(new_books_df: pd.DataFrame) -> pd.DataFrame:
     
     主要操作：
     1. 列重命名：馆藏条码 -> 书目条码
-    2. 列重命名：标识号 -> isbn
+    2. 列重命名：标识号 -> ISBN
     3. ISBN列清洗
     
     Args:
@@ -41,20 +41,20 @@ def preprocess_new_books_data(new_books_df: pd.DataFrame) -> pd.DataFrame:
         logger.info("列重命名: 馆藏条码 -> 书目条码")
     
     if '标识号' in df.columns:
-        rename_map['标识号'] = 'isbn'
-        logger.info("列重命名: 标识号 -> isbn")
+        rename_map['标识号'] = 'ISBN'
+        logger.info("列重命名: 标识号 -> ISBN")
     
     if rename_map:
         df = df.rename(columns=rename_map)
     
     # ISBN列清洗
-    if 'isbn' in df.columns:
+    if 'ISBN' in df.columns:
         # 转换为字符串并去除空格
-        df['isbn'] = df['isbn'].astype(str).str.strip()
+        df['ISBN'] = df['ISBN'].astype(str).str.strip()
         # 将'nan'字符串和空字符串转换为None
-        df.loc[df['isbn'].isin(['nan', '', 'None']), 'isbn'] = None
+        df.loc[df['ISBN'].isin(['nan', '', 'None']), 'ISBN'] = None
         
-        null_isbn_count = df['isbn'].isnull().sum()
+        null_isbn_count = df['ISBN'].isnull().sum()
         logger.info(f"ISBN列清洗完成，空值数量: {null_isbn_count}/{len(df)}")
     
     # 书目条码列清洗

@@ -18,7 +18,7 @@
 statistics:
   # 基于哪个月份计算近三个月（用于近三月借阅数据统计）
   # 格式：YYYY-MM，例如2025-09表示基于9月归还数据计算7-8-9月的借阅统计
-  target_month: "2025-10"
+  target_month: "2025-11"
   
   # 月份计算方式
   month_calculation:
@@ -55,7 +55,7 @@ filtering:
     title_keywords:
       enabled: true
       description: "题名关键词排除"
-      target_column: "书名"
+      target_column: ["书名", "题名"]
       file: "config/filters/title_keywords.txt"
       match_type: "contains"  # contains, starts_with, ends_with, regex
     
@@ -112,7 +112,7 @@ douban:
   # ISBN获取器配置 (folio_isbn_async_processor.py)
   # 功能：通过访问图书馆FOLIO文献历史接口，根据附加信息（如图书馆系统ID）查询ISBN号。
   isbn_resolver:
-    enabled: true  # 是否启用此功能。如果禁用，后续流程将无法获取ISBN。
+    enabled: false  # 是否启用此功能。如果禁用，后续流程将无法获取ISBN。
     base_url: "https://circ-folio.library.sh.cn/shlcirculation-query/literatureHistory" # FOLIO系统接口地址
     timeout: 30  # 请求超时时间（秒）
     delay: 2.0  # 每次请求之间的固定延迟（秒），用于控制请求频率

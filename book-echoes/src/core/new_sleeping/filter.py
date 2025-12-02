@@ -51,15 +51,19 @@ class ZeroBorrowingFilter:
         logger.info(f"新书数据量: {original_count}")
         logger.info(f"借阅数据量: {len(borrowing_df)}")
         
+        # 统一条码类型，防止数字/字符串混用导致匹配异常
+        normalized_new_barcodes = self._normalize_barcode_series(new_books_df[self.barcode_column])
+        normalized_borrow_barcodes = self._normalize_barcode_series(borrowing_df[self.barcode_column])
+        
         # 获取借阅数据中的书目条码集合
-        borrowed_barcodes = set(borrowing_df[self.barcode_column].dropna().unique())
+        borrowed_barcodes = set(normalized_borrow_barcodes.dropna().tolist())
         logger.info(f"借阅数据中唯一书目条码数量: {len(borrowed_barcodes)}")
         
         # 筛选零借阅图书：在新书中但不在借阅数据中
-        zero_borrowing_mask = ~new_books_df[self.barcode_column].isin(borrowed_barcodes)
+        zero_borrowing_mask = ~normalized_new_barcodes.isin(borrowed_barcodes)
         
         # 同时排除书目条码为空的记录
-        valid_barcode_mask = new_books_df[self.barcode_column].notna()
+        valid_barcode_mask = normalized_new_barcodes.notna()
         zero_borrowing_mask = zero_borrowing_mask & valid_barcode_mask
         
         zero_borrowing_books = new_books_df[zero_borrowing_mask].copy()
@@ -86,6 +90,29 @@ class ZeroBorrowingFilter:
         logger.info(f"  零借阅比例: {stats['零借阅比例']}")
         
         return zero_borrowing_books, borrowed_books, stats
+    
+    def _normalize_barcode_series(self, barcode_series: pd.Series) -> pd.Series:
+        """
+        标准化书目条码列
+        
+        Args:
+            barcode_series: 含有书目条码的数据列
+            
+        Returns:
+            pd.Series: 去除空白并统一为字符串类型的条码列
+        """
+        normalized = barcode_series.astype('string')
+        normalized = normalized.str.strip()
+        normalized = normalized.replace(
+            {
+                'nan': pd.NA,
+                'NaN': pd.NA,
+                'None': pd.NA,
+                'NaT': pd.NA,
+                '': pd.NA
+            }
+        )
+        return normalized
     
     def get_statistics(self, zero_borrowing_df: pd.DataFrame) -> Dict[str, Any]:
         """

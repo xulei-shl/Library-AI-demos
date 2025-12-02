@@ -17,8 +17,11 @@ class BaseFilter(ABC):
         self.config = config
         self.enabled = config.get('enabled', True)
         self.description = config.get('description', '')
-        self.target_column = config.get('target_column')
-        self.target_columns = config.get('target_columns', [self.target_column])
+        self.target_columns = self._prepare_target_columns(
+            config.get('target_columns'),
+            config.get('target_column')
+        )
+        self.target_column = self.target_columns[0] if self.target_columns else None
     
     @abstractmethod
     def apply(self, data: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
@@ -44,6 +47,44 @@ class BaseFilter(ABC):
                     valid_columns.append(mapped_col)
         
         return valid_columns
+
+    def _prepare_target_columns(self, columns_config, column_config) -> List[str]:
+        """
+        标准化目标列配置，确保最终使用字符串列表
+        
+        Args:
+            columns_config: target_columns配置项
+            column_config: target_column配置项
+            
+        Returns:
+            List[str]: 规范化后的列名列表
+        """
+        normalized = []
+        seen = set()
+
+        def _append_column(value: Any):
+            if value is None:
+                return
+            text = str(value).strip()
+            if not text or text in seen:
+                return
+            seen.add(text)
+            normalized.append(text)
+
+        if isinstance(columns_config, (list, tuple, set)):
+            for col in columns_config:
+                _append_column(col)
+        elif columns_config is not None:
+            _append_column(columns_config)
+
+        if not normalized:
+            if isinstance(column_config, (list, tuple, set)):
+                for col in column_config:
+                    _append_column(col)
+            else:
+                _append_column(column_config)
+
+        return normalized
     
     def _auto_map_column(self, target: str, available: List[str]) -> str:
         """自动映射列名"""
