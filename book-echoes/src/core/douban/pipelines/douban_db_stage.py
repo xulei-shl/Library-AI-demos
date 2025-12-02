@@ -79,12 +79,14 @@ class DoubanDatabaseStage(PipelineStep):
         )
 
         existing_valid = categories.get("existing_valid") or []
+        existing_valid_incomplete = categories.get("existing_valid_incomplete") or []
         existing_stale = categories.get("existing_stale") or []
         new_books = categories.get("new") or []
 
         logger.info(
-            "数据库分类统计 - 有效:%s 过期:%s 新增:%s",
+            "数据库分类统计 - 有效:%s 待补API:%s 过期:%s 新增:%s",
             len(existing_valid),
+            len(existing_valid_incomplete),
             len(existing_stale),
             len(new_books),
         )
@@ -105,7 +107,8 @@ class DoubanDatabaseStage(PipelineStep):
 
         filled_from_db = 0
         if not resume_light_mode:
-            for book_data in existing_valid:
+            valid_groups = (existing_valid or []) + (existing_valid_incomplete or [])
+            for book_data in valid_groups:
                 index = book_data.get("_index")
                 if index is None:
                     continue
@@ -124,7 +127,15 @@ class DoubanDatabaseStage(PipelineStep):
                     field_mapping=context.field_mapping,
                 )
                 context.progress_manager.append_source(df, index, "DB")
-                context.progress_manager.mark_done(df, index)
+                if self._has_required_douban_fields(df, index, context.field_mapping):
+                    context.progress_manager.mark_done(df, index)
+                else:
+                    context.progress_manager.mark_api_pending(df, index)
+                    logger.debug(
+                        "DB 写回缺少必备字段，进入待补API - row=%s required=%s",
+                        index,
+                        self._required_field_names(context.field_mapping),
+                    )
                 filled_from_db += 1
 
             pending_rows = existing_stale + new_books
@@ -141,6 +152,7 @@ class DoubanDatabaseStage(PipelineStep):
         return {
             "enabled": True,
             "existing_valid": len(existing_valid),
+            "existing_valid_incomplete": len(existing_valid_incomplete),
             "existing_stale": len(existing_stale),
             "new": len(new_books),
             "filled_from_db": filled_from_db,
@@ -196,3 +208,36 @@ class DoubanDatabaseStage(PipelineStep):
             if isinstance(value, str) and not value.strip():
                 continue
             df.at[row_index, excel_col] = value
+
+    def _required_field_names(self, field_mapping: Dict[str, str]) -> List[str]:
+        required_keys = ("title", "summary", "cover_image")
+        names: List[str] = []
+        for key in required_keys:
+            column = field_mapping.get(key)
+            if column:
+                names.append(column)
+        return names
+
+    def _has_required_douban_fields(
+        self,
+        df: pd.DataFrame,
+        row_index: int,
+        field_mapping: Dict[str, str],
+    ) -> bool:
+        """校验 DB 写回后必备的豆瓣列是否齐全."""
+        required_columns = self._required_field_names(field_mapping)
+        if not required_columns:
+            return False
+        for column in required_columns:
+            if column not in df.columns:
+                return False
+            value = df.at[row_index, column]
+            if value is None:
+                return False
+            if isinstance(value, str):
+                if not value.strip():
+                    return False
+                continue
+            if pd.isna(value):
+                return False
+        return True

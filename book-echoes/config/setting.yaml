@@ -258,6 +258,10 @@ douban:
       force_update: false  # 是否强制更新所有记录，忽略 stale_days 限制
       update_mode: "merge" # 更新数据的方式：'merge'（合并新旧数据，保留旧记录字段）或 'overwrite'（完全用新数据覆盖）
       crawl_empty_url: false  # 当douban_url为空时是否需要重新爬取（true=爬取，false=跳过）
+      required_fields:      # 用于判定DB数据是否完整，缺少则进入待补API流程
+        - douban_title
+        - douban_summary
+        - douban_cover_image
 
     # 写入策略：控制数据如何写入数据库
     write_strategy:

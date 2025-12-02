@@ -14,6 +14,7 @@
 """
 
 import logging
+import math
 from typing import Dict, List, Any
 from .database_manager import DatabaseManager
 
@@ -43,6 +44,11 @@ class DataChecker:
         self.stale_days = self.refresh_config.get('stale_days', 30)
         self.force_update = self.refresh_config.get('force_update', False)
         self.crawl_empty_url = self.refresh_config.get('crawl_empty_url', True)
+        self.required_fields = [
+            field.strip()
+            for field in (self.refresh_config.get('required_fields') or [])
+            if isinstance(field, str) and field.strip()
+        ] or ['douban_title', 'douban_summary', 'douban_cover_image']
 
         logger.info(f"查重处理器初始化完成: enabled={self.enabled}, stale_days={self.stale_days}, force_update={self.force_update}, crawl_empty_url={self.crawl_empty_url}")
 
@@ -70,6 +76,7 @@ class DataChecker:
             logger.info("查重功能已禁用，直接处理所有数据")
             return {
                 'existing_valid': [],
+                'existing_valid_incomplete': [],
                 'existing_stale': [],
                 'new': excel_data
             }
@@ -86,6 +93,7 @@ class DataChecker:
                 logger.warning("没有有效的barcode数据")
                 return {
                     'existing_valid': [],
+                    'existing_valid_incomplete': [],
                     'existing_stale': [],
                     'new': []
                 }
@@ -102,6 +110,7 @@ class DataChecker:
             # 3. 转换为统一格式
             result = {
                 'existing_valid': [],
+                'existing_valid_incomplete': [],
                 'existing_stale': [],
                 'new': []
             }
@@ -116,7 +125,11 @@ class DataChecker:
                 if excel_row:
                     # 合并数据库数据到Excel行
                     merged_data = self._merge_database_data(excel_row, book_data)
-                    result['existing_valid'].append(merged_data)
+                    bucket = 'existing_valid'
+                    if not self._has_required_fields(book_data):
+                        bucket = 'existing_valid_incomplete'
+                        merged_data['_needs_api_patch'] = True
+                    result[bucket].append(merged_data)
 
             # 处理已有过期数据
             for item in duplicate_result['existing_stale']:
@@ -140,13 +153,16 @@ class DataChecker:
             if self.force_update:
                 logger.info("强制更新模式：将所有已有数据标记为需要重新爬取")
                 result['existing_stale'].extend(result['existing_valid'])
+                result['existing_stale'].extend(result['existing_valid_incomplete'])
                 result['existing_valid'] = []
+                result['existing_valid_incomplete'] = []
 
             # 5. 记录统计信息
             total_existing = len(duplicate_result['existing_valid']) + len(duplicate_result['existing_stale'])
             logger.info(
                 f"查重分类完成: "
                 f"已有有效={len(result['existing_valid'])}, "
+                f"已有待补API={len(result['existing_valid_incomplete'])}, "
                 f"已有过期={len(result['existing_stale'])}, "
                 f"全新数据={len(result['new'])}, "
                 f"总计={len(excel_data)}"
@@ -160,6 +176,7 @@ class DataChecker:
             logger.warning("查重失败，降级到无数据库模式")
             return {
                 'existing_valid': [],
+                'existing_valid_incomplete': [],
                 'existing_stale': [],
                 'new': excel_data
             }
@@ -188,6 +205,7 @@ class DataChecker:
             logger.info("查重功能已禁用，直接处理所有数据")
             return {
                 'existing_valid': [],
+                'existing_valid_incomplete': [],
                 'existing_stale': [],
                 'new': excel_data
             }
@@ -204,6 +222,7 @@ class DataChecker:
                 logger.warning("没有有效的barcode数据")
                 return {
                     'existing_valid': [],
+                    'existing_valid_incomplete': [],
                     'existing_stale': [],
                     'new': []
                 }
@@ -216,6 +235,7 @@ class DataChecker:
             # 3. 转换为统一格式
             result = {
                 'existing_valid': [],
+                'existing_valid_incomplete': [],
                 'existing_stale': [],  # ISBN查重不使用
                 'new': []
             }
@@ -256,6 +276,7 @@ class DataChecker:
             logger.warning("ISBN查重失败，降级到无数据库模式")
             return {
                 'existing_valid': [],
+                'existing_valid_incomplete': [],
                 'existing_stale': [],
                 'new': excel_data
             }
@@ -276,6 +297,22 @@ class DataChecker:
             if row_barcode == barcode:
                 return row
         return None
+
+    def _has_required_fields(self, db_book: Dict[str, Any]) -> bool:
+        """
+        检查数据库书目是否具备配置的必备字段
+        """
+        for field in self.required_fields:
+            value = db_book.get(field)
+            if value is None:
+                return False
+            if isinstance(value, str):
+                if not value.strip():
+                    return False
+            elif isinstance(value, float):
+                if math.isnan(value):
+                    return False
+        return True
 
     def _merge_database_data(self, excel_row: Dict, db_book: Dict, merge_mode: str = 'full') -> Dict:
         """

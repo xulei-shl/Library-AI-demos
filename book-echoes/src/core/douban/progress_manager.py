@@ -209,7 +209,7 @@ class ProgressManager:
             return
 
         category = self._row_category_map.get(index)
-        if category not in ("existing_stale", "new"):
+        if category not in ("existing_stale", "new", "existing_valid_incomplete"):
             return
 
         row = df.iloc[index]
