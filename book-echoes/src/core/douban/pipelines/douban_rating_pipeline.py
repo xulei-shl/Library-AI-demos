@@ -943,7 +943,15 @@ class DoubanRatingPipeline:
 
         timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
 
-        output_name = f"{excel_path.stem}_豆瓣结果_{timestamp}{excel_path.suffix}"
+        stem = excel_path.stem
+
+        if stem.endswith("_partial"):
+
+            # partial 续跑完成后应产出与原始文件同名的正式结果
+
+            stem = stem[: -len("_partial")]
+
+        output_name = f"{stem}_豆瓣结果_{timestamp}{excel_path.suffix}"
 
         return excel_path.parent / output_name
 
