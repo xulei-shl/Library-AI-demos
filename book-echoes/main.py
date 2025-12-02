@@ -606,6 +606,82 @@ def run_module6():
         return 1
 
 
+def run_module7():
+    """运行模块7：主题书目每日追踪"""
+    print("=" * 60)
+    print("模块7: 主题书目每日追踪")
+    print("=" * 60)
+    
+    while True:
+        print("\n请选择运行阶段:")
+        print("1. 阶段1: RSS获取")
+        print("2. 阶段2: 全文解析")
+        print("3. 阶段3: LLM评估")
+        print("4. 完整流程 (1→2→3)")
+        print("5. 返回主菜单")
+        
+        choice = input("\n请输入选择 (1-5): ").strip()
+        
+        if choice == '5':
+            return 0
+        
+        try:
+            from src.core.subject_bibliography.pipeline import SubjectBibliographyPipeline
+            pipeline = SubjectBibliographyPipeline()
+            
+            if choice == '1':
+                print("\n执行阶段1: RSS获取...")
+                output_file = pipeline.run_stage_fetch()
+                if output_file:
+                    print(f"\n[成功] 阶段1完成! 输出文件: {output_file}")
+                else:
+                    print("\n[提示] 阶段1完成，但未发现新文章")
+                    
+            elif choice == '2':
+                print("\n执行阶段2: 全文解析...")
+                # 可以选择指定输入文件
+                use_latest = input("是否使用最新的阶段1输出文件? (y/n, 默认y): ").strip().lower()
+                input_file = None
+                if use_latest not in ('', 'y', 'yes'):
+                    input_file = input("请输入阶段1输出文件路径: ").strip()
+                
+                output_file = pipeline.run_stage_extract(input_file)
+                if output_file:
+                    print(f"\n[成功] 阶段2完成! 输出文件: {output_file}")
+                else:
+                    print("\n[失败] 阶段2执行失败")
+                    
+            elif choice == '3':
+                print("\n执行阶段3: LLM评估...")
+                # 可以选择指定输入文件
+                use_latest = input("是否使用最新的阶段2输出文件? (y/n, 默认y): ").strip().lower()
+                input_file = None
+                if use_latest not in ('', 'y', 'yes'):
+                    input_file = input("请输入阶段2输出文件路径: ").strip()
+                
+                output_file = pipeline.run_stage_analyze(input_file)
+                if output_file:
+                    print(f"\n[成功] 阶段3完成! 输出文件: {output_file}")
+                else:
+                    print("\n[失败] 阶段3执行失败")
+                    
+            elif choice == '4':
+                print("\n执行完整流程 (1→2→3)...")
+                pipeline.run_all_stages()
+                print("\n[成功] 完整流程执行完成!")
+                
+            else:
+                print("无效选择，请重新输入")
+                continue
+                
+        except Exception as e:
+            logger.error(f"运行模块7时出错: {str(e)}", exc_info=True)
+            print(f"\n" + "=" * 60)
+            print(f"X 模块7执行失败: {str(e)}")
+            print("=" * 60)
+
+
+
 def run_data_collection_pipeline():
     """依次运行模块1（含模块2）和模块3 - 数据采集流程"""
     print("=" * 60)
@@ -709,7 +785,8 @@ def main():
         print("6. 数据分析与评选流程: 模块1 -> 模块2 -> 模块3 -> 模块4")
         print("7. 模块5: 图书卡片生成（含借书卡）")
         print("8. 模块6: 新书零借阅（睡美人）筛选")
-        print("9. 退出程序")
+        print("9. 模块7: 主题书目每日追踪")
+        print("10. 退出程序")
 
         choice = input("\n请输入选择 (1-9): ").strip()
 
@@ -730,6 +807,8 @@ def main():
         elif choice == '8':
             return run_module6()
         elif choice == '9':
+            return run_module7()
+        elif choice == '10':
             print("感谢使用 书海回响 脚本!")
             return 0
         else:

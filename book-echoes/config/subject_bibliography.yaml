@@ -1,0 +1,46 @@
+# 模块7-主题书目 配置文件
+
+# RSS 源列表
+rss_feeds:
+  # 优选信息源
+  - name: "澎湃思想市场"
+    url: "http://wechat2rss.vip.cpolar.top/feed/3587489630.xml"
+    enabled: true
+    extractor: "pengpai"  # 提取器类型
+  - name: "Wikipedia每日首页文章"
+    url: "https://en.wikipedia.org/w/api.php?action=featuredfeed&feed=featured&feedformat=atom"
+    enabled: true
+    extractor: "wikipedia"
+  - name: "Big Think"
+    url: "https://bigthink.buzzing.cc/feed.xml"
+    enabled: true
+    extractor: "bigthink"
+  # 候选信息源
+  - name: "Kagi News"
+    url: "https://news.kagi.com/world_zh-Hans.xml"
+    enabled: false
+    extractor: ""
+  - name: "纽约客"
+    url: "https://newyorker.buzzing.cc/feed.xml"
+    enabled: false
+    extractor: ""
+
+# 抓取设置
+fetch_settings:
+  hours_lookback: 24  # 抓取过去多少小时内的文章
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+
+# 输出设置
+output:
+  base_dir: "runtime/outputs/subject_bibliography"
+  filename_format: "daily_articles_{date}.xlsx"  # date format: YYYY-MM-DD
+
+# LLM 分析设置
+llm_analysis:
+  task_name: "subject_bibliography_analysis"  # 对应 config/llm.yaml 中的任务名
+
+# 全文提取设置
+extraction_settings:
+  timeout: 30  # 爬取超时时间(秒)
+  retry_times: 3  # 失败重试次数
+  browser_headless: true  # 无头浏览器模式

@@ -12,6 +12,8 @@ requests>=2.28.0       # HTTP请求，版本要求较高以修复安全问题
 httpx>=0.24.0          # 异步HTTP客户端，现代替代方案
 beautifulsoup4>=4.11.0 # HTML解析，版本要求较高
 lxml>=4.9.0            # XML/HTML解析，版本要求较高以修复安全问题
+feedparser>=6.0.0      # RSS/Atom feed解析，用于主题书目模块
+
 
 # 浏览器自动化 (核心依赖 - ISBN获取模块)
 playwright>=1.40.0     # 浏览器自动化，用于豆瓣登录和ISBN获取

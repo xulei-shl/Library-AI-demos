@@ -178,6 +178,33 @@ tasks:
         project: "book-echoes"
         module: "模块4"
 
+  # ----------------------------------------------------------------------------
+  # 任务: 主题书目文章分析 (subject_bibliography_analysis)
+  # 逻辑位置: src/core/subject_bibliography/processor.py
+  # ----------------------------------------------------------------------------
+  subject_bibliography_analysis:
+    provider_type: text
+    temperature: 0.3
+    top_p: 0.8
+    prompt:
+      type: md
+      source: "prompts/subject_bibliography_analysis.md"
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "主题书目文章分析"
+      tags: ["book-echoes", "模块7"]
+      metadata:
+        module: "模块7"
+
 defaults:
   temperature: 0.45
   top_p: 0.9
