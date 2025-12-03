@@ -513,6 +513,7 @@ rating_filter:
   new_sleeping:
     enabled: true
     # 不同学科（索书号首字母）的最低豆瓣评分
+    allow_no_rating: true   # true=保留无评分书籍（默认），false=排除无评分书籍    
     category_min_scores:
       B: 8.2
       C: 7.5

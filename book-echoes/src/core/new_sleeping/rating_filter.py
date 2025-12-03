@@ -45,6 +45,7 @@ class NewSleepingRatingFilter:
     # 默认配置
     DEFAULT_CONFIG = {
         "enabled": True,
+        "allow_no_rating": True,  # 是否允许无评分书籍成为候选
         "category_min_scores": {
             "I": 7.5,
             "K": 8.0,
@@ -207,6 +208,8 @@ class NewSleepingRatingFilter:
         if rating_col and call_no_col:
             category_min_scores = self.config.get("category_min_scores", {})
             default_score = category_min_scores.get("default", 7.2)
+            # 是否允许无评分书籍成为候选（默认True，保持向后兼容）
+            allow_no_rating = self.config.get("allow_no_rating", True)
 
             # 提取索书号首字母
             call_letters = df[call_no_col].apply(self._extract_call_letter)
@@ -231,14 +234,23 @@ class NewSleepingRatingFilter:
                     }
                 category_stats[letter]["total"] += 1
 
-                # 评分为0表示无评分，跳过评分检查（但保留候选）
-                if rating > 0 and rating < min_score:
+                # 评分判断逻辑
+                if rating == 0:
+                    # 无评分书籍：根据配置决定是否保留
+                    if allow_no_rating:
+                        category_stats[letter]["passed"] += 1
+                    else:
+                        candidate_mask[idx] = False
+                        excluded_by_rating += 1
+                elif rating < min_score:
+                    # 有评分但不达标：排除
                     candidate_mask[idx] = False
                     excluded_by_rating += 1
                 else:
+                    # 有评分且达标：保留
                     category_stats[letter]["passed"] += 1
 
-            logger.info(f"学科最低评分过滤: 排除 {excluded_by_rating} 条")
+            logger.info(f"学科最低评分过滤: 排除 {excluded_by_rating} 条 (allow_no_rating={allow_no_rating})")
 
         # 写入候选状态
         df.loc[candidate_mask, candidate_column] = "候选"
@@ -461,13 +473,31 @@ def run_new_sleeping_rating_filter(excel_file: str) -> Tuple[str, NewSleepingFil
     rating_filter = NewSleepingRatingFilter()
     result = rating_filter.apply_filter(df)
 
-    # 生成输出文件名
+    # 保存结果（直接写回原文件）
     input_path = Path(excel_file)
+    df.to_excel(excel_file, index=False)
+    logger.info(f"结果已保存到: {excel_file}")
+
+    # 保存统计结果到 txt 文件
     timestamp = get_timestamp()
-    output_file = input_path.parent / f"{input_path.stem}_新书过滤_{timestamp}.xlsx"
+    stats_file = input_path.parent / f"{input_path.stem}_评分过滤报告_{timestamp}.txt"
+    with open(stats_file, "w", encoding="utf-8") as f:
+        f.write("【新书评分过滤统计】\n")
+        f.write(f"总记录数: {result.total_count}\n")
+        f.write(f"候选数量: {result.candidate_count}\n")
+        f.write(f"排除数量: {result.excluded_count}\n")
+        f.write(f"  - 必填字段缺失: {result.excluded_by_required_fields}\n")
+        f.write(f"  - 出版年不符合: {result.excluded_by_pub_year}\n")
+        f.write(f"  - 题名关键词: {result.excluded_by_title_keywords}\n")
+        f.write(f"  - 索书号规则: {result.excluded_by_call_number}\n")
+        f.write(f"  - 评分不达标: {result.excluded_by_rating}\n")
+        if result.category_stats:
+            f.write("各学科统计:\n")
+            for letter, stats in sorted(result.category_stats.items()):
+                f.write(
+                    f"  {letter}: 总数 {stats['total']}, 通过 {stats['passed']}, "
+                    f"最低分 {stats['min_score']}\n"
+                )
+    logger.info(f"统计结果已保存到: {stats_file}")
 
-    # 保存结果
-    df.to_excel(output_file, index=False)
-    logger.info(f"结果已保存到: {output_file}")
-
-    return str(output_file), result
+    return str(excel_file), result
