@@ -90,20 +90,27 @@ def find_latest_module3_excel():
 def find_latest_module4_excel():
     """
     查找模块4生成的终评结果Excel：
-    查找包含"终评"的最新Excel文件
+    同时检查豆瓣结果和ISBN_API结果两种文件模式
     """
     outputs_dir = get_outputs_dir()
     if not outputs_dir.exists():
         return None
 
+    # 同时查找两种文件模式
+    patterns = ["数据筛选结果_*豆瓣结果*.xlsx", "*ISBN_API结果*.xlsx"]
+    candidates = []
+    for pattern in patterns:
+        candidates.extend(outputs_dir.glob(pattern))
+
+    # 过滤临时文件并按修改时间排序
     candidates = sorted(
-        outputs_dir.glob("数据筛选结果_*豆瓣结果*.xlsx"),
+        [p for p in candidates if not p.name.startswith("~$")],
         key=lambda p: p.stat().st_mtime,
         reverse=True
     )
-    # 查找文件名中包含终评相关内容的文件
+
+    # 查找包含终评结果列的文件
     for p in candidates:
-        # 检查文件是否包含终评结果列（需要读取Excel）
         try:
             import pandas as pd
             df = pd.read_excel(p, nrows=1)
