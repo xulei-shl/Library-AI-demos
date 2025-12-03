@@ -789,6 +789,14 @@ class CardGeneratorModule:
         Returns:
             str: 汇总报告文本
         """
+        # 按条码去重统计失败记录
+        unique_failed_barcodes = set(r['barcode'] for r in self.stats['failed_records'])
+        unique_failed_count = len(unique_failed_barcodes)
+
+        # 按条码去重统计警告记录
+        unique_warning_barcodes = set(r['barcode'] for r in self.stats['warning_records'])
+        unique_warning_count = len(unique_warning_barcodes)
+
         lines = [
             "=" * 60,
             "模块5执行汇总报告",
@@ -802,23 +810,24 @@ class CardGeneratorModule:
             "",
             "执行结果：",
             f"  成功生成: {self.stats['success_count']} 张图书卡片",
-            f"  失败记录: {self.stats['failed_count']} 条",
-            f"  警告记录: {self.stats['warning_count']} 条",
+            f"  失败记录: {unique_failed_count} 条",
+            f"  警告记录: {unique_warning_count} 条",
             f"  数据库写入: {db_result} 条",
         ]
-        
+
         # 添加重试统计（如果有重试）
         if self.stats['retry_success_count'] > 0 or self.stats['retry_failed_records']:
+            unique_retry_failed = len(set(r['barcode'] for r in self.stats['retry_failed_records']))
             lines.extend([
                 "",
                 "重试结果：",
                 f"  重试成功: {self.stats['retry_success_count']} 条",
-                f"  重试后仍失败: {len(self.stats['retry_failed_records'])} 条",
+                f"  重试后仍失败: {unique_retry_failed} 条",
             ])
-        
+
         # 继续原有的统计
         lines.append("")
-        
+
         # 添加借书卡统计（如果启用）
         if self.library_card_enabled:
             lines.extend([
@@ -827,25 +836,37 @@ class CardGeneratorModule:
                 f"  成功生成: {self.stats['library_card_success_count']} 张借书卡",
                 f"  失败记录: {self.stats['library_card_failed_count']} 条",
             ])
-        
+
         lines.append("")
 
-        # 失败详情
+        # 失败详情（按条码去重，每个条码只显示最后一次失败原因）
         if self.stats['failed_records']:
+            # 去重：保留每个条码的最后一条记录
+            seen_barcodes = {}
+            for record in self.stats['failed_records']:
+                seen_barcodes[record['barcode']] = record
+            unique_failed_records = list(seen_barcodes.values())
+
             lines.append("失败详情：")
-            for i, record in enumerate(self.stats['failed_records'][:20], 1):
+            for i, record in enumerate(unique_failed_records[:20], 1):
                 lines.append(f"  {i}. 书目条码：{record['barcode']}，原因：{record['reason']}")
-            if len(self.stats['failed_records']) > 20:
-                lines.append(f"  ... 还有 {len(self.stats['failed_records']) - 20} 条失败记录")
+            if len(unique_failed_records) > 20:
+                lines.append(f"  ... 还有 {len(unique_failed_records) - 20} 条失败记录")
             lines.append("")
 
-        # 警告详情
+        # 警告详情（按条码去重）
         if self.stats['warning_records']:
+            # 去重：保留每个条码的最后一条记录
+            seen_barcodes = {}
+            for record in self.stats['warning_records']:
+                seen_barcodes[record['barcode']] = record
+            unique_warning_records = list(seen_barcodes.values())
+
             lines.append("警告详情：")
-            for i, record in enumerate(self.stats['warning_records'][:20], 1):
+            for i, record in enumerate(unique_warning_records[:20], 1):
                 lines.append(f"  {i}. 书目条码：{record['barcode']}，警告：{record['warning']}")
-            if len(self.stats['warning_records']) > 20:
-                lines.append(f"  ... 还有 {len(self.stats['warning_records']) - 20} 条警告记录")
+            if len(unique_warning_records) > 20:
+                lines.append(f"  ... 还有 {len(unique_warning_records) - 20} 条警告记录")
             lines.append("")
 
         lines.append(f"执行时间: {elapsed_time:.2f} 秒")
@@ -935,9 +956,18 @@ class CardGeneratorModule:
                     if success:
                         current_success.add(barcode)
                         self.stats['retry_success_count'] += 1
-                        self.stats['failed_count'] -= 1
+                        # 从failed_records中移除该条码的所有记录
+                        self.stats['failed_records'] = [
+                            r for r in self.stats['failed_records'] if r['barcode'] != barcode
+                        ]
+                        self.stats['failed_count'] = len(self.stats['failed_records'])
                         logger.info(f"[重试] 成功，书目条码：{barcode}")
                     else:
+                        # 清理重复的失败记录，只保留最新的一条
+                        other_records = [r for r in self.stats['failed_records'] if r['barcode'] != barcode]
+                        latest_record = [r for r in self.stats['failed_records'] if r['barcode'] == barcode][-1:]
+                        self.stats['failed_records'] = other_records + latest_record
+                        self.stats['failed_count'] = len(self.stats['failed_records'])
                         logger.warning(f"[重试] 第 {attempt} 次重试失败，书目条码：{barcode}")
                 
                 # 从失败列表中移除成功的记录
