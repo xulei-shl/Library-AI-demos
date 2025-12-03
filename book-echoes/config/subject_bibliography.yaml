@@ -41,7 +41,7 @@ output:
 
 # LLM 分析设置
 llm_analysis:
-  task_name: "subject_bibliography_analysis"  # 对应 config/llm.yaml 中的任务名
+  task_name: "network_article_initial_review"  # 对应 config/llm.yaml 中的任务名
 
 # 全文提取设置
 extraction_settings:

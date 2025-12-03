@@ -182,13 +182,13 @@ tasks:
   # 任务: 主题书目文章分析 (subject_bibliography_analysis)
   # 逻辑位置: src/core/subject_bibliography/processor.py
   # ----------------------------------------------------------------------------
-  subject_bibliography_analysis:
+  network_article_initial_review:
     provider_type: text
     temperature: 0.3
     top_p: 0.8
     prompt:
       type: md
-      source: "prompts/subject_bibliography_analysis.md"
+      source: "prompts/网络文章主题初评.md"
     retry:
       max_retries: 3
       base_delay: 1.0
@@ -200,8 +200,8 @@ tasks:
       output_format: json
     langfuse:
       enabled: true
-      name: "主题书目文章分析"
-      tags: ["book-echoes", "模块7"]
+      name: "网络文章主题初评"
+      tags: ["book-echoes", "文章初评"]
       metadata:
         module: "模块7"
 
