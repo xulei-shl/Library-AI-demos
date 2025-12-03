@@ -134,7 +134,9 @@ class DoubanIsbnApiPipeline:
         )
 
         # 步骤 4: 数据库查重（可选）
-        db_manager, db_checker = self._run_database_check(df, options, douban_config, field_mapping)
+        db_manager, db_checker = self._run_database_check(
+            df, options, douban_config, field_mapping, progress
+        )
 
         # 步骤 5: ISBN API 调用
         logger.info("步骤 5: 调用 ISBN API")
@@ -276,6 +278,7 @@ class DoubanIsbnApiPipeline:
         options: DoubanIsbnApiPipelineOptions,
         douban_config: Dict,
         field_mapping: Dict[str, str],
+        progress: Optional[ProgressManager] = None,
     ) -> Tuple[Any, Optional[DatabaseChecker]]:
         """运行数据库查重步骤."""
         if options.disable_database:
@@ -288,6 +291,7 @@ class DoubanIsbnApiPipeline:
             df=df,
             douban_config=douban_config,
             field_mapping=field_mapping,
+            progress=progress,
             db_path=options.db_path,
             force_update=options.force_update,
         )

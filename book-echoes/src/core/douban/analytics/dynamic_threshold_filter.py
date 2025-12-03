@@ -93,6 +93,8 @@ class DynamicThresholdFilter:
             )
 
         working = working.dropna(subset=["rating"]).copy()
+        # 排除评分为 0 的记录（0 分表示无评分，不是真正的评分）
+        working = working[working["rating"] > 0]
         return working
 
     def analyze(self, dataset: pd.DataFrame) -> DynamicFilterResult:

@@ -17,7 +17,7 @@ from src.core.douban.database.database_manager import DatabaseManager
 from .constants import ProcessStatus
 
 if TYPE_CHECKING:
-    pass
+    from src.core.douban.progress_manager import ProgressManager
 
 logger = get_logger(__name__)
 
@@ -44,6 +44,7 @@ class DatabaseChecker:
         df: pd.DataFrame,
         douban_config: Dict,
         field_mapping: Dict[str, str],
+        progress: Optional["ProgressManager"] = None,
         db_path: Optional[str] = None,
         force_update: bool = False,
     ) -> Tuple[Optional[DatabaseManager], Optional[Dict]]:
@@ -95,9 +96,9 @@ class DatabaseChecker:
 
             # 处理各分类
             protected_count = 0
-            protected_count += self._process_existing_valid(df, categories, db_manager, field_mapping)
-            protected_count += self._process_existing_incomplete(df, categories, db_manager, field_mapping)
-            protected_count += self._process_existing_stale(df, categories, db_manager, field_mapping)
+            protected_count += self._process_existing_valid(df, categories, db_manager, field_mapping, progress)
+            protected_count += self._process_existing_incomplete(df, categories, db_manager, field_mapping, progress)
+            protected_count += self._process_existing_stale(df, categories, db_manager, field_mapping, progress)
             protected_count += self._process_new(df, categories)
 
             logger.info(
@@ -123,6 +124,7 @@ class DatabaseChecker:
         categories: Dict,
         db_manager: DatabaseManager,
         field_mapping: Dict[str, str],
+        progress: Optional["ProgressManager"] = None,
     ) -> int:
         """处理 existing_valid: 从数据库填充数据，标记为完成.
         
@@ -147,7 +149,7 @@ class DatabaseChecker:
                 logger.debug(f"终态保护 - idx={idx}, 状态={current_status}, 分类=existing_valid")
             
             self.row_category_map[idx] = "existing_valid"
-            self._fill_from_database(df, idx, barcode, db_manager, field_mapping)
+            self._fill_from_database(df, idx, barcode, db_manager, field_mapping, progress)
         
         return protected_count
 
@@ -157,6 +159,7 @@ class DatabaseChecker:
         categories: Dict,
         db_manager: DatabaseManager,
         field_mapping: Dict[str, str],
+        progress: Optional["ProgressManager"] = None,
     ) -> int:
         """处理 existing_valid_incomplete: 从数据库填充数据，但需要调用API补充.
         
@@ -180,7 +183,7 @@ class DatabaseChecker:
                 logger.debug(f"终态保护 - idx={idx}, 状态={current_status}, 分类=existing_valid_incomplete")
             
             self.row_category_map[idx] = "existing_valid_incomplete"
-            self._fill_from_database(df, idx, barcode, db_manager, field_mapping)
+            self._fill_from_database(df, idx, barcode, db_manager, field_mapping, progress)
         
         return protected_count
 
@@ -190,6 +193,7 @@ class DatabaseChecker:
         categories: Dict,
         db_manager: DatabaseManager,
         field_mapping: Dict[str, str],
+        progress: Optional["ProgressManager"] = None,
     ) -> int:
         """处理 existing_stale: 从数据库填充基础数据，需要调用API刷新.
         
@@ -213,7 +217,7 @@ class DatabaseChecker:
                 logger.debug(f"终态保护 - idx={idx}, 状态={current_status}, 分类=existing_stale")
             
             self.row_category_map[idx] = "existing_stale"
-            self._fill_from_database(df, idx, barcode, db_manager, field_mapping)
+            self._fill_from_database(df, idx, barcode, db_manager, field_mapping, progress)
         
         return protected_count
 
@@ -249,6 +253,7 @@ class DatabaseChecker:
         barcode: str,
         db_manager: DatabaseManager,
         field_mapping: Dict[str, str],
+        progress: Optional["ProgressManager"] = None,
     ) -> None:
         """从数据库填充已有数据."""
         try:
@@ -285,6 +290,9 @@ class DatabaseChecker:
                 value = book_data.get(db_field)
                 if value is not None and excel_col in df.columns:
                     df.at[idx, excel_col] = value
+
+            if progress:
+                progress.append_source(df, idx, "database")
 
         except Exception as e:
             logger.warning(f"从数据库填充数据失败 - barcode={barcode}: {e}")

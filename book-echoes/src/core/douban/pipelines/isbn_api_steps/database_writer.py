@@ -70,7 +70,7 @@ class DatabaseWriter:
             写入的记录数
         """
         try:
-            from src.core.douban.pipelines.database.excel_to_database_writer import (
+            from src.core.douban.database.excel_to_database_writer import (
                 ExcelToDatabaseWriter,
             )
 

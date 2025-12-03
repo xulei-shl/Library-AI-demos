@@ -123,6 +123,7 @@ class ApiCaller:
                     field_mapping=field_mapping,
                     current=current,
                     total=total,
+                    progress=progress,
                 )
 
                 if success:
@@ -230,6 +231,7 @@ class ApiCaller:
         field_mapping: Dict[str, str],
         current: int,
         total: int,
+        progress: "ProgressManager",
     ) -> bool:
         """处理单个 ISBN.
 
@@ -261,6 +263,7 @@ class ApiCaller:
                         df.at[idx, url_col] = payload["share_url"]
 
                 df.at[idx, "处理状态"] = ProcessStatus.DONE
+                progress.append_source(df, idx, "api")
                 logger.info(f"[{current}/{total}] ISBN {isbn} 获取成功")
                 return True
             else:
