@@ -14,11 +14,9 @@
 academic_ Search/
 */data/
 
-book-echoes/
-book-echoes/
+
 research_report_writing/
 metadata-editor/jsondata/llm_settings.json
-/litellm-langfuse
-/metadata-editor/jsondata
+metadata-editor/jsondata/knowledge_settings.json
 .cursorignore
-/.vscode
+.vscode/settings.json
