@@ -83,6 +83,7 @@ class ReportGenerator:
         isbn_supplement_stats: Dict[str, int],
         api_stats: Dict[str, int],
         filter_stats: Dict[str, Any],
+        folio_stats: Optional[Dict[str, Any]] = None,
     ) -> str:
         """生成处理报告.
 
@@ -94,6 +95,7 @@ class ReportGenerator:
             isbn_supplement_stats: ISBN 补充统计
             api_stats: API 调用统计
             filter_stats: 评分过滤统计
+            folio_stats: FOLIO ISBN 爬取统计（可选）
 
         Returns:
             报告文件路径
@@ -114,9 +116,25 @@ class ReportGenerator:
             "",
         ]
 
+        # 添加 FOLIO ISBN 爬取统计
+        if folio_stats and not folio_stats.get("skipped"):
+            lines.extend(["【FOLIO ISBN 爬取统计】"])
+            lines.extend([
+                f"  总记录数: {folio_stats.get('total_records', 0)}",
+                f"  成功获取: {folio_stats.get('success_count', 0)}",
+                f"  获取失败: {folio_stats.get('failed_count', 0)}",
+            ])
+            if folio_stats.get("error"):
+                lines.append(f"  错误信息: {folio_stats['error']}")
+            lines.append("")
+        elif folio_stats and folio_stats.get("skipped"):
+            lines.extend(["【FOLIO ISBN 爬取统计】"])
+            lines.append(f"  状态: 已跳过（{folio_stats.get('reason', '未知原因')}）")
+            lines.append("")
+
         # 添加 ISBN 补充统计
         if isbn_supplement_stats.get("total", 0) > 0 or isbn_supplement_stats.get("disabled"):
-            lines.extend(["【ISBN 补充统计】"])
+            lines.extend(["【ISBN 补充统计（兜底）】"])
             if isbn_supplement_stats.get("disabled"):
                 lines.append("  状态: 已禁用（配置关闭）")
             else:

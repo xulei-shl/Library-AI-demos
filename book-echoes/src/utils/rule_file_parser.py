@@ -74,7 +74,11 @@ class RuleFileParser:
         Returns:
             CallNumberRules 规则集合
         """
-        file_path = file_path or DEFAULT_CALL_NUMBER_RULES_FILE
+        # 兼容字符串和 Path 对象
+        if file_path:
+            file_path = Path(file_path) if not isinstance(file_path, Path) else file_path
+        else:
+            file_path = DEFAULT_CALL_NUMBER_RULES_FILE
         rules = CallNumberRules()
 
         if not file_path.exists():
@@ -139,7 +143,11 @@ class RuleFileParser:
         Returns:
             关键词列表
         """
-        file_path = file_path or DEFAULT_TITLE_KEYWORDS_FILE
+        # 兼容字符串和 Path 对象
+        if file_path:
+            file_path = Path(file_path) if not isinstance(file_path, Path) else file_path
+        else:
+            file_path = DEFAULT_TITLE_KEYWORDS_FILE
         keywords = []
 
         if not file_path.exists():
