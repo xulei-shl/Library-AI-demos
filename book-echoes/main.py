@@ -571,7 +571,7 @@ def run_module6():
     print("模块6: 新书零借阅（睡美人）模块")
     print("筛选近期验收但零借阅的新书")
     print("=" * 60)
-    
+
     # 检查配置指定的输入文件是否存在
     from pathlib import Path
     new_books_file = Path(app_config.get(
@@ -582,7 +582,7 @@ def run_module6():
         'paths.excel_files.borrowing_4months_file',
         'data/new/近四月借阅.xlsx'
     ))
-    
+
     missing_files = [path for path in (new_books_file, borrowing_4m_file) if not path.exists()]
     if missing_files:
         print("错误: 找不到以下配置指定的输入文件:")
@@ -590,11 +590,11 @@ def run_module6():
             print(f"  - {missing}")
         print("请检查 config/setting.yaml 中 paths.excel_files 的配置，或确认文件路径正确")
         return 1
-    
+
     try:
         from src.core.new_sleeping.pipeline import run_new_sleeping_pipeline
         success = run_new_sleeping_pipeline()
-        
+
         if success:
             print("\n" + "=" * 60)
             print("[成功] 模块6执行完成!")
@@ -611,6 +611,59 @@ def run_module6():
         logger.error(f"运行模块6时出错: {str(e)}", exc_info=True)
         print(f"\n" + "=" * 60)
         print(f"X 运行模块6时出错: {str(e)}")
+        print("=" * 60)
+        return 1
+
+
+def run_module6b():
+    """运行模块6-B：新书评分过滤"""
+    print("=" * 60)
+    print("模块6-B: 新书评分过滤")
+    print("使用新书专用规则进行评分过滤，写入候选状态列")
+    print("=" * 60)
+
+    # 查找模块3-B的输出文件（ISBN API结果）
+    outputs_dir = get_outputs_dir()
+    if not outputs_dir.exists():
+        print("错误: 输出目录不存在")
+        return 1
+
+    # 查找包含 ISBN_API结果 的最新文件
+    candidates = sorted(
+        outputs_dir.glob("*ISBN_API结果*.xlsx"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True
+    )
+
+    # 过滤掉临时文件
+    target_excel = None
+    for p in candidates:
+        if not p.name.startswith("~$") and "partial" not in p.name.lower():
+            target_excel = p
+            break
+
+    if not target_excel:
+        print("错误: 未找到模块3-B生成的 ISBN API 结果文件。")
+        print("请先运行模块3-B获取豆瓣数据，或将结果文件放到 runtime/outputs 目录。")
+        return 1
+
+    print(f"使用输入文件: {target_excel}")
+
+    try:
+        from src.core.new_sleeping.rating_filter import run_new_sleeping_rating_filter
+        output_file, result = run_new_sleeping_rating_filter(str(target_excel))
+
+        print("\n" + "=" * 60)
+        print("[成功] 模块6-B执行完成!")
+        print(f"输出文件: {output_file}")
+        print(f"候选数量: {result.candidate_count} / {result.total_count}")
+        print("=" * 60)
+        return 0
+
+    except Exception as e:
+        logger.error(f"运行模块6-B时出错: {str(e)}", exc_info=True)
+        print(f"\n" + "=" * 60)
+        print(f"X 运行模块6-B时出错: {str(e)}")
         print("=" * 60)
         return 1
 
@@ -858,10 +911,11 @@ def main():
         print("7. 数据分析与评选流程: 模块1 -> 模块2 -> 模块3 -> 模块4")
         print("8. 模块5: 图书卡片生成（含借书卡）")
         print("9. 模块6: 新书零借阅（睡美人）筛选")
-        print("10. 模块7: 主题书目每日追踪")
-        print("11. 退出程序")
+        print("10. 模块6-B: 新书评分过滤（写入候选状态）")
+        print("11. 模块7: 主题书目每日追踪")
+        print("12. 退出程序")
 
-        choice = input("\n请输入选择 (1-11): ").strip()
+        choice = input("\n请输入选择 (1-12): ").strip()
 
         if choice == '1':
             return run_module1()
@@ -882,8 +936,10 @@ def main():
         elif choice == '9':
             return run_module6()
         elif choice == '10':
-            return run_module7()
+            return run_module6b()
         elif choice == '11':
+            return run_module7()
+        elif choice == '12':
             print("感谢使用 书海回响 脚本!")
             return 0
         else:

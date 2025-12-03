@@ -7,9 +7,12 @@
 from .preprocessor import preprocess_new_books_data
 from .filter import ZeroBorrowingFilter
 from .pipeline import run_new_sleeping_pipeline
+from .rating_filter import NewSleepingRatingFilter, run_new_sleeping_rating_filter
 
 __all__ = [
     'preprocess_new_books_data',
     'ZeroBorrowingFilter',
-    'run_new_sleeping_pipeline'
+    'run_new_sleeping_pipeline',
+    'NewSleepingRatingFilter',
+    'run_new_sleeping_rating_filter',
 ]

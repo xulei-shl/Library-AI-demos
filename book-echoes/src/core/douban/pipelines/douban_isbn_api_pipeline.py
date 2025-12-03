@@ -310,7 +310,22 @@ class DoubanIsbnApiPipeline:
         options: DoubanIsbnApiPipelineOptions,
         field_mapping: Dict[str, str],
     ) -> Dict[str, Any]:
-        """运行评分过滤步骤."""
+        """运行评分过滤步骤.
+
+        优先读取配置文件中的 rating_filter.dynamic_filter_enabled 开关，
+        如果配置为 false，则跳过动态评分过滤（适用于新书数据，后续使用命令10单独过滤）。
+        """
+        # 从配置文件读取动态过滤开关
+        full_config = self._config_manager.get_config()
+        rating_filter_config = full_config.get("rating_filter", {})
+        dynamic_filter_enabled = rating_filter_config.get("dynamic_filter_enabled", True)
+
+        # 如果配置禁用动态过滤，则跳过
+        if not dynamic_filter_enabled:
+            logger.info("步骤 6: 跳过评分过滤（配置 rating_filter.dynamic_filter_enabled=false）")
+            return {}
+
+        # 如果选项禁用评分过滤，则跳过
         if not options.enable_rating_filter:
             logger.info("步骤 6: 跳过评分过滤（已禁用）")
             return {}
