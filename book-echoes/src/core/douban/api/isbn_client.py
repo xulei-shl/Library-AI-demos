@@ -22,7 +22,7 @@ from .rate_limiter import AsyncRateLimiter
 
 logger = get_logger(__name__)
 
-__all__ = ["IsbnApiClient", "IsbnApiError", "IsbnApiConfig"]
+__all__ = ["IsbnApiClient", "IsbnApiError", "IsbnApiConfig", "normalize_isbn", "preprocess_excel_isbn"]
 
 
 class IsbnApiError(RuntimeError):
@@ -81,12 +81,64 @@ USER_AGENTS = [
 ISBN_PATTERN = re.compile(r"^(\d{10}|\d{13})$")
 
 
-def normalize_isbn(isbn: Optional[str]) -> Optional[str]:
-    """标准化 ISBN：去除分隔符，保留纯数字."""
-    if not isbn:
+def preprocess_excel_isbn(value) -> str:
+    """预处理 Excel 中的 ISBN 值，将各种格式转换为文本.
+
+    处理以下 Excel 格式问题：
+    - 数字类型存储导致前导零丢失
+    - 科学计数法（如 9.78712E+12）
+    - 浮点数格式（如 9787121123456.0）
+    - None 或 NaN 值
+
+    Args:
+        value: Excel 单元格原始值（可能是 int, float, str, None）
+
+    Returns:
+        标准化的字符串格式，空值返回空字符串
+    """
+    if value is None:
+        return ""
+
+    # 处理 pandas NaN
+    try:
+        import pandas as pd
+        if pd.isna(value):
+            return ""
+    except (ImportError, TypeError):
+        pass
+
+    # 处理浮点数（科学计数法或带小数点）
+    if isinstance(value, float):
+        try:
+            # 转换为整数再转字符串，避免小数点和科学计数法
+            int_value = int(value)
+            return str(int_value)
+        except (ValueError, OverflowError):
+            return str(value)
+
+    # 处理整数
+    if isinstance(value, int):
+        return str(value)
+
+    # 字符串：去除首尾空格
+    return str(value).strip()
+
+
+def normalize_isbn(isbn) -> Optional[str]:
+    """标准化 ISBN：去除分隔符，保留纯数字.
+
+    Args:
+        isbn: ISBN 值（支持任意类型，会先进行 Excel 格式预处理）
+
+    Returns:
+        标准化后的 ISBN（10位或13位纯数字），无效则返回 None
+    """
+    # 先进行 Excel 格式预处理
+    preprocessed = preprocess_excel_isbn(isbn)
+    if not preprocessed:
         return None
     # 去除所有非数字字符
-    cleaned = re.sub(r"[^0-9]", "", str(isbn).strip())
+    cleaned = re.sub(r"[^0-9]", "", preprocessed)
     # 校验格式（10位或13位数字）
     if ISBN_PATTERN.match(cleaned):
         return cleaned

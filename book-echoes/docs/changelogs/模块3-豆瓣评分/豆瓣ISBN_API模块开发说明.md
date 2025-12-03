@@ -452,7 +452,28 @@ api/init.py - 导出新客户端
 python main.py
 
 # 或直接运行 ISBN API 模块
-python src/core/douban/douban_isbn_main.py run --excel-file "runtime\outputs\月归还数据筛选结果_20251113_103834.xlsx"
+python src/core/douban/douban_isbn_main.py run  --excel-file "E:\Desk\1.xlsx" --disable-database
 
 # 查看帮助
 python src/core/douban/douban_isbn_main.py help
+
+---
+
+P1: 代码重构 - 拆分大文件
+原文件行数: 1063 行 → 精简后: 320 行 新建模块目录: src/core/douban/pipelines/isbn_api_steps/
+
+文件	行数	职责
+constants.py	15	状态常量 ProcessStatus
+isbn_preprocessor.py	230	ISBN 预处理和补充检索
+database_checker.py	200	数据库查重和填充
+api_caller.py	220	ISBN API 调用
+rating_filter.py	75	评分过滤
+database_writer.py	115	数据库写入
+report_generator.py	155	输出结果和报告生成
+
+P2: 状态常量提取
+状态常量已提取到 ProcessStatus 类中（constants.py），各模块统一引用。
+重要说明
+数据库写入逻辑未变: 所有 STATUS_DONE 的记录都会写入数据库，与评分过滤无关
+向后兼容: 主流水线 API 保持不变，DoubanIsbnApiPipelineOptions 接口一致
+所有语法已验证通过

@@ -243,7 +243,7 @@ douban:
 
     # ISBN 补充配置（在调用 ISBN API 前，对缺失 ISBN 的记录进行 FOLIO 补充检索）
     isbn_supplement:
-      enabled: true           # 是否启用 ISBN 补充检索
+      enabled: false           # 是否启用 ISBN 补充检索
       min_threshold: 5        # 最小阈值，只有当需要补充的记录数 >= 此值时才启动 FOLIO 处理器
 
   # 数据分析配置 (src/core/douban/analytics/ 和 report_generator.py)

@@ -1,0 +1,27 @@
+# Ignore environment variables
+**/.env
+
+**/backup/
+
+**/refs/
+
+data/backup
+tests/
+
+**/jsondata/
+
+__pycache__/
+
+
+tmp/
+
+**/logs
+
+.claude/
+
+# 忽略所有 .db 文件
+*.db
+
+runtime/database/
+runtime/cache/
+runtime/outputs/
