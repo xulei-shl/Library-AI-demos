@@ -16,6 +16,8 @@ import pandas as pd
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 sys.path.insert(0, project_root)
 
+import shutil
+
 from src.utils.logger import get_logger
 from src.utils.config_manager import get_config_manager
 from src.core.card_generator.models import BookCardData
@@ -83,7 +85,8 @@ class CardGeneratorModule:
             'library_card_success_count': 0,
             'library_card_failed_count': 0,
             'retry_success_count': 0,
-            'retry_failed_records': []
+            'retry_failed_records': [],
+            'success_barcodes': []  # 成功生成卡片的条码列表
         }
 
     def run(self, excel_path: str) -> int:
@@ -134,39 +137,34 @@ class CardGeneratorModule:
             logger.info(f"开始处理 {len(filtered_df)} 本通过终评的图书...")
 
             # 5. 并行执行独立任务（每个任务使用独立的浏览器实例）
+            # 注意：DB写入移到最后执行，确保只写入成功生成卡片的记录
             logger.info("=" * 60)
             logger.info("启动并行任务:")
             logger.info("  任务1: 图书卡片生成")
-            logger.info("  任务2: 推荐结果数据库写入")
             if self.library_card_enabled:
-                logger.info("  任务3: 图书馆借书卡生成")
+                logger.info("  任务2: 图书馆借书卡生成")
             logger.info("=" * 60)
 
             # 使用ThreadPoolExecutor并行执行
-            max_workers = 3 if self.library_card_enabled else 2
+            max_workers = 2 if self.library_card_enabled else 1
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 # 任务1: 图书卡片生成（使用线程安全的converter）
                 card_future = executor.submit(self._generate_cards_task, filtered_df)
-                
-                # 任务2: 推荐结果数据库写入
-                db_future = executor.submit(self._write_recommendation_results_task, df)
-                
-                # 任务3: 图书馆借书卡生成（如果启用，使用线程安全的converter）
+
+                # 任务2: 图书馆借书卡生成（如果启用，使用线程安全的converter）
                 library_card_future = None
                 if self.library_card_enabled:
                     library_card_future = executor.submit(self._generate_library_cards_task, filtered_df)
 
                 # 等待任务完成
                 card_result = card_future.result()
-                db_result = db_future.result()
                 library_card_result = library_card_future.result() if library_card_future else 0
 
             logger.info("=" * 60)
             logger.info("并行任务执行完成")
             logger.info(f"  任务1结果: {'成功' if card_result else '失败'}")
-            logger.info(f"  任务2结果: 写入 {db_result} 条记录")
             if self.library_card_enabled:
-                logger.info(f"  任务3结果: 成功生成 {library_card_result} 张借书卡")
+                logger.info(f"  任务2结果: 成功生成 {library_card_result} 张借书卡")
             logger.info("=" * 60)
 
             # 6. 失败重试机制
@@ -176,8 +174,15 @@ class CardGeneratorModule:
                 logger.info("=" * 60)
                 self._retry_failed_records(filtered_df)
 
-            # 7. 如果重试后仍有失败，生成错误报告
+            # 7. 如果重试后仍有失败，清理失败记录并生成错误报告
             if self.stats['retry_failed_records']:
+                # 清理失败记录的文件夹和Excel标记
+                logger.info("=" * 60)
+                logger.info("开始清理失败记录...")
+                logger.info("=" * 60)
+                self._cleanup_failed_records(excel_path, filtered_df)
+
+                # 生成错误报告
                 error_report_path = os.path.join(
                     self.config.get('output', {}).get('base_dir', 'runtime/outputs'),
                     f'card_generation_errors_{time.strftime("%Y%m%d_%H%M%S")}.txt'
@@ -185,19 +190,28 @@ class CardGeneratorModule:
                 self._generate_error_report(error_report_path)
                 logger.error(f"重试后仍有 {len(self.stats['retry_failed_records'])} 条记录失败，错误报告已生成：{error_report_path}")
 
-            # 8. 生成汇总报告
+            # 8. 写入推荐结果到数据库（只写入成功生成卡片的记录）
+            db_result = 0
+            if self.stats['success_barcodes']:
+                logger.info("=" * 60)
+                logger.info("开始写入推荐结果到数据库...")
+                logger.info("=" * 60)
+                db_result = self._write_recommendation_results_task(df, self.stats['success_barcodes'])
+                logger.info(f"数据库写入完成，成功写入 {db_result} 条记录")
+
+            # 9. 生成汇总报告
             elapsed_time = time.time() - start_time
-            report = self.generate_summary_report(excel_path, elapsed_time)
+            report = self.generate_summary_report(excel_path, elapsed_time, db_result)
             logger.info("\n" + report)
 
-            # 9. 保存报告
+            # 10. 保存报告
             report_path = os.path.join(
                 self.config.get('output', {}).get('base_dir', 'runtime/outputs'),
                 f'card_generation_report_{time.strftime("%Y%m%d_%H%M%S")}.txt'
             )
             self.save_report(report, report_path)
 
-            # 10. 返回结果
+            # 11. 返回结果
             if self.stats['success_count'] > 0:
                 logger.info("=" * 60)
                 logger.info("[成功] 模块5执行完成!")
@@ -275,18 +289,19 @@ class CardGeneratorModule:
             logger.info("[任务1] 关闭浏览器实例...")
             html_to_image_converter.stop_browser()
 
-    def _write_recommendation_results_task(self, df: pd.DataFrame) -> int:
+    def _write_recommendation_results_task(self, df: pd.DataFrame, success_barcodes: List[str] = None) -> int:
         """
-        任务2: 推荐结果数据库写入任务(在独立线程中执行)
+        推荐结果数据库写入任务
 
         Args:
             df: 完整的DataFrame(包含所有数据)
+            success_barcodes: 成功生成卡片的条码列表，如果为None则写入所有初评通过的记录
 
         Returns:
             int: 成功写入的记录数
         """
         try:
-            logger.info("[任务2] 开始写入推荐结果到数据库...")
+            logger.info("开始写入推荐结果到数据库...")
             task_start = time.time()
 
             # 获取完整配置(包含fields_mapping)
@@ -296,15 +311,23 @@ class CardGeneratorModule:
             # 创建写入器
             writer = RecommendationResultsWriter(full_config)
 
+            # 如果指定了成功条码列表，先过滤DataFrame
+            if success_barcodes:
+                # 只保留成功生成卡片的记录
+                df_to_write = df[df['书目条码'].astype(str).str.strip().isin(success_barcodes)]
+                logger.info(f"过滤后待写入记录数: {len(df_to_write)}")
+            else:
+                df_to_write = df
+
             # 写入数据(只写入初评结果为"通过"的记录)
-            success_count = writer.write_recommendation_results(df)
+            success_count = writer.write_recommendation_results(df_to_write)
 
             task_time = time.time() - task_start
-            logger.info(f"[任务2] 推荐结果写入完成,成功 {success_count} 条,耗时: {task_time:.2f}秒")
+            logger.info(f"推荐结果写入完成,成功 {success_count} 条,耗时: {task_time:.2f}秒")
             return success_count
 
         except Exception as e:
-            logger.error(f"[任务2] 推荐结果写入任务异常: {e}", exc_info=True)
+            logger.error(f"推荐结果写入任务异常: {e}", exc_info=True)
             return 0
 
     def _generate_library_cards_task(self, filtered_df: pd.DataFrame) -> int:
@@ -619,11 +642,12 @@ class CardGeneratorModule:
             # 8. 成功完成
             total_time = time.time() - book_start_time
             self.stats['success_count'] += 1
-            
+            self.stats['success_barcodes'].append(barcode)  # 记录成功的条码
+
             # 输出性能统计
             logger.info(f"成功生成卡片,书目条码:{barcode}, 总耗时:{total_time:.2f}秒")
             logger.debug(f"  步骤耗时: {', '.join([f'{k}:{v:.2f}s' for k, v in step_times.items()])}")
-            
+
             return True
 
         except Exception as e:
@@ -753,13 +777,14 @@ class CardGeneratorModule:
             logger.error(f"提取图书数据时发生错误：{e}")
             return None
 
-    def generate_summary_report(self, excel_path: str, elapsed_time: float) -> str:
+    def generate_summary_report(self, excel_path: str, elapsed_time: float, db_result: int = 0) -> str:
         """
         生成汇总报告
 
         Args:
             excel_path: Excel文件路径
             elapsed_time: 执行时间（秒）
+            db_result: 数据库写入成功记录数
 
         Returns:
             str: 汇总报告文本
@@ -779,6 +804,7 @@ class CardGeneratorModule:
             f"  成功生成: {self.stats['success_count']} 张图书卡片",
             f"  失败记录: {self.stats['failed_count']} 条",
             f"  警告记录: {self.stats['warning_count']} 条",
+            f"  数据库写入: {db_result} 条",
         ]
         
         # 添加重试统计（如果有重试）
@@ -1000,9 +1026,73 @@ class CardGeneratorModule:
                 f.write(report_content)
             
             logger.info(f"错误报告已生成：{output_path}")
-        
+
         except Exception as e:
             logger.error(f"生成错误报告失败：{e}", exc_info=True)
+
+    def _cleanup_failed_records(self, excel_path: str, filtered_df: pd.DataFrame) -> None:
+        """
+        清理最终失败的记录：删除文件夹、清除Excel中的人工评选标记
+
+        Args:
+            excel_path: Excel文件路径
+            filtered_df: 筛选后的DataFrame
+        """
+        if not self.stats['retry_failed_records']:
+            return
+
+        # 获取失败的条码列表（去重）
+        failed_barcodes = set()
+        for record in self.stats['retry_failed_records']:
+            failed_barcodes.add(record['barcode'])
+
+        logger.info(f"[清理] 需要清理 {len(failed_barcodes)} 条失败记录")
+
+        # 1. 删除失败记录的文件夹
+        deleted_folders = 0
+        output_base_dir = self.config.get('output', {}).get('base_dir', 'runtime/outputs')
+        cards_dir = os.path.join(output_base_dir, 'cards')
+
+        for barcode in failed_barcodes:
+            folder_path = os.path.join(cards_dir, barcode)
+            if os.path.exists(folder_path):
+                try:
+                    shutil.rmtree(folder_path)
+                    deleted_folders += 1
+                    logger.debug(f"[清理] 已删除文件夹: {folder_path}")
+                except Exception as e:
+                    logger.warning(f"[清理] 删除文件夹失败: {folder_path}, 错误: {e}")
+
+        logger.info(f"[清理] 已删除 {deleted_folders} 个失败记录的文件夹")
+
+        # 2. 更新Excel文件，清除失败记录的人工评选标记
+        try:
+            # 读取原始Excel文件
+            df = pd.read_excel(excel_path)
+
+            # 获取人工评选列名
+            filter_config = self.config.get('filter', {})
+            manual_column = filter_config.get('force_column', '人工评选')
+
+            if manual_column not in df.columns:
+                logger.warning(f"[清理] Excel中未找到列 '{manual_column}'，跳过清除标记")
+                return
+
+            # 清除失败记录的人工评选标记
+            updated_count = 0
+            for barcode in failed_barcodes:
+                mask = df['书目条码'].astype(str).str.strip() == barcode
+                if mask.any():
+                    df.loc[mask, manual_column] = ''
+                    updated_count += 1
+                    logger.debug(f"[清理] 已清除条码 {barcode} 的人工评选标记")
+
+            # 保存更新后的Excel文件
+            df.to_excel(excel_path, index=False)
+            logger.info(f"[清理] 已更新Excel文件，清除 {updated_count} 条记录的人工评选标记")
+
+        except Exception as e:
+            logger.error(f"[清理] 更新Excel文件失败: {e}", exc_info=True)
 
 
 def main():

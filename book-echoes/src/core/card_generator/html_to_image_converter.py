@@ -238,7 +238,7 @@ class HTMLToImageConverter:
 
     def wait_for_rendering(self, page: Page) -> None:
         """
-        等待页面渲染完成
+        等待页面渲染完成，包括所有图片加载
 
         Args:
             page: Playwright页面对象
@@ -246,7 +246,57 @@ class HTMLToImageConverter:
         try:
             # 先等待网络空闲(本地HTML文件通常很快)
             page.wait_for_load_state('networkidle', timeout=self.timeout)
-            
+
+            # 等待所有图片加载完成（包括img标签和CSS背景图）
+            try:
+                page.evaluate("""
+                    async () => {
+                        // 1. 等待所有 <img> 标签加载完成
+                        const imgPromises = Array.from(document.querySelectorAll('img'))
+                            .filter(img => !img.complete)
+                            .map(img => new Promise((resolve, reject) => {
+                                img.onload = resolve;
+                                img.onerror = resolve;  // 即使加载失败也继续
+                                // 设置超时，防止无限等待
+                                setTimeout(resolve, 5000);
+                            }));
+
+                        // 2. 等待所有CSS背景图加载完成
+                        const bgPromises = Array.from(document.querySelectorAll('*'))
+                            .map(el => {
+                                const style = window.getComputedStyle(el);
+                                const bgImage = style.backgroundImage;
+                                if (bgImage && bgImage !== 'none' && bgImage.startsWith('url(')) {
+                                    // 提取URL
+                                    const urlMatch = bgImage.match(/url\\(['"]?([^'"\\)]+)['"]?\\)/);
+                                    if (urlMatch && urlMatch[1]) {
+                                        const url = urlMatch[1];
+                                        // 跳过data: URL和已缓存的图片
+                                        if (!url.startsWith('data:')) {
+                                            return new Promise((resolve) => {
+                                                const img = new Image();
+                                                img.onload = resolve;
+                                                img.onerror = resolve;
+                                                img.src = url;
+                                                // 设置超时
+                                                setTimeout(resolve, 5000);
+                                            });
+                                        }
+                                    }
+                                }
+                                return Promise.resolve();
+                            });
+
+                        await Promise.all([...imgPromises, ...bgPromises]);
+
+                        // 3. 额外等待一帧，确保渲染完成
+                        await new Promise(resolve => requestAnimationFrame(resolve));
+                    }
+                """)
+                logger.debug("所有图片加载完成")
+            except Exception as e:
+                logger.warning(f"等待图片加载时发生警告: {e}")
+
             # 只在配置了额外等待时间时才等待(性能优化)
             if self.wait_time > 0:
                 time.sleep(self.wait_time / 1000.0)

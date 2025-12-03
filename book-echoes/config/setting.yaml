@@ -552,7 +552,7 @@ rating_filter:
 # =============================================================================
 card_generator:
   # HTML模板文件路径
-  template_path: "config/瑞士灰色网格风格.html"
+  template_path: "config/极简工业档案.html"
 
   # 字段转换器配置
   # 功能: 为不同模板提供灵活的字段处理规则
