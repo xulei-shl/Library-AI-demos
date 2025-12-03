@@ -904,7 +904,7 @@ def main():
         print("\n请选择要运行的功能模块:")
         print("1. 模块1/2: 月归还数据分析 + 智能筛选")
         print("2. 模块3: 豆瓣模块（FOLIO ISBN + 豆瓣链接 + 评分过滤 + 豆瓣 API）")
-        print("3. 模块3-B: 豆瓣模块（FOLIO ISBN + 豆瓣 ISBN API + 评分过滤）")
+        print("3. 模块3-B: 豆瓣模块（FOLIO ISBN + 豆瓣 ISBN API + 配置是否启用评分过滤）")
         print("4. 数据采集流程: 模块1 -> 模块2 -> 模块3")
         print("5. 模块4: 初评（海选阶段）")
         print("6. 模块4: 完整评选（初评→决选→终评）")

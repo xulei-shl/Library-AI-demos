@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
+from src.utils.rule_file_parser import CallNumberMatcher, TitleKeywordsMatcher
 from src.utils.config_manager import get_config_manager
 from src.utils.logger import get_logger
 
@@ -176,29 +177,30 @@ class NewSleepingRatingFilter:
         if reuse_filters.get("title_keywords", False):
             title_col = self._find_column(df, [title_column, "题名", "书名"])
             if title_col:
-                keywords = self._load_title_keywords()
-                if keywords:
-                    keyword_mask = self._apply_title_keywords_filter(df[title_col], keywords)
+                title_matcher = TitleKeywordsMatcher()
+                if title_matcher.has_keywords:
+                    keyword_mask = title_matcher.apply(df[title_col])
                     excluded_count = (candidate_mask & keyword_mask).sum()
                     candidate_mask &= ~keyword_mask
                     excluded_by_title_keywords = excluded_count
-                    logger.info(f"题名关键词过滤: 排除 {excluded_count} 条 (关键词数: {len(keywords)})")
+                    logger.info(
+                        f"题名关键词过滤: 排除 {excluded_count} 条 "
+                        f"(关键词数: {title_matcher.get_keywords_count()})"
+                    )
 
         # 规则4: 索书号规则过滤
         if reuse_filters.get("call_number_clc", False):
             call_no_col = self._find_column(df, [call_number_column, "索书号"])
             if call_no_col:
-                include_patterns, exclude_patterns = self._load_call_number_patterns()
-                if include_patterns or exclude_patterns:
-                    call_no_mask = self._apply_call_number_filter(
-                        df[call_no_col], include_patterns, exclude_patterns
-                    )
+                call_number_matcher = CallNumberMatcher()
+                if call_number_matcher.has_rules:
+                    call_no_mask = call_number_matcher.apply(df[call_no_col])
                     excluded_count = (candidate_mask & call_no_mask).sum()
                     candidate_mask &= ~call_no_mask
                     excluded_by_call_number = excluded_count
                     logger.info(
                         f"索书号规则过滤: 排除 {excluded_count} 条 "
-                        f"(保留规则: {len(include_patterns)}, 排除规则: {len(exclude_patterns)})"
+                        f"({call_number_matcher.get_rules_summary()})"
                     )
 
         # 规则5: 学科最低评分过滤
@@ -354,99 +356,6 @@ class NewSleepingRatingFilter:
             if col in df.columns:
                 return col
         return None
-
-    def _load_title_keywords(self) -> List[str]:
-        """加载题名关键词"""
-        keywords_file = Path("config/filters/title_keywords.txt")
-        if not keywords_file.exists():
-            logger.warning(f"题名关键词文件不存在: {keywords_file}")
-            return []
-
-        keywords = []
-        try:
-            with open(keywords_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#"):
-                        keywords.append(line)
-        except Exception as e:
-            logger.error(f"加载题名关键词文件失败: {e}")
-
-        return keywords
-
-    def _apply_title_keywords_filter(
-        self, title_series: pd.Series, keywords: List[str]
-    ) -> pd.Series:
-        """应用题名关键词过滤，返回需要排除的掩码"""
-        mask = pd.Series(False, index=title_series.index)
-        titles = title_series.fillna("").astype(str)
-
-        for keyword in keywords:
-            mask |= titles.str.contains(keyword, case=False, na=False)
-
-        return mask
-
-    def _load_call_number_patterns(self) -> Tuple[List[str], List[str]]:
-        """加载索书号规则"""
-        patterns_file = Path("config/filters/call_number_clc.txt")
-        if not patterns_file.exists():
-            logger.warning(f"索书号规则文件不存在: {patterns_file}")
-            return [], []
-
-        include_patterns = []
-        exclude_patterns = []
-
-        try:
-            with open(patterns_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith("#"):
-                        continue
-
-                    tokens = line.split(maxsplit=1)
-                    if len(tokens) == 1:
-                        exclude_patterns.append(tokens[0])
-                    else:
-                        directive, pattern = tokens[0].lower(), tokens[1]
-                        if directive in ("keep", "include", "allow"):
-                            include_patterns.append(pattern)
-                        elif directive in ("drop", "exclude", "deny"):
-                            exclude_patterns.append(pattern)
-                        else:
-                            exclude_patterns.append(line)
-        except Exception as e:
-            logger.error(f"加载索书号规则文件失败: {e}")
-
-        return include_patterns, exclude_patterns
-
-    def _apply_call_number_filter(
-        self,
-        call_no_series: pd.Series,
-        include_patterns: List[str],
-        exclude_patterns: List[str],
-    ) -> pd.Series:
-        """应用索书号规则过滤，返回需要排除的掩码"""
-        call_nos = call_no_series.fillna("").astype(str)
-
-        # 构建保留掩码
-        include_mask = pd.Series(False, index=call_no_series.index)
-        for pattern in include_patterns:
-            try:
-                include_mask |= call_nos.str.match(pattern, na=False)
-            except re.error:
-                logger.warning(f"无效的保留正则: {pattern}")
-
-        # 构建排除掩码
-        exclude_mask = pd.Series(False, index=call_no_series.index)
-        for pattern in exclude_patterns:
-            try:
-                exclude_mask |= call_nos.str.match(pattern, na=False)
-            except re.error:
-                logger.warning(f"无效的排除正则: {pattern}")
-
-        # 仅当命中排除且未命中保留时才排除
-        return (~include_mask) & exclude_mask
-
 
 def run_new_sleeping_rating_filter(excel_file: str) -> Tuple[str, NewSleepingFilterResult]:
     """

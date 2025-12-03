@@ -1,10 +1,14 @@
 ﻿# 索书号和CLC号模式筛选 - Rule B (match_type=regex)
-# 语法：以 KEEP/INCLUDE 表示保留优先规则；以 DROP/EXCLUDE 表示排除规则；未显式指定前缀默认 DROP。
-# CallNumberFilter 会优先保留命中 KEEP 的记录，其次再由 DROP 规则排除其他记录。
+# 语法：
+#   DROP!  - 高优先级排除（不受 KEEP 保护，无条件排除）
+#   KEEP   - 保留规则
+#   DROP   - 普通排除（受 KEEP 保护）
+# CallNumberFilter 处理优先级：DROP! > KEEP > DROP
 
-# --- 高优先级排除规则 ---
-# 高优先级：过滤包含#或*的记录
-DROP .*[#*].*
+# --- 高优先级排除规则（不受 KEEP 保护）---
+# 过滤包含#或*的记录
+DROP! .*[#*].*
+DROP! ^D829.*
 
 # --- 保留规则 ---
 # 保留 -64/-49/-0 系列尾段的记录
@@ -19,7 +23,7 @@ KEEP ^D[4-5].*
 KEEP ^D61.*
 KEEP ^D69.*
 KEEP ^D7.*
-KEEP ^D829.*
+# KEEP ^D829.*
 KEEP ^D8(?:\d+\.?\d*|\.\d+)+9/.*
 KEEP ^D90.*
 KEEP ^D992.*
