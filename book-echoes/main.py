@@ -902,44 +902,38 @@ def main():
 
     while True:
         print("\n请选择要运行的功能模块:")
-        print("1. 模块1/2: 月归还数据分析 + 智能筛选")
-        print("2. 模块3: 豆瓣模块（FOLIO ISBN + 豆瓣链接 + 评分过滤 + 豆瓣 API）")
-        print("3. 模块3-B: 豆瓣模块（FOLIO ISBN + 豆瓣 ISBN API + 配置是否启用评分过滤）")
-        print("4. 数据采集流程: 模块1 -> 模块2 -> 模块3")
-        print("5. 模块4: 初评（海选阶段）")
-        print("6. 模块4: 完整评选（初评→决选→终评）")
-        print("7. 数据分析与评选流程: 模块1 -> 模块2 -> 模块3 -> 模块4")
-        print("8. 模块5: 图书卡片生成（含借书卡）")
-        print("9. 模块6: 新书零借阅（睡美人）筛选")
-        print("10. 模块6-B: 新书评分过滤（写入候选状态）")
-        print("11. 模块7: 主题书目每日追踪")
-        print("12. 退出程序")
+        print("1. 模块1/2-借阅模块: 月归还数据分析 + 智能筛选")
+        print("2. 模块6-新书模块: 零借阅（睡美人）筛选")
+        print("3. 模块3-废弃保留: 豆瓣模块（FOLIO ISBN + 豆瓣链接 + 评分过滤 + 豆瓣 API）")
+        print("4. 模块3-B-公共模块: 豆瓣模块（FOLIO ISBN + 豆瓣 ISBN API + 配置是否启用评分过滤）")
+        print("5. 模块6-B-新书模块: 新书评分过滤（写入候选状态）")
+        print("6. 模块4-公共模块: 初评（海选阶段）")
+        print("7. 模块4-公共模块: 完整评选（初评→决选→终评）")
+        print("8. 模块5-公共模块: 图书卡片生成（含借书卡）")
+        print("9. 模块7-主题模块: 主题书目每日追踪")
+        print("10. 退出程序")
 
-        choice = input("\n请输入选择 (1-12): ").strip()
+        choice = input("\n请输入选择 (1-10): ").strip()
 
         if choice == '1':
             return run_module1()
         elif choice == '2':
-            return run_module3()
+            return run_module6()
         elif choice == '3':
-            return run_module3b()
+            return run_module3()
         elif choice == '4':
-            return run_data_collection_pipeline()
+            return run_module3b()
         elif choice == '5':
-            return run_theme_module_initial()
+            return run_module6b()
         elif choice == '6':
-            return run_theme_module_full()
+            return run_theme_module_initial()
         elif choice == '7':
-            return run_data_analysis_and_evaluation_pipeline()
+            return run_theme_module_full()
         elif choice == '8':
             return run_module5()
         elif choice == '9':
-            return run_module6()
-        elif choice == '10':
-            return run_module6b()
-        elif choice == '11':
             return run_module7()
-        elif choice == '12':
+        elif choice == '10':
             print("感谢使用 书海回响 脚本!")
             return 0
         else:
