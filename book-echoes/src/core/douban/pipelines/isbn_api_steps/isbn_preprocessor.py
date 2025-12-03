@@ -73,6 +73,14 @@ class IsbnPreprocessor:
                     if df.at[idx, "处理状态"] == ProcessStatus.PENDING:
                         df.at[idx, "处理状态"] = ProcessStatus.INVALID_ISBN
                     invalid_count += 1
+                else:
+                    # ISBN 为空,检查是否有条码
+                    barcode = str(
+                        df.at[idx, self.barcode_column] if self.barcode_column in df.columns else ""
+                    ).strip()
+                    # 如果没有条码,则无法通过 FOLIO 补充,直接标记为 NO_ISBN
+                    if (not barcode or barcode.lower() == "nan") and df.at[idx, "处理状态"] == ProcessStatus.PENDING:
+                        df.at[idx, "处理状态"] = ProcessStatus.NO_ISBN
 
         return {"valid": valid_count, "invalid": invalid_count}
 
@@ -236,9 +244,11 @@ class IsbnPreprocessor:
                     success_count += 1
                     logger.debug(f"[ISBN补充] 行{index+1}: 成功获取ISBN={isbn_value}")
                 else:
-                    # 仍然失败
+                    # 仍然失败,标记为无ISBN
+                    if df.at[index, "处理状态"] == ProcessStatus.PENDING:
+                        df.at[index, "处理状态"] = ProcessStatus.NO_ISBN
                     failed_count += 1
-                    logger.debug(f"[ISBN补充] 行{index+1}: 未能获取ISBN")
+                    logger.debug(f"[ISBN补充] 行{index+1}: 未能获取ISBN,已标记为无ISBN")
 
             # 保存更新后的状态
             progress.save_partial(df, force=True, reason="isbn_supplement")

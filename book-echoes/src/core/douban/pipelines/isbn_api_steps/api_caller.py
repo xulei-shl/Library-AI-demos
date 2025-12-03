@@ -155,12 +155,18 @@ class ApiCaller:
         for idx in df.index:
             status = df.at[idx, "处理状态"]
 
-            # 跳过已完成或已从数据库获取的完整记录
+            # 跳过所有终态状态:
+            # - DONE: 已完成
+            # - FROM_DB: 从数据库获取的完整记录
+            # - NOT_FOUND: API 调用失败,已经尝试过
+            # - INVALID_ISBN: ISBN 格式无效,无法调用 API
+            # - NO_ISBN: ISBN 为空且无法补充,无法调用 API
             skip_statuses = {
                 ProcessStatus.DONE,
                 ProcessStatus.FROM_DB,
                 ProcessStatus.NOT_FOUND,
                 ProcessStatus.INVALID_ISBN,
+                ProcessStatus.NO_ISBN,
             }
             if status in skip_statuses:
                 continue

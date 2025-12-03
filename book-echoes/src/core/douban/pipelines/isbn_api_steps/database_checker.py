@@ -94,10 +94,11 @@ class DatabaseChecker:
             categories = data_checker.check_and_categorize_books(excel_data)
 
             # 处理各分类
-            self._process_existing_valid(df, categories, db_manager, field_mapping)
-            self._process_existing_incomplete(df, categories, db_manager, field_mapping)
-            self._process_existing_stale(df, categories, db_manager, field_mapping)
-            self._process_new(df, categories)
+            protected_count = 0
+            protected_count += self._process_existing_valid(df, categories, db_manager, field_mapping)
+            protected_count += self._process_existing_incomplete(df, categories, db_manager, field_mapping)
+            protected_count += self._process_existing_stale(df, categories, db_manager, field_mapping)
+            protected_count += self._process_new(df, categories)
 
             logger.info(
                 f"数据库分类完成: "
@@ -106,6 +107,9 @@ class DatabaseChecker:
                 f"过期={len(categories.get('existing_stale', []))}, "
                 f"新增={len(categories.get('new', []))}"
             )
+            
+            if protected_count > 0:
+                logger.info(f"终态保护: {protected_count} 条记录保持原状态不变")
 
             return db_manager, categories
 
@@ -119,16 +123,33 @@ class DatabaseChecker:
         categories: Dict,
         db_manager: DatabaseManager,
         field_mapping: Dict[str, str],
-    ) -> None:
-        """处理 existing_valid: 从数据库填充数据，标记为完成."""
+    ) -> int:
+        """处理 existing_valid: 从数据库填充数据，标记为完成.
+        
+        只有当前状态为 PENDING 时才更新状态,保护终态状态不被覆盖。
+        
+        Returns:
+            被保护的终态记录数量
+        """
+        protected_count = 0
         for item in categories.get("existing_valid", []):
             idx = item.get("_index")
             if idx is None:
                 continue
             barcode = str(item.get("barcode", "")).strip()
-            df.at[idx, "处理状态"] = ProcessStatus.FROM_DB
+            
+            # 只有当前状态为 PENDING 时才更新为 FROM_DB
+            current_status = df.at[idx, "处理状态"]
+            if current_status == ProcessStatus.PENDING:
+                df.at[idx, "处理状态"] = ProcessStatus.FROM_DB
+            else:
+                protected_count += 1
+                logger.debug(f"终态保护 - idx={idx}, 状态={current_status}, 分类=existing_valid")
+            
             self.row_category_map[idx] = "existing_valid"
             self._fill_from_database(df, idx, barcode, db_manager, field_mapping)
+        
+        return protected_count
 
     def _process_existing_incomplete(
         self,
@@ -136,16 +157,32 @@ class DatabaseChecker:
         categories: Dict,
         db_manager: DatabaseManager,
         field_mapping: Dict[str, str],
-    ) -> None:
-        """处理 existing_valid_incomplete: 从数据库填充数据，但需要调用API补充."""
+    ) -> int:
+        """处理 existing_valid_incomplete: 从数据库填充数据，但需要调用API补充.
+        
+        只有当前状态为 PENDING 时才保持 PENDING,保护终态状态不被覆盖。
+        
+        Returns:
+            被保护的终态记录数量
+        """
+        protected_count = 0
         for item in categories.get("existing_valid_incomplete", []):
             idx = item.get("_index")
             if idx is None:
                 continue
             barcode = str(item.get("barcode", "")).strip()
-            df.at[idx, "处理状态"] = ProcessStatus.PENDING
+            
+            # 只有当前状态为 PENDING 时才保持 PENDING(实际上不需要修改)
+            # 如果是终态,则保持不变
+            current_status = df.at[idx, "处理状态"]
+            if current_status != ProcessStatus.PENDING:
+                protected_count += 1
+                logger.debug(f"终态保护 - idx={idx}, 状态={current_status}, 分类=existing_valid_incomplete")
+            
             self.row_category_map[idx] = "existing_valid_incomplete"
             self._fill_from_database(df, idx, barcode, db_manager, field_mapping)
+        
+        return protected_count
 
     def _process_existing_stale(
         self,
@@ -153,25 +190,57 @@ class DatabaseChecker:
         categories: Dict,
         db_manager: DatabaseManager,
         field_mapping: Dict[str, str],
-    ) -> None:
-        """处理 existing_stale: 从数据库填充基础数据，需要调用API刷新."""
+    ) -> int:
+        """处理 existing_stale: 从数据库填充基础数据，需要调用API刷新.
+        
+        只有当前状态为 PENDING 时才保持 PENDING,保护终态状态不被覆盖。
+        
+        Returns:
+            被保护的终态记录数量
+        """
+        protected_count = 0
         for item in categories.get("existing_stale", []):
             idx = item.get("_index")
             if idx is None:
                 continue
             barcode = str(item.get("barcode", "")).strip()
-            df.at[idx, "处理状态"] = ProcessStatus.PENDING
+            
+            # 只有当前状态为 PENDING 时才保持 PENDING(实际上不需要修改)
+            # 如果是终态,则保持不变
+            current_status = df.at[idx, "处理状态"]
+            if current_status != ProcessStatus.PENDING:
+                protected_count += 1
+                logger.debug(f"终态保护 - idx={idx}, 状态={current_status}, 分类=existing_stale")
+            
             self.row_category_map[idx] = "existing_stale"
             self._fill_from_database(df, idx, barcode, db_manager, field_mapping)
+        
+        return protected_count
 
-    def _process_new(self, df: pd.DataFrame, categories: Dict) -> None:
-        """处理 new: 标记为待处理."""
+    def _process_new(self, df: pd.DataFrame, categories: Dict) -> int:
+        """处理 new: 标记为待处理.
+        
+        只有当前状态为 PENDING 时才保持 PENDING,保护终态状态不被覆盖。
+        
+        Returns:
+            被保护的终态记录数量
+        """
+        protected_count = 0
         for item in categories.get("new", []):
             idx = item.get("_index")
             if idx is None:
                 continue
-            df.at[idx, "处理状态"] = ProcessStatus.PENDING
+            
+            # 只有当前状态为 PENDING 时才保持 PENDING(实际上不需要修改)
+            # 如果是终态,则保持不变
+            current_status = df.at[idx, "处理状态"]
+            if current_status != ProcessStatus.PENDING:
+                protected_count += 1
+                logger.debug(f"终态保护 - idx={idx}, 状态={current_status}, 分类=new")
+            
             self.row_category_map[idx] = "new"
+        
+        return protected_count
 
     def _fill_from_database(
         self,

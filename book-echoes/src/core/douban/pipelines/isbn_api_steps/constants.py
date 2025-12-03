@@ -11,3 +11,4 @@ class ProcessStatus:
     NOT_FOUND = "未找到"
     INVALID_ISBN = "ISBN无效"
     FROM_DB = "数据库已有"
+    NO_ISBN = "无ISBN"  # ISBN为空且无法补充
