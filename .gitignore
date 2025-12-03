@@ -1,3 +1,24 @@
 *.pyc
 *.log
 *.db
+*.toml
+
+**/.chainlit/
+
+.env
+
+**/backup/
+**/old-version/
+**/token.json
+
+academic_ Search/
+*/data/
+
+book-echoes/
+book-echoes/
+research_report_writing/
+metadata-editor/jsondata/llm_settings.json
+/litellm-langfuse
+/metadata-editor/jsondata
+.cursorignore
+/.vscode

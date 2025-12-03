@@ -1,0 +1,34 @@
+# 忽略真实配置文件
+config.json
+
+# 忽略数据文件夹
+data/
+
+# 忽略Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 忽略日志文件
+*.log
+
+# 忽略Excel文件
+*.xls
+*.xlsx
+
+# 忽略PDF文件
+*.pdf
+
+# 忽略环境文件
+.env
+.venv
+env/
+venv/
+ENV/
+
+# 忽略IDE配置
+.idea/
+.vscode/
+*.swp
+*.swo
+.codebuddy/

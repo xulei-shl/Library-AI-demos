@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+
+# Caches
+.pytest_cache/
+
+# Runtime generated files
+runtime/
+
+# Backups
+backup/
+
+tests/
+
+scripts/
+
+examples/
+
+docs/tools/
+
+# IDE configuration
+.vscode/
+.idea/
+.codebuddy/
+.qoder/
