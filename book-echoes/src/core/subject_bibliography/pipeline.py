@@ -8,7 +8,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from dateutil import parser as date_parser
 from src.utils.logger import get_logger
 from .rss_fetcher import RSSFetcher
-from .processor import ArticleProcessor
+from .article_analyzer import ArticleProcessor
 from .storage import StorageManager
 from .content_extractors import ExtractorFactory
 

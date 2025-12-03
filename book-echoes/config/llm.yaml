@@ -187,7 +187,7 @@ tasks:
     temperature: 0.3
     top_p: 0.8
     prompt:
-      type: md
+      type: langfuse
       source: "prompts/网络文章主题初评.md"
     retry:
       max_retries: 3
