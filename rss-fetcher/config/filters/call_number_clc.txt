@@ -1,0 +1,221 @@
+﻿# 索书号和CLC号模式筛选 - Rule B (match_type=regex)
+# 语法：
+#   DROP!  - 高优先级排除（不受 KEEP 保护，无条件排除）
+#   KEEP   - 保留规则
+#   DROP   - 普通排除（受 KEEP 保护）
+# CallNumberFilter 处理优先级：DROP! > KEEP > DROP
+
+# --- 高优先级排除规则（不受 KEEP 保护）---
+# 过滤包含#或*的记录
+DROP! .*[#*].*
+
+# --- 保留规则 ---
+# 保留 -64/-49/-0 系列尾段的记录
+^(?![TR]).*?(?:-64|-49|-0\d)\d*(?=.*\/).*(?=\/)
+
+
+# KEEP ^B81-.*
+# KEEP ^B9[4-8]9(?!\.9).*
+
+KEEP ^D[0-1](?!35).*
+KEEP ^D[4-5].*
+KEEP ^D61.*
+KEEP ^D69.*
+KEEP ^D7.*
+KEEP ^D829.*
+KEEP ^D8(?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^D90.*
+KEEP ^D992.*
+
+KEEP ^F11.*
+KEEP ^F129.*
+KEEP ^F1[3-7](?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^F2[4-9]9.(?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^F[3-4]1.*
+KEEP ^F[3-4]29.*
+KEEP ^F[3-4](?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^F51[1-2].9.*
+KEEP ^F51(?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^F5[3-6]2.9.*
+KEEP ^F5[3-6](?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^F572.89.*
+KEEP ^F57[3-7](?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^F59[1-2].9.*
+KEEP ^F59[3-7](?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^F63[1-2].9.*
+KEEP ^F63[3-7](?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^F7[2-4]9.*
+KEEP ^F73[3-7](?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^F752.9.*
+KEEP ^F75[3-7](?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^F8[1-4][1-2].9.*
+KEEP ^F8[1-4](?:\d+\.?\d*|\.\d+)+9/.*
+
+KEEP ^I0.*
+KEEP ^I10.*
+KEEP ^I206.7.*
+KEEP ^I209.*
+KEEP ^I253.7.*
+KEEP ^I[3-7](?:\d+\.?\d*|\.\d+)+5[2-5]/.*
+
+KEEP ^J0.*
+KEEP ^J11.*
+KEEP ^J120.9.*
+KEEP ^J[2-5]0-.*
+KEEP ^J[2-5]09.*
+KEEP ^J[2-5]0[1-2].*
+KEEP ^J2[2-3]7.*
+KEEP ^J1[3-7](?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^J[4-5][2-3].*
+KEEP ^J[6-9]0.*
+KEEP ^J616.9.*
+
+
+# 保留 N 开头的记录
+KEEP ^N0.*
+KEEP ^N49.*
+KEEP ^N91.*
+
+# 保留 TS（排除 TS1）的记录
+KEEP ^TS(?!1).*
+
+# 保留 TU22 开头的记录
+KEEP ^TU22.*
+KEEP ^TU23.*
+KEEP ^TU24(?!4\.5).*
+KEEP ^TU24(?!4\.5).*
+KEEP ^TU25.*
+KEEP ^TU98/.*
+# KEEP ^TU984/.*
+# KEEP ^TU984.1/.*
+# KEEP ^TU984.[2-7].*
+KEEP ^TU986.*
+
+KEEP ^G210.9.*
+KEEP ^G20.*
+KEEP ^G0.*
+KEEP ^G1.*
+
+KEEP ^G219.19.* 
+KEEP ^G219.29.*
+KEEP ^G219(?:\d+\.?\d*|\.\d+)+9/.*
+
+KEEP ^G229.19.* 
+KEEP ^G229.29.*
+KEEP ^G229(?:\d+\.?\d*|\.\d+)+9/.*
+
+KEEP ^G239.19.* 
+KEEP ^G239.29.*
+KEEP ^G239(?:\d+\.?\d*|\.\d+)+9/.*
+
+KEEP ^G259.19.* 
+KEEP ^G259.29.*
+KEEP ^G259(?:\d+\.?\d*|\.\d+)+9/.*
+KEEP ^G250.9.*
+KEEP ^G256.1.*
+
+KEEP ^G260.*
+KEEP ^G264.3.*
+KEEP ^G269.29.*
+KEEP ^G269(?:\d+\.?\d*|\.\d+)+9/.*
+
+KEEP ^G270.9*
+KEEP ^G279.29.*
+KEEP ^G279(?:\d+\.?\d*|\.\d+)+9/.*
+
+KEEP ^G30(?!\d).*  # keep G30 not followed by another digit
+KEEP ^G30[1-5].*   # keep G301-305 explicitly
+KEEP ^G32.*
+
+KEEP ^G40(?!\d).*
+KEEP ^G44.*
+
+KEEP ^G519.*
+KEEP ^G529.*
+KEEP ^G5[0-9\W]+9/.*  # keep G5<digits/symbols>9/
+
+KEEP ^G649.28.*
+KEEP ^G649.29.*
+KEEP ^G649\.\d+8/.*
+KEEP ^G649(?:\d+\.?\d*|\.\d+)+9/.*
+
+KEEP ^G659.28.*
+KEEP ^G659.29.*
+KEEP ^G659\.\d+8/.*
+KEEP ^G659(?:\d+\.?\d*|\.\d+)+9/.*
+
+KEEP ^G79.*
+
+KEEP ^G80-.*
+KEEP ^G80[2-3].*
+KEEP ^G812.9.*
+KEEP ^G81[0-9\W]+9/.*
+
+KEEP ^Z228.*
+KEEP ^Z2[3-7].*
+
+# --- 排除规则 ---
+# 排除 A 开头的记录
+DROP ^A.*
+
+DROP ^B2.*
+DROP ^B81.*
+DROP ^B841.*
+DROP ^B844.*
+DROP ^B9[4-9].*
+
+DROP ^C[5-8].*
+DROP ^C9[6-7].*
+
+DROP ^D.*
+
+DROP ^E89.*
+DROP ^E9[4-6].*
+
+DROP ^F.*
+
+# 排除 G 开头的记录
+DROP ^G.*
+
+# 排除 H 开头的记录
+DROP ^H.*
+
+DROP ^I.*
+DROP ^J.*
+
+DROP ^K854.*
+DROP ^K8[7-8].*
+
+# 排除 N 开头但不属于 N91/N0/N49 的记录
+DROP ^N(?!(?:91|0|49)).*
+
+# 排除 O 开头的记录
+DROP ^O.*
+
+# 排除 P 开头的记录
+DROP ^P.*
+
+# 排除 Q 开头的记录
+DROP ^Q.*
+
+# 排除 R 开头的记录
+DROP ^R.*
+
+# 排除 TS1 开头的记录（TS 其他段由 KEEP 规则保留）
+DROP ^TS1.*
+
+# 排除 T 开头但不在白名单 (TP18、TS 非 TS1) 的记录
+DROP ^T(?!(?:P18|S(?!1))).*
+
+
+# 排除 U 开头但非 U675.81 的记录
+DROP ^U(?!675\.81).*
+
+# 排除 V 开头的记录
+DROP ^V.*
+
+# 排除 X 开头的记录
+DROP ^X.*
+
+# 排除 Z 开头的记录
+DROP ^Z.*

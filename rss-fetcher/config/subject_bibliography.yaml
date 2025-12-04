@@ -1,0 +1,118 @@
+# RSS 源列表
+rss_feeds:
+  # 优选信息源
+  - name: "澎湃思想市场"
+    url: "https://xiaoyao.familyds.net:15974/feed/12c762e00b1efd24c9c4d0644b9113a8d948114f.xml"
+    backup_urls:  # 备用URL列表，当主URL失败时自动尝试
+      - "https://wechat2rss.vip.cpolar.top/feed/3587489630.xml"
+      - "http://47.103.50.106:8080/feeds/MP_WXS_3587489630.atom" 
+      - "https://decemberpei.cyou/rssbox/wechat-pengpaisixiangshichang.xml" #日期范围无法筛选，rss信息只有题名，无法获取全文
+    retry_config:  # 重试配置
+      max_retries: 3      # 最大重试次数
+      retry_delay: 3      # 重试间隔（秒）
+      timeout: 100         # 单次请求超时时间（秒）
+    enabled: true
+    extractor: "pengpai"  # 提取器类型
+  # 新的RSSHub源 - 澎湃思想
+  # - name: "澎湃思想"
+  #   url: "rsshub://thepaper/list/25483"
+  #   enabled: true
+  #   retry_config:
+  #     max_retries: 2
+  #     retry_delay: 3
+
+  - name: "Wikipedia每日首页文章"
+    url: "https://en.wikipedia.org/w/api.php?action=featuredfeed&feed=featured&feedformat=atom"
+    backup_urls:
+      - "https://feedx.net/rss/wikienindex.xml"
+    retry_config:
+      max_retries: 3
+      retry_delay: 3
+      timeout: 100
+    enabled: true
+    extractor: "wikipedia"
+  - name: "Big Think-官方"
+    url: "https://bigthink.com/feed/all"
+    retry_config:
+      max_retries: 3
+      retry_delay: 3
+      timeout: 100
+    enabled: true
+    extractor: "bigthink_official"
+  - name: "Big Think-Buzz.CC"
+    url: "https://bigthink.buzzing.cc/feed.xml"
+    retry_config:
+      max_retries: 3
+      retry_delay: 3
+      timeout: 100
+    enabled: true
+    extractor: "bigthink"  
+  # 候选信息源    
+  - name: "上海书评"
+    url: "https://feedx.net/rss/shanghaishuping.xml"
+    enabled: false
+    extractor: ""
+  - name: "Kagi News"
+    url: "https://news.kagi.com/world_zh-Hans.xml"
+    enabled: false
+    extractor: ""
+  - name: "纽约客"
+    url: "https://newyorker.buzzing.cc/feed.xml"
+    enabled: false
+    extractor: ""
+
+# 抓取设置
+fetch_settings:
+  hours_lookback: 24  # 抓取过去多少小时内的文章
+  # time_range 为可选配置，若填写则优先使用起止时间过滤文章
+  time_range:
+    start: "2025-12-02 00:00:00"  # 例: "2025-12-01 00:00:00"
+    end: "2025-12-04 00:00:00"    # 例: "2025-12-02 00:00:00"，若需覆盖整月，把 end 写成“下月1号00:00:00”形成闭开区间
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+
+# 输出设置 - 按月聚合版本
+output:
+  base_dir: "runtime/outputs"  # 注意：现在输出到runtime/outputs下，而不是runtime/outputs/subject_bibliography
+  # 按月聚合文件命名格式：YYYY-MM.xlsx (如: 2025-12.xlsx)
+  # 每个文件包含该月的所有文章数据，新增article_date列记录文章发布日期
+
+# LLM 分析设置
+llm_analysis:
+  task_name: "network_article_initial_review"  # 对应 config/llm.yaml 中的任务名
+
+# 全文提取设置
+extraction_settings:
+  timeout: 30  # 爬取超时时间(秒)
+  retry_times: 3  # 失败重试次数
+  browser_headless: true  # 无头浏览器模式
+
+# Playwright网站抓取配置
+# 用于不支持RSS的网站，使用浏览器动态抓取
+playwright_sites:
+  - name: "澎湃思想市场-手机端"
+    url: "https://m.thepaper.cn/list_25483"
+    enabled: true  # 设置为false来禁用此源
+    category: "思想市场"
+    retry_config:
+      max_retries: 3
+      retry_delay: 5
+      timeout: 60
+    # 网站特定的CSS选择器配置
+    selectors:
+      article_container: ".index_wrapper__9rz3z"  # 文章容器
+      title: "h3.index_title__aGAqD"  # 标题选择器
+      link: "a"  # 链接选择器
+      time: ".adm-space-item span"  # 时间选择器（相对时间如"19小时前"）
+      loading: ".loading, .spinner"  # 加载指示器
+    # 滚动加载配置
+    scroll_config:
+      max_scrolls: 3  # 最大滚动次数
+      scroll_delay: 3000  # 滚动间隔（毫秒）
+    # 浏览器设置
+    browser_config:
+      user_agent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1"
+      viewport_width: 375  # 手机屏幕宽度
+      viewport_height: 667  # 手机屏幕高度
+      headless: true  # 是否无头模式
+    # 全文提取器配置 - 可选
+    extractor: "pengpai_playwright"  # 对应的提取器名称，如不需要全文提取可留空

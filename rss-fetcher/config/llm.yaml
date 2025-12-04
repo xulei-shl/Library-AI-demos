@@ -1,0 +1,72 @@
+﻿# ----------------------------------------------------------------------------------
+# LLM 统一配置文件
+# ----------------------------------------------------------------------------------
+# 本文件集中管理所有对大语言模型 (LLM) 的调用配置。
+#
+# 核心机制:
+# 1. ConfigLoader 读取本文件，解析 env:VAR 环境变量。
+# 2. UnifiedLLMClient (src/utils/llm/client.py) 根据任务名加载配置。
+# 3. 业务代码 (src/core/recommendation/config.py) 通过 helper 函数读取 parameters 中的业务参数。
+#
+# 结构说明:
+# - api_providers: 定义底层模型服务商 (OneAPI, Cerebras 等)。
+# - tasks: 定义各个业务场景的具体配置 (如初评、终评)。
+# - defaults: 全局默认配置，会被 tasks 继承。
+# - langfuse: 全局 Langfuse 监控配置。
+# ----------------------------------------------------------------------------------
+
+api_providers:
+  # 文本生成模型服务商配置
+  # RetryManager 会根据 primary -> secondary 的顺序进行故障转移
+  text:
+    primary:
+      name: "oneapi"
+      api_key: env:ONEAPI_API_KEY
+      base_url: "http://47.103.50.106:3000/v1"
+      model: "gemini-2.5-pro"
+      timeout_seconds: 120
+    secondary:
+      name: "cerebras"
+      api_key: env:CEREBRAS_API_KEY
+      base_url: "https://api.cerebras.ai/v1"
+      model: "zai-glm-4.6"
+      timeout_seconds: 120
+
+tasks:
+  # ----------------------------------------------------------------------------
+  # 任务: 主题书目文章分析 (subject_bibliography_analysis)
+  # 逻辑位置: 
+  # ----------------------------------------------------------------------------
+  network_article_initial_review:
+    provider_type: text
+    temperature: 0.3
+    top_p: 0.8
+    prompt:
+      type: md
+      source: "prompts/网络文章主题初评.md"
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "网络文章主题初评"
+      tags: ["book-echoes", "文章初评"]
+      metadata:
+        module: "模块7"
+
+defaults:
+  temperature: 0.45
+  top_p: 0.9
+
+langfuse:
+  enabled: true
+  host: env:LANGFUSE_HOST
+  public_key: env:LANGFUSE_PUBLIC_KEY
+  secret_key: env:LANGFUSE_SECRET_KEY
+  debug: false
