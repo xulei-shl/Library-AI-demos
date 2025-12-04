@@ -28,21 +28,36 @@ class ArticleProcessor:
         source = article.get("source", "未知来源")
         pub_date = article.get("published_date", "未知时间")
         
+        # 获取文章内容，优先使用 full_text，然后是 content
+        full_text = article.get("full_text")
+        content = article.get("content")
+        
+        # 检查是否有可用的内容进行 LLM 分析
+        if not full_text and not content:
+            logger.info(f"文章 '{title}' 缺少 full_text 和 content 字段，跳过 LLM 分析")
+            # 返回原始数据，不进行 LLM 分析
+            processed_article = article.copy()
+            # 标记跳过的状态和原因
+            processed_article["llm_status"] = "跳过"
+            processed_article["llm_raw_response"] = "缺少 full_text 和 content 字段"
+            processed_article["llm_skip_reason"] = "缺少 full_text 和 content 字段"
+            return processed_article
+        
         # 优先使用 full_text，如果没有则使用 content
-        full_text = article.get("full_text") or article.get("content", "")
+        text_content = full_text or content or ""
         
         # 简单的截断处理，防止超出 Context Window
         # 假设 1 token ~= 1.5 chars (中文), 4 chars (English)
         # 保守起见，截取前 8000 字符
-        if len(full_text) > 8000:
-            full_text = full_text[:8000] + "\n...(内容过长已截断)"
+        if len(text_content) > 8000:
+            text_content = text_content[:8000] + "\n...(内容过长已截断)"
 
         user_prompt = (
             f"请分析以下文章：\n\n"
             f"标题：{title}\n"
             f"来源：{source}\n"
             f"发布时间：{pub_date}\n\n"
-            f"内容：\n{full_text}"
+            f"内容：\n{text_content}"
         )
 
         try:
@@ -56,24 +71,35 @@ class ArticleProcessor:
             if isinstance(result, str):
                 try:
                     analysis_data = json.loads(result)
+                    # JSON解析成功，设置成功状态
+                    processed_article = article.copy()
+                    processed_article["llm_status"] = "成功"
+                    processed_article["llm_raw_response"] = result
+                    logger.info(f"文章 '{title}' LLM分析成功，JSON解析成功")
                 except json.JSONDecodeError:
                     logger.error(f"LLM 返回的不是有效 JSON: {result[:100]}...")
+                    # JSON解析失败，保存原始错误响应
+                    processed_article = article.copy()
+                    processed_article["llm_status"] = "JSON解析错误"
+                    processed_article["llm_raw_response"] = result
                     analysis_data = {}
             else:
                 analysis_data = result
+                # 直接是dict对象，认为是成功状态
+                processed_article = article.copy()
+                processed_article["llm_status"] = "成功"
+                processed_article["llm_raw_response"] = json.dumps(result, ensure_ascii=False)
+                logger.info(f"文章 '{title}' LLM分析成功，返回字典对象")
 
         except Exception as e:
             logger.error(f"分析文章 '{title}' 失败: {e}")
+            # LLM调用失败，保存错误信息
+            processed_article = article.copy()
+            processed_article["llm_status"] = "LLM调用错误"
+            processed_article["llm_raw_response"] = str(e)
             analysis_data = {
                 "error": str(e)
             }
-
-        # 保存原始响应
-        raw_response = json.dumps(analysis_data, ensure_ascii=False)
-        
-        # 合并结果 - 先保留原始数据
-        processed_article = article.copy()
-        processed_article["llm_raw_response"] = raw_response
         
         # 安全地解析各个字段，如果解析失败则跳过
         try:

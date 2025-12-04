@@ -329,29 +329,65 @@ class SubjectBibliographyPipeline:
             logger.error("输入文件为空或加载失败")
             return None
         
-        # 只处理提取成功的文章
-        articles_to_analyze = [a for a in articles if a.get("extract_status") == "success"]
+        # 过滤需要LLM分析的文章：提取成功且未处理过的文章
+        unprocessed_articles = []
+        already_processed = 0
         
-        if not articles_to_analyze:
-            logger.warning("没有提取成功的文章需要分析")
-            return None
+        for article in articles:
+            # 检查提取状态
+            if article.get("extract_status") != "success":
+                continue
+                
+            # 检查是否已经处理过LLM（优先检查llm_status）
+            llm_status = article.get("llm_status", "")
+            llm_raw_response = article.get("llm_raw_response", "")
+            
+            # 处理NaN值：将NaN视为空值
+            llm_status_is_valid = (
+                llm_status and 
+                str(llm_status).lower() not in ('nan', 'none', '')
+            )
+            llm_raw_response_is_valid = (
+                llm_raw_response and 
+                str(llm_raw_response).lower() not in ('nan', 'none', '')
+            )
+            
+            # 如果有有效的llm_status或llm_raw_response，认为已处理
+            if llm_status_is_valid or llm_raw_response_is_valid:
+                already_processed += 1
+                logger.debug(f"跳过已处理文章: {article.get('title', 'N/A')[:50]}... (状态: {llm_status})")
+            else:
+                unprocessed_articles.append(article)
+        
+        total = len(articles)
+        to_analyze = len(unprocessed_articles)
+        logger.info(f"文章总数: {total}, 已处理: {already_processed}, 需要分析: {to_analyze}")
+        
+        if to_analyze == 0:
+            logger.info("所有文章都已成功分析，跳过阶段3")
+            return input_file
         
         # 初始化 LLM 处理器
         llm_task_name = self.config.get("llm_analysis", {}).get("task_name", "subject_bibliography_analysis")
         processor = ArticleProcessor(task_name=llm_task_name)
         
         # LLM 分析
-        total = len(articles_to_analyze)
-        logger.info(f"开始分析 {total} 篇文章 (跳过 {len(articles) - total} 篇提取失败的文章)...")
+        logger.info(f"开始分析 {to_analyze} 篇文章 (跳过 {len(articles) - to_analyze} 篇提取失败或已处理的文章)...")
         
-        for i, article in enumerate(articles_to_analyze):
-            logger.info(f"正在分析 ({i+1}/{total}): {article.get('title')}")
+        for i, article in enumerate(unprocessed_articles):
+            logger.info(f"正在分析 ({i+1}/{to_analyze}): {article.get('title')}")
             analyzed = processor.analyze_article(article)
             # 更新原文章数据
             article.update(analyzed)
         
         # 保存结果
-        output_file = self.storage.save_analyze_results(articles, input_file)
+        if to_analyze > 0:
+            # 有新处理的文章，只传递这些文章给storage进行更新
+            output_file = self.storage.save_analyze_results(unprocessed_articles, input_file)
+        else:
+            # 没有新处理的文章，仍然调用保存以确保文件格式正确
+            output_file = self.storage.save_analyze_results([], input_file)
+            logger.info("没有新处理的文章，文件格式已确认")
         
         logger.info("=" * 60)
         logger.info(f"阶段3完成，输出文件: {output_file}")

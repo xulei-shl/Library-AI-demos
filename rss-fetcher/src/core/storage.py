@@ -315,23 +315,58 @@ class StorageManager:
             logger.error(f"保存阶段2结果失败: {e}")
             return None
 
-    def save_analyze_results(self, articles: List[Dict], input_file: Optional[str] = None) -> Optional[str]:
+    def save_analyze_results(self, articles: List[Dict], input_file: Optional[str] = None, 
+                             skip_processed: bool = True) -> Optional[str]:
         """
-        保存阶段3: LLM评估结果 - 按月聚合版本
+        保存阶段3: LLM评估结果 - 按月聚合版本（支持过滤已处理数据）
         
         Args:
-            articles: 文章列表，在阶段2基础上新增 llm_score, llm_tags, llm_keywords, llm_summary, llm_logic, llm_raw_response
-            input_file: 输入文件路径(可选，用于验证)
+            articles: 文章列表，在阶段2基础上新增 llm_decision, llm_score, llm_reason, llm_summary, llm_tags, llm_keywords, llm_primary_dimension, llm_mentioned_books, llm_book_clues, llm_raw_response
+            input_file: 输入文件路径(可选，用于验证）
+            skip_processed: 是否跳过已处理的数据，避免重复调用LLM（默认True）
             
         Returns:
             保存的文件路径，失败返回 None
         """
+        # 确定输出文件路径 - 优先使用input_file，备选使用articles
+        if input_file and os.path.exists(input_file):
+            # 使用输入文件路径生成输出文件路径
+            dirname = os.path.dirname(input_file)
+            basename = os.path.basename(input_file)
+            # 替换文件名为分析阶段的文件名格式
+            if input_file.endswith('.xlsx'):
+                filepath = os.path.join(dirname, basename)
+            else:
+                filepath = input_file
+        elif articles:
+            # 根据文章发布时间确定月份并生成文件路径
+            filepath = self._get_filepath("analyze", articles)
+        else:
+            # 使用当前时间生成默认文件路径
+            filepath = self._get_filepath("analyze", [])
+        
         if not articles:
-            logger.info("没有数据需要保存。")
-            return None
-
-        # 根据文章发布时间确定月份并生成文件路径
-        filepath = self._get_filepath("analyze", articles)
+            # 没有新数据，但仍然需要确保现有文件存在且格式正确
+            logger.info("没有新数据需要保存，检查现有文件...")
+            if os.path.exists(filepath):
+                logger.info(f"文件已存在: {filepath}")
+                return filepath
+            else:
+                logger.info("没有现有文件，创建空文件...")
+                # 创建空的DataFrame保存到文件
+                columns = [
+                    "source", "title", "article_date", "published_date", "link", "fetch_date", "summary", "extract_status", "extract_error",
+                    "content", "full_text", "llm_status", "llm_decision", "llm_score", "llm_reason", "llm_summary", "llm_tags", "llm_keywords", 
+                    "llm_primary_dimension", "llm_mentioned_books", "llm_book_clues", "llm_raw_response"
+                ]
+                df = pd.DataFrame(columns=columns)
+                try:
+                    df.to_excel(filepath, index=False)
+                    logger.info(f"空文件已创建: {filepath}")
+                    return filepath
+                except Exception as e:
+                    logger.error(f"创建空文件失败: {e}")
+                    return None
         
         # 确保所有文章都有article_date列
         from dateutil import parser as date_parser
@@ -353,33 +388,82 @@ class StorageManager:
         # 读取现有数据，准备合并
         existing_articles = self._get_existing_data(filepath)
         
+        # 过滤可写回的LLM结果，避免重复调用LLM
+        ready_articles = []
+        pending_count = 0
+        if skip_processed:
+            for article in articles:
+                llm_raw_response = str(article.get("llm_raw_response", "") or "").strip()
+                llm_status = str(article.get("llm_status", "") or "").strip()
+
+                if llm_raw_response or llm_status:
+                    ready_articles.append(article)
+                else:
+                    pending_count += 1
+                    logger.debug(f"跳过尚未LLM处理的文章: {article.get('title', 'N/A')[:50]}...")
+
+            logger.info(
+                f"过滤结果: 总文章{len(articles)}篇，具备LLM结果{len(ready_articles)}篇，待处理{pending_count}篇"
+            )
+        else:
+            logger.info("跳过过滤逻辑，处理所有文章")
+            ready_articles = articles
+
         # 为现有文章补充分析结果，保留已成功分析的文章
         all_articles = []
         updated_count = 0
+        
+        # 创建已处理文章的映射，便于查找
+        processed_articles_map = {}
+        for article in ready_articles:
+            # 优先使用link作为键
+            link = article.get("link", "").strip()
+            title = article.get("title", "").strip()
+            
+            if link:
+                processed_articles_map[link] = article
+            else:
+                # 如果没有link，使用title+published_date组合
+                published_date = article.get("published_date", "").strip()
+                key = f"{title}_{published_date}"
+                processed_articles_map[key] = article
+        
         for existing_article in existing_articles:
             # 尝试找到对应的已处理文章
             processed_article = None
-            for article in articles:
-                # 通过title和link匹配
-                if (article.get("title") == existing_article.get("title") and 
-                    article.get("link") == existing_article.get("link")):
-                    processed_article = article
-                    break
+            
+            # 优先使用link匹配
+            link = existing_article.get("link", "").strip()
+            if link and link in processed_articles_map:
+                processed_article = processed_articles_map[link]
+            else:
+                # 回退到title+published_date匹配
+                title = existing_article.get("title", "").strip()
+                published_date = existing_article.get("published_date", "").strip()
+                key = f"{title}_{published_date}"
+                if key in processed_articles_map:
+                    processed_article = processed_articles_map[key]
             
             if processed_article:
                 # 使用已处理的数据更新现有文章
                 all_articles.append(processed_article)
                 updated_count += 1
+                logger.debug(f"更新文章: {processed_article.get('title', 'N/A')[:50]}... (状态: {processed_article.get('llm_status', 'N/A')})")
             else:
-                # 保留原有数据
+                # 保留原有数据（包括已经处理的和不需要处理的）
                 all_articles.append(existing_article)
         
-        # 定义列顺序 (把重要信息放前面，新增article_date列)
+        # 确保所有文章都有llm_status字段（向后兼容）
+        for article in all_articles:
+            if "llm_status" not in article:
+                article["llm_status"] = ""
+        
+        # 定义列顺序 (把重要信息放前面，新增llm_status列)
         columns = [
-            "source", "title", "article_date", "published_date", "llm_score", 
-            "llm_summary", "llm_logic", "llm_tags", "llm_keywords",
-            "link", "fetch_date", "summary", "extract_status", "extract_error",
-            "content", "full_text", "llm_raw_response"
+            "source", "title", "article_date", "published_date", "link", "fetch_date", "summary", "extract_status", "extract_error",
+            "content", "full_text", 
+            "llm_status", "llm_decision", "llm_score", "llm_reason", "llm_summary", "llm_tags", "llm_keywords", 
+            "llm_primary_dimension", "llm_mentioned_books", "llm_book_clues", "llm_raw_response"
         ]
         
         df = pd.DataFrame(all_articles)
@@ -521,10 +605,11 @@ class StorageManager:
             ]
         elif stage == "analyze":
             columns = [
-                "source", "title", "article_date", "published_date", "llm_score", 
-                "llm_summary", "llm_logic", "llm_tags", "llm_keywords",
+                "source", "title", "article_date", "published_date", 
+                "llm_status", "llm_decision", "llm_score", "llm_reason", "llm_summary", "llm_tags", "llm_keywords", 
+                "llm_primary_dimension", "llm_mentioned_books", "llm_book_clues", "llm_raw_response",
                 "link", "fetch_date", "summary", "extract_status", "extract_error",
-                "content", "full_text", "llm_raw_response"
+                "content", "full_text"
             ]
         else:
             columns = list(set().union(*(article.keys() for article in all_articles)))

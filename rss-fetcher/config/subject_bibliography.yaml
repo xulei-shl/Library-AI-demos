@@ -11,7 +11,7 @@ rss_feeds:
       max_retries: 3      # 最大重试次数
       retry_delay: 3      # 重试间隔（秒）
       timeout: 100         # 单次请求超时时间（秒）
-    enabled: true
+    enabled: false
     extractor: "pengpai"  # 提取器类型
   # 新的RSSHub源 - 澎湃思想
   # - name: "澎湃思想"
@@ -66,7 +66,7 @@ fetch_settings:
   hours_lookback: 24  # 抓取过去多少小时内的文章
   # time_range 为可选配置，若填写则优先使用起止时间过滤文章
   time_range:
-    start: "2025-12-02 00:00:00"  # 例: "2025-12-01 00:00:00"
+    start: "2025-12-01 00:00:00"  # 例: "2025-12-01 00:00:00"
     end: "2025-12-04 00:00:00"    # 例: "2025-12-02 00:00:00"，若需覆盖整月，把 end 写成“下月1号00:00:00”形成闭开区间
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 

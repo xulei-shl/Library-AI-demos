@@ -228,10 +228,11 @@ class PlaywrightSiteFetcher:
                     "tags": []
                 }
                 
-                # 如果配置了extractor，调用提取器获取全文
+                # 注意：在fetch阶段不调用全文提取器，避免异步环境中的Playwright同步API问题
+                # 全文提取将在extract阶段进行
                 extractor_name = site_config.get("extractor")
                 if extractor_name is not None and extractor_name != "":
-                    article = self._apply_extractor(article, extractor_name, source)
+                    logger.debug(f"文章 '{title}' 配置了提取器 '{extractor_name}'，将在extract阶段调用")
                 
                 articles.append(article)
                 
