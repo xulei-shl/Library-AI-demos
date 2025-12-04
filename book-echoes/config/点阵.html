@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Echoes - Auto Truncate</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Codystar:wght@400&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Codystar:wght@400&family=Inter:wght@300;400;600;800&display=swap"
+        rel="stylesheet">
 
     <style>
         :root {
             --bg-color: #fbfaf9;
             --text-color: #423832;
-            --accent-color: #d9480f; 
+            --accent-color: #d9480f;
             --dark-bg: #2b221b;
-            
+
             /* --- 字体系统定义 --- */
             --sys-font: 'Inter', sans-serif;
             --dot-font: 'Codystar', cursive;
@@ -24,7 +27,11 @@
             --deco-font: "钟齐志莽行书", "ZhongQi ZhiMang XingShu", cursive;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             background-color: #ccc;
@@ -33,21 +40,23 @@
             align-items: center;
             min-height: 100vh;
             padding: 40px;
-            font-family: var(--sys-font); 
+            font-family: var(--sys-font);
             color: var(--text-color);
             -webkit-font-smoothing: antialiased;
         }
 
-        .poster {
+        .library-card {
             width: 600px;
             background-color: var(--bg-color);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
             position: relative;
             border: 1px solid #e0e0e0;
-            padding-bottom: 60px; /* 确保底部内容不被截断 */
+
         }
 
-        .top-section { padding: 40px 30px 20px 30px; }
+        .top-section {
+            padding: 40px 30px 20px 30px;
+        }
 
         /* 标题区域 */
         .title-area {
@@ -56,93 +65,136 @@
             text-transform: uppercase;
             position: relative;
         }
-        .title-row-1 { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
-        .dotted-bar { flex-grow: 1; height: 12px; border: 4px dotted var(--text-color); opacity: 0.3; }
-        .main-title { font-size: 3rem; font-weight: bold; line-height: 0.9; letter-spacing: -1px; }
-        
-        .title-row-2 { display: flex; align-items: center; font-size: 1.2rem; gap: 10px; margin-top: 5px; }
-        
-        .sub-text { 
-            font-family: var(--title-font); 
-            font-size: 1rem; 
-            background: var(--text-color); 
-            color: #fff; 
+
+        .title-row-1 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .dotted-bar {
+            flex-grow: 1;
+            height: 12px;
+            border: 4px dotted var(--text-color);
+            opacity: 0.3;
+        }
+
+        .main-title {
+            font-size: 3rem;
+            font-weight: bold;
+            line-height: 0.9;
+            letter-spacing: -1px;
+        }
+
+        .title-row-2 {
+            display: flex;
+            align-items: center;
+            font-size: 1.2rem;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .sub-text {
+            font-family: var(--title-font);
+            font-size: 1rem;
+            background: var(--text-color);
+            color: #fff;
             padding: 2px 8px 4px 8px;
             letter-spacing: 2px;
             line-height: 1;
-            white-space: nowrap; /* 防止副标题换行 */
+            white-space: nowrap;
+            /* 防止副标题换行 */
         }
 
         /* --- 核心网格 --- */
         .info-grid {
             display: grid;
             /* 中间列改为 minmax(0, 1fr) 是关键，防止长文本撑开 Grid */
-            grid-template-columns: 150px minmax(0, 1fr) 90px; 
+            grid-template-columns: 150px minmax(0, 1fr) 90px;
             gap: 25px;
             border-top: 2px solid var(--text-color);
             border-bottom: 2px solid var(--text-color);
             padding: 25px 0;
             margin-bottom: 20px;
-            align-items: start; 
+            align-items: start;
         }
 
         .cover-wrapper {
             position: relative;
             width: 100%;
-            height: 220px; 
+            height: 220px;
             border: 1px solid var(--text-color);
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #f4f4f4; 
-            overflow: hidden; 
+            background-color: #f4f4f4;
+            overflow: hidden;
         }
 
         .book-cover {
-            width: 100%; height: 100%; object-fit: contain; 
-            padding: 4px; filter: grayscale(100%) contrast(110%);
-            mix-blend-mode: multiply; display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 4px;
+            filter: grayscale(100%) contrast(110%);
+            mix-blend-mode: multiply;
+            display: block;
         }
 
         .halftone-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background-image: radial-gradient(var(--text-color) 1px, transparent 1px);
-            background-size: 4px 4px; opacity: 0.15; 
-            pointer-events: none; mix-blend-mode: multiply; z-index: 2;
+            background-size: 4px 4px;
+            opacity: 0.15;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            z-index: 2;
         }
-        
+
         .cover-tag {
-            position: absolute; bottom: -18px; left: 0;
-            font-family: var(--dot-font); font-size: 0.6rem;
-            background: var(--bg-color); padding-right: 5px;
+            position: absolute;
+            bottom: -18px;
+            left: 0;
+            font-family: var(--dot-font);
+            font-size: 0.6rem;
+            background: var(--bg-color);
+            padding-right: 5px;
             color: var(--text-color);
         }
 
         .meta-group {
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; 
+            justify-content: flex-start;
             font-size: 0.85rem;
             height: 100%;
-            overflow: hidden; /* 防止内部溢出 */
+            overflow: hidden;
+            /* 防止内部溢出 */
         }
 
         .meta-row {
             display: flex;
-            margin-bottom: 8px; 
+            margin-bottom: 8px;
             align-items: baseline;
-            width: 100%; /* 确保占满容器 */
+            width: 100%;
+            /* 确保占满容器 */
         }
 
         .meta-key {
-            font-family: var(--sys-font); 
+            font-family: var(--sys-font);
             font-weight: 700;
             min-width: 85px;
             text-transform: uppercase;
             font-size: 0.65rem;
             letter-spacing: 1px;
             opacity: 0.5;
-            flex-shrink: 0; /* 标签绝不压缩 */
+            flex-shrink: 0;
+            /* 标签绝不压缩 */
         }
 
         /* --- 修改点 1: 单行文本截断 --- */
@@ -151,43 +203,50 @@
             font-family: var(--body-font);
             font-weight: 500;
             line-height: 1.3;
-            font-size: 1rem; 
-            
+            font-size: 1rem;
+
             /* 截断核心代码 */
-            flex: 1; /* 占据剩余空间 */
-            white-space: nowrap; /* 强制不换行 */
-            overflow: hidden; /* 隐藏溢出内容 */
-            text-overflow: ellipsis; /* 显示省略号 */
-            min-width: 0; /* Flex子项截断必须属性 */
+            flex: 1;
+            /* 占据剩余空间 */
+            white-space: nowrap;
+            /* 强制不换行 */
+            overflow: hidden;
+            /* 隐藏溢出内容 */
+            text-overflow: ellipsis;
+            /* 显示省略号 */
+            min-width: 0;
+            /* Flex子项截断必须属性 */
         }
-        
+
         .book-title-val {
             font-family: var(--title-font);
-            font-size: 1.0rem; 
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            font-size: 1.0rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
             padding-bottom: 4px;
             letter-spacing: 1px;
         }
 
         /* --- 修改点 2: 多行文本截断 (Review) --- */
         .review-box {
-            margin-top: 15px; 
+            margin-top: 15px;
             padding-top: 15px;
             border-top: 1px dashed #bbb;
-            font-family: var(--body-font); 
-            font-size: 0.85rem; 
-            line-height: 1.6; /* 稍微收紧一点行高以适应行数 */
+            font-family: var(--body-font);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            /* 稍微收紧一点行高以适应行数 */
             text-align: justify;
-            color: #2b221b; 
-            
+            color: #2b221b;
+
             /* 多行截断核心代码 */
             display: -webkit-box;
             -webkit-box-orient: vertical;
-            -webkit-line-clamp: 4; /* 最多显示4行，保持高度平衡 */
+            -webkit-line-clamp: 4;
+            /* 最多显示4行，保持高度平衡 */
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+
         .review-header {
             font-family: var(--sys-font);
             font-size: 0.7rem;
@@ -203,7 +262,7 @@
             align-items: flex-end;
             text-align: right;
             position: relative;
-            min-height: 220px; 
+            min-height: 220px;
         }
 
         .rate-label {
@@ -226,46 +285,80 @@
             border-bottom: 4px double var(--text-color);
         }
 
-        .rate-star { font-size: 1.5rem; vertical-align: super; }
+        .rate-star {
+            font-size: 1.5rem;
+            vertical-align: super;
+        }
+
         .book-year {
             font-family: var(--sys-font);
-            font-size: 1.2rem; font-weight: 800; margin-top: 10px;
-            background: var(--text-color); color: var(--bg-color);
-            padding: 2px 6px; display: inline-block;
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-top: 10px;
+            background: var(--text-color);
+            color: var(--bg-color);
+            padding: 2px 6px;
+            display: inline-block;
         }
 
         .quote-section {
             background-color: var(--text-color);
             color: var(--bg-color);
-            padding: 20px 25px; 
+            padding: 20px 25px;
             margin-top: 10px;
             border: 1px solid var(--text-color);
             position: relative;
-            box-shadow: 4px 4px 0 rgba(0,0,0,0.1); 
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
             /* 固定高度范围，或者允许轻微扩展，建议限制行数 */
         }
-        .quote-header { font-family: var(--dot-font); font-size: 0.7rem; margin-bottom: 12px; opacity: 0.8; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 4px; }
-        .blink { animation: blinker 1s linear infinite; color: var(--accent-color); }
-        @keyframes blinker { 50% { opacity: 0; } }
-        
+
+        .quote-header {
+            font-family: var(--dot-font);
+            font-size: 0.7rem;
+            margin-bottom: 12px;
+            opacity: 0.8;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.3);
+            padding-bottom: 4px;
+        }
+
+        .blink {
+            animation: blinker 1s linear infinite;
+            color: var(--accent-color);
+        }
+
+        @keyframes blinker {
+            50% {
+                opacity: 0;
+            }
+        }
+
         /* --- 修改点 3: 多行文本截断 (Quote) --- */
-        .quote-content { 
+        .quote-content {
             font-family: var(--quote-font);
-            font-size: 1.2rem; 
-            line-height: 1.6; 
-            text-align: justify; 
-            font-weight: 400; 
-            letter-spacing: 1px; 
-            
+            font-size: 1.2rem;
+            line-height: 1.6;
+            text-align: justify;
+            font-weight: 400;
+            letter-spacing: 1px;
+
             /* 多行截断核心代码 */
             display: -webkit-box;
             -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2; /* 限制为2行，避免撑破海报底部 */
+            -webkit-line-clamp: 2;
+            /* 限制为2行，避免撑破海报底部 */
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
-        .quote-footer { display: flex; justify-content: space-between; margin-top: 15px; font-family: monospace; font-size: 0.6rem; opacity: 0.5; text-transform: uppercase; }        
+
+        .quote-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 0.6rem;
+            opacity: 0.5;
+            text-transform: uppercase;
+        }
 
         .bottom-section {
             height: 240px;
@@ -273,49 +366,89 @@
             position: relative;
             overflow: hidden;
             border-top: 4px double var(--bg-color);
-            margin-bottom: 20px; /* 为底部内容添加额外间距 */
+
         }
-        
+
         .brutalist-img {
-            width: 100%; height: 100%; object-fit: cover;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             filter: grayscale(100%) contrast(120%) sepia(20%);
-            opacity: 0.8; mix-blend-mode: luminosity;
-            transform: scale(1.05); transition: transform 0.5s ease;
+            opacity: 0.8;
+            mix-blend-mode: luminosity;
+            transform: scale(1.05);
+            transition: transform 0.5s ease;
         }
-        .bottom-section:hover .brutalist-img { transform: scale(1.1); filter: grayscale(0%) contrast(100%); }
+
+        .bottom-section:hover .brutalist-img {
+            transform: scale(1.1);
+            filter: grayscale(0%) contrast(100%);
+        }
+
         .bottom-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(43, 34, 27, 0.5); z-index: 1;
-            background-image: radial-gradient(rgba(0,0,0,0) 1px, transparent 1px); background-size: 4px 4px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(43, 34, 27, 0.5);
+            z-index: 1;
+            background-image: radial-gradient(rgba(0, 0, 0, 0) 1px, transparent 1px);
+            background-size: 4px 4px;
         }
 
         .scatter-text {
             position: absolute;
-            color: rgba(255,255,255,0.9);
+            color: rgba(255, 255, 255, 0.9);
             z-index: 2;
             pointer-events: none;
             mix-blend-mode: overlay;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         }
 
-        .st-1 { top: 10px; left: 10px; font-size: 0.8rem; font-family: var(--dot-font); }
-        .st-2 { 
-            top: 100%; right: 50px;
+        .st-1 {
+            top: 10px;
+            left: 10px;
+            font-size: 0.8rem;
+            font-family: var(--dot-font);
+        }
+
+        .st-2 {
+            top: 100%;
+            right: 50px;
             transform: translateY(-50%) rotate(90deg);
             transform-origin: right center;
-            font-size: 4rem; opacity: 0.15; 
-            line-height: 1; white-space: nowrap;
+            font-size: 4rem;
+            opacity: 0.15;
+            line-height: 1;
+            white-space: nowrap;
         }
-        .st-3 { bottom: 20px; left: 20px; font-size: 2rem; border: 1px solid #fff; padding: 0 10px; font-family: var(--dot-font); }
-        .st-4 { bottom: 20px; right: 20px; font-family: var(--sys-font); font-weight: bold; font-size: 0.8rem; letter-spacing: 2px;}
 
+        .st-3 {
+            bottom: 20px;
+            left: 20px;
+            font-size: 2rem;
+            border: 1px solid #fff;
+            padding: 0 10px;
+            font-family: var(--dot-font);
+        }
+
+        .st-4 {
+            bottom: 20px;
+            right: 20px;
+            font-family: var(--sys-font);
+            font-weight: bold;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
     </style>
 </head>
+
 <body>
 
-    <div class="poster">
+    <div class="library-card">
         <div class="top-section">
-            
+
             <div class="title-area">
                 <div class="title-row-1">
                     <span style="font-size: 1.5rem;">PROJECT</span>
@@ -333,9 +466,10 @@
 
             <!-- 核心网格 -->
             <div class="info-grid">
-                
+
                 <div class="cover-wrapper">
-                    <img src="pic/cover.jpg" alt="Book Cover" class="book-cover" onerror="this.src='https://via.placeholder.com/300x400/333/fff?text=COVER';">
+                    <img src="pic/cover.jpg" alt="Book Cover" class="book-cover"
+                        onerror="this.src='https://via.placeholder.com/300x400/333/fff?text=COVER';">
                     <div class="halftone-overlay"></div>
                     <div class="cover-tag">FIG.01</div>
                 </div>
@@ -358,7 +492,8 @@
                         </div>
                         <div class="meta-row">
                             <span class="meta-key">Call No.</span>
-                            <span class="meta-val" style="font-family: monospace; letter-spacing: 0;">{{CALL_NUMBER}}</span>
+                            <span class="meta-val"
+                                style="font-family: monospace; letter-spacing: 0;">{{CALL_NUMBER}}</span>
                         </div>
                     </div>
 
@@ -387,10 +522,11 @@
                     <span>// END OF LOG</span>
                 </div>
             </div>
-        </div> 
+        </div>
 
         <div class="bottom-section">
-            <img src="pic/b.png" alt="Book Cover Aesthetics" class="brutalist-img" onerror="this.style.display='none'; this.parentNode.style.backgroundColor='#333';">
+            <img src="pic/b.png" alt="Book Cover Aesthetics" class="brutalist-img"
+                onerror="this.style.display='none'; this.parentNode.style.backgroundColor='#333';">
             <div class="bottom-overlay"></div>
             <div class="scatter-text st-1">SHANGHAI LIBRARY</div>
             <div class="scatter-text st-2">ECHOES</div>
@@ -400,4 +536,5 @@
     </div>
 
 </body>
+
 </html>

@@ -660,8 +660,8 @@ card_generator:
     headless: true
     # 视窗宽度
     viewport_width: 1200
-    # 视窗高度
-    viewport_height: 800
+    # 视窗高度（增加到1400以确保点阵模板底部不被截断）
+    viewport_height: 1400
     # 设备缩放因子
     device_scale_factor: 2
     # 图片格式
@@ -676,8 +676,8 @@ card_generator:
     border_radius: 8
     # 页面加载超时(毫秒) - 性能优化:本地HTML文件加载快,从60000ms减少到30000ms
     timeout: 30000
-    # 等待时间(毫秒) - 性能优化:本地HTML文件渲染快,从2000ms减少到500ms
-    wait_time: 500
+    # 等待时间(毫秒) - 增加到1000ms确保底部图片完全加载
+    wait_time: 1000
 
   # Logo资源配置
   logo:
