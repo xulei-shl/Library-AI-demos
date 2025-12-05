@@ -112,7 +112,7 @@ douban:
   # ISBN获取器配置 (folio_isbn_async_processor.py)
   # 功能：通过访问图书馆FOLIO文献历史接口，根据附加信息（如图书馆系统ID）查询ISBN号。
   isbn_resolver:
-    enabled: true  # 是否启用此功能。如果禁用，后续流程将无法获取ISBN。
+    enabled: false  # 是否启用此功能。如果禁用，后续流程将无法获取ISBN。
     base_url: "https://circ-folio.library.sh.cn/shlcirculation-query/literatureHistory" # FOLIO系统接口地址
     timeout: 30  # 请求超时时间（秒）
     delay: 2.0  # 每次请求之间的固定延迟（秒），用于控制请求频率
@@ -507,7 +507,7 @@ rating_filter:
   # 模块3/3-B 的动态阈值过滤开关
   # true: 启用动态阈值过滤（适合借阅数据，数据量大）
   # false: 跳过动态过滤（适合新书数据，后续使用命令10单独过滤）
-  dynamic_filter_enabled: true
+  dynamic_filter_enabled: false
 
   # 新书专用过滤策略配置（命令10使用）
   new_sleeping:
