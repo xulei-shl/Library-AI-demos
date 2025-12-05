@@ -205,6 +205,38 @@ tasks:
       metadata:
         module: "模块7"
 
+  # ----------------------------------------------------------------------------
+  # 任务: 无评分书籍筛选 (no_rating_book_filter)
+  # 逻辑位置: src/core/new_sleeping/rating_filter.py
+  # ----------------------------------------------------------------------------
+  no_rating_book_filter:
+    provider_type: text
+    temperature: 0.4
+    top_p: 0.9
+    prompt:
+      type: file
+      source: "prompts/无评分书籍筛选.md"
+    
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+      jitter: true
+    
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+    
+    langfuse:
+      enabled: true
+      name: "无评分书籍筛选"
+      tags: ["book-echoes", "模块6", "新书筛选"]
+      metadata:
+        project: "book-echoes"
+        module: "模块6"
+
 defaults:
   temperature: 0.45
   top_p: 0.9

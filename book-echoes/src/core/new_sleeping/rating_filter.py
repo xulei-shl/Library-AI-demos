@@ -12,6 +12,7 @@
 """
 
 import re
+import json
 from datetime import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -37,6 +38,7 @@ class NewSleepingFilterResult:
     excluded_by_pub_year: int           # 出版年不符合排除数
     excluded_by_title_keywords: int     # 题名关键词排除数
     excluded_by_call_number: int        # 索书号规则排除数
+    llm_filtered_count: int = 0         # LLM筛选排除数
     category_stats: Dict[str, Dict]     # 各学科统计
 
 
@@ -126,6 +128,7 @@ class NewSleepingRatingFilter:
                 excluded_by_pub_year=0,
                 excluded_by_title_keywords=0,
                 excluded_by_call_number=0,
+                llm_filtered_count=0,
                 category_stats={},
             )
 
@@ -254,6 +257,13 @@ class NewSleepingRatingFilter:
 
             logger.info(f"学科最低评分过滤: 排除 {excluded_by_rating} 条 (allow_no_rating={allow_no_rating})")
 
+        # 规则6: 无评分书籍LLM智能筛选
+        llm_filtered_count = 0
+        if rating_col and allow_no_rating:
+            candidate_mask, llm_filtered_count = self._apply_no_rating_llm_filter(
+                df, candidate_mask, rating_col
+            )
+
         # 写入候选状态
         df.loc[candidate_mask, candidate_column] = "候选"
         df.loc[~candidate_mask, candidate_column] = ""
@@ -272,6 +282,8 @@ class NewSleepingRatingFilter:
         logger.info(f"    - 题名关键词: {excluded_by_title_keywords}")
         logger.info(f"    - 索书号规则: {excluded_by_call_number}")
         logger.info(f"    - 评分不达标: {excluded_by_rating}")
+        if llm_filtered_count > 0:
+            logger.info(f"    - LLM智能筛选: {llm_filtered_count}")
 
         if category_stats:
             logger.info("  各学科统计:")
@@ -291,6 +303,7 @@ class NewSleepingRatingFilter:
             excluded_by_pub_year=excluded_by_pub_year,
             excluded_by_title_keywords=excluded_by_title_keywords,
             excluded_by_call_number=excluded_by_call_number,
+            llm_filtered_count=llm_filtered_count,
             category_stats=category_stats,
         )
 
@@ -357,6 +370,246 @@ class NewSleepingRatingFilter:
                 return col
         return None
 
+    def _apply_no_rating_llm_filter(
+        self,
+        df: pd.DataFrame,
+        candidate_mask: pd.Series,
+        rating_column: str,
+    ) -> tuple[pd.Series, int]:
+        """
+        对无评分候选书籍进行LLM智能筛选
+        
+        三层判断逻辑:
+        1. 无评分候选数 > pre_filter.trigger_threshold → 触发预筛选
+        2. 预筛选后数量 > llm_trigger_threshold → 触发LLM筛选
+        
+        Args:
+            df: 数据框
+            candidate_mask: 当前候选掩码
+            rating_column: 评分列名
+            
+        Returns:
+            (更新后的候选掩码, LLM筛选排除数量)
+        """
+        llm_config = self.config.get("no_rating_llm_filter", {})
+        if not llm_config.get("enabled", False):
+            return candidate_mask, 0
+        
+        # 1. 识别无评分的候选书籍
+        ratings = pd.to_numeric(df[rating_column], errors="coerce").fillna(0)
+        no_rating_candidates = candidate_mask & (ratings == 0)
+        no_rating_count = no_rating_candidates.sum()
+        
+        logger.info(f"检测到无评分候选书籍: {no_rating_count} 条")
+        
+        # 2. 准备LLM筛选数据
+        no_rating_df = df[no_rating_candidates].copy()
+        
+        # 3. 判断是否需要应用预筛选
+        pre_filter_config = llm_config.get("pre_filter", {})
+        pre_filter_enabled = pre_filter_config.get("enabled", False)
+        pre_filter_threshold = pre_filter_config.get("trigger_threshold", 0)
+        
+        if pre_filter_enabled and no_rating_count > pre_filter_threshold:
+            # 无评分候选数超过预筛选阈值,启动预筛选
+            logger.info(
+                f"无评分候选数({no_rating_count}) > 预筛选阈值({pre_filter_threshold}),启动预筛选"
+            )
+            no_rating_df = self._apply_pre_filter(no_rating_df, pre_filter_config)
+            logger.info(f"预筛选后剩余: {len(no_rating_df)} 条")
+        elif pre_filter_enabled:
+            # 预筛选已启用,但无评分候选数未达到阈值
+            logger.info(
+                f"无评分候选数({no_rating_count}) ≤ 预筛选阈值({pre_filter_threshold}),跳过预筛选"
+            )
+        
+        # 4. 判断预筛选后的数量是否触发LLM筛选
+        # 兼容旧配置: 优先使用 llm_trigger_threshold, 其次使用 trigger_threshold
+        llm_threshold = llm_config.get("llm_trigger_threshold") or llm_config.get("trigger_threshold", 100)
+        final_count = len(no_rating_df)
+        
+        if final_count <= llm_threshold:
+            logger.info(
+                f"{'预筛选后' if pre_filter_enabled and no_rating_count > pre_filter_threshold else ''}"
+                f"无评分候选数({final_count}) ≤ LLM阈值({llm_threshold}),跳过LLM筛选"
+            )
+            return candidate_mask, 0
+        
+        logger.info(f"无评分候选数({final_count}) > LLM阈值({llm_threshold}),启动LLM智能筛选")
+        
+        # 5. 分批调用LLM
+        batch_config = llm_config.get("batch_processing", {})
+        batch_size = batch_config.get("batch_size", 20)
+        pass_quota = batch_config.get("pass_quota_per_batch", 10)
+        task_name = llm_config.get("llm_task_name", "no_rating_book_filter")
+        
+        # 延迟导入LLM客户端
+        try:
+            from src.utils.llm.client import UnifiedLLMClient
+        except ImportError as e:
+            logger.error(f"无法导入LLM客户端: {e}")
+            return candidate_mask, 0
+        
+        llm_client = UnifiedLLMClient()
+        passed_barcodes = set()
+        total_batches = (len(no_rating_df) + batch_size - 1) // batch_size
+        
+        logger.info(f"开始分批LLM筛选: 共{total_batches}批,每批{batch_size}本,每批最多通过{pass_quota}本")
+        
+        for i in range(0, len(no_rating_df), batch_size):
+            batch_num = i // batch_size + 1
+            batch_df = no_rating_df.iloc[i:i+batch_size]
+            
+            # 构建提示词
+            books_info = self._format_books_for_llm(batch_df)
+            prompt = f"请从以下{len(batch_df)}本书中筛选出最多{pass_quota}本推荐:\n\n{books_info}"
+            
+            # 调用LLM
+            try:
+                logger.info(f"处理第{batch_num}/{total_batches}批...")
+                response = llm_client.call(task_name, prompt)
+                
+                # 解析响应
+                results = json.loads(response)
+                
+                # 提取通过的书目条码
+                batch_passed = 0
+                for item in results:
+                    if item.get("decision") == "通过":
+                        barcode = item.get("barcode")
+                        if barcode:
+                            passed_barcodes.add(barcode)
+                            batch_passed += 1
+                            logger.debug(
+                                f"  通过: {barcode} | 分数: {item.get('score', 'N/A')} | "
+                                f"理由: {item.get('reason', 'N/A')}"
+                            )
+                
+                logger.info(f"第{batch_num}批完成: {batch_passed}/{len(batch_df)} 通过")
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"LLM响应JSON解析失败(批次{batch_num}): {e}")
+                logger.debug(f"原始响应: {response[:200]}...")
+                continue
+            except Exception as e:
+                logger.error(f"LLM筛选批次{batch_num}失败: {e}")
+                continue
+        
+        # 6. 更新候选状态
+        # 将未通过LLM筛选的无评分书籍从候选中移除
+        llm_filtered_count = 0
+        for idx in no_rating_df.index:
+            barcode = df.loc[idx, "书目条码"]
+            if barcode not in passed_barcodes:
+                candidate_mask[idx] = False
+                llm_filtered_count += 1
+        
+        logger.info(
+            f"LLM筛选完成: {len(passed_barcodes)}/{final_count} 通过, "
+            f"{llm_filtered_count} 被排除"
+        )
+        
+        return candidate_mask, llm_filtered_count
+
+    def _format_books_for_llm(self, df: pd.DataFrame) -> str:
+        """
+        格式化书籍信息供LLM评估
+        
+        Args:
+            df: 包含书籍信息的数据框
+            
+        Returns:
+            格式化后的书籍信息字符串
+        """
+        books = []
+        for idx, row in df.iterrows():
+            # 提取关键信息
+            book_info = {
+                "barcode": str(row.get("书目条码", "")),
+                "title": str(row.get("豆瓣书名", row.get("书名", ""))),
+                "author": str(row.get("豆瓣作者", "")),
+                "publisher": str(row.get("豆瓣出版社", "")),
+                "pub_year": str(row.get("豆瓣出版年", "")),
+                "summary": str(row.get("豆瓣内容简介", ""))[:150],  # 截取前150字
+                "call_number": str(row.get("索书号", "")),
+            }
+            
+            # 清理空值
+            book_info = {k: v for k, v in book_info.items() if v and v != "nan"}
+            
+            books.append(json.dumps(book_info, ensure_ascii=False))
+        
+        return "\n".join(books)
+
+    def _apply_pre_filter(
+        self,
+        df: pd.DataFrame,
+        pre_filter_config: Dict[str, Any]
+    ) -> pd.DataFrame:
+        """
+        应用预筛选策略,在LLM前进一步缩小范围
+        
+        Args:
+            df: 待筛选的数据框
+            pre_filter_config: 预筛选配置
+            
+        Returns:
+            筛选后的数据框
+        """
+        result_df = df.copy()
+        filter_mask = pd.Series(False, index=result_df.index)
+        has_any_condition = False  # 标记是否配置了任何有效条件
+        
+        # 条件1: 优先保留有指定字段值的书籍(AND逻辑:所有字段都有值才保留)
+        prefer_fields = pre_filter_config.get("prefer_with_fields", [])
+        if prefer_fields:  # 非空列表才执行
+            has_any_condition = True
+            field_mask = pd.Series(True, index=result_df.index)  # 初始为True,使用AND逻辑
+            
+            for field in prefer_fields:
+                if field in result_df.columns:
+                    has_value = result_df[field].notna() & (
+                        result_df[field].astype(str).str.strip() != ""
+                    )
+                    field_mask &= has_value  # AND逻辑:所有字段都必须有值
+                    logger.info(f"预筛选: 字段 [{field}] 有值的书籍 ({has_value.sum()} 条)")
+                else:
+                    # 如果配置的字段不存在,则全部过滤
+                    logger.warning(f"预筛选: 字段 [{field}] 不存在于数据中,将过滤所有书籍")
+                    field_mask = pd.Series(False, index=result_df.index)
+                    break
+            
+            filter_mask |= field_mask
+            logger.info(f"预筛选: 满足所有字段条件的书籍总计 ({field_mask.sum()} 条)")
+        
+        # 条件2: 优先保留特定学科
+        priority_categories = pre_filter_config.get("priority_categories", [])
+        if priority_categories:  # 非空列表才执行
+            has_any_condition = True
+            call_letters = result_df["索书号"].apply(self._extract_call_letter)
+            is_priority = call_letters.isin(priority_categories)
+            filter_mask |= is_priority
+            logger.info(
+                f"预筛选: 优先学科 {priority_categories} "
+                f"({is_priority.sum()} 条)"
+            )
+        
+        # 如果没有配置任何有效条件,返回原数据
+        if not has_any_condition:
+            logger.warning("预筛选: 未配置任何有效的筛选条件,保留所有书籍")
+            return result_df
+        
+        # 如果配置了条件但没有书籍满足,返回空数据框
+        if not filter_mask.any():
+            logger.warning("预筛选: 配置了筛选条件,但没有书籍满足,返回空结果")
+            return result_df[filter_mask]  # 返回空DataFrame
+        
+        # 应用过滤
+        result_df = result_df[filter_mask]
+        logger.info(f"预筛选: 最终保留 {len(result_df)} 条")
+        
+        return result_df
+
 def run_new_sleeping_rating_filter(excel_file: str) -> Tuple[str, NewSleepingFilterResult]:
     """
     运行新书评分过滤
@@ -400,6 +653,8 @@ def run_new_sleeping_rating_filter(excel_file: str) -> Tuple[str, NewSleepingFil
         f.write(f"  - 题名关键词: {result.excluded_by_title_keywords}\n")
         f.write(f"  - 索书号规则: {result.excluded_by_call_number}\n")
         f.write(f"  - 评分不达标: {result.excluded_by_rating}\n")
+        if result.llm_filtered_count > 0:
+            f.write(f"  - LLM智能筛选: {result.llm_filtered_count}\n")
         if result.category_stats:
             f.write("各学科统计:\n")
             for letter, stats in sorted(result.category_stats.items()):

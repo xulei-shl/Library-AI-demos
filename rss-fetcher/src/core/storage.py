@@ -12,6 +12,38 @@ logger = get_logger(__name__)
 class StorageManager:
     """负责将各阶段结果保存到 Excel 文件"""
 
+    # 定义标准字段顺序常量，确保各阶段字段顺序一致
+    STANDARD_COLUMNS = {
+        "fetch": [
+            "source", "title", "article_date", "link", "published_date", 
+            "fetch_date", "summary", "content"
+        ],
+        "extract": [
+            "source", "title", "article_date", "link", "published_date", 
+            "fetch_date", "summary", "content", "full_text", 
+            "extract_status", "extract_error"
+        ],
+        "analyze": [
+            "source", "title", "article_date", "published_date", "link", 
+            "fetch_date", "summary", "extract_status", "extract_error",
+            "content", "full_text", 
+            "filter_pass", "filter_reason", "filter_status",
+            "llm_status", "llm_score", "llm_reason", "llm_summary", 
+            "llm_thematic_essence", "llm_tags", 
+            "llm_primary_dimension", "llm_mentioned_books"
+        ]
+    }
+
+    # 需要更新的Analyze阶段字段列表
+    ANALYZE_UPDATE_FIELDS = [
+        "filter_pass", "filter_reason", "filter_status",
+        "llm_status", "llm_score", "llm_reason", "llm_summary", 
+        "llm_thematic_essence", "llm_tags", 
+        "llm_primary_dimension", "llm_mentioned_books"
+    ]
+
+    BOOLEAN_COLUMNS = ["filter_pass"]
+
     def __init__(self, output_dir: str):
         self.output_dir = output_dir
         
@@ -83,6 +115,55 @@ class StorageManager:
         except Exception as e:
             logger.warning(f"读取现有文件失败，将创建新文件: {filepath}, 错误: {e}")
             return []
+
+    def _reorder_columns(self, df: pd.DataFrame, preferred_columns: List[str]) -> pd.DataFrame:
+        """按照预期列顺序排列表头，保留所有已有列"""
+        if df is None:
+            return df
+
+        ordered = [col for col in preferred_columns if col in df.columns]
+        remaining = [col for col in df.columns if col not in ordered]
+        if not ordered and not remaining:
+            return df
+        return df[ordered + remaining]
+
+    def _coerce_to_nullable_bool(self, value):
+        """将不同类型值转换为可空布尔"""
+        if value in ("", None):
+            return pd.NA
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "1", "yes"}:
+                return True
+            if normalized in {"false", "0", "no"}:
+                return False
+            return pd.NA
+        if isinstance(value, (int, float)):
+            if value == 1 or value == 1.0:
+                return True
+            if value == 0 or value == 0.0:
+                return False
+        if pd.isna(value):
+            return pd.NA
+        return pd.NA
+
+    def _normalize_boolean_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """确保布尔列保持布尔语义，避免被转换为0/1"""
+        if df is None:
+            return df
+
+        for column in self.BOOLEAN_COLUMNS:
+            if column not in df.columns:
+                continue
+            df[column] = df[column].apply(self._coerce_to_nullable_bool)
+            try:
+                df[column] = df[column].astype("boolean")
+            except (TypeError, ValueError):
+                # 如果转换失败，保留原值但不中断流程
+                continue
+        return df
 
     def _is_duplicate(self, new_article: Dict, existing_articles: List[Dict]) -> bool:
         """
@@ -181,18 +262,20 @@ class StorageManager:
         # 合并现有数据和新数据
         all_articles = existing_articles + filtered_articles
         
-        # 定义列顺序 (新增article_date列)
-        columns = ["source", "title", "article_date", "link", "published_date", "fetch_date", "summary", "content"]
+        # 定义fetch阶段的基础列顺序 - 使用标准字段常量
+        base_columns = self.STANDARD_COLUMNS["fetch"]
         
         df = pd.DataFrame(all_articles)
         
-        # 确保所有列都存在
-        for col in columns:
+        # 确保基础列都存在
+        for col in base_columns:
             if col not in df.columns:
                 df[col] = ""
         
-        # 重新排列列
-        df = df[columns]
+        # 保留所有现有列,不丢弃extract和analyze阶段的字段
+        # 将基础列放在前面,其他列保持原有顺序
+        df = self._reorder_columns(df, base_columns)
+        df = self._normalize_boolean_columns(df)
         
         try:
             df.to_excel(filepath, index=False)
@@ -291,11 +374,8 @@ class StorageManager:
                 
             all_articles.append(updated_article)
         
-        # 定义列顺序 (新增article_date列)
-        columns = [
-            "source", "title", "article_date", "link", "published_date", "fetch_date", "summary", 
-            "content", "full_text", "extract_status", "extract_error"
-        ]
+        # 定义列顺序 - 使用标准字段常量
+        columns = self.STANDARD_COLUMNS["extract"]
         
         df = pd.DataFrame(all_articles)
         
@@ -304,8 +384,9 @@ class StorageManager:
             if col not in df.columns:
                 df[col] = ""
         
-        # 重新排列列
-        df = df[columns]
+        # 重新排列列，保留其它阶段写入的扩展字段
+        df = self._reorder_columns(df, columns)
+        df = self._normalize_boolean_columns(df)
         
         try:
             df.to_excel(filepath, index=False)
@@ -353,14 +434,8 @@ class StorageManager:
                 return filepath
             else:
                 logger.info("没有现有文件，创建空文件...")
-                # 创建空的DataFrame保存到文件
-                columns = [
-                    "source", "title", "article_date", "published_date", "link", "fetch_date", "summary", "extract_status", "extract_error",
-                    "content", "full_text", 
-                    "filter_pass", "filter_reason", "filter_status",
-                    "llm_status", "llm_score", "llm_reason", "llm_summary", "llm_thematic_essence", "llm_tags", 
-                    "llm_primary_dimension", "llm_mentioned_books"
-                ]
+                # 创建空的DataFrame保存到文件 - 使用标准字段常量
+                columns = self.STANDARD_COLUMNS["analyze"]
                 df = pd.DataFrame(columns=columns)
                 try:
                     df.to_excel(filepath, index=False)
@@ -447,10 +522,20 @@ class StorageManager:
                     processed_article = processed_articles_map[key]
             
             if processed_article:
-                # 使用已处理的数据更新现有文章
-                all_articles.append(processed_article)
+                # 使用字段级更新，保留现有数据 - 修复数据覆盖Bug
+                updated_article = existing_article.copy()  # 复制原文章
+                
+                # 只更新analyze相关字段，避免丢失其他阶段的数据
+                for field in self.ANALYZE_UPDATE_FIELDS:
+                    updated_article[field] = processed_article.get(field, "")
+                
+                # 确保title字段也被正确更新（如果提取器修改了标题）
+                if "title" in processed_article and processed_article["title"]:
+                    updated_article["title"] = processed_article["title"]
+                
+                all_articles.append(updated_article)
                 updated_count += 1
-                logger.debug(f"更新文章: {processed_article.get('title', 'N/A')[:50]}... (状态: {processed_article.get('llm_status', 'N/A')})")
+                logger.debug(f"字段级更新文章: {processed_article.get('title', 'N/A')[:50]}... (状态: {processed_article.get('llm_status', 'N/A')})")
             else:
                 # 保留原有数据（包括已经处理的和不需要处理的）
                 all_articles.append(existing_article)
@@ -460,14 +545,8 @@ class StorageManager:
             if "llm_status" not in article:
                 article["llm_status"] = ""
         
-        # 定义列顺序 (把重要信息放前面，新增双Agent字段)
-        columns = [
-            "source", "title", "article_date", "published_date", "link", "fetch_date", "summary", "extract_status", "extract_error",
-            "content", "full_text", 
-            "filter_pass", "filter_reason", "filter_status",
-            "llm_status", "llm_score", "llm_reason", "llm_summary", "llm_thematic_essence", "llm_tags", 
-            "llm_primary_dimension", "llm_mentioned_books"
-        ]
+        # 定义列顺序 - 使用标准字段常量确保一致性
+        columns = self.STANDARD_COLUMNS["analyze"]
         
         df = pd.DataFrame(all_articles)
         
@@ -477,9 +556,8 @@ class StorageManager:
                 df[col] = ""
         
         # 重新排列列
-        existing_cols = [c for c in columns if c in df.columns]
-        remaining_cols = [c for c in df.columns if c not in existing_cols]
-        df = df[existing_cols + remaining_cols]
+        df = self._reorder_columns(df, columns)
+        df = self._normalize_boolean_columns(df)
         
         try:
             df.to_excel(filepath, index=False)
@@ -625,9 +703,8 @@ class StorageManager:
                 df[col] = ""
         
         # 重新排列列
-        existing_cols = [c for c in columns if c in df.columns]
-        remaining_cols = [c for c in df.columns if c not in existing_cols]
-        df = df[existing_cols + remaining_cols]
+        df = self._reorder_columns(df, columns)
+        df = self._normalize_boolean_columns(df)
         
         try:
             df.to_excel(filepath, index=False)

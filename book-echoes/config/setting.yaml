@@ -513,7 +513,38 @@ rating_filter:
   new_sleeping:
     enabled: true
     # 不同学科（索书号首字母）的最低豆瓣评分
-    allow_no_rating: true   # true=保留无评分书籍（默认），false=排除无评分书籍    
+    allow_no_rating: true   # true=保留无评分书籍（默认），false=排除无评分书籍
+    
+    # 无评分书籍LLM智能筛选配置
+    # 三层判断逻辑:
+    # 1. 无评分候选数 > pre_filter_threshold → 触发预筛选
+    # 2. 预筛选后数量 > llm_trigger_threshold → 触发LLM筛选
+    no_rating_llm_filter:
+      enabled: true                    # 总开关:是否启用整个LLM筛选功能
+
+      # 预筛选策略(可选,在LLM前进一步缩小范围)
+      pre_filter:
+        enabled: true                  # 是否启用预筛选
+        trigger_threshold: 150         # 触发阈值:无评分候选数>此值时才启动预筛选
+        # 优先保留有指定字段值的书籍(AND逻辑,所有字段都有值才保留,任一字段为空则过滤)
+        # 留空[]则不执行该条件
+        prefer_with_fields: ["豆瓣目录", "豆瓣作者简介"]
+        # 优先保留的学科分类(OR逻辑)
+        # 留空[]则不执行该条件
+        priority_categories: []
+
+      # LLM筛选触发阈值(判断预筛选后的数量)
+      llm_trigger_threshold: 100       # 触发阈值:(预筛选后)无评分候选数>此值时启动LLM筛选
+      
+      # 批次处理配置
+      batch_processing:
+        batch_size: 20                 # 每批次送入LLM的书籍数量
+        pass_quota_per_batch: 5       # 每批次最多通过数量
+        # 备选:使用比例模式 pass_ratio: 0.5  # 每批次通过50%
+      
+      # LLM任务配置
+      llm_task_name: "no_rating_book_filter"  # 对应llm.yaml中的任务名
+      
     category_min_scores:
       B: 8.2
       C: 7.5
