@@ -356,8 +356,10 @@ class StorageManager:
                 # 创建空的DataFrame保存到文件
                 columns = [
                     "source", "title", "article_date", "published_date", "link", "fetch_date", "summary", "extract_status", "extract_error",
-                    "content", "full_text", "llm_status", "llm_decision", "llm_score", "llm_reason", "llm_summary", "llm_tags", "llm_keywords", 
-                    "llm_primary_dimension", "llm_mentioned_books", "llm_book_clues", "llm_raw_response"
+                    "content", "full_text", 
+                    "filter_pass", "filter_reason", "filter_status",
+                    "llm_status", "llm_score", "llm_reason", "llm_summary", "llm_thematic_essence", "llm_tags", 
+                    "llm_primary_dimension", "llm_mentioned_books"
                 ]
                 df = pd.DataFrame(columns=columns)
                 try:
@@ -458,12 +460,13 @@ class StorageManager:
             if "llm_status" not in article:
                 article["llm_status"] = ""
         
-        # 定义列顺序 (把重要信息放前面，新增llm_status列)
+        # 定义列顺序 (把重要信息放前面，新增双Agent字段)
         columns = [
             "source", "title", "article_date", "published_date", "link", "fetch_date", "summary", "extract_status", "extract_error",
             "content", "full_text", 
-            "llm_status", "llm_decision", "llm_score", "llm_reason", "llm_summary", "llm_tags", "llm_keywords", 
-            "llm_primary_dimension", "llm_mentioned_books", "llm_book_clues", "llm_raw_response"
+            "filter_pass", "filter_reason", "filter_status",
+            "llm_status", "llm_score", "llm_reason", "llm_summary", "llm_thematic_essence", "llm_tags", 
+            "llm_primary_dimension", "llm_mentioned_books"
         ]
         
         df = pd.DataFrame(all_articles)
@@ -606,8 +609,9 @@ class StorageManager:
         elif stage == "analyze":
             columns = [
                 "source", "title", "article_date", "published_date", 
-                "llm_status", "llm_decision", "llm_score", "llm_reason", "llm_summary", "llm_tags", "llm_keywords", 
-                "llm_primary_dimension", "llm_mentioned_books", "llm_book_clues", "llm_raw_response",
+                "filter_pass", "filter_reason", "filter_status",
+                "llm_status", "llm_score", "llm_reason", "llm_summary", "llm_thematic_essence", "llm_tags", 
+                "llm_primary_dimension", "llm_mentioned_books",
                 "link", "fetch_date", "summary", "extract_status", "extract_error",
                 "content", "full_text"
             ]

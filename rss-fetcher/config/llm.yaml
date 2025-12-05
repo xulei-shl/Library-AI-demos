@@ -32,10 +32,24 @@ api_providers:
       model: "zai-glm-4.6"
       timeout_seconds: 120
 
+  text-small:
+    primary:
+      name: "oneapi"
+      api_key: env:ONEAPI_API_KEY
+      base_url: "http://47.103.50.106:3000/v1"
+      model: "gpt-4o-mini"
+      timeout_seconds: 120
+    secondary:
+      name: "cerebras"
+      api_key: env:CEREBRAS_API_KEY
+      base_url: "https://api.cerebras.ai/v1"
+      model: "zai-glm-4.6"
+      timeout_seconds: 120      
+
 tasks:
   # ----------------------------------------------------------------------------
   # 任务: 主题书目文章分析 (subject_bibliography_analysis)
-  # 逻辑位置: 
+  # 逻辑位置: 废弃
   # ----------------------------------------------------------------------------
   network_article_initial_review:
     provider_type: text
@@ -59,6 +73,42 @@ tasks:
       tags: ["book-echoes", "文章初评"]
       metadata:
         module: "模块7"
+
+  # ----------------------------------------------------------------------------
+  # 任务: Agent 1 - 文章初筛守门员
+  # 逻辑位置: src/core/analysis/filter.py
+  # ----------------------------------------------------------------------------
+  article_filter:
+    provider_type: text-small
+    temperature: 0.3
+    prompt:
+      type: md
+      source: "prompts/article_filter.md"
+    json_repair:
+      enabled: true
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "文章初筛"
+      tags: ["filter"]
+
+  # ----------------------------------------------------------------------------
+  # 任务: Agent 2 - 深度分析师
+  # 逻辑位置: src/core/analysis/analyst.py
+  # ----------------------------------------------------------------------------
+  article_analysis:
+    provider_type: text
+    temperature: 0.5
+    prompt:
+      type: md
+      source: "prompts/article_analysis.md"
+    json_repair:
+      enabled: true
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "文章深度分析"
+      tags: ["analysis"]
 
 defaults:
   temperature: 0.45

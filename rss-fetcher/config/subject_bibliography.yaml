@@ -76,9 +76,13 @@ output:
   # 按月聚合文件命名格式：YYYY-MM.xlsx (如: 2025-12.xlsx)
   # 每个文件包含该月的所有文章数据，新增article_date列记录文章发布日期
 
-# LLM 分析设置
+
+# LLM 分析设置 (双 Agent 架构)
+# Agent 1 (Filter): 使用 article_filter 任务进行初筛
+# Agent 2 (Analyst): 使用 article_analysis 任务进行深度分析
+# 详见 config/llm.yaml 中的任务配置
 llm_analysis:
-  task_name: "network_article_initial_review"  # 对应 config/llm.yaml 中的任务名
+  task_name: "network_article_initial_review"  # [已废弃] 双Agent使用: article_filter 和 article_analysis
 
 # 全文提取设置
 extraction_settings:

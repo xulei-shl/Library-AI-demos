@@ -367,9 +367,8 @@ class SubjectBibliographyPipeline:
             logger.info("所有文章都已成功分析，跳过阶段3")
             return input_file
         
-        # 初始化 LLM 处理器
-        llm_task_name = self.config.get("llm_analysis", {}).get("task_name", "subject_bibliography_analysis")
-        processor = ArticleProcessor(task_name=llm_task_name)
+        # 初始化 LLM 处理器 (双 Agent 架构)
+        processor = ArticleProcessor()
         
         # LLM 分析
         logger.info(f"开始分析 {to_analyze} 篇文章 (跳过 {len(articles) - to_analyze} 篇提取失败或已处理的文章)...")
