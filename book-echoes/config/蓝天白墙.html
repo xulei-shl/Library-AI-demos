@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书海回响 | 邮票完美修复版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;700;900&family=Noto+Sans+SC:wght@300;400;700&family=Playfair+Display:ital,wght@1,400;1,600&family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --font-serif: 'Noto Serif SC', "Songti SC", serif;
+            --font-sans: 'Noto Sans SC', system-ui, sans-serif;
+            --font-eng: 'Playfair Display', serif;
+            --font-modern: 'Montserrat', sans-serif;
+            --rotate-deg: 46.5deg;
+            --c-sky-text: #ffffff;
+            --c-wall-text: #0a0a0a;
+            --c-accent: #bf242a; 
+            --c-stamp-bg: #fdfdfd;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #eef1f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: var(--font-serif);
+        }
+        .poster-card {
+            width: 700px;
+            height: 950px;
+            position: relative;
+            background-color: #3a7bd5;
+            background-image: url('https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20251205192936.jpg');
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.25);
+        }
+
+        .brand-watermark {
+            position: absolute; top: 40px; right: 40px; z-index: 10;
+            display: flex; flex-direction: column; align-items: flex-end;
+            color: var(--c-sky-text); mix-blend-mode: overlay;
+        }
+        .brand-logo-img { width: 42px; height: auto; margin-bottom: 12px; filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0,0,0,0.2)); opacity: 0.9; }
+        .project-name-en { font-family: var(--font-eng); font-size: 16px; font-style: italic; font-weight: 600; letter-spacing: 1px; line-height: 1; margin-bottom: 4px; }
+        .brand-line { width: 100%; height: 1px; background: rgba(255,255,255,0.4); margin-top: 8px; transform-origin: right; transform: scaleX(0.6); }
+
+        .layout-grid {
+            position: absolute;
+            top: -125px; left: -160px;
+            width: 1200px; height: 1400px;
+            transform: rotate(var(--rotate-deg));
+            transform-origin: 50% 50%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-left: 320px;
+            z-index: 1;
+        }
+
+        .stamp-container {
+            position: absolute;
+            left: 40px;
+            top: 100px;
+            transform: rotate(46.5deg);
+            width: 230px;
+            z-index: 5;
+            pointer-events: auto;
+            filter: drop-shadow(3px 5px 8px rgba(0,0,0,0.4));
+        }
+        
+        .stamp-shell {
+            position: relative;
+            padding: 12px; 
+            background-image: radial-gradient(transparent 0px, transparent 5px, #fdfdfd 5.5px, #fdfdfd);
+            background-size: 20px 20px; 
+            background-position: -10px -10px; 
+            background-repeat: round; 
+        }
+
+        .stamp-shell::after {
+            content: '';
+            position: absolute;
+            top: 12px; left: 12px; right: 12px; bottom: 12px;
+            z-index: 2;
+            pointer-events: none;
+            background: linear-gradient(
+                165deg, 
+                rgba(30, 90, 200, 0.5) 0%,    
+                rgba(30, 90, 200, 0.2) 40%,   
+                rgba(255, 255, 255, 0.1) 50%, 
+                rgba(255, 255, 255, 0.6) 100% 
+            );
+            mix-blend-mode: hard-light; 
+        }
+
+        .stamp-blocker {
+            position: absolute;
+            top: 10px; left: 10px; right: 10px; bottom: 10px;
+            background: #fdfdfd; 
+            z-index: 0;
+        }
+
+        .book-img {
+            position: relative;
+            z-index: 1; 
+            width: 100%;
+            height: auto;
+            display: block;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1); 
+            filter: sepia(0.1); 
+        }
+
+        .postmark-group {
+            position: absolute;
+            bottom: -15px; right: -25px;
+            width: 180px; height: 100px;
+            z-index: 10; opacity: 0.85;
+            mix-blend-mode: multiply; 
+            pointer-events: none;
+            transform: rotate(-15deg); 
+            display: flex; align-items: center;
+        }
+        .postmark-circle {
+            width: 70px; height: 70px;
+            border: 2px solid var(--c-accent); border-radius: 50%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: var(--c-accent); font-family: 'Courier New', monospace; font-weight: bold; font-size: 10px;
+            line-height: 1.2; text-align: center; position: relative; background: transparent;
+            mask-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.5"/><rect width="100%" height="100%" fill="black" opacity="0.8"/></svg>'); 
+        }
+        .postmark-circle::after { content: ''; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; border: 1px solid var(--c-accent); border-radius: 50%; }
+        .postmark-waves {
+            flex: 1; height: 40px; margin-left: -10px; display: flex; flex-direction: column; justify-content: space-evenly; overflow: hidden;
+            background-image: linear-gradient(45deg, transparent 45%, var(--c-accent) 45%, var(--c-accent) 55%, transparent 55%), linear-gradient(-45deg, transparent 45%, var(--c-accent) 45%, var(--c-accent) 55%, transparent 55%);
+            background-size: 10px 10px; background-repeat: repeat-x; height: 20px; width: 100px; opacity: 0.8; margin-top: 5px;
+        }
+
+        .header-group { color: var(--c-sky-text); margin-bottom: 50px; position: relative; z-index: 2; }
+        .deco-line { width: 60px; height: 4px; background: var(--c-sky-text); margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .main-title {
+            font-size: 52px;
+            font-weight: 900;
+            line-height: 0.95;
+            letter-spacing: -2px;
+            text-shadow: 0 10px 30px rgba(0, 40, 80, 0.4);
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 500px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: normal; 
+            line-height: 1.2; 
+        }
+        .meta-data { font-family: var(--font-sans); font-size: 14px; letter-spacing: 1px; opacity: 0.9; display: flex; align-items: center; gap: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .tag { background: var(--c-sky-text); color: #003366; padding: 2px 8px; font-weight: 700; font-size: 12px; }
+
+        .body-group { color: var(--c-wall-text); width: 580px; position: relative; z-index: 2; }
+        .body-group::before {
+            content: '';
+            position: absolute;
+            top: 70%; left: -10%; width: 140%; height: 140%;
+            background-color: rgba(250, 250, 250, 0.95);
+            background-image: url('pic/b.png');
+            background-repeat: no-repeat;
+            background-position: 30% 70%;
+            background-size: 60% auto;
+            background-blend-mode: multiply;
+            mask-image: radial-gradient(ellipse at center, black 40%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 70%);
+            transform: rotate(-40deg); transform-origin: center;
+            z-index: -1; opacity: 0.9;
+        }
+
+        .quote-symbol { font-family: var(--font-eng); font-size: 120px; color: var(--c-accent); position: absolute; top: -60px; left: -40px; opacity: 0.8; z-index: 1; text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff, 0 0 15px #fff; }
+        
+        /* 
+           ================================================================
+           【修改点】推荐语样式：无需 span，利用伪元素自动生成两处高光
+           ================================================================
+        */
+        .recommend-text { 
+            font-size: 22px; 
+            font-weight: 700; 
+            line-height: 1.6; 
+            text-align: justify; 
+            margin-bottom: 25px; 
+            text-shadow: 1px 1px 0 #fff; 
+            position: relative; /* 定位基准 */
+            z-index: 1;
+        }
+
+        .recommend-text::before,
+        .recommend-text::after {
+            content: '';
+            position: absolute;
+            height: 12px;
+            background: rgba(211, 47, 47, 0.3);
+            transform: skewX(-10deg);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* 第一行开头 */
+        .recommend-text::before {
+            top: 0.7em; 
+            left: 0;
+            width: 140px; 
+        }
+
+        /* 第二行中后段 */
+        .recommend-text::after {
+            top: 2.3em; /* 0.7 + 1.6 */
+            left: 45%;
+            width: 120px;
+        }
+
+        .footer-info { font-family: var(--font-eng); font-size: 14px; color: #333; border-top: 2px solid #000; display: inline-block; padding-top: 10px; font-weight: 600; letter-spacing: 0.5px; }
+        .call-number { font-family: 'Courier New', monospace; font-weight: 600; font-size: 16px; color: var(--c-wall-text); background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(245,245,245,0.9) 100%); padding: 3px 8px; border-left: 3px solid var(--c-accent); box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.1); position: relative; display: inline-block; letter-spacing: 0.5px; }
+        .rating-badge { background: var(--c-accent); color: white; padding: 4px 10px; font-size: 16px; font-family: var(--font-eng); margin-left: 10px; box-shadow: 2px 2px 0 #000; }
+    </style>
+</head>
+<body>
+    <div class="poster-card">
+        
+        <div class="brand-watermark">
+            <img src="pic/logo_shl.png" alt="Logo" class="brand-logo-img">
+            <div class="project-name-en">Book Echoes</div>
+            <div class="brand-line"></div>
+        </div>
+
+        <div class="stamp-container">
+            <div class="stamp-shell">
+                <div class="stamp-blocker"></div>
+                
+                <img src="pic/cover.jpg" alt="Book Cover" class="book-img">
+                
+                <div class="postmark-group">
+                    <div class="postmark-circle">
+                        <div>SHANGHAI</div>
+                        <div style="font-size: 8px;">2025.07</div>
+                    </div>
+                    <div class="postmark-waves"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="layout-grid">
+            <div class="header-group">
+                <div class="deco-line"></div>
+                <h1 class="main-title">
+                    {{TITLE}}
+                </h1>
+                <div class="meta-data">
+                    <span class="tag">{{AUTHOR}}</span>
+                    <span>{{PUBLISHER}} · {{PUB_YEAR}}</span>
+                </div>
+            </div>
+
+            <div class="body-group">
+                <div class="quote-symbol">"</div>
+                <!-- 注意：此处已去除 span 标签，样式完全由 CSS 自动生成 -->
+                <div class="recommend-text">
+                    {{RECOMMENDATION}}...
+                </div>
+                
+                <div class="footer-info">
+                    CALL NUMBER: <span class="call-number">{{CALL_NUMBER}}</span>
+                    <span class="rating-badge">RATE {{DOUBAN_RATING}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

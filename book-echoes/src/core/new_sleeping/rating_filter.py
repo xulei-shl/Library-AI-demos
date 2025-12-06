@@ -39,7 +39,7 @@ class NewSleepingFilterResult:
     excluded_by_title_keywords: int     # 题名关键词排除数
     excluded_by_call_number: int        # 索书号规则排除数
     llm_filtered_count: int = 0         # LLM筛选排除数
-    category_stats: Dict[str, Dict]     # 各学科统计
+    category_stats: Dict[str, Dict] = field(default_factory=dict)     # 各学科统计
 
 
 class NewSleepingRatingFilter:

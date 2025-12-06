@@ -509,7 +509,7 @@ rating_filter:
   # false: 跳过动态过滤（适合新书数据，后续使用命令10单独过滤）
   dynamic_filter_enabled: false
 
-  # 新书专用过滤策略配置（命令10使用）
+  # 新书专用过滤策略配置
   new_sleeping:
     enabled: true
     # 不同学科（索书号首字母）的最低豆瓣评分
@@ -525,7 +525,7 @@ rating_filter:
       # 预筛选策略(可选,在LLM前进一步缩小范围)
       pre_filter:
         enabled: true                  # 是否启用预筛选
-        trigger_threshold: 150         # 触发阈值:无评分候选数>此值时才启动预筛选
+        trigger_threshold: 100         # 触发阈值:无评分候选数>此值时才启动预筛选
         # 优先保留有指定字段值的书籍(AND逻辑,所有字段都有值才保留,任一字段为空则过滤)
         # 留空[]则不执行该条件
         prefer_with_fields: ["豆瓣目录", "豆瓣作者简介"]
@@ -534,7 +534,7 @@ rating_filter:
         priority_categories: []
 
       # LLM筛选触发阈值(判断预筛选后的数量)
-      llm_trigger_threshold: 100       # 触发阈值:(预筛选后)无评分候选数>此值时启动LLM筛选
+      llm_trigger_threshold: 80       # 触发阈值:(预筛选后)无评分候选数>此值时启动LLM筛选。llm配置中提示词type: file错的（md是正确值，但最终结果却实现了再次筛选，很诡异）
       
       # 批次处理配置
       batch_processing:
@@ -583,7 +583,7 @@ rating_filter:
 # =============================================================================
 card_generator:
   # HTML模板文件路径
-  template_path: "config/点阵.html"
+  template_path: "config/蓝天白墙.html"
 
   # 字段转换器配置
   # 功能: 为不同模板提供灵活的字段处理规则
@@ -598,12 +598,12 @@ card_generator:
     
     # 示例2: AUTHOR字段 - 只显示第一作者 + "等"
     # 取消下面的注释即可启用此配置
-    # AUTHOR:
-    #   type: "first_author"        # 转换器类型: first_author(提取第一作者)
-    #   source_field: "豆瓣作者"     # 源字段名
-    #   separator: "/"              # 作者分隔符
-    #   suffix: " 等"               # 多作者时的后缀
-    #   default: ""                 # 默认值
+    AUTHOR:
+      type: "first_author"        # 转换器类型: first_author(提取第一作者)
+      source_field: "豆瓣作者"     # 源字段名
+      separator: "/"              # 作者分隔符
+      suffix: " 等"               # 多作者时的后缀
+      default: ""                 # 默认值
     
     # 示例3: TITLE字段 - 使用完整标题(主标题 + 副标题,默认行为)
     # 如果不配置,则使用默认逻辑(显示主标题和副标题)
