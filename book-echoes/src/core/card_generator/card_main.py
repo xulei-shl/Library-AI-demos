@@ -396,6 +396,14 @@ class CardGeneratorModule:
                         logger.warning(f"[任务3] 无法创建输出目录，书目条码：{barcode}")
                         self.stats['library_card_failed_count'] += 1
                         continue
+
+                    # 确保借书卡所需的logo资源已准备完毕
+                    files_status = self.check_existing_files(output_paths)
+                    if not files_status['logo_complete']:
+                        if not self.directory_manager.copy_logo_files(output_paths.pic_dir):
+                            logger.warning(f"[任务3] Logo文件复制失败，书目条码：{barcode}")
+                            self.stats['library_card_failed_count'] += 1
+                            continue
                     
                     # 生成HTML（会自动添加-S后缀）
                     html_success, html_path = self.library_card_html_generator.generate_html(
