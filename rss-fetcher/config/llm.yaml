@@ -27,9 +27,9 @@ api_providers:
       timeout_seconds: 120
     secondary:
       name: "cerebras"
-      api_key: env:CEREBRAS_API_KEY
-      base_url: "https://api.cerebras.ai/v1"
-      model: "zai-glm-4.6"
+      api_key: env:ONEAPI_API_KEY
+      base_url: "http://47.103.50.106:3000/v1"
+      model: "qwen"
       timeout_seconds: 120
 
   text-small:
@@ -41,9 +41,9 @@ api_providers:
       timeout_seconds: 120
     secondary:
       name: "cerebras"
-      api_key: env:CEREBRAS_API_KEY
-      base_url: "https://api.cerebras.ai/v1"
-      model: "zai-glm-4.6"
+      api_key: env:ONEAPI_API_KEY
+      base_url: "http://47.103.50.106:3000/v1"
+      model: "qwen"
       timeout_seconds: 120      
 
 tasks:

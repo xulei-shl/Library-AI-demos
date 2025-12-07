@@ -12,12 +12,13 @@ tests/
 
 __pycache__/
 
+.pytest_cache/
+.claude/
 
 tmp/
 
 **/logs
 
-.claude/
 
 # 忽略所有 .db 文件
 *.db
