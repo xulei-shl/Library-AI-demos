@@ -343,9 +343,78 @@ class SubjectBibliographyPipeline:
         skipped_count = sum(1 for a in articles if a.get("extract_status") == "skipped")
         
         logger.info("=" * 60)
-        logger.info(f"阶段2完成，输出文件: {output_file}")
+        logger.info(f"阶段2初次提取完成，输出文件: {output_file}")
         logger.info(f"提取统计: 成功={success_count}, 失败={failed_count}, 跳过={skipped_count}")
         logger.info("=" * 60)
+        
+        # ========== 兜底重试机制 ==========
+        # 筛选提取失败的文章进行重试
+        failed_articles = [article for article in articles if article.get("extract_status") == "failed"]
+        
+        if failed_articles:
+            logger.info(f"开始兜底重试机制，对 {len(failed_articles)} 篇失败文章重新提取...")
+            
+            retry_success_count = 0
+            retry_failed_count = 0
+            
+            for i, article in enumerate(failed_articles):
+                source = article.get("source", "")
+                title = article.get("title", "")
+                original_error = article.get("extract_error", "")
+                
+                logger.info(f"兜底重试 ({i+1}/{len(failed_articles)}): [{source}] {title}")
+                logger.debug(f"原始错误: {original_error}")
+                
+                # 获取对应的提取器
+                extractor = ExtractorFactory.get_extractor(source)
+                
+                if extractor is None:
+                    # 没有找到提取器，保持失败状态
+                    article["extract_error"] = f"兜底重试失败: 未找到适合源 '{source}' 的提取器"
+                    retry_failed_count += 1
+                    logger.warning(f"兜底重试失败，未找到提取器: {source}")
+                else:
+                    # 清除之前的错误信息，重新执行提取
+                    article["extract_error"] = ""
+                    
+                    try:
+                        # 执行提取
+                        result = extractor.extract(article)
+                        article.update(result)
+                        
+                        # 检查重试结果
+                        if article.get("extract_status") == "success":
+                            retry_success_count += 1
+                            logger.info(f"✓ 兜底重试成功: {title}")
+                        else:
+                            retry_failed_count += 1
+                            # 在错误信息前添加"兜底重试失败"前缀
+                            current_error = article.get("extract_error", "")
+                            article["extract_error"] = f"兜底重试失败: {current_error}" if current_error else "兜底重试失败: 未知错误"
+                            logger.warning(f"✗ 兜底重试失败: {title} - {article.get('extract_error', 'N/A')}")
+                            
+                    except Exception as e:
+                        retry_failed_count += 1
+                        article["extract_status"] = "failed"
+                        article["extract_error"] = f"兜底重试异常: {str(e)}"
+                        logger.error(f"✗ 兜底重试异常: {title} - {str(e)}")
+            
+            # 重新保存包含重试结果的数据
+            output_file = self.storage.save_extract_results(articles, input_file)
+            
+            # 重新统计最终结果
+            final_success_count = sum(1 for a in articles if a.get("extract_status") == "success")
+            final_failed_count = sum(1 for a in articles if a.get("extract_status") == "failed")
+            final_skipped_count = sum(1 for a in articles if a.get("extract_status") == "skipped")
+            
+            logger.info("=" * 60)
+            logger.info("兜底重试完成")
+            logger.info(f"重试统计: 成功={retry_success_count}, 失败={retry_failed_count}")
+            logger.info(f"最终统计: 成功={final_success_count}, 失败={final_failed_count}, 跳过={final_skipped_count}")
+            logger.info(f"最终输出文件: {output_file}")
+            logger.info("=" * 60)
+        else:
+            logger.info("没有失败文章，跳过兜底重试机制")
         
         return output_file
 
