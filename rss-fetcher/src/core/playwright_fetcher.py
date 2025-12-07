@@ -45,9 +45,6 @@ class PlaywrightSiteFetcher:
         """
         articles = []
         
-        # 计算时间过滤条件
-        cutoff_time = self._calculate_cutoff_time(hours_lookback, start_time, end_time)
-        
         for site_config in site_configs:
             if not site_config.get("enabled", True):
                 logger.info(f"跳过禁用的网站: {site_config.get('name', 'Unknown')}")
@@ -55,7 +52,12 @@ class PlaywrightSiteFetcher:
                 
             try:
                 logger.info(f"开始抓取网站: {site_config.get('name', 'Unknown')}")
-                site_articles = self._fetch_site_articles(site_config, cutoff_time)
+                site_articles = self._fetch_site_articles(
+                    site_config, 
+                    hours_lookback=hours_lookback,
+                    start_time=start_time,
+                    end_time=end_time
+                )
                 articles.extend(site_articles)
                 logger.info(f"网站 {site_config.get('name', 'Unknown')} 抓取完成，获取 {len(site_articles)} 篇文章")
                 
@@ -66,21 +68,13 @@ class PlaywrightSiteFetcher:
         logger.info(f"总共获取 {len(articles)} 篇文章")
         return articles
     
-    def _calculate_cutoff_time(
+    def _fetch_site_articles(
         self, 
-        hours_lookback: int, 
-        start_time: Optional[datetime], 
+        site_config: Dict[str, Any], 
+        hours_lookback: int,
+        start_time: Optional[datetime],
         end_time: Optional[datetime]
-    ) -> datetime:
-        """计算时间过滤的截止时间"""
-        if start_time:
-            return start_time
-        elif end_time:
-            return end_time - timedelta(hours=hours_lookback)
-        else:
-            return datetime.now() - timedelta(hours=hours_lookback)
-    
-    def _fetch_site_articles(self, site_config: Dict[str, Any], cutoff_time: datetime) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """抓取单个网站的文章"""
         url = site_config.get("url")
         if not url:
@@ -112,7 +106,12 @@ class PlaywrightSiteFetcher:
                 self._scroll_to_load_content(page, site_config)
                 
                 # 提取文章信息
-                articles = self._extract_articles(page, site_config, selectors, url, cutoff_time)
+                articles = self._extract_articles(
+                    page, site_config, selectors, url, 
+                    hours_lookback=hours_lookback,
+                    start_time=start_time,
+                    end_time=end_time
+                )
                 
             except PlaywrightTimeoutError:
                 logger.warning(f"页面加载超时: {url}")
@@ -149,11 +148,31 @@ class PlaywrightSiteFetcher:
         page, 
         site_config: Dict[str, Any], 
         selectors: Dict[str, str], 
-        base_url: str, 
-        cutoff_time: datetime
+        base_url: str,
+        hours_lookback: int,
+        start_time: Optional[datetime],
+        end_time: Optional[datetime]
     ) -> List[Dict[str, Any]]:
         """从页面提取文章信息"""
         articles = []
+        
+        # 计算时间过滤范围
+        if start_time and end_time:
+            time_start = start_time
+            time_end = end_time
+            logger.info(f"使用配置的时间范围: {time_start.strftime('%Y-%m-%d %H:%M:%S')} 至 {time_end.strftime('%Y-%m-%d %H:%M:%S')}")
+        elif start_time:
+            time_start = start_time
+            time_end = datetime.now()
+            logger.info(f"使用开始时间至今: {time_start.strftime('%Y-%m-%d %H:%M:%S')} 至 {time_end.strftime('%Y-%m-%d %H:%M:%S')}")
+        elif end_time:
+            time_start = end_time - timedelta(hours=hours_lookback)
+            time_end = end_time
+            logger.info(f"使用结束时间回溯{hours_lookback}小时: {time_start.strftime('%Y-%m-%d %H:%M:%S')} 至 {time_end.strftime('%Y-%m-%d %H:%M:%S')}")
+        else:
+            time_end = datetime.now()
+            time_start = time_end - timedelta(hours=hours_lookback)
+            logger.info(f"使用默认回溯{hours_lookback}小时: {time_start.strftime('%Y-%m-%d %H:%M:%S')} 至 {time_end.strftime('%Y-%m-%d %H:%M:%S')}")
         
         # 获取文章容器选择器
         article_container_selector = selectors.get("article_container", ".index_wrapper__9rz3z")
@@ -173,29 +192,46 @@ class PlaywrightSiteFetcher:
         for i in range(count):
             try:
                 element = article_elements.nth(i)
+                logger.info(f"开始处理第 {i+1}/{count} 个文章容器")
                 
                 # 提取标题
                 title = self._extract_title(element, selectors)
                 if not title:
+                    logger.info(f"第 {i+1} 个文章容器：无法提取标题，跳过")
                     continue
+                
+                logger.info(f"第 {i+1} 个文章容器：提取到标题: {title}")
                 
                 # 提取链接
                 link = self._extract_link(element, selectors, base_url)
                 if not link:
+                    logger.info(f"文章 '{title}'：无法提取链接，跳过")
                     continue
+                
+                logger.info(f"文章 '{title}'：提取到链接: {link}")
                 
                 # 提取时间 - 必须有时间才能过滤
                 publish_time = self._extract_time(element, selectors)
                 
-                # 根据时间过滤文章
-                if publish_time:
-                    if publish_time < cutoff_time:
-                        filtered_count += 1
-                        continue  # 跳过时间过旧的文章
-                else:
+                if not publish_time:
                     # 如果无法解析时间，跳过该文章
-                    logger.debug(f"无法解析文章时间，跳过: {title}")
+                    logger.warning(f"文章 '{title}'：无法解析文章时间，跳过")
                     continue
+                
+                logger.info(f"文章 '{title}'：解析到时间: {publish_time.strftime('%Y-%m-%d %H:%M:%S')}")
+                
+                # 根据时间过滤文章
+                # 检查是否在时间范围内 [time_start, time_end)
+                if publish_time < time_start:
+                    filtered_count += 1
+                    logger.info(f"文章 '{title}' 时间早于起始时间 {time_start.strftime('%Y-%m-%d %H:%M:%S')}，跳过")
+                    continue
+                if publish_time >= time_end:
+                    filtered_count += 1
+                    logger.info(f"文章 '{title}' 时间晚于或等于结束时间 {time_end.strftime('%Y-%m-%d %H:%M:%S')}，跳过")
+                    continue
+                
+                logger.info(f"文章 '{title}' 时间在范围内，继续处理")
                 
                 # 获取详情页面的准确时间
                 accurate_time = self._fetch_article_detail_time(link, page.context)
@@ -204,8 +240,13 @@ class PlaywrightSiteFetcher:
                     publish_time = accurate_time
                     
                     # 重新检查时间过滤
-                    if publish_time < cutoff_time:
-                        logger.info(f"根据准确时间过滤掉文章: {title}")
+                    if publish_time < time_start:
+                        logger.info(f"根据准确时间过滤掉文章(早于起始时间): {title}")
+                        filtered_count += 1
+                        continue
+                    if publish_time >= time_end:
+                        logger.info(f"根据准确时间过滤掉文章(晚于或等于结束时间): {title}")
+                        filtered_count += 1
                         continue
                 
                 # 提取来源
@@ -241,7 +282,7 @@ class PlaywrightSiteFetcher:
                 continue
         
         if filtered_count > 0:
-            logger.info(f"根据时间过滤掉 {filtered_count} 篇文章（早于 {cutoff_time.strftime('%Y-%m-%d %H:%M:%S')}）")
+            logger.info(f"根据时间范围过滤掉 {filtered_count} 篇文章（不在 [{time_start.strftime('%Y-%m-%d %H:%M:%S')}, {time_end.strftime('%Y-%m-%d %H:%M:%S')}) 范围内）")
         
         return articles
     
@@ -311,14 +352,17 @@ class PlaywrightSiteFetcher:
             
             logger.debug(f"找到 {count} 个 span 元素")
             
+            # 收集所有找到的文本
+            all_texts = []
             for i in range(count):
                 time_text = time_elements.nth(i).inner_text().strip()
+                all_texts.append(time_text)
                 logger.debug(f"检查第 {i+1} 个span元素: '{time_text}'")
                 
                 # 更精确的时间识别：检查是否包含时间关键词且不是其他信息
-                if any(keyword in time_text for keyword in ["小时前", "分钟前", "天前", "刚刚"]):
+                if any(keyword in time_text for keyword in ["小时前", "分钟前", "天前", "刚刚", "昨天", "今天", "前天"]):
                     # 排除明显不是时间的文本（如评论数等）
-                    if not any(exclude in time_text for exclude in ["评", "评论", "阅读", "次"]):
+                    if not any(exclude in time_text for exclude in ["评", "评论", "阅读", "次", "分享", "赞"]):
                         logger.debug(f"识别到时间文本: {time_text}")
                         publish_time = self._parse_relative_time(time_text)
                         if publish_time:
@@ -326,6 +370,21 @@ class PlaywrightSiteFetcher:
                             return publish_time
                     else:
                         logger.debug(f"跳过非时间文本: {time_text}")
+            
+            # 如果没有找到相对时间，尝试查找绝对时间格式
+            logger.debug(f"未找到相对时间，检查所有文本: {all_texts}")
+            for i, text in enumerate(all_texts):
+                # 检查是否是绝对时间格式 (YYYY-MM-DD 或 YYYY-MM-DD HH:MM)
+                if self._is_valid_date_time_format(text) or self._is_valid_date_format(text):
+                    logger.debug(f"发现绝对时间格式: '{text}'")
+                    # 如果只有日期部分，补充默认时间
+                    if self._is_valid_date_format(text) and not self._is_valid_date_time_format(text):
+                        text += " 12:00"  # 默认中午12点
+                    publish_time = self._parse_absolute_time(text)
+                    if publish_time:
+                        logger.debug(f"解析绝对时间成功: {publish_time.strftime('%Y-%m-%d %H:%M:%S')}")
+                        return publish_time
+                        
         except Exception as e:
             logger.debug(f"提取时间时出错: {e}")
         
@@ -336,15 +395,22 @@ class PlaywrightSiteFetcher:
                 time_text = time_element.inner_text().strip()
                 logger.debug(f"备用方案检查时间文本: '{time_text}'")
                 
-                if any(keyword in time_text for keyword in ["小时前", "分钟前", "天前", "刚刚"]):
+                if any(keyword in time_text for keyword in ["小时前", "分钟前", "天前", "刚刚", "昨天", "今天", "前天"]):
                     publish_time = self._parse_relative_time(time_text)
                     if publish_time:
                         logger.debug(f"备用方案解析时间成功: {publish_time.strftime('%Y-%m-%d %H:%M:%S')}")
                         return publish_time
+                elif self._is_valid_date_time_format(time_text) or self._is_valid_date_format(time_text):
+                    if self._is_valid_date_format(time_text) and not self._is_valid_date_time_format(time_text):
+                        time_text += " 12:00"
+                    publish_time = self._parse_absolute_time(time_text)
+                    if publish_time:
+                        logger.debug(f"备用方案解析绝对时间成功: {publish_time.strftime('%Y-%m-%d %H:%M:%S')}")
+                        return publish_time
         except:
             pass
         
-        logger.debug("未能提取到有效时间")
+        logger.warning("未能提取到有效时间")
         return None
     
     def _parse_relative_time(self, time_text: str) -> Optional[datetime]:
@@ -355,16 +421,16 @@ class PlaywrightSiteFetcher:
         
         logger.debug(f"开始解析时间文本: '{time_text}'")
         
-        # 使用当前UTC时间作为基准，避免时区问题
-        now = datetime.utcnow()
-        logger.debug(f"当前UTC时间: {now.strftime('%Y-%m-%d %H:%M:%S')}")
+        # 使用当前本地时间作为基准，因为澎湃是中文网站
+        now = datetime.now()
+        logger.info(f"当前本地时间: {now.strftime('%Y-%m-%d %H:%M:%S')}")
         
         # 匹配小时前
         hour_match = re.search(r'(\d+)小时前', time_text)
         if hour_match:
             hours = int(hour_match.group(1))
             result_time = now - timedelta(hours=hours)
-            logger.debug(f"解析为 {hours} 小时前: {result_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"解析为 {hours} 小时前: {result_time.strftime('%Y-%m-%d %H:%M:%S')}")
             return result_time
         
         # 匹配分钟前
@@ -372,7 +438,7 @@ class PlaywrightSiteFetcher:
         if minute_match:
             minutes = int(minute_match.group(1))
             result_time = now - timedelta(minutes=minutes)
-            logger.debug(f"解析为 {minutes} 分钟前: {result_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"解析为 {minutes} 分钟前: {result_time.strftime('%Y-%m-%d %H:%M:%S')}")
             return result_time
         
         # 匹配天前
@@ -380,28 +446,28 @@ class PlaywrightSiteFetcher:
         if day_match:
             days = int(day_match.group(1))
             result_time = now - timedelta(days=days)
-            logger.debug(f"解析为 {days} 天前: {result_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"解析为 {days} 天前: {result_time.strftime('%Y-%m-%d %H:%M:%S')}")
             return result_time
         
         # 匹配"刚刚"
         if "刚刚" in time_text:
-            logger.debug("解析为刚刚")
+            logger.info("解析为刚刚")
             return now
         
         # 匹配今天、昨天等
         if "今天" in time_text:
             # 假设"今天"就是当前日期的00:00
             result_time = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            logger.debug(f"解析为今天: {result_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"解析为今天: {result_time.strftime('%Y-%m-%d %H:%M:%S')}")
             return result_time
         
         if "昨天" in time_text:
             # 假设"昨天"是当前日期前一天的00:00
             result_time = (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-            logger.debug(f"解析为昨天: {result_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"解析为昨天: {result_time.strftime('%Y-%m-%d %H:%M:%S')}")
             return result_time
         
-        logger.debug(f"无法解析时间文本: {time_text}")
+        logger.warning(f"无法解析时间文本: {time_text}")
         return None
     
     def _fetch_article_detail_time(self, article_url: str, context) -> Optional[datetime]:
@@ -503,6 +569,23 @@ class PlaywrightSiteFetcher:
         
         # 匹配 YYYY-MM-DD HH:MM 格式
         pattern = r'^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}$'
+        return bool(re.match(pattern, time_text.strip()))
+    
+    def _is_valid_date_format(self, time_text: str) -> bool:
+        """
+        检查文本是否为有效的日期格式
+        
+        Args:
+            time_text: 时间文本
+            
+        Returns:
+            是否为有效的日期格式
+        """
+        if not time_text:
+            return False
+        
+        # 匹配 YYYY-MM-DD 格式
+        pattern = r'^\d{4}-\d{2}-\d{2}$'
         return bool(re.match(pattern, time_text.strip()))
     
     def _parse_absolute_time(self, time_text: str) -> Optional[datetime]:
