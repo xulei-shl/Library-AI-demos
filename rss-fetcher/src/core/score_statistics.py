@@ -199,9 +199,10 @@ class ScoreStatistics:
         # 分析评分
         statistics = self.analyze_scores(articles)
         
-        # 生成报告文件路径（与Excel同目录，同名但扩展名为.txt）
+        # 生成报告文件路径（与Excel同目录，同名但扩展名为.txt，尾部添加时间戳）
         base_path = os.path.splitext(excel_path)[0]
-        report_path = f"{base_path}_评分统计报告.txt"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_path = f"{base_path}_评分统计报告_{timestamp}.txt"
         
         # 生成报告
         return self.generate_report(statistics, report_path)

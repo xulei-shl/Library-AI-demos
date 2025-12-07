@@ -432,17 +432,34 @@ class SubjectBibliographyPipeline:
             # 初始化 LLM 处理器 (双 Agent 架构)
             processor = ArticleProcessor()
             
-            # LLM 分析
+            # LLM 分析 - 采用单条即时保存策略
             logger.info(f"开始分析 {to_analyze} 篇文章 (跳过 {len(articles) - to_analyze} 篇提取失败或已处理的文章)...")
+            logger.info("采用即时保存策略，每处理一条立即保存，确保不丢失数据")
+            
+            # 统计计数器
+            saved_count = 0
+            failed_count = 0
             
             for i, article in enumerate(unprocessed_articles):
                 logger.info(f"正在分析 ({i+1}/{to_analyze}): {article.get('title')}")
+                
+                # 执行LLM分析
                 analyzed = processor.analyze_article(article)
                 # 更新原文章数据
                 article.update(analyzed)
+                
+                # 立即保存当前文章的分析结果
+                try:
+                    output_file = self.storage.save_analyze_results([article], input_file)
+                    saved_count += 1
+                    logger.info(f"✓ 已保存 ({i+1}/{to_analyze}): {article.get('title', 'N/A')[:50]}... [状态: {article.get('llm_status', 'N/A')}]")
+                except Exception as e:
+                    failed_count += 1
+                    logger.error(f"✗ 保存失败 ({i+1}/{to_analyze}): {article.get('title', 'N/A')[:50]}... 错误: {e}")
+                    # 保存失败不中断流程，继续处理下一篇
             
-            # 保存结果
-            output_file = self.storage.save_analyze_results(unprocessed_articles, input_file)
+            # 输出保存统计
+            logger.info(f"即时保存统计: 成功={saved_count}, 失败={failed_count}")
         
         logger.info("=" * 60)
         logger.info(f"阶段3完成，输出文件: {output_file}")
