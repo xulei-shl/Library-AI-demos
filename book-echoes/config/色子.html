@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swiss Style V8 - Text Truncation</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Inter:wght@400;600;900&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --card-width: 600px;
+            --card-height: 850px;
+            --paper-bg: #EAEAE5;
+            --swiss-red: #E6332A;
+            --swiss-green: #009640;
+            --swiss-blue: #0065BD;
+            --ink-black: #0F0F0F;
+            --font-head: 'Antonio', sans-serif; 
+            --font-body: 'Inter', sans-serif;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: var(--font-body);
+        }
+        
+        .library-card {
+            width: var(--card-width);
+            height: var(--card-height);
+            background-color: var(--paper-bg);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 背景设计 */
+        .grid-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .texture {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100;
+            mix-blend-mode: overlay;
+            opacity: 0.7;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E");
+        }
+        .vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 99;
+            background: radial-gradient(circle at 50% 40%, transparent 50%, rgba(0,0,0,0.15) 120%);
+            pointer-events: none;
+        }
+
+        /* Header */
+        .header {
+            padding: 45px 40px 10px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            color: var(--swiss-red);
+            position: relative;
+            z-index: 50;
+        }
+        .badge {
+            width: 130px; height: 70px;
+            border: 3px solid var(--swiss-red);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: rotate(-6deg);
+            background: var(--paper-bg);
+            box-shadow: 5px 5px 0px rgba(230, 51, 42, 0.1);
+        }
+        .badge span:nth-child(1) { font-family: var(--font-head); font-size: 14px; line-height: 1; }
+        .badge span:nth-child(2) { font-family: var(--font-head); font-size: 22px; font-weight: 700; line-height: 1; margin: 2px 0; }
+        .badge span:nth-child(3) { font-family: var(--font-head); font-size: 14px; line-height: 1; }
+
+        .meta-col {
+            display: flex;
+            flex-direction: column;
+            font-family: var(--font-head);
+            font-weight: 700;
+            text-transform: uppercase;
+            line-height: 0.9;
+        }
+        .meta-center { text-align: center; margin-top: 10px; }
+        .meta-right { text-align: right; margin-top: 5px; }
+        .label { font-size: 22px; letter-spacing: -0.5px; opacity: 0.9; }
+        .value { font-size: 26px; letter-spacing: -1px; margin-bottom: 8px; }
+        .sm-label { font-size: 14px; opacity: 0.7; letter-spacing: 0.5px; margin-top: 4px;}
+
+        /* =========================================
+           Info List (关键修复区域)
+           ========================================= */
+        .info-list {
+            padding: 0 40px;
+            margin-top: 25px;
+            position: relative;
+            z-index: 40;
+            width: 100%; /* 确保容器宽度 */
+        }
+
+        .list-row {
+            border-top: 3px solid var(--ink-black);
+            padding: 10px 0;
+            display: flex;
+            align-items: baseline; /* 基线对齐 */
+            width: 100%;
+            overflow: hidden; /* 防止任何意外溢出 */
+        }
+        .list-row:last-child { 
+            border-bottom: 3px solid var(--ink-black); 
+            padding-bottom: 10px;
+        }
+
+        .bullet { 
+            width: 10px; height: 10px; 
+            background: var(--ink-black); 
+            margin-right: 15px; 
+            transform: translateY(-3px);
+            flex-shrink: 0; /* 防止方块被挤扁 */
+        }
+
+        .row-main { 
+            font-family: var(--font-head); 
+            font-size: 34px; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            color: var(--ink-black); 
+            line-height: 1.1; /* 稍微增加行高防止切字 */
+            letter-spacing: -1px;
+            
+            /* --- 截断逻辑开始 --- */
+            flex: 1;           /* 占据剩余空间 */
+            min-width: 0;      /* 允许 Flex 子项收缩到比内容更小，触发截断的关键 */
+            white-space: nowrap; /* 强制不换行 */
+            overflow: hidden;    /* 隐藏超出部分 */
+            text-overflow: ellipsis; /* 显示省略号 */
+            padding-right: 15px; /* 与右侧标签保持距离 */
+            /* --- 截断逻辑结束 --- */
+        }
+
+        .row-sub {
+            font-family: var(--font-head);
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--ink-black);
+            width: 100px;
+            text-align: left;
+            opacity: 0.6;
+            flex-shrink: 0; /* 关键：防止标签被左侧长文本挤压消失 */
+        }
+
+        /* =========================================
+           其他组件
+           ========================================= */
+        .dice-grid {
+            position: absolute;
+            bottom: 20px; 
+            right: 40px;
+            width: 320px; 
+            height: 320px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 6px;
+            z-index: 20;
+        }
+        .dice {
+            width: 100%; height: 100%; position: relative;
+            border-radius: 4px; mix-blend-mode: multiply;
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.15);
+        }
+        .bg-red { background-color: var(--swiss-red); }
+        .bg-green { background-color: var(--swiss-green); }
+        .bg-blue { background-color: var(--swiss-blue); }
+        .bg-black { background-color: var(--ink-black); }
+        .dot {
+            background: #f0f0f0; border-radius: 50%; position: absolute;
+            width: 32px; height: 32px; box-shadow: inset 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        /* Dot Positions (省略部分重复代码，保持原样) */
+        .bg-red .dot { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .bg-green .dot:nth-child(1) { top: 20px; left: 20px; }
+        .bg-green .dot:nth-child(2) { bottom: 20px; right: 20px; }
+        .bg-blue .dot:nth-child(1) { top: 20px; right: 20px; }
+        .bg-blue .dot:nth-child(2) { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .bg-blue .dot:nth-child(3) { bottom: 20px; left: 20px; }
+        .bg-black .dot:nth-child(1) { top: 20px; left: 20px; }
+        .bg-black .dot:nth-child(2) { top: 20px; right: 20px; }
+        .bg-black .dot:nth-child(3) { bottom: 20px; left: 20px; }
+        .bg-black .dot:nth-child(4) { bottom: 20px; right: 20px; }
+
+        .rec-text {
+            position: absolute; right: 40px; bottom: 355px; width: 320px; 
+            text-align: right; z-index: 30;
+        }
+        .rec-title {
+            font-family: var(--font-head); font-size: 16px; font-weight: 700;
+            color: #fff; background: var(--swiss-red); padding: 3px 10px;
+            display: inline-block; text-transform: uppercase; margin-bottom: 10px;
+            transform: skewX(-10deg); margin-right: 2px;
+        }
+        .rec-body {
+            font-family: var(--font-body); font-size: 12px; line-height: 1.5;
+            color: #111; font-weight: 600; background: rgba(255,255,255,0.85);
+            padding: 12px 15px; backdrop-filter: blur(4px); border-radius: 2px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); word-wrap: break-word;
+            text-align: left;
+        }
+
+        .cover-layer {
+            position: absolute; z-index: 10; left: -30px; width: 420px;
+            top: 280px; bottom: 183px; overflow: visible;
+        }
+        .cover-img {
+            width: 100%; height: 100%; object-fit: cover;
+            filter: grayscale(100%) contrast(130%) brightness(1.2) sepia(20%);
+            mix-blend-mode: multiply;
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 98%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 98%, transparent 100%);
+            transform: rotate(3deg) scale(1.05); opacity: 0.95;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="library-card">
+        <div class="grid-bg"></div>
+        <div class="vignette"></div>
+        <div class="texture"></div>
+
+        <div class="header">
+            <div class="badge">
+                <span>BOOK</span>
+                <span>ECHOES</span>
+                <span>SHANGHAI</span>
+            </div>
+            <div class="meta-col meta-center">
+                <span class="label">PUBLISHED</span>
+                <span class="value">{{YEAR}}</span>
+            </div>
+            <div class="meta-col meta-right">
+                <span class="label">RATING</span>
+                <span class="value">{{RATE}} / 10</span>
+                <span class="sm-label">CALL_NUMBER</span>
+                <span class="sm-label" style="font-size:16px; color:#000;">{{CALL_NUMBER}}</span>
+            </div>
+        </div>
+
+        <!-- 列表区域：现在支持超长文本自动截断 -->
+        <div class="info-list">
+            <div class="list-row">
+                <div class="bullet"></div>
+                <!-- 模拟超长标题 -->
+                <div class="row-main">{{TITLE}} 很长很长的标题测试很长很长的标题测试很长很长的标题测试很长很长的标题测试</div>
+            </div>
+            <div class="list-row">
+                <div class="bullet"></div>
+                <!-- 模拟超长作者 -->
+                <div class="row-main" style="font-size: 28px;">{{AUTHOR}} 陀思妥耶夫斯基与托尔斯泰的对话录特别长版本</div>
+                <div class="row-sub">AUTHOR</div>
+            </div>
+            <div class="list-row">
+                <div class="bullet"></div>
+                <!-- 模拟超长出版社 -->
+                <div class="row-main" style="font-size: 28px;">{{PUBLISHER}} 这是一个名字非常非常非常长的出版社有限公司</div>
+                <div class="row-sub">PUBLISHER</div>
+            </div>
+        </div>
+
+        <div class="cover-layer">
+            <img src="pic/cover.jpg" alt="Cover" class="cover-img"
+                 onerror="this.src='https://images.unsplash.com/photo-1463320726281-696a485928c7?q=80&w=1000&auto=format&fit=crop'">
+        </div>
+
+        <div class="rec-text">
+            <span class="rec-title">CRITIC'S NOTE</span>
+            <div class="rec-body">
+                {{RECOMMENDATION}} 这是一段用于测试长文本排版的填充文字。通过增加文本框的宽度并减小下方色块的高度，我们为这段文字争取到了更多的垂直空间。现在即使文字较多，也不会轻易挤占上方的书籍信息区域。
+            </div>
+        </div>
+
+        <div class="dice-grid">
+            <div class="dice bg-red"><div class="dot"></div></div>
+            <div class="dice bg-green"><div class="dot"></div><div class="dot"></div></div>
+            <div class="dice bg-blue"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            <div class="dice bg-black"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+
+    </div>
+
+</body>
+</html>
