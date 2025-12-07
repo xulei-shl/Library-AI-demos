@@ -19,9 +19,9 @@
 2.  **可视化**: 逻辑复杂时，必须使用 Mermaid 绘制流程图或时序图。
 
 ### 第三步：撰写演进式文档 (Documentation)
-输出符合以下模板的 Markdown 文档：
+输出符合以下模板的 Markdown 文档，存储路径为`docs/{feture}/简要描述_YYYYMMDD.md`：
 
-‍```markdown
+```markdown
 # [功能名称] 设计文档
 - **Status**: Proposal
 - **Date**: YYYY-MM-DD
@@ -42,7 +42,7 @@
 
 ## 3. 测试策略
 [列出关键测试用例，遵循 @00_STANDARDS.md]
-‍```
+```
 
 ### 第四步：等待批准 (Approval)
 明确询问用户：“**该设计方案是否通过？**” 只有获得批准，才提示用户切换到【开发专家模式】（`@.rules/02_DEVELOPER.md`）。
