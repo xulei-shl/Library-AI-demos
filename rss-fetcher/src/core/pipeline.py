@@ -2,6 +2,7 @@
 
 import yaml
 import os
+import sys
 import argparse
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
@@ -13,8 +14,66 @@ from .playwright_fetcher import PlaywrightSiteFetcher
 from .article_analyzer import ArticleProcessor
 from .storage import StorageManager
 from .content_extractors import ExtractorFactory
+from .score_statistics import ScoreStatistics
+
+# Windows平台的输入超时处理
+if sys.platform == 'win32':
+    import msvcrt
+    import time
+else:
+    import select
 
 logger = get_logger(__name__)
+
+
+def get_user_input_with_timeout(prompt: str, timeout: int = 10, default: str = "y") -> str:
+    """
+    获取用户输入，支持超时自动选择默认值
+    
+    Args:
+        prompt: 提示信息
+        timeout: 超时时间（秒）
+        default: 默认值
+        
+    Returns:
+        用户输入或默认值
+    """
+    print(f"\n{prompt}")
+    print(f"(默认为 '{default}'，{timeout}秒内无输入将自动选择默认值)")
+    print("请输入 (y/n): ", end="", flush=True)
+    
+    if sys.platform == 'win32':
+        # Windows平台实现
+        start_time = time.time()
+        user_input = ""
+        
+        while True:
+            if msvcrt.kbhit():
+                char = msvcrt.getwche()
+                if char in ('\r', '\n'):
+                    print()  # 换行
+                    break
+                user_input += char
+            
+            if time.time() - start_time > timeout:
+                print(f"\n超时，自动选择默认值: {default}")
+                return default
+            
+            time.sleep(0.1)
+        
+        return user_input.strip().lower() if user_input.strip() else default
+    else:
+        # Unix/Linux平台实现
+        import select
+        rlist, _, _ = select.select([sys.stdin], [], [], timeout)
+        
+        if rlist:
+            user_input = sys.stdin.readline().strip().lower()
+            return user_input if user_input else default
+        else:
+            print(f"\n超时，自动选择默认值: {default}")
+            return default
+
 
 
 class SubjectBibliographyPipeline:
@@ -359,38 +418,64 @@ class SubjectBibliographyPipeline:
             else:
                 unprocessed_articles.append(article)
         
+        
         total = len(articles)
         to_analyze = len(unprocessed_articles)
         logger.info(f"文章总数: {total}, 已处理: {already_processed}, 需要分析: {to_analyze}")
         
+        # 初始化输出文件路径
+        output_file = input_file
+        
         if to_analyze == 0:
-            logger.info("所有文章都已成功分析，跳过阶段3")
-            return input_file
-        
-        # 初始化 LLM 处理器 (双 Agent 架构)
-        processor = ArticleProcessor()
-        
-        # LLM 分析
-        logger.info(f"开始分析 {to_analyze} 篇文章 (跳过 {len(articles) - to_analyze} 篇提取失败或已处理的文章)...")
-        
-        for i, article in enumerate(unprocessed_articles):
-            logger.info(f"正在分析 ({i+1}/{to_analyze}): {article.get('title')}")
-            analyzed = processor.analyze_article(article)
-            # 更新原文章数据
-            article.update(analyzed)
-        
-        # 保存结果
-        if to_analyze > 0:
-            # 有新处理的文章，只传递这些文章给storage进行更新
-            output_file = self.storage.save_analyze_results(unprocessed_articles, input_file)
+            logger.info("所有文章都已成功分析，跳过LLM分析步骤")
         else:
-            # 没有新处理的文章，仍然调用保存以确保文件格式正确
-            output_file = self.storage.save_analyze_results([], input_file)
-            logger.info("没有新处理的文章，文件格式已确认")
+            # 初始化 LLM 处理器 (双 Agent 架构)
+            processor = ArticleProcessor()
+            
+            # LLM 分析
+            logger.info(f"开始分析 {to_analyze} 篇文章 (跳过 {len(articles) - to_analyze} 篇提取失败或已处理的文章)...")
+            
+            for i, article in enumerate(unprocessed_articles):
+                logger.info(f"正在分析 ({i+1}/{to_analyze}): {article.get('title')}")
+                analyzed = processor.analyze_article(article)
+                # 更新原文章数据
+                article.update(analyzed)
+            
+            # 保存结果
+            output_file = self.storage.save_analyze_results(unprocessed_articles, input_file)
         
         logger.info("=" * 60)
         logger.info(f"阶段3完成，输出文件: {output_file}")
         logger.info("=" * 60)
+        
+        # ========== 交互式评分统计 ==========
+        # 询问用户是否需要进行评分统计
+        try:
+            user_choice = get_user_input_with_timeout(
+                prompt="是否对文章评分（llm_score列）进行统计分析？",
+                timeout=10,
+                default="y"
+            )
+            
+            if user_choice in ('y', 'yes', '是'):
+                logger.info("用户选择进行评分统计分析")
+                
+                # 执行统计分析
+                try:
+                    statistics_analyzer = ScoreStatistics()
+                    report_path = statistics_analyzer.run_analysis(articles, output_file)
+                    
+                    logger.info("=" * 60)
+                    logger.info(f"评分统计报告已生成: {report_path}")
+                    logger.info("=" * 60)
+                    
+                except Exception as e:
+                    logger.error(f"评分统计分析失败: {e}", exc_info=True)
+            else:
+                logger.info("用户选择跳过评分统计分析")
+                
+        except Exception as e:
+            logger.warning(f"交互式提示失败，跳过评分统计: {e}")
         
         return output_file
 
