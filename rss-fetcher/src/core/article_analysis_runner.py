@@ -90,6 +90,13 @@ class ArticleAnalysisRunner:
             if analysis_status == "成功":
                 continue
 
+            # 添加调试日志：记录状态字段
+            logger.debug(f"分析阶段状态检查 - 标题: {article.get('title', 'N/A')[:50]}...")
+            logger.debug(f"  llm_summary_status: '{summary_status}'")
+            logger.debug(f"  llm_summary存在: {bool(summary_text)}")
+            logger.debug(f"  llm_analysis_status: '{analysis_status}'")
+            logger.debug(f"  filter_status: '{article.get('filter_status', '')}'")
+
             pending.append(article)
         return pending
 

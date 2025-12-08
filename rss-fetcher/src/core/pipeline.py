@@ -492,11 +492,22 @@ class SubjectBibliographyPipeline:
             if article.get("extract_status") != "success":
                 continue
                 
-            # 检查是否已经处理过过滤（优先检查llm_status）
-            llm_status = article.get("llm_status", "")
+            # 检查是否已经处理过过滤（优先检查filter_status）
+            filter_status = article.get("filter_status", "")
             llm_raw_response = article.get("llm_raw_response", "")
+            llm_status = article.get("llm_status", "")  # 保留用于向后兼容
+            
+            # 添加调试日志：记录当前状态字段值
+            logger.debug(f"文章状态检查 - 标题: {article.get('title', 'N/A')[:50]}...")
+            logger.debug(f"  filter_status: '{filter_status}'")
+            logger.debug(f"  llm_status: '{llm_status}' (向后兼容)")
+            logger.debug(f"  llm_raw_response存在: {bool(llm_raw_response)}")
             
             # 处理NaN值：将NaN视为空值
+            filter_status_is_valid = (
+                filter_status and
+                str(filter_status).lower() not in ('nan', 'none', '')
+            )
             llm_status_is_valid = (
                 llm_status and
                 str(llm_status).lower() not in ('nan', 'none', '')
@@ -506,10 +517,11 @@ class SubjectBibliographyPipeline:
                 str(llm_raw_response).lower() not in ('nan', 'none', '')
             )
             
-            # 如果有有效的llm_status或llm_raw_response，认为已处理
-            if llm_status_is_valid or llm_raw_response_is_valid:
+            # 如果有有效的filter_status或llm_raw_response，认为已处理
+            # 同时保留llm_status的检查以实现向后兼容
+            if filter_status_is_valid or llm_status_is_valid or llm_raw_response_is_valid:
                 already_processed += 1
-                logger.debug(f"跳过已处理文章: {article.get('title', 'N/A')[:50]}... (状态: {llm_status})")
+                logger.debug(f"跳过已处理文章: {article.get('title', 'N/A')[:50]}... (filter_status: {filter_status}, llm_status: {llm_status})")
             else:
                 unprocessed_articles.append(article)
         
@@ -548,7 +560,7 @@ class SubjectBibliographyPipeline:
                 if not full_text and not content:
                     logger.info(f"文章 '{title}' 缺少 full_text 和 content 字段,跳过过滤")
                     processed_article = article.copy()
-                    processed_article["llm_status"] = "跳过"
+                    processed_article["filter_status"] = "跳过"
                     processed_article["llm_skip_reason"] = "缺少 full_text 和 content 字段"
                 else:
                     # 优先使用 full_text,如果没有则使用 content
@@ -563,17 +575,23 @@ class SubjectBibliographyPipeline:
                     # 保存过滤结果
                     processed_article["filter_pass"] = filter_result.get("pass", False)
                     processed_article["filter_reason"] = filter_result.get("reason", "")
-                    processed_article["filter_status"] = filter_result.get("status", "")
+                    filter_status_value = filter_result.get("status", "")
+                    processed_article["filter_status"] = filter_status_value
+                    
+                    # 添加调试日志：记录状态字段设置
+                    logger.debug(f"设置过滤状态 - 标题: {title}")
+                    logger.debug(f"  filter_status: '{filter_status_value}'")
                     
                     # 如果过滤失败,标记状态
                     if filter_result.get("status") == "失败":
                         logger.warning(f"文章 '{title}' 过滤失败: {filter_result.get('error')}")
-                        processed_article["llm_status"] = "过滤失败"
+                        processed_article["filter_status"] = "失败"
                         processed_article["llm_error"] = filter_result.get("error", "")
+                        logger.debug(f"  设置 filter_status: '失败'")
                     # 如果未通过过滤,标记为拒绝
                     elif not filter_result.get("pass", False):
                         logger.info(f"文章 '{title}' 未通过过滤,理由: {filter_result.get('reason')}")
-                        processed_article["llm_status"] = "已拒绝"
+                        processed_article["filter_status"] = "已拒绝"
                         # 设置默认值
                         processed_article["llm_score"] = 0
                         processed_article["llm_primary_dimension"] = ""
@@ -581,22 +599,24 @@ class SubjectBibliographyPipeline:
                         processed_article["llm_tags"] = "[]"
                         processed_article["llm_mentioned_books"] = "[]"
                         processed_article["llm_thematic_essence"] = ""
+                        logger.debug(f"  设置 filter_status: '已拒绝'")
                     else:
                         # 通过过滤，但暂不进行深度分析
                         logger.info(f"文章 '{title}' 通过过滤")
-                        processed_article["llm_status"] = "已通过过滤"
+                        processed_article["filter_status"] = "成功"
                         processed_article["llm_score"] = 0  # 暂时设为0，等待后续分析
                         processed_article["llm_primary_dimension"] = ""
                         processed_article["llm_reason"] = ""
                         processed_article["llm_tags"] = "[]"
                         processed_article["llm_mentioned_books"] = "[]"
                         processed_article["llm_thematic_essence"] = ""
+                        logger.debug(f"  设置 filter_status: '成功'")
                 
                 # 立即保存当前文章的过滤结果
                 try:
                     output_file = self.storage.save_analyze_results([processed_article], input_file)
                     saved_count += 1
-                    logger.info(f"✓ 已保存 ({i+1}/{to_filter}): {processed_article.get('title', 'N/A')[:50]}... [状态: {processed_article.get('llm_status', 'N/A')}]")
+                    logger.info(f"✓ 已保存 ({i+1}/{to_filter}): {processed_article.get('title', 'N/A')[:50]}... [状态: {processed_article.get('filter_status', 'N/A')}]")
                 except Exception as e:
                     failed_count += 1
                     logger.error(f"✗ 保存失败 ({i+1}/{to_filter}): {processed_article.get('title', 'N/A')[:50]}... 错误: {e}")

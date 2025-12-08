@@ -72,6 +72,15 @@ class ArticleSummaryRunner:
 
             status = str(article.get("llm_summary_status", "") or "").strip()
             summary_text = str(article.get("llm_summary", "") or "").strip()
+            llm_status = str(article.get("llm_status", "") or "").strip()
+            filter_status = str(article.get("filter_status", "") or "").strip()
+
+            # 添加调试日志：记录状态字段
+            logger.debug(f"总结阶段状态检查 - 标题: {article.get('title', 'N/A')[:50]}...")
+            logger.debug(f"  filter_pass: {article.get('filter_pass')}")
+            logger.debug(f"  filter_status: '{filter_status}'")
+            logger.debug(f"  llm_summary_status: '{status}'")
+            logger.debug(f"  llm_summary存在: {bool(summary_text)}")
 
             if status == "成功" and summary_text:
                 continue

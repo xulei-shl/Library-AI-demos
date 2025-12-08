@@ -28,7 +28,7 @@ class StorageManager:
             "fetch_date", "summary", "extract_status", "extract_error",
             "content", "full_text",
             "filter_pass", "filter_reason", "filter_status",
-            "llm_status", "llm_score", "llm_reason",
+            "llm_score", "llm_reason",
             "llm_thematic_essence", "llm_tags",
             "llm_primary_dimension", "llm_mentioned_books",
             "llm_summary", "llm_summary_status", "llm_summary_error", "llm_summary_last_try",
@@ -39,7 +39,7 @@ class StorageManager:
     # 需要更新的Analyze阶段字段列表
     ANALYZE_UPDATE_FIELDS = [
         "filter_pass", "filter_reason", "filter_status",
-        "llm_status", "llm_score", "llm_reason",
+        "llm_score", "llm_reason",
         "llm_thematic_essence", "llm_tags",
         "llm_primary_dimension", "llm_mentioned_books",
         "llm_summary", "llm_summary_status", "llm_summary_error", "llm_summary_last_try",
@@ -484,9 +484,19 @@ class StorageManager:
         if skip_processed:
             for article in articles:
                 llm_raw_response = str(article.get("llm_raw_response", "") or "").strip()
-                llm_status = str(article.get("llm_status", "") or "").strip()
+                filter_status = str(article.get("filter_status", "") or "").strip()
+                llm_summary_status = str(article.get("llm_summary_status", "") or "").strip()
+                llm_analysis_status = str(article.get("llm_analysis_status", "") or "").strip()
 
-                if llm_raw_response or llm_status:
+                # 添加调试日志：记录所有状态字段
+                logger.debug(f"文章状态字段检查 - 标题: {article.get('title', 'N/A')[:50]}...")
+                logger.debug(f"  llm_raw_response存在: {bool(llm_raw_response)}")
+                logger.debug(f"  filter_status: '{filter_status}'")
+                logger.debug(f"  llm_summary_status: '{llm_summary_status}'")
+                logger.debug(f"  llm_analysis_status: '{llm_analysis_status}'")
+
+                # 使用filter_status替代llm_status进行判断，同时保留llm_raw_response的向后兼容
+                if llm_raw_response or filter_status:
                     ready_articles.append(article)
                 else:
                     pending_count += 1
@@ -553,10 +563,10 @@ class StorageManager:
                 # 保留原有数据（包括已经处理的和不需要处理的）
                 all_articles.append(existing_article)
         
-        # 确保所有文章都有llm_status字段（向后兼容）
+        # 确保所有文章都有filter_status字段（向后兼容）
         for article in all_articles:
-            if "llm_status" not in article:
-                article["llm_status"] = ""
+            if "filter_status" not in article:
+                article["filter_status"] = ""
         
         # 定义列顺序 - 使用标准字段常量确保一致性
         columns = self.STANDARD_COLUMNS["analyze"]
@@ -707,7 +717,7 @@ class StorageManager:
             columns = [
                 "id", "source", "title", "article_date", "published_date",
                 "filter_pass", "filter_reason", "filter_status",
-                "llm_status", "llm_score", "llm_reason", "llm_thematic_essence", "llm_tags",
+                "llm_score", "llm_reason", "llm_thematic_essence", "llm_tags",
                 "llm_primary_dimension", "llm_mentioned_books",
                 "link", "fetch_date", "summary", "extract_status", "extract_error",
                 "content", "full_text"
