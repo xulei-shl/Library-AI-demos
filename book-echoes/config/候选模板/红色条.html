@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Echoes - 赤色阶梯</title>
+
+    <!-- 引入高冲击力字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&family=Noto+Serif+SC:wght@500;700;900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* =========================================
+           CSS 变量配置
+           ========================================= */
+        :root {
+            /* 字体栈 */
+            --font-main: 'Inter', sans-serif;
+            --font-serif: 'Noto Serif SC', serif;
+            --font-deco: 'Anton', sans-serif;
+
+            /* 阶梯红：从明亮到深沉的无缝过渡 */
+            /* 每一级的颜色都经过微调，保证堆叠时没有突兀感 */
+            --r-1: #ff5252;
+            /* 标题 - 最亮 */
+            --r-2: #f24646;
+            /* 作者 */
+            --r-3: #e63939;
+            /* 出版社 */
+            --r-4: #d92d2d;
+            /* 评分 */
+            --r-5: #cc2020;
+            /* 推荐语 */
+            --r-6: #a61b1b;
+            /* 底部装饰 */
+
+            /* 尺寸升级 */
+            --card-width: 800px;
+            /* 宽度变大 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px;
+            font-family: var(--font-main);
+        }
+
+        /* =========================================
+           主容器
+           ========================================= */
+        .library-card {
+            width: var(--card-width);
+            background-color: #1a1a1a;
+            /* 深色底板，衬托封面 */
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+            /* ❌ 无 padding-bottom/margin-bottom */
+        }
+
+        /* =========================================
+           右侧：封面舞台 (Cover Stage)
+           ========================================= */
+        .cover-stage {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 45%;
+            /* 右侧预留区域 */
+            z-index: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: linear-gradient(to left, #2c2c2c, #1a1a1a);
+            /* 只有最右侧有点光影 */
+        }
+
+        .book-img {
+            /* 核心修改：确保完整显示，不裁切 */
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* 阴影让书本浮起来 */
+            filter: drop-shadow(10px 20px 30px rgba(0, 0, 0, 0.5));
+            transform: rotate(-2deg);
+            /* 微微倾斜，增加动感 */
+        }
+
+        /* =========================================
+           左侧：色条堆叠层 (The Stack)
+           ========================================= */
+        .content-stack {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            /* 关键：无间隙堆叠 */
+            gap: 0;
+        }
+
+        /* =========================================
+           通用色条样式
+           ========================================= */
+        .bar {
+            position: relative;
+            padding: 25px 40px;
+            /* 内部空间加大 */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            /* 右侧边缘形状 */
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+
+            /* 阴影：虽然无缝连接，但保留阴影制造层叠感 */
+            box-shadow: 5px 10px 20px rgba(0, 0, 0, 0.15);
+
+            transition: width 0.3s;
+        }
+
+        /* 装饰背景大字 */
+        .deco-bg {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: var(--font-deco);
+            font-size: 5rem;
+            /* 更大 */
+            color: rgba(0, 0, 0, 0.08);
+            /* 极淡的黑色水印 */
+            pointer-events: none;
+            line-height: 0.8;
+            z-index: 0;
+        }
+
+        .bar-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 标签样式 */
+        .label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+        }
+
+        .label::before {
+            content: '';
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        /* =========================================
+           各层级色条定制 (宽度与颜色)
+           ========================================= */
+
+        /* 1. 顶部Logo条 */
+        .bar-header {
+            width: 100%;
+            /* 满宽背景 */
+            background-color: var(--r-1);
+            padding: 20px 40px;
+            padding-bottom: 10px;
+        }
+
+        .logo-text {
+            font-family: var(--font-deco);
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 2px;
+        }
+
+        /* 2. 书名：最长，最强的冲击力 */
+        .bar-title {
+            width: 92%;
+            /* 覆盖封面 */
+            background-color: var(--r-1);
+            padding-top: 20px;
+            padding-bottom: 30px;
+            z-index: 5;
+        }
+
+        .txt-title {
+            font-family: var(--font-serif);
+            font-size: 2.8rem;
+            /* 字体加大 */
+            font-weight: 900;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 3. 作者：缩进，露出封面 */
+        .bar-author {
+            width: 65%;
+            /* 缩短 */
+            background-color: var(--r-2);
+            z-index: 4;
+            padding-top: 25px;
+            padding-bottom: 25px;
+        }
+
+        .txt-author {
+            font-size: 1.6rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 4. 出版社 & 年份 (独立色条) */
+        .bar-pub {
+            width: 75%;
+            background-color: var(--r-3);
+            z-index: 3;
+        }
+
+        .txt-pub {
+            font-size: 1.1rem;
+            font-family: var(--font-serif);
+        }
+
+        /* 5. 评分 & 索书号 (独立色条) */
+        .bar-rate {
+            width: 70%;
+            background-color: var(--r-4);
+            z-index: 2;
+        }
+
+        .rate-row {
+            display: flex;
+            align-items: baseline;
+            gap: 20px;
+        }
+
+        .txt-rate {
+            font-family: var(--font-deco);
+            font-size: 2.2rem;
+            line-height: 1;
+        }
+
+        .txt-call {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* 6. 推荐语：宽大，深沉 */
+        .bar-rec {
+            width: 88%;
+            background-color: var(--r-5);
+            z-index: 1;
+            padding-top: 30px;
+            padding-bottom: 40px;
+            /* 推荐语需要高度撑开 */
+            min-height: 180px;
+        }
+
+        .txt-rec {
+            font-family: var(--font-serif);
+            font-size: 1.15rem;
+            line-height: 1.7;
+            text-align: justify;
+            opacity: 0.95;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 5;
+            /* 允许更多行 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 20px;
+        }
+
+        /* 7. 底部收尾 */
+        .bar-footer {
+            width: 60%;
+            background-color: var(--r-6);
+            height: 20px;
+            border-radius: 0 0 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ⭐ 主容器：800px 宽度 -->
+    <div class="library-card">
+
+        <!-- 右侧舞台：封面图完整显示 -->
+        <div class="cover-stage">
+            <img src="pic/cover.jpg" alt="Book Cover" class="book-img"
+                onerror="this.src='https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800';">
+        </div>
+
+        <!-- 左侧：无缝堆叠的色条 -->
+        <div class="content-stack">
+
+            <!-- 头部 -->
+            <div class="bar-header">
+                <div class="logo-text">COLLECTION</div>
+            </div>
+
+            <!-- 1. 书名 (Title) -->
+            <div class="bar bar-title">
+                <div class="deco-bg">01</div>
+                <div class="bar-inner">
+                    <div class="label">Title</div>
+                    <h1 class="txt-title">{{TITLE}}</h1>
+                </div>
+            </div>
+
+            <!-- 2. 作者 (Author) -->
+            <div class="bar bar-author">
+                <div class="deco-bg">WRITER</div>
+                <div class="bar-inner">
+                    <div class="label">Author</div>
+                    <div class="txt-author">{{AUTHOR}}</div>
+                </div>
+            </div>
+
+            <!-- 3. 出版社 (Publisher) -->
+            <div class="bar bar-pub">
+                <div class="deco-bg">PUB</div>
+                <div class="bar-inner">
+                    <div class="label">Publisher</div>
+                    <div class="txt-pub">{{PUBLISHER}} · {{YEAR}}</div>
+                </div>
+            </div>
+
+            <!-- 4. 评分 (Rating) -->
+            <div class="bar bar-rate">
+                <div class="deco-bg">RATE</div>
+                <div class="bar-inner">
+                    <div class="label">Rating & Call No.</div>
+                    <div class="rate-row">
+                        <span class="txt-rate">{{RATE}}</span>
+                        <span class="txt-call">{{CALL_NUMBER}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. 推荐语 (Recommendation) -->
+            <div class="bar bar-rec">
+                <div class="deco-bg">PICK</div>
+                <div class="bar-inner">
+                    <div class="label">Editor's Voice</div>
+                    <div class="txt-rec">{{RECOMMENDATION}}</div>
+                </div>
+            </div>
+
+            <!-- 底部装饰条 -->
+            <div class="bar-footer"></div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>
