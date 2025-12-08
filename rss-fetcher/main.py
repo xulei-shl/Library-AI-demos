@@ -4,21 +4,30 @@
 程序主入口，提供简单易用的命令行接口，支持按月聚合文章数据。
 
 使用示例:
-    # 完整流程运行(三阶段)
+    # 完整流程运行(按默认阶段)
     python main.py
-    
-    日常自动运行（推荐用于crontab）：
 
-    python main.py --stage extract    # 自动处理最新文件
-    python main.py --stage analyze    # 自动处理最新文件
-    手动运维指定文件：
+    # 日常自动运行（按最新文件处理）
+    python main.py --stage fetch
+    python main.py --stage extract
+    python main.py --stage filter
+    python main.py --stage summary    
+    python main.py --stage analysis
+    python main.py --stage cross --score-threshold 70
 
+    # 手动指定输入文件
     python main.py --stage extract --input runtime/outputs/2025-12.xlsx
-    python main.py --stage analyze --input runtime/outputs/2025-12.xlsx
-    历史数据处理：
+    python main.py --stage filter --input runtime/outputs/2025-12.xlsx
+    
+    python main.py --stage summary --input runtime/outputs/2025-12.xlsx    
+    python main.py --stage analysis --input runtime/outputs/2025-12.xlsx    
+    python main.py --stage cross --input runtime/outputs/2025-12.xlsx
 
-    python main.py --stage fetch --input runtime/outputs/2025-11.xlsx  # 处理指定月份
-        
+    python main.py --stage all        # 执行完整流程
+
+    # 历史数据或仅获取RSS
+    python main.py --stage fetch --input runtime/outputs/2025-11.xlsx
+
     # 显示帮助信息
     python main.py --help
 """
@@ -45,12 +54,19 @@ def setup_args_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
-  %(prog)s                          # 运行完整流程(三阶段)
+  %(prog)s                          # 运行完整流程
   %(prog)s --stage fetch            # 仅运行RSS获取阶段
-  %(prog)s --stage extract          # 仅运行全文解析阶段  
-  %(prog)s --stage analyze          # 仅运行LLM分析阶段
+  %(prog)s --stage extract          # 仅运行全文解析阶段
+  %(prog)s --stage filter           # 仅运行文章过滤阶段
+  %(prog)s --stage summary          # 仅运行文章总结阶段
+  %(prog)s --stage analysis         # 仅运行深度分析阶段
+  %(prog)s --stage cross            # 仅运行文章交叉主题分析阶段
   %(prog)s --stage extract --input runtime/outputs/2025-12.xlsx
-  %(prog)s --stage analyze --input runtime/outputs/2025-12.xlsx
+  %(prog)s --stage filter --input runtime/outputs/2025-12.xlsx
+  %(prog)s --stage summary --input runtime/outputs/2025-12.xlsx
+  %(prog)s --stage analysis --input runtime/outputs/2025-12.xlsx
+  %(prog)s --stage cross --input runtime/outputs/2025-12.xlsx
+  %(prog)s --stage cross --score-threshold 70  # 自定义评分阈值
         """
     )
     
@@ -58,19 +74,22 @@ def setup_args_parser() -> argparse.ArgumentParser:
         "--stage",
         type=str,
         default="all",
-        choices=["fetch", "extract", "analyze", "all"],
+        choices=["fetch", "extract", "filter", "summary", "analysis", "cross", "all"],
         help="""运行阶段:
   fetch     - 阶段1: RSS获取 (按月聚合)
   extract   - 阶段2: 全文解析 (基于月文件)
-  analyze   - 阶段3: LLM分析 (基于月文件)  
-  all       - 完整三阶段流程 (默认)"""
+  filter    - 阶段3: 文章过滤 (基于月文件)
+  summary   - 阶段4: 文章总结 (基于过滤结果)
+  analysis  - 阶段5: 深度分析 (基于总结结果)
+  cross     - 阶段6: 文章交叉主题分析 (基于月文件)
+  all       - 完整流程 (默认)"""
     )
     
     parser.add_argument(
         "--input",
         type=str,
         default=None,
-        help="输入文件路径 (用于阶段2、3，例如: runtime/outputs/2025-12.xlsx)"
+        help="输入文件路径 (用于阶段2、3及summary阶段，例如: runtime/outputs/2025-12.xlsx)"
     )
     
     parser.add_argument(
@@ -78,6 +97,13 @@ def setup_args_parser() -> argparse.ArgumentParser:
         type=str,
         default="config/subject_bibliography.yaml",
         help="配置文件路径 (默认: config/subject_bibliography.yaml)"
+    )
+    
+    parser.add_argument(
+        "--score-threshold",
+        type=int,
+        default=None,
+        help="交叉分析的评分筛选阈值(仅对cross有效)，如果不指定则使用配置文件中的默认值"
     )
     
     parser.add_argument(
@@ -169,7 +195,7 @@ def main():
     
     try:
         # 执行pipeline
-        run_pipeline(stage=args.stage, input_file=args.input)
+        run_pipeline(stage=args.stage, input_file=args.input, score_threshold=args.score_threshold)
         
         # 记录完成信息
         end_time = datetime.now()

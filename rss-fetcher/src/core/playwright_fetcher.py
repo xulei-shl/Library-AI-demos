@@ -23,6 +23,7 @@ class PlaywrightSiteFetcher:
         self.user_agent = user_agent or "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1"
         self.headless = headless
         self.timeout = 30000  # 30秒超时
+        self.article_counter = 0  # 用于生成顺序号
         
     def fetch_recent_articles(
         self, 
@@ -254,6 +255,7 @@ class PlaywrightSiteFetcher:
                 
                 # 构建符合Excel列要求的文章数据
                 article = {
+                    "id": self._generate_article_id(),
                     "source": source,
                     "title": title,
                     "article_date": publish_time.strftime("%Y-%m-%d") if publish_time else "",
@@ -670,6 +672,23 @@ class PlaywrightSiteFetcher:
             article["extract_error"] = str(e)
         
         return article
+
+    def _generate_article_id(self) -> str:
+        """
+        生成文章唯一ID，格式为时间戳+顺序号+随机数
+        
+        Returns:
+            唯一ID字符串，如: 2025120716223401
+        """
+        import time
+        import random
+        
+        timestamp = int(time.time())
+        self.article_counter += 1
+        
+        # 添加随机数来确保跨实例的唯一性
+        random_suffix = random.randint(0, 99)
+        return f"{timestamp}{self.article_counter:02d}{random_suffix:02d}"
 
 
 def load_playwright_sites_config(config_path: str = "config/subject_bibliography.yaml") -> List[Dict[str, Any]]:

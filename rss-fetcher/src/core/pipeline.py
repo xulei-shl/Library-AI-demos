@@ -4,6 +4,7 @@ import yaml
 import os
 import sys
 import argparse
+import asyncio
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
 from dateutil import parser as date_parser
@@ -11,10 +12,12 @@ from src.utils.logger import get_logger
 from .rss_fetcher import RSSFetcher
 from .rsshub_fetcher import RSSHubFetcher
 from .playwright_fetcher import PlaywrightSiteFetcher
-from .article_analyzer import ArticleProcessor
+from .article_summary_runner import ArticleSummaryRunner
+from .article_analysis_runner import ArticleAnalysisRunner
 from .storage import StorageManager
 from .content_extractors import ExtractorFactory
 from .score_statistics import ScoreStatistics
+from .cross_analysis import CrossAnalyzer
 
 # Windows平台的输入超时处理
 if sys.platform == 'win32':
@@ -24,6 +27,28 @@ else:
     import select
 
 logger = get_logger(__name__)
+
+
+def load_config():
+    """加载配置文件"""
+    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                               "config", "subject_bibliography.yaml")
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f)
+    except Exception as e:
+        logger.error(f"加载配置文件失败: {e}")
+        return {}
+
+
+def get_cross_analysis_config():
+    """获取交叉分析配置"""
+    config = load_config()
+    cross_config = config.get("cross_analysis", {}) or {}
+    return {
+        "score_threshold": cross_config.get("score_threshold", 90),
+        "batch_size": cross_config.get("batch_size", 10)
+    }
 
 
 def get_user_input_with_timeout(prompt: str, timeout: int = 10, default: str = "y") -> str:
@@ -418,9 +443,9 @@ class SubjectBibliographyPipeline:
         
         return output_file
 
-    def run_stage_analyze(self, input_file: Optional[str] = None) -> Optional[str]:
+    def run_stage_filter(self, input_file: Optional[str] = None) -> Optional[str]:
         """
-        阶段3: LLM评估
+        阶段3: 文章过滤
         
         Args:
             input_file: 输入文件路径，如果不指定则自动查找最新的 extract 文件
@@ -429,7 +454,8 @@ class SubjectBibliographyPipeline:
             输出文件路径，失败返回 None
         """
         logger.info("=" * 60)
-        logger.info("开始执行阶段3: LLM评估")
+        logger.info("开始执行阶段3: 文章过滤")
+        logger.info("说明: 本阶段将使用 article_filter 提示词对文章进行初筛")
         logger.info("=" * 60)
         
         # 确定输入文件 - 智能检测策略
@@ -457,7 +483,7 @@ class SubjectBibliographyPipeline:
             logger.error("输入文件为空或加载失败")
             return None
         
-        # 过滤需要LLM分析的文章：提取成功且未处理过的文章
+        # 过滤需要过滤的文章：提取成功且未处理过的文章
         unprocessed_articles = []
         already_processed = 0
         
@@ -466,17 +492,17 @@ class SubjectBibliographyPipeline:
             if article.get("extract_status") != "success":
                 continue
                 
-            # 检查是否已经处理过LLM（优先检查llm_status）
+            # 检查是否已经处理过过滤（优先检查llm_status）
             llm_status = article.get("llm_status", "")
             llm_raw_response = article.get("llm_raw_response", "")
             
             # 处理NaN值：将NaN视为空值
             llm_status_is_valid = (
-                llm_status and 
+                llm_status and
                 str(llm_status).lower() not in ('nan', 'none', '')
             )
             llm_raw_response_is_valid = (
-                llm_raw_response and 
+                llm_raw_response and
                 str(llm_raw_response).lower() not in ('nan', 'none', '')
             )
             
@@ -489,20 +515,21 @@ class SubjectBibliographyPipeline:
         
         
         total = len(articles)
-        to_analyze = len(unprocessed_articles)
-        logger.info(f"文章总数: {total}, 已处理: {already_processed}, 需要分析: {to_analyze}")
+        to_filter = len(unprocessed_articles)
+        logger.info(f"文章总数: {total}, 已处理: {already_processed}, 需要过滤: {to_filter}")
         
         # 初始化输出文件路径
         output_file = input_file
         
-        if to_analyze == 0:
-            logger.info("所有文章都已成功分析，跳过LLM分析步骤")
+        if to_filter == 0:
+            logger.info("所有文章都已成功过滤，跳过过滤步骤")
         else:
-            # 初始化 LLM 处理器 (双 Agent 架构)
-            processor = ArticleProcessor()
+            # 初始化过滤器 (只执行过滤，不执行深度分析)
+            from src.core.analysis.filter import ArticleFilter
+            filter_agent = ArticleFilter()
             
-            # LLM 分析 - 采用单条即时保存策略
-            logger.info(f"开始分析 {to_analyze} 篇文章 (跳过 {len(articles) - to_analyze} 篇提取失败或已处理的文章)...")
+            # 文章过滤 - 采用单条即时保存策略
+            logger.info(f"开始过滤 {to_filter} 篇文章 (跳过 {len(articles) - to_filter} 篇提取失败或已处理的文章)...")
             logger.info("采用即时保存策略，每处理一条立即保存，确保不丢失数据")
             
             # 统计计数器
@@ -510,21 +537,69 @@ class SubjectBibliographyPipeline:
             failed_count = 0
             
             for i, article in enumerate(unprocessed_articles):
-                logger.info(f"正在分析 ({i+1}/{to_analyze}): {article.get('title')}")
+                title = article.get("title", "无标题")
+                logger.info(f"正在过滤 ({i+1}/{to_filter}): {title}")
                 
-                # 执行LLM分析
-                analyzed = processor.analyze_article(article)
-                # 更新原文章数据
-                article.update(analyzed)
+                # 获取文章内容,优先使用 full_text,然后是 content
+                full_text = article.get("full_text")
+                content = article.get("content")
                 
-                # 立即保存当前文章的分析结果
+                # 检查是否有可用的内容进行过滤
+                if not full_text and not content:
+                    logger.info(f"文章 '{title}' 缺少 full_text 和 content 字段,跳过过滤")
+                    processed_article = article.copy()
+                    processed_article["llm_status"] = "跳过"
+                    processed_article["llm_skip_reason"] = "缺少 full_text 和 content 字段"
+                else:
+                    # 优先使用 full_text,如果没有则使用 content
+                    text_content = full_text or content or ""
+                    
+                    # 执行过滤
+                    filter_result = filter_agent.filter(title, text_content)
+                    
+                    # 创建处理后的文章副本
+                    processed_article = article.copy()
+                    
+                    # 保存过滤结果
+                    processed_article["filter_pass"] = filter_result.get("pass", False)
+                    processed_article["filter_reason"] = filter_result.get("reason", "")
+                    processed_article["filter_status"] = filter_result.get("status", "")
+                    
+                    # 如果过滤失败,标记状态
+                    if filter_result.get("status") == "失败":
+                        logger.warning(f"文章 '{title}' 过滤失败: {filter_result.get('error')}")
+                        processed_article["llm_status"] = "过滤失败"
+                        processed_article["llm_error"] = filter_result.get("error", "")
+                    # 如果未通过过滤,标记为拒绝
+                    elif not filter_result.get("pass", False):
+                        logger.info(f"文章 '{title}' 未通过过滤,理由: {filter_result.get('reason')}")
+                        processed_article["llm_status"] = "已拒绝"
+                        # 设置默认值
+                        processed_article["llm_score"] = 0
+                        processed_article["llm_primary_dimension"] = ""
+                        processed_article["llm_reason"] = filter_result.get("reason", "")
+                        processed_article["llm_tags"] = "[]"
+                        processed_article["llm_mentioned_books"] = "[]"
+                        processed_article["llm_thematic_essence"] = ""
+                    else:
+                        # 通过过滤，但暂不进行深度分析
+                        logger.info(f"文章 '{title}' 通过过滤")
+                        processed_article["llm_status"] = "已通过过滤"
+                        processed_article["llm_score"] = 0  # 暂时设为0，等待后续分析
+                        processed_article["llm_primary_dimension"] = ""
+                        processed_article["llm_reason"] = ""
+                        processed_article["llm_tags"] = "[]"
+                        processed_article["llm_mentioned_books"] = "[]"
+                        processed_article["llm_thematic_essence"] = ""
+                
+                # 立即保存当前文章的过滤结果
                 try:
-                    output_file = self.storage.save_analyze_results([article], input_file)
+                    output_file = self.storage.save_analyze_results([processed_article], input_file)
                     saved_count += 1
-                    logger.info(f"✓ 已保存 ({i+1}/{to_analyze}): {article.get('title', 'N/A')[:50]}... [状态: {article.get('llm_status', 'N/A')}]")
+                    logger.info(f"✓ 已保存 ({i+1}/{to_filter}): {processed_article.get('title', 'N/A')[:50]}... [状态: {processed_article.get('llm_status', 'N/A')}]")
                 except Exception as e:
                     failed_count += 1
-                    logger.error(f"✗ 保存失败 ({i+1}/{to_analyze}): {article.get('title', 'N/A')[:50]}... 错误: {e}")
+                    logger.error(f"✗ 保存失败 ({i+1}/{to_filter}): {processed_article.get('title', 'N/A')[:50]}... 错误: {e}")
                     # 保存失败不中断流程，继续处理下一篇
             
             # 输出保存统计
@@ -534,40 +609,89 @@ class SubjectBibliographyPipeline:
         logger.info(f"阶段3完成，输出文件: {output_file}")
         logger.info("=" * 60)
         
-        # ========== 交互式评分统计 ==========
-        # 询问用户是否需要进行评分统计
-        try:
-            user_choice = get_user_input_with_timeout(
-                prompt="是否对文章评分（llm_score列）进行统计分析？",
-                timeout=10,
-                default="y"
-            )
-            
-            if user_choice in ('y', 'yes', '是'):
-                logger.info("用户选择进行评分统计分析")
-                
-                # 执行统计分析
-                try:
-                    statistics_analyzer = ScoreStatistics()
-                    report_path = statistics_analyzer.run_analysis(articles, output_file)
-                    
-                    logger.info("=" * 60)
-                    logger.info(f"评分统计报告已生成: {report_path}")
-                    logger.info("=" * 60)
-                    
-                except Exception as e:
-                    logger.error(f"评分统计分析失败: {e}", exc_info=True)
-            else:
-                logger.info("用户选择跳过评分统计分析")
-                
-        except Exception as e:
-            logger.warning(f"交互式提示失败，跳过评分统计: {e}")
-        
+        return output_file
+
+    def run_stage_summary(self, input_file: Optional[str] = None) -> Optional[str]:
+        """
+        阶段4: LLM总结
+
+        Args:
+            input_file: filter 阶段 Excel 路径，未提供则自动定位最新文件
+
+        Returns:
+            输出文件路径，失败返回 None
+        """
+        logger.info("=" * 60)
+        logger.info("开始执行阶段4: 文章总结")
+        logger.info("=" * 60)
+
+        if input_file is None:
+            logger.info("未指定输入文件，尝试定位最新 filter 文件...")
+            input_file = self.storage.find_latest_stage_file("filter")
+            if input_file is None:
+                logger.error("未找到任何 filter 文件，请先完成前序流程")
+                return None
+            logger.info(f"自动选择文件: {input_file}")
+        else:
+            if not os.path.exists(input_file):
+                logger.error(f"指定的输入文件不存在: {input_file}")
+                return None
+            logger.info(f"使用指定文件: {input_file}")
+
+        runner = ArticleSummaryRunner(self.storage)
+        output_file = runner.run(input_file)
+
+        if output_file:
+            logger.info(f"总结流程完成，输出文件: {output_file}")
+        else:
+            logger.error("总结流程执行失败")
+
+        logger.info("=" * 60)
+        return output_file
+
+    def run_stage_analysis(self, input_file: Optional[str] = None) -> Optional[str]:
+        """
+        阶段5: 深度分析
+
+        对总结成功的文章进行深度分析，提取评分、维度、母题等结构化信息。
+
+        Args:
+            input_file: summary 阶段 Excel 路径，未提供则自动定位最新文件
+
+        Returns:
+            输出文件路径，失败返回 None
+        """
+        logger.info("=" * 60)
+        logger.info("开始执行阶段5: 深度分析")
+        logger.info("=" * 60)
+
+        if input_file is None:
+            logger.info("未指定输入文件，尝试定位最新 summary 文件...")
+            input_file = self.storage.find_latest_stage_file("summary")
+            if input_file is None:
+                logger.error("未找到任何 summary 文件，请先完成前序流程")
+                return None
+            logger.info(f"自动选择文件: {input_file}")
+        else:
+            if not os.path.exists(input_file):
+                logger.error(f"指定的输入文件不存在: {input_file}")
+                return None
+            logger.info(f"使用指定文件: {input_file}")
+
+        runner = ArticleAnalysisRunner(self.storage)
+        output_file = runner.run(input_file)
+
+        if output_file:
+            logger.info(f"深度分析流程完成，输出文件: {output_file}")
+        else:
+            logger.error("深度分析流程执行失败")
+
+        logger.info("=" * 60)
         return output_file
 
     def run_all_stages(self):
-        """执行完整流程: 阶段1 -> 阶段2 -> 阶段3"""
-        logger.info("开始执行完整流程 (三阶段)")
+        """执行完整流程: fetch -> extract -> filter -> summary -> analysis"""
+        logger.info("开始执行完整流程")
         
         # 阶段1: RSS获取
         fetch_output = self.run_stage_fetch()
@@ -581,38 +705,157 @@ class SubjectBibliographyPipeline:
             logger.error("阶段2失败，流程终止")
             return
         
-        # 阶段3: LLM评估
-        analyze_output = self.run_stage_analyze(extract_output)
-        if analyze_output is None:
+        # 阶段3: 文章过滤
+        filter_output = self.run_stage_filter(extract_output)
+        if filter_output is None:
             logger.error("阶段3失败，流程终止")
+            return
+        
+        # 阶段4: 文章总结
+        summary_output = self.run_stage_summary(filter_output)
+        if summary_output is None:
+            logger.error("阶段4失败，流程终止")
+            return
+        
+        # 阶段5: 深度分析
+        analysis_output = self.run_stage_analysis(summary_output)
+        if analysis_output is None:
+            logger.error("阶段5失败，流程终止")
             return
         
         logger.info("=" * 60)
         logger.info("完整流程执行完毕！")
-        logger.info(f"最终结果文件: {analyze_output}")
+        logger.info(f"最终结果文件: {analysis_output}")
         logger.info("=" * 60)
 
+    async def run_stage_cross_analysis(
+        self,
+        input_file: Optional[str] = None,
+        score_threshold: Optional[int] = None
+    ) -> Optional[str]:
+        """
+        阶段4: 文章交叉主题分析
 
-def run_pipeline(stage: str = "all", input_file: Optional[str] = None):
+        Args:
+            input_file: 输入文件路径，如果不指定则自动查找最新的 analyze 文件
+            score_threshold: 评分筛选阈值
+
+        Returns:
+            报告文件路径，失败返回 None
+        """
+        logger.info("=" * 60)
+        logger.info("开始执行阶段4: 文章交叉主题分析")
+        logger.info("=" * 60)
+
+        # 确定输入文件
+        if input_file is None:
+            logger.info("未指定输入文件，智能检测analysis文件...")
+            input_file = self.storage.find_latest_stage_file("analysis")
+            if input_file is None:
+                logger.error("未找到任何阶段5的输出文件，请先运行阶段5")
+                return None
+            logger.info(f"自动选择最新文件: {input_file}")
+        else:
+            if not os.path.exists(input_file):
+                logger.error(f"指定的输入文件不存在: {input_file}")
+                return None
+            logger.info(f"使用用户指定的文件: {input_file}")
+
+        logger.info(f"输入文件: {input_file}")
+
+        # 若未提供外部阈值，则回退到配置
+        config_threshold = self.config.get("cross_analysis", {}).get("score_threshold", 90)
+        if score_threshold is None:
+            score_threshold = config_threshold
+        logger.info(f"评分筛选阈值: {score_threshold}")
+
+        # 加载数据
+        articles = self.storage.load_stage_data("analysis", input_file)
+
+        if not articles:
+            logger.error("输入文件为空或加载失败")
+            return None
+
+        # 筛选高质量文章
+        high_quality_articles = [
+            article for article in articles
+            if article.get("llm_score", 0) >= score_threshold
+            and article.get("llm_thematic_essence")
+        ]
+
+        logger.info(f"文章总数: {len(articles)}")
+        logger.info(f"高质量文章数 (评分>={score_threshold}): {len(high_quality_articles)}")
+
+        if len(high_quality_articles) < 3:
+            logger.warning(f"高质量文章数量不足 ({len(high_quality_articles)} < 3)，建议降低评分阈值")
+            # 但仍然继续分析
+
+        # 初始化交叉分析器
+        # 合并配置，确保CLI传入的阈值生效
+        analyzer_config = self.config.copy()
+        if "cross_analysis" not in analyzer_config:
+            analyzer_config["cross_analysis"] = {}
+        analyzer_config["cross_analysis"]["score_threshold"] = score_threshold
+        analyzer_config["cross_analysis"].setdefault("batch_size", get_cross_analysis_config().get("batch_size", 10))
+        
+        analyzer = CrossAnalyzer(config=analyzer_config)
+
+        # 执行交叉分析
+        logger.info("开始执行交叉主题分析...")
+        result = await analyzer.analyze(high_quality_articles)
+
+        if result.get("success", False):
+            logger.info("=" * 60)
+            logger.info("交叉分析完成！")
+            logger.info(f"共同主题: {'是' if result.get('has_common_theme') else '否'}")
+            if result.get("main_theme"):
+                logger.info(f"主要主题: {result['main_theme'].get('name', '未命名')}")
+            logger.info(f"候选主题数: {len(result.get('candidate_themes', []))}")
+            logger.info(f"报告文件: {result.get('report_path', '')}")
+            logger.info("=" * 60)
+            return result.get("report_path")
+        else:
+            logger.error(f"交叉分析失败: {result.get('metadata', {}).get('error', '未知错误')}")
+            return None
+
+
+def run_pipeline(stage: str = "all", input_file: Optional[str] = None, score_threshold: Optional[int] = None):
     """
     运行流程
-    
+
     Args:
-        stage: 阶段名称 (fetch/extract/analyze/all)
+        stage: 阶段名称 (fetch/extract/filter/summary/analysis/cross/all)
         input_file: 输入文件路径(可选)
+        score_threshold: 交叉分析的评分阈值(仅对cross有效)，如果不指定则使用配置文件中的默认值
     """
+    # 如果未指定阈值，从配置文件读取
+    if stage == "cross":
+        cross_config = get_cross_analysis_config()
+        if score_threshold is None:
+            score_threshold = cross_config.get("score_threshold", 90)
+            logger.info(f"使用配置文件中的评分阈值: {score_threshold}")
     pipeline = SubjectBibliographyPipeline()
-    
+
     if stage == "fetch":
         pipeline.run_stage_fetch()
     elif stage == "extract":
         pipeline.run_stage_extract(input_file)
-    elif stage == "analyze":
-        pipeline.run_stage_analyze(input_file)
+    elif stage == "filter":
+        pipeline.run_stage_filter(input_file)
+    elif stage == "summary":
+        pipeline.run_stage_summary(input_file)
+    elif stage == "analysis":
+        pipeline.run_stage_analysis(input_file)
+    elif stage == "cross":
+        # cross 是异步函数，需要特殊处理
+        import asyncio
+        report_path = asyncio.run(pipeline.run_stage_cross_analysis(input_file, score_threshold))
+        if report_path:
+            logger.info(f"交叉分析报告已生成: {report_path}")
     elif stage == "all":
         pipeline.run_all_stages()
     else:
-        logger.error(f"未知的阶段: {stage}，支持的阶段: fetch/extract/analyze/all")
+        logger.error(f"未知的阶段: {stage}，支持的阶段: fetch/extract/filter/summary/analysis/cross/all")
 
 
 if __name__ == "__main__":
@@ -621,15 +864,24 @@ if __name__ == "__main__":
         "--stage",
         type=str,
         default="all",
-        choices=["fetch", "extract", "analyze", "all"],
-        help="运行阶段: fetch(RSS获取) / extract(全文解析) / analyze(LLM评估) / all(完整流程)"
+        choices=["fetch", "extract", "filter", "summary", "analysis", "cross", "all"],
+        help="运行阶段: fetch(RSS获取) / extract(全文解析) / filter(文章过滤) / summary(LLM总结) / analysis(深度分析) / cross(交叉主题分析) / all(完整流程)"
     )
     parser.add_argument(
         "--input",
         type=str,
         default=None,
-        help="输入文件路径(用于阶段2、3)"
+        help="输入文件路径(用于阶段2、3、4、5、6)"
     )
-    
+    # 获取默认阈值
+    default_threshold = get_cross_analysis_config().get("score_threshold", 90)
+
+    parser.add_argument(
+        "--score-threshold",
+        type=int,
+        default=None,
+        help=f"交叉分析的评分筛选阈值(仅对cross有效，默认从配置文件读取，当前为{default_threshold})"
+    )
+
     args = parser.parse_args()
-    run_pipeline(args.stage, args.input)
+    run_pipeline(args.stage, args.input, args.score_threshold)

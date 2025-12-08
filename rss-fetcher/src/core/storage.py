@@ -15,31 +15,35 @@ class StorageManager:
     # 定义标准字段顺序常量，确保各阶段字段顺序一致
     STANDARD_COLUMNS = {
         "fetch": [
-            "source", "title", "article_date", "link", "published_date", 
+            "id", "source", "title", "article_date", "link", "published_date",
             "fetch_date", "summary", "content"
         ],
         "extract": [
-            "source", "title", "article_date", "link", "published_date", 
-            "fetch_date", "summary", "content", "full_text", 
+            "id", "source", "title", "article_date", "link", "published_date",
+            "fetch_date", "summary", "content", "full_text",
             "extract_status", "extract_error"
         ],
         "analyze": [
-            "source", "title", "article_date", "published_date", "link", 
+            "id", "source", "title", "article_date", "published_date", "link",
             "fetch_date", "summary", "extract_status", "extract_error",
-            "content", "full_text", 
+            "content", "full_text",
             "filter_pass", "filter_reason", "filter_status",
-            "llm_status", "llm_score", "llm_reason", "llm_summary", 
-            "llm_thematic_essence", "llm_tags", 
-            "llm_primary_dimension", "llm_mentioned_books"
+            "llm_status", "llm_score", "llm_reason",
+            "llm_thematic_essence", "llm_tags",
+            "llm_primary_dimension", "llm_mentioned_books",
+            "llm_summary", "llm_summary_status", "llm_summary_error", "llm_summary_last_try",
+            "llm_analysis_status", "llm_analysis_error", "llm_analysis_last_try"
         ]
     }
 
     # 需要更新的Analyze阶段字段列表
     ANALYZE_UPDATE_FIELDS = [
         "filter_pass", "filter_reason", "filter_status",
-        "llm_status", "llm_score", "llm_reason", "llm_summary", 
-        "llm_thematic_essence", "llm_tags", 
-        "llm_primary_dimension", "llm_mentioned_books"
+        "llm_status", "llm_score", "llm_reason",
+        "llm_thematic_essence", "llm_tags",
+        "llm_primary_dimension", "llm_mentioned_books",
+        "llm_summary", "llm_summary_status", "llm_summary_error", "llm_summary_last_try",
+        "llm_analysis_status", "llm_analysis_error", "llm_analysis_last_try"
     ]
 
     BOOLEAN_COLUMNS = ["filter_pass"]
@@ -176,6 +180,15 @@ class StorageManager:
         Returns:
             True表示重复，False表示不重复
         """
+        # 优先使用ID判断（如果存在）
+        new_id = str(new_article.get("id", "") or "").strip()
+        if new_id:
+            for existing in existing_articles:
+                existing_id = str(existing.get("id", "") or "").strip()
+                if new_id and existing_id and new_id == existing_id:
+                    return True
+        
+        # 如果没有ID，回退到原有的判断逻辑
         new_link = str(new_article.get("link", "") or "").strip()
         new_title = str(new_article.get("title", "") or "").strip()
         
@@ -402,7 +415,7 @@ class StorageManager:
         保存阶段3: LLM评估结果 - 按月聚合版本（支持过滤已处理数据）
         
         Args:
-            articles: 文章列表，在阶段2基础上新增 llm_decision, llm_score, llm_reason, llm_summary, llm_tags, llm_keywords, llm_primary_dimension, llm_mentioned_books, llm_book_clues, llm_raw_response
+            articles: 文章列表，在阶段2基础上新增 llm_decision, llm_score, llm_reason, llm_tags, llm_keywords, llm_primary_dimension, llm_mentioned_books, llm_book_clues, llm_raw_response
             input_file: 输入文件路径(可选，用于验证）
             skip_processed: 是否跳过已处理的数据，避免重复调用LLM（默认True）
             
@@ -588,6 +601,12 @@ class StorageManager:
         try:
             df = pd.read_excel(filepath)
             articles = df.to_dict("records")
+            
+            # 标准化ID字段为字符串类型，确保类型一致性
+            for article in articles:
+                if "id" in article and article["id"] is not None:
+                    article["id"] = str(article["id"])
+            
             logger.info(f"已加载 {stage} 阶段数据: {filepath} (共 {len(articles)} 条记录)")
             return articles
         except Exception as e:
@@ -678,17 +697,17 @@ class StorageManager:
         
         # 根据不同阶段确定列顺序
         if stage == "fetch":
-            columns = ["source", "title", "article_date", "link", "published_date", "fetch_date", "summary", "content"]
+            columns = ["id", "source", "title", "article_date", "link", "published_date", "fetch_date", "summary", "content"]
         elif stage == "extract":
             columns = [
-                "source", "title", "article_date", "link", "published_date", "fetch_date", "summary", 
+                "id", "source", "title", "article_date", "link", "published_date", "fetch_date", "summary",
                 "content", "full_text", "extract_status", "extract_error"
             ]
         elif stage == "analyze":
             columns = [
-                "source", "title", "article_date", "published_date", 
+                "id", "source", "title", "article_date", "published_date",
                 "filter_pass", "filter_reason", "filter_status",
-                "llm_status", "llm_score", "llm_reason", "llm_summary", "llm_thematic_essence", "llm_tags", 
+                "llm_status", "llm_score", "llm_reason", "llm_thematic_essence", "llm_tags",
                 "llm_primary_dimension", "llm_mentioned_books",
                 "link", "fetch_date", "summary", "extract_status", "extract_error",
                 "content", "full_text"

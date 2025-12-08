@@ -19,7 +19,7 @@
 2.  **可视化**: 逻辑复杂时，必须使用 Mermaid 绘制流程图或时序图。
 
 ### 第三步：撰写演进式文档 (Documentation)
-输出符合以下模板的 Markdown 文档：
+输出符合以下模板的 Markdown 文档，存储路径为`docs/{module}/简要描述_YYYYMMDD.md`：
 
 ‍```markdown
 # [功能名称] 设计文档

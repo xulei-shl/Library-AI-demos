@@ -24,13 +24,13 @@ api_providers:
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
       model: "gemini-2.5-pro"
-      timeout_seconds: 120
+      timeout_seconds: 820
     secondary:
-      name: "cerebras"
+      name: "oneapi"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
-      model: "qwen"
-      timeout_seconds: 120
+      model: "qwen3-max"
+      timeout_seconds: 820
 
   text-small:
     primary:
@@ -38,13 +38,13 @@ api_providers:
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
       model: "gpt-4o-mini"
-      timeout_seconds: 120
+      timeout_seconds: 820
     secondary:
-      name: "cerebras"
+      name: "oneapi"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
-      model: "qwen"
-      timeout_seconds: 120      
+      model: "gemini-2.5-flash"
+      timeout_seconds: 820      
 
 tasks:
   # ----------------------------------------------------------------------------
@@ -56,8 +56,10 @@ tasks:
     temperature: 0.3
     top_p: 0.8
     prompt:
-      type: md
-      source: "prompts/网络文章主题初评.md"
+      # type: md
+      # source: "prompts/网络文章主题初评.md"
+      type: langfuse
+      langfuse_name: "网络文章主题初评"     
     retry:
       max_retries: 3
       base_delay: 1.0
@@ -82,33 +84,99 @@ tasks:
     provider_type: text-small
     temperature: 0.3
     prompt:
-      type: md
-      source: "prompts/article_filter.md"
+      # type: md
+      # source: "prompts/article_filter.md"
+      type: langfuse
+      langfuse_name: "article_filter"  
     json_repair:
       enabled: true
       output_format: json
     langfuse:
       enabled: true
       name: "文章初筛"
-      tags: ["filter"]
+      tags: ["book-echoes"]
+      metadata:
+        project: "book-echoes"
+        module: "模块7"
 
   # ----------------------------------------------------------------------------
-  # 任务: Agent 2 - 深度分析师
+  # 任务: Agent 2 - 全文总结
+  # 逻辑位置: src/core/analysis/summary_agent.py
+  # ----------------------------------------------------------------------------
+  article_summary:
+    provider_type: text
+    temperature: 0.4
+    prompt:
+      # type: md
+      # source: "prompts/article_summary.md"
+      type: langfuse
+      langfuse_name: "article_summary"
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+    json_repair:
+      enabled: true
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "文章总结"
+      tags: ["book-echoes"]
+      metadata:
+        project: "book-echoes"
+        module: "模块7"
+
+  # ----------------------------------------------------------------------------
+  # 任务: Agent 3 - 深度分析师
   # 逻辑位置: src/core/analysis/analyst.py
   # ----------------------------------------------------------------------------
   article_analysis:
     provider_type: text
     temperature: 0.5
     prompt:
-      type: md
-      source: "prompts/article_analysis.md"
+      # type: md
+      # source: "prompts/article_analysis.md"
+      type: langfuse
+      langfuse_name: "article_analysis"        
     json_repair:
       enabled: true
       output_format: json
     langfuse:
       enabled: true
       name: "文章深度分析"
-      tags: ["analysis"]
+      tags: ["book-echoes"]
+      metadata:
+        project: "book-echoes"
+        module: "模块7"
+
+  # ----------------------------------------------------------------------------
+  # 任务: 文章交叉主题分析
+  # 逻辑位置: src/core/cross_analysis/theme_cluster.py
+  # ----------------------------------------------------------------------------
+  article_cross_analysis:
+    provider_type: text
+    temperature: 0.3
+    prompt:
+      # type: md
+      # source: "prompts/article_cross_analysis.md"
+      type: langfuse
+      langfuse_name: "article_cross_analysis"        
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+    json_repair:
+      enabled: true
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "文章交叉主题分析"
+      tags: ["book-echoes"]
+      metadata:
+        project: "book-echoes"
+        module: "模块7"
 
 defaults:
   temperature: 0.45

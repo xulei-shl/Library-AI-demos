@@ -90,6 +90,11 @@ extraction_settings:
   retry_times: 3  # 失败重试次数
   browser_headless: true  # 无头浏览器模式
 
+# 交叉分析设置
+cross_analysis:
+  score_threshold: 92  # 评分筛选阈值，只分析评分>=此值的文章
+  batch_size: 6       # 每批次分析的文章数量
+
 # Playwright网站抓取配置
 # 用于不支持RSS的网站，使用浏览器动态抓取
 playwright_sites:

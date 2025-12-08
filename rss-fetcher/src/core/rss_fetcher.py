@@ -17,7 +17,25 @@ class RSSFetcher:
 
     def __init__(self, user_agent: Optional[str] = None):
         self.user_agent = user_agent or "Mozilla/5.0 (compatible; LibraryAI/1.0)"
+        self.article_counter = 0  # 用于生成顺序号
         
+    def _generate_article_id(self) -> str:
+        """
+        生成文章唯一ID，格式为时间戳+三位顺序号
+        
+        Returns:
+            唯一ID字符串，如: 20251207162034001
+        """
+        import time
+        import random
+        
+        timestamp = int(time.time())
+        self.article_counter += 1
+        
+        # 添加随机数来确保跨实例的唯一性
+        random_suffix = random.randint(0, 99)
+        return f"{timestamp}{self.article_counter:02d}{random_suffix:02d}"
+
     def _get_retry_config(self, feed_conf: Dict) -> Dict:
         """获取重试配置，默认值"""
         default_config = {
@@ -196,6 +214,7 @@ class RSSFetcher:
                         published_dt, cutoff_time, start_time, end_time
                     ):
                         article = {
+                            "id": self._generate_article_id(),
                             "source": name,
                             "title": entry.get("title", ""),
                             "link": entry.get("link", ""),
