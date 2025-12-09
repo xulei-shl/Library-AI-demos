@@ -703,6 +703,25 @@ class SubjectBibliographyPipeline:
 
         if output_file:
             logger.info(f"深度分析流程完成，输出文件: {output_file}")
+            
+            # 深度分析完成后，询问是否执行评分统计
+            try:
+                user_choice = get_user_input_with_timeout(
+                    "是否对文章评分进行统计分析？",
+                    timeout=10,
+                    default="y"
+                )
+                if user_choice in ['y', 'yes', '是', '']:
+                    # 执行评分统计
+                    logger.info("开始执行评分统计分析...")
+                    articles = self.storage.load_stage_data("analysis", output_file)
+                    score_stats = ScoreStatistics()
+                    report_path = score_stats.run_analysis(articles, output_file)
+                    logger.info(f"评分统计报告已生成: {report_path}")
+                else:
+                    logger.info("用户跳过评分统计分析")
+            except Exception as e:
+                logger.warning(f"评分统计交互失败，跳过统计: {e}")
         else:
             logger.error("深度分析流程执行失败")
 
