@@ -20,31 +20,31 @@ api_providers:
   # RetryManager 会根据 primary -> secondary 的顺序进行故障转移
   text:
     primary:
-      name: "oneapi"
+      name: "oneapi-2.5-pro"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
       model: "gemini-2.5-pro"
-      timeout_seconds: 820
+      timeout_seconds: 240
     secondary:
-      name: "oneapi"
+      name: "oneapi-qwen3"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
       model: "qwen3-max"
-      timeout_seconds: 820
+      timeout_seconds: 240
 
   text-small:
     primary:
-      name: "oneapi"
+      name: "oneapi-4o-mini"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
       model: "gpt-4o-mini"
-      timeout_seconds: 820
+      timeout_seconds: 240
     secondary:
-      name: "oneapi"
+      name: "oneapi-gemini-flash"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
       model: "gemini-2.5-flash"
-      timeout_seconds: 820      
+      timeout_seconds: 240      
 
 tasks:
   # ----------------------------------------------------------------------------
