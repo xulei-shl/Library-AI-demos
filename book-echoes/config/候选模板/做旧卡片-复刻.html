@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometric Card Reproduction - Aged</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Courier+Prime:wght@400;700&family=Reenie+Beanie&display=swap');
+
+        :root {
+            /* 保持之前的做旧配色 */
+            --bg-paper: #e3dac4;
+            --ink-blue: #3d6cb9;
+            --ink-black: #332f2c;
+            
+            --art-yellow: rgba(255, 230, 0, 0.75);
+            --art-pink: rgba(255, 160, 185, 0.75);
+            --art-blue-center: #5fa4ee;
+            --art-black: #2b2b2b;
+            --art-green: rgba(108, 194, 74, 0.75);
+            --art-lightblue: rgba(135, 206, 250, 0.75);
+            --art-grey-bar: #8da6b5;
+        }
+
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Roboto Condensed', sans-serif;
+        }
+
+        .card {
+            width: 800px;
+            height: 530px;
+            background-color: var(--bg-paper);
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+            background-image: 
+                radial-gradient(#cbbfa0 1px, transparent 1px),
+                linear-gradient(120deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 40%, rgba(0,0,0,0.05) 100%);
+            background-size: 20px 20px, 100% 100%;
+            box-shadow: 
+                0 15px 40px rgba(0,0,0,0.6),
+                inset 0 0 60px rgba(90, 70, 40, 0.15),
+                inset 0 0 10px rgba(90, 70, 40, 0.2);
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 999;
+            opacity: 0.12;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply;
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 998;
+            background-color: #8f7c50;
+            mix-blend-mode: overlay;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .form-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            color: var(--ink-blue);
+            pointer-events: none;
+        }
+
+        .border-line-left {
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--ink-blue);
+            opacity: 0.8;
+        }
+        .border-line-right {
+            position: absolute;
+            right: 40px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--ink-blue);
+            opacity: 0.8;
+        }
+        .border-line-bottom {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 80px;
+            height: 1px;
+            background: var(--ink-blue);
+            opacity: 0.8;
+        }
+
+        .text {
+            position: absolute;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .text-bold { font-weight: 700; }
+        .text-num { 
+            font-family: 'Courier Prime', monospace; 
+            color: var(--ink-black);
+            font-weight: 700;
+        }
+
+        .t-reg { top: 15px; left: 80px; }
+        .t-code { top: 15px; left: 240px; line-height: 1.1; }
+        .t-naam { top: 15px; left: 450px; }
+        
+        .t-nr { 
+            bottom: 35px; left: 35px; 
+            font-size: 18px; font-weight: 900; 
+            color: var(--ink-blue);
+            opacity: 0.9;
+        }
+        .t-alfa { 
+            bottom: 45px; left: 140px; 
+            font-size: 16px; font-weight: 700; 
+            color: var(--ink-blue);
+            opacity: 0.9;
+        }
+        .t-belast {
+            bottom: 25px; left: 125px;
+            font-size: 16px; font-weight: 700;
+            color: var(--ink-blue);
+            opacity: 0.9;
+        }
+        .t-bon {
+            position: absolute;
+            right: 15px; bottom: 80px;
+            font-size: 10px; color: var(--ink-blue);
+            transform: rotate(-90deg);
+            transform-origin: right bottom;
+            opacity: 0.8;
+        }
+
+        .n-510 { top: 75px; left: 75px; font-size: 18px; letter-spacing: 2px; }
+        .n-66200 { top: 220px; left: 38px; font-size: 18px; letter-spacing: 1px; }
+        .n-roddam { top: 220px; left: 130px; font-size: 16px; color: #b03030; opacity: 0.5; mix-blend-mode: multiply;} 
+        .n-12007 { top: 370px; left: 38px; font-size: 18px; letter-spacing: 1px; }
+        
+        .l-code-werk { top: 110px; left: 50px; width: 80px; text-align: center; line-height: 1.1; }
+        .l-code-gem { top: 280px; left: 30px; width: 80px; text-align: center; line-height: 1.1; }
+        .l-hingene { top: 220px; right: 150px; font-size: 16px; color: var(--ink-blue); opacity: 0.5; font-family: 'Courier Prime'; }
+
+        .handwriting {
+            font-family: 'Reenie Beanie', cursive;
+            position: absolute;
+            color: #444; 
+            font-size: 24px;
+            z-index: 10;
+            transform: rotate(-5deg);
+            opacity: 0.85; 
+        }
+        .hw-top-right { top: 10px; right: 50px; font-size: 28px; color: #667799; }
+        .hw-bottom-right { bottom: 15px; right: 60px; font-size: 28px; }
+        .hw-mid-right { top: 260px; right: 60px; font-size: 20px; transform: rotate(-10deg); }
+        .hw-date-1 { top: 305px; right: 60px; font-size: 22px; }
+        .hw-date-2 { top: 340px; right: 60px; font-size: 24px; }
+
+        .overlay {
+            position: absolute;
+            mix-blend-mode: multiply; 
+        }
+
+        .strip-yellow {
+            top: 70px; left: 40px;
+            width: 100px; height: 350px;
+            background-color: var(--art-yellow);
+        }
+
+        .strip-pink {
+            top: 70px; left: 140px;
+            width: 100px; height: 350px;
+            background-color: var(--art-pink);
+        }
+
+        .block-blue {
+            top: 175px; left: 240px;
+            width: 100px; height: 155px;
+            background-color: var(--art-blue-center);
+            mix-blend-mode: normal; 
+            filter: sepia(0.2);
+        }
+
+        .block-black {
+            top: 175px; left: 440px;
+            width: 100px; height: 155px;
+            background-color: var(--art-black);
+            mix-blend-mode: normal;
+        }
+
+        .strip-lightblue {
+            top: 70px; right: 160px;
+            width: 100px; height: 350px;
+            background-color: var(--art-lightblue);
+        }
+
+        .strip-green {
+            top: 70px; right: 60px;
+            width: 100px; height: 350px;
+            background-color: var(--art-green);
+        }
+
+        .grey-bar {
+            position: absolute;
+            height: 105px;
+            background-color: var(--art-grey-bar);
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.05), rgba(0,0,0,0.1)),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            z-index: 5;
+            filter: sepia(0.3);
+        }
+
+        .bar-top {
+            top: 70px;
+            left: 150px;
+            width: 390px;
+        }
+
+        /* 修改：调整底部灰色色块的位置，使其底部与彩色条纹对齐 */
+        /* 彩色条纹：top 70 + height 350 = 420 */
+        /* 灰色色块：height 105. 为了底部为420，top 需要是 315 */
+        .bar-bottom {
+            top: 315px; 
+            left: 150px;
+            width: 390px;
+        }
+
+        .red-line-diag {
+            position: absolute;
+            top: 180px; left: 280px;
+            width: 200px; height: 1px;
+            background-color: #d44; 
+            transform: rotate(32deg);
+            z-index: 4;
+            opacity: 0.7;
+        }
+        
+        .red-line-corner {
+            position: absolute;
+            top: 30px; left: 10px;
+            width: 150px; height: 2px;
+            background-color: #c33;
+            transform: rotate(35deg);
+            z-index: 2;
+            opacity: 0.5;
+        }
+        
+        .red-line-corner-bottom {
+             position: absolute;
+            bottom: 30px; right: 40px;
+            width: 100px; height: 1px;
+            background-color: #c33;
+            transform: rotate(35deg);
+            z-index: 2;
+            opacity: 0.5;
+        }
+
+        .dot {
+            position: absolute;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            z-index: 6;
+            box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+            opacity: 0.9;
+        }
+
+        .d-top-1 { top: 35px; left: 40px; background-color: #e6c200; } 
+        .d-top-2 { top: 35px; right: 40px; background-color: #7bbcdb; } 
+        
+        .d-bot-1 { top: 35px; left: 40px; background-color: #e6c200; }
+        .d-bot-2 { top: 35px; right: 40px; background-color: #7bbcdb; }
+
+        .hole {
+            position: absolute;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background-color: var(--bg-paper); 
+            z-index: 3;
+            box-shadow: inset 1px 1px 1px rgba(0,0,0,0.1); 
+        }
+        .h-y-1 { top: 100px; left: 85px; }
+        .h-y-2 { top: 380px; left: 85px; }
+        
+        .h-g-1 { top: 100px; right: 105px; }
+        .h-g-2 { top: 380px; right: 105px; }
+        
+        .h-lb-1 { top: 100px; right: 205px; background: var(--bg-paper);}
+        .h-lb-2 { top: 380px; right: 205px; }
+
+        .scribble {
+            position: absolute;
+            bottom: 20px;
+            left: 430px;
+            width: 40px; height: 40px;
+            border: 1px solid #444;
+            border-radius: 50% 40% 60% 30%;
+            transform: rotate(15deg);
+            border-width: 1px 2px 1px 1px;
+            opacity: 0.6;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- 1. 基础表格文字层 -->
+        <div class="form-layer">
+            <div class="border-line-left"></div>
+            <div class="border-line-right"></div>
+            <div class="border-line-bottom"></div>
+
+            <!-- 顶部 -->
+            <div class="text t-reg">Registratienummer</div>
+            <div class="text t-code">Code<br>Kantoor</div>
+            <div class="text t-naam">Naam en voornamen <span style="opacity:0.5">of benaming</span></div>
+            <div class="handwriting hw-top-right">2745</div>
+
+            <!-- 左侧数字列 -->
+            <div class="text-num n-510">510.0</div>
+            <div class="text l-code-werk">Code<br>werkzaamheid</div>
+
+            <div class="text-num n-66200">66200</div>
+            <div class="text-num n-roddam">RODDAM</div>
+            <div class="text l-code-gem">Code<br>Gemeente</div>
+            <div class="text l-code-gem" style="left: 100px;">Kant.<br>dir.-bel</div>
+
+            <div class="text-num n-12007">12007 02</div>
+
+            <!-- 中间文字 -->
+            <div class="text" style="top:280px; left:200px; opacity:0.5;">J.<br>V.</div>
+            <div class="text" style="top:280px; left:240px; opacity:0.5;">T<br>R</div>
+            <div class="text" style="top:280px; left:360px;">Post-<br>nr</div>
+            <div class="text" style="top:280px; left:420px;">Vol-<br>mach</div>
+
+            <!-- 右侧 -->
+            <div class="text l-hingene">(HINGENE)</div>
+            <div class="text" style="top:280px; right:120px; width:80px; line-height:1.2;">Dat. wijzi-<br>ging BLR</div>
+            <div class="text" style="top:280px; right:50px; width:80px; line-height:1.2;">Datum begin<br>werkzaamheid</div>
+            <div class="text" style="top:280px; right:10px;">Reden</div>
+
+            <!-- 底部 -->
+            <div class="t-nr">Nr 612</div>
+            <div class="t-alfa">ALFABETISCHE FICHE</div>
+            <div class="t-belast">van een belastingplichtige</div>
+            <div class="t-bon">1977 - Bon 8448</div>
+            <div class="text" style="bottom: 30px; left: 365px;">C.I.V. op</div>
+            <div class="text" style="bottom: 15px; left: 365px;">Paraaf :</div>
+            
+            <!-- 手写签名 -->
+            <div class="scribble"></div>
+            <div class="handwriting hw-bottom-right">KM '17</div>
+            <div class="handwriting hw-mid-right">enrole</div>
+            <div class="handwriting hw-date-1">31-12-77</div>
+            <div class="handwriting hw-date-2">1-4-78</div>
+        </div>
+
+        <!-- 2. 红色涂鸦线 (底层) -->
+        <div class="red-line-corner"></div>
+        <div class="red-line-corner-bottom"></div>
+
+        <!-- 3. 彩色条纹层 (Overlay) -->
+        <div class="overlay strip-yellow"></div>
+        <div class="overlay strip-pink"></div>
+        
+        <!-- 纸孔 (在色条上挖孔) -->
+        <div class="hole h-y-1"></div>
+        <div class="hole h-y-2"></div>
+
+        <!-- 4. 中心块 -->
+        <div class="block-blue"></div>
+        <div class="red-line-diag"></div> <!-- 红线穿过蓝色块 -->
+        <div class="block-black"></div>
+
+        <!-- 5. 右侧色条 -->
+        <div class="overlay strip-lightblue"></div>
+        <div class="overlay strip-green"></div>
+        
+        <!-- 右侧纸孔 -->
+        <div class="hole h-g-1"></div>
+        <div class="hole h-g-2"></div>
+        <div class="hole h-lb-1" style="background:transparent; border: 1px solid rgba(0,0,0,0.1)"></div> 
+        <div class="hole h-lb-2" style="background:transparent; border: 1px solid rgba(0,0,0,0.1)"></div>
+
+        <!-- 6. 顶部灰色纹理条 -->
+        <div class="grey-bar bar-top">
+            <div class="dot d-top-1"></div>
+            <div class="dot d-top-2"></div>
+        </div>
+
+        <!-- 7. 底部灰色纹理条 -->
+        <div class="grey-bar bar-bottom">
+            <div class="dot d-bot-1"></div>
+            <div class="dot d-bot-2"></div>
+        </div>
+
+    </div>
+
+</body>
+</html>

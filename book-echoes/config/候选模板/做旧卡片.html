@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Echoes - Chaotic Archive</title>
+    
+    <!-- 引入字体：Roboto Condensed(表格文字), Courier Prime(打字机), Reenie Beanie(手写), Noto Serif SC(中文书名) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Serif+SC:wght@700;900&family=Reenie+Beanie&family=Roboto+Condensed:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* 纸张与墨水 */
+            --bg-paper: #e3dac4;
+            --ink-blue: #3d6cb9;
+            --ink-black: #2b2b2b;
+            --ink-red: #c33;
+			--ink-burgundy: #722F37;
+            
+            /* 蒙德里安色系 (带透明度以叠加纹理) */
+            --art-yellow: rgba(230, 194, 0, 0.85);
+            --art-pink: rgba(225, 130, 155, 0.8);
+            --art-green: rgba(108, 174, 74, 0.8);
+            --art-lightblue: rgba(115, 186, 230, 0.8);
+            --art-grey-bar: rgba(141, 166, 181, 0.9);
+
+            /* 字体 */
+            --font-form: 'Roboto Condensed', sans-serif;  /* 表格印刷体 */
+            --font-type: 'Courier Prime', monospace;      /* 打字机体 */
+            --font-hand: 'Reenie Beanie', cursive;        /* 手写体 */
+            --font-title: "Noto Serif SC", serif;         /* 书名宋体 */
+            
+            /* 中文字体 */
+            --font-cn-title: "又又意宋", serif;            /* 中文书名 */
+            --font-cn-author: "润植家如印奏章楷", serif;    /* 中文作者 */
+            --font-cn-publisher: "上图东观体", sans-serif;  /* 中文出版社 */
+            --font-cn-rec: "又又意宋", serif;              /* 中文推荐语 */
+            --font-cn-year: "润植家如印奏章楷", serif;      /* 中文年份 */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: var(--font-form);
+        }
+
+        /* =========================================
+           主容器 (Library Card)
+           ========================================= */
+        .library-card {
+            width: 800px;
+            height: 530px;
+            background-color: var(--bg-paper);
+            position: relative;
+            overflow: hidden;
+            
+            /* 纸张网格背景 */
+            background-image: 
+                radial-gradient(#cbbfa0 1px, transparent 1px),
+                linear-gradient(120deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 40%, rgba(0,0,0,0.05) 100%);
+            background-size: 20px 20px, 100% 100%;
+            
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* 噪点纹理 (做旧) */
+        .library-card::before {
+            content: "";
+            position: absolute; inset: 0; z-index: 900;
+            opacity: 0.15; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply;
+        }
+
+        /* 泛黄滤镜 */
+        .library-card::after {
+            content: "";
+            position: absolute; inset: 0; z-index: 899;
+            background-color: #8f7c50; mix-blend-mode: overlay; opacity: 0.1; pointer-events: none;
+        }
+
+        /* =========================================
+           装饰性色块层 (Color Strips)
+           ========================================= */
+        .strip { position: absolute; mix-blend-mode: multiply; z-index: 5; }
+        
+        /* 竖条 */
+        .s-yellow { top: 70px; left: 40px; width: 100px; height: 350px; background-color: var(--art-yellow); }
+        .s-pink { top: 70px; left: 140px; width: 100px; height: 350px; background-color: var(--art-pink); }
+        .s-blue { top: 70px; right: 160px; width: 100px; height: 350px; background-color: var(--art-lightblue); }
+        .s-green { top: 70px; right: 60px; width: 100px; height: 350px; background-color: var(--art-green); }
+
+        /* 中心色块 */
+        .block-blue {
+            top: 20px;           /* 原来是 175px */
+            left: 20px;          /* 原来是 240px */
+            width: 120px;        /* 稍微加宽一点以容纳文字 */
+            height: 150px;
+            background-color: #5fa4ee;
+            mix-blend-mode: normal; /* 保持正常模式以遮挡底下的线条，或者改为 multiply 混合 */
+            filter: sepia(0.2);
+            z-index: 25;         /* 提高层级，确保不被黄色条挡住 */
+            opacity: 0.9;
+        }
+
+        .block-black {
+            top: 175px; left: 440px;
+            width: 100px; height: 155px;
+            background-color: #2b2b2b;
+            mix-blend-mode: normal;
+            z-index: 7;
+        }
+
+        /* 红色斜线 */
+        .red-line-diag {
+            position: absolute;
+            top: 180px; left: 280px;
+            width: 200px; height: 1px;
+            background-color: #d44;
+            transform: rotate(32deg);
+            z-index: 8;
+            opacity: 0.7;
+        }
+
+        /* 横向灰色纹理条 */
+        .grey-bar {
+            position: absolute; height: 105px; width: 390px; left: 150px;
+            background-color: var(--art-grey-bar);
+            /* 细微的网点纹理 */
+            background-image: url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0' y='0' width='1' height='1' fill='rgba(0,0,0,0.1)'/%3E%3C/svg%3E");
+            z-index: 6;
+            mix-blend-mode: multiply;
+        }
+        .gb-top { top: 70px; }
+        .gb-bottom { top: 315px; }
+
+        /* =========================================
+           穿孔效果 (Holes) - 关键复刻点
+           ========================================= */
+        .hole {
+            position: absolute;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background-color: var(--bg-paper); /* 露出纸张颜色 */
+            z-index: 10; /* 必须高于色块 */
+            box-shadow: inset 2px 2px 3px rgba(0,0,0,0.2); /* 内部阴影增加深度 */
+        }
+        /* 黄色条上的孔 */
+        .h-y1 { top: 100px; left: 85px; }
+        .h-y2 { top: 380px; left: 85px; }
+        /* 绿色条上的孔 */
+        .h-g1 { top: 100px; right: 100px; }
+        .h-g2 { top: 380px; right: 100px; }
+        /* 蓝色条上的孔 (空心圆圈效果) */
+        .h-b1 { 
+            top: 100px; right: 205px; 
+            background: transparent; 
+            border: 1px solid rgba(0,0,0,0.3);
+            box-shadow: none;
+        }
+        .h-b2 { 
+            top: 380px; right: 205px; 
+            background: transparent; 
+            border: 1px solid rgba(0,0,0,0.3);
+            box-shadow: none;
+        }
+
+        /* 灰色条上的彩色圆点 (图钉) */
+        .pin {
+            position: absolute; width: 16px; height: 16px;
+            border-radius: 50%; z-index: 11;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .p-gold { top: 100px; left: 190px; background-color: #e6c200; }
+        .p-blue { top: 100px; right: 300px; background-color: #7bbcdb; }
+        .p-gold-b { top: 345px; left: 190px; background-color: #e6c200; }
+        .p-blue-b { top: 345px; right: 300px; background-color: #7bbcdb; }
+
+        /* =========================================
+           混乱的装饰性文字层 (Deco Text)
+           ========================================= */
+        .deco-layer {
+            position: absolute; inset: 0; z-index: 4;
+            color: var(--ink-blue);
+            pointer-events: none;
+        }
+
+        .d-text {
+            position: absolute;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.7;
+        }
+
+        /* 边框线 */
+        .line-v-l { position: absolute; left: 20px; top: 0; bottom: 0; width: 1px; background: var(--ink-blue); opacity: 0.5; }
+        .line-v-r { position: absolute; right: 40px; top: 0; bottom: 0; width: 1px; background: var(--ink-blue); opacity: 0.5; }
+        .line-h-b { position: absolute; left: 0; right: 0; bottom: 80px; height: 1px; background: var(--ink-blue); opacity: 0.5; }
+
+        /* 散乱的文字 */
+        .dt-1 { top: 15px; left: 80px; } /* Registratienummer */
+        .dt-2 { top: 15px; left: 240px; line-height: 1.1; } /* Code Kantoor */
+        .dt-3 { top: 15px; left: 450px; } /* Naam en voornamen */
+        .dt-4 { top: 220px; left: 130px; color: #b03030; mix-blend-mode: multiply; transform: rotate(-2deg); font-weight: bold;} /* RODDAM stamp */
+        .dt-5 { bottom: 35px; left: 35px; font-size: 18px; font-weight: 900; } /* Nr 612 */
+        .dt-6 { bottom: 45px; left: 140px; font-weight: 700; } /* ALFABETISCHE */
+        .dt-7 { bottom: 25px; left: 125px; font-weight: 700; } /* belastingplichtige */
+        .dt-8 { bottom: 85px; right: 15px; transform: rotate(-90deg); transform-origin: right bottom; font-size: 9px;} /* Bon 8448 */
+        
+        /* 中间区域的散乱代码 */
+        .dt-mid-1 { top: 280px; left: 200px; opacity: 0.4; }
+        .dt-mid-2 { top: 280px; left: 360px; opacity: 0.4; }
+        .dt-mid-3 { top: 280px; right: 120px; width: 60px; line-height: 1.1; opacity: 0.6; }
+        
+        /* 红色装饰线 */
+        .red-line-1 { position: absolute; top: 30px; left: 10px; width: 150px; height: 2px; background: var(--ink-red); transform: rotate(35deg); opacity: 0.4; z-index: 2; }
+        .red-line-2 { position: absolute; top: 180px; left: 280px; width: 200px; height: 1px; background: #d44; transform: rotate(32deg); opacity: 0.6; z-index: 20; }
+        .red-line-3 { position: absolute; bottom: 30px; right: 40px; width: 100px; height: 1px; background: var(--ink-red); transform: rotate(35deg); opacity: 0.4; z-index: 2; }
+
+        /* =========================================
+           图书数据层 (Data Layer)
+           ========================================= */
+        
+        /* 1. 书名 (位于顶部灰色条) */
+        .book-title-container {
+            position: absolute;
+            top: 75px; left: 160px; width: 370px; height: 95px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+        }
+        .book-title {
+            font-family: var(--font-cn-title);
+            font-size: 26px;
+            font-weight: 900;
+            color: #1a1a1a;
+            line-height: 1.2;
+            /* 模拟油墨印在灰色条上的效果 */
+            mix-blend-mode: multiply;
+            /* 单行截断 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 2. 索书号 (左侧黄色条上的竖排数字) */
+        .call-number-col {
+            position: absolute;
+            top: 270px; left: 455px; width: 150px;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .cn-item {
+            font-family: var(--font-type);
+            font-size: 20px;
+            font-weight: 700;
+            color: #222;
+            letter-spacing: 1px;
+        }
+        .cn-label {
+            font-family: var(--font-form);
+            font-size: 10px;
+            color: var(--ink-blue);
+            line-height: 1;
+        }
+
+        /* 3. 推荐语 (中间打字机效果) */
+        .rec-container {
+            position: absolute;
+            top: 190px; left: 200px; width: 280px; height: 110px;
+            z-index: 15;
+            transform: rotate(-0.5deg);
+        }
+        .rec-text {
+            font-family: var(--font-cn-rec);
+            font-size: 13px;
+            line-height: 1.4;
+            color: #333;
+            text-align: justify;
+            /* 多行截断 */
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* 增加一点文字阴影提高可读性 */
+            text-shadow: 0 0 20px rgba(227, 218, 196, 0.9);
+        }
+
+        /* 4. 作者与出版社 (底部灰色条) */
+        .bottom-meta {
+            position: absolute;
+            top: 325px; left: 160px; width: 370px;
+            z-index: 20;
+            color: #1a1a1a;
+        }
+        .book-author {
+            font-family: var(--font-cn-author);
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .book-publisher {
+            font-family: var(--font-cn-publisher);
+            font-size: 14px;
+            opacity: 0.8;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* 5. 年份与手写文字 (右侧绿色条) */
+        .meta-right {
+            position: absolute;
+            top: 250px; right: 50px; width: 100px;
+            text-align: right;
+            z-index: 20;
+        }
+        .hw-text {
+            font-family: var(--font-hand);
+            font-size: 24px;
+            color: #444;
+            transform: rotate(-5deg);
+            display: block;
+            margin-bottom: 5px;
+        }
+        .book-year {
+            font-family: var(--font-cn-year);
+            font-size: 22px;
+            font-weight: 700;
+            color: #222;
+        }
+
+        /* 6. 封面 (回形针照片效果) */
+        .cover-wrapper {
+            position: absolute;
+            top: 140px; right: 180px; /* 调整位置，不挡住太多字 */
+            width: 110px; height: 160px;
+            z-index: 30;
+            background: #fff;
+            padding: 4px;
+            box-shadow: 3px 4px 8px rgba(0,0,0,0.3);
+            transform: rotate(2deg);
+        }
+        .book-cover {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: sepia(0.15) contrast(1.1);
+        }
+        /* 回形针 */
+        .paperclip {
+            position: absolute;
+            top: -12px; right: 20px;
+            width: 12px; height: 35px;
+            border-radius: 10px;
+            border: 2px solid #889;
+            z-index: 31;
+            transform: rotate(5deg);
+        }
+        .paperclip::after {
+            content: ""; position: absolute;
+            top: 8px; left: -2px; width: 12px; height: 20px;
+            border-radius: 10px; border: 2px solid #889; border-top: none;
+        }
+
+        /* 7. 评分 (右下角手写圈注) */
+        .rate-stamp {
+            position: absolute;
+            bottom: 20px; right: 50px;
+            z-index: 40;
+            transform: rotate(-8deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100px; height: 60px;
+        }
+        .rate-val {
+            font-family: var(--font-hand);
+            font-size: 48px;
+            color: var(--ink-red);
+            font-weight: bold;
+        }
+        /* 红笔圈 */
+        .rate-circle {
+            position: absolute; inset: 0;
+            border: 3px solid var(--ink-red);
+            border-radius: 60% 40% 50% 70% / 60% 30% 70% 40%;
+            opacity: 0.7;
+            mask-image: url("data:image/svg+xml,%3Csvg width='200' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
+        }
+
+        /* 8. 藏书章 (替代二维码) */
+        .library-stamp {
+            position: absolute;
+            bottom: 110px; left: 380px;
+            width: 80px; height: 80px;
+            border: 2px solid var(--ink-burgundy);
+            border-radius: 50%;
+            opacity: 0.6;
+            z-index: 8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: rotate(-15deg);
+            mix-blend-mode: multiply;
+        }
+		.stamp-inner {
+			width: 70px;
+			height: 70px;
+			border: 1px solid var(--ink-burgundy); /* 边框也建议同步 */
+			border-radius: 50%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			font-family: var(--font-form);
+			font-size: 10px;
+			text-align: center;
+			color: var(--ink-burgundy); /* ← 这一行就是控制文字颜色的关键 */
+			font-weight: bold;
+			line-height: 1.2;
+
+        /* 色块上的装饰性文字 */
+        .block-texts {
+            position: absolute;
+            top: -15%;
+            left: -51%;
+            width: 100%;
+            height: 100%;
+            z-index: 9;
+            pointer-events: none;
+        }
+
+        .block-text {
+            position: absolute;
+            font-family: var(--font-form);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.5;
+            line-height: 1.2;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- ⭐ 主容器 -->
+    <div class="library-card">
+        
+        <!-- ================= 1. 装饰背景层 ================= -->
+        
+        <!-- 竖向色带 -->
+        <div class="strip s-yellow"></div>
+        <div class="strip s-pink"></div>
+        <div class="strip s-blue"></div>
+        <div class="strip s-green"></div>
+        
+        <!-- 中心色块 -->
+        <div class="block-blue"></div>
+        <div class="block-black"></div>
+        
+        <!-- 蓝色色块上的装饰性文字 -->
+        <div class="block-texts">
+            <!-- 1. 顶部英文标题 -->
+            <div style="position: absolute; top: 5px; left: -5px; font-weight: 900; font-size: 14px; line-height: 0.9; color: #fff; letter-spacing: -0.5px; z-index: 30;">
+                BOOK<br>ECHOES
+            </div>
+
+            <!-- 2. 主标题中文 (竖排) -->
+            <div style="position: absolute; top: 35px; left: -5px; font-family: var(--font-cn-title); font-size: 24px; color: #fff; writing-mode: vertical-rl; letter-spacing: 4px; font-weight: 900; opacity: 0.95; text-shadow: 2px 2px 0 rgba(0,0,0,0.1); z-index: 30;">
+                书海回响
+            </div>
+
+            <!-- 3. 年份装饰 (黄色数字) -->
+            <div style="position: absolute; top: 30px; left: 55px; font-family: var(--font-type); font-size: 36px; font-weight: 700; color: var(--art-yellow); opacity: 0.9; transform: rotate(90deg); transform-origin: left top; z-index: 29;">
+                2025
+            </div>
+
+            <!-- 4. 英文机构名 (黑色小字) -->
+            <div style="position: absolute; top: 65px; left: 60px; font-size: 8px; font-weight: 700; color: #1a1a1a; letter-spacing: 0.5px; line-height: 1.2; text-align: left; z-index: 30;">
+                SHANGHAI<br>LIBRARY<br>ARCHIVE<br>COLLECTION
+            </div>
+
+            <!-- 5. 红色编号 -->
+            <div style="position: absolute; top: 135px; left: 65px; font-family: var(--font-type); font-size: 9px; color: var(--ink-red); font-weight: bold; letter-spacing: 1px; z-index: 30;">
+                NO.70-07
+            </div>
+
+            <!-- 6. 底部中文标签 -->
+            <div style="position: absolute; top: 145px; left: 15px; font-family: var(--font-cn-publisher); font-size: 10px; font-weight: bold; color: #222; background: rgba(255,255,255,0.85); padding: 1px 4px; box-shadow: 1px 1px 2px rgba(0,0,0,0.2); z-index: 30;">
+                上海图书馆
+            </div>
+
+            <!-- 7. 装饰线条 -->
+            <div style="position: absolute; top: 55px; left: 30px; width: 30px; height: 2px; background: #fff; opacity: 0.6; z-index: 30;"></div>
+            <div style="position: absolute; top: 120px; left: 70px; width: 30px; height: 1px; background: #1a1a1a; opacity: 0.3; z-index: 30;"></div>
+        </div>
+
+
+        
+        <!-- 红色斜线 -->
+        <div class="red-line-diag"></div>
+        
+        <!-- 横向灰色条 -->
+        <div class="grey-bar gb-top"></div>
+        <div class="grey-bar gb-bottom"></div>
+
+        <!-- 穿孔效果 (还原原版细节) -->
+        <div class="hole h-y1"></div>
+        <div class="hole h-y2"></div>
+        <div class="hole h-g1"></div>
+        <div class="hole h-g2"></div>
+        <div class="hole h-b1"></div> <!-- 空心孔 -->
+        <div class="hole h-b2"></div> <!-- 空心孔 -->
+
+        <!-- 装饰图钉 -->
+        <div class="pin p-gold"></div>
+        <div class="pin p-blue"></div>
+        <div class="pin p-gold-b"></div>
+        <div class="pin p-blue-b"></div>
+
+        <!-- ================= 2. 混乱文字装饰层 ================= -->
+        <div class="deco-layer">
+            <!-- 边框线 -->
+            <div class="line-v-l"></div>
+            <div class="line-v-r"></div>
+            <div class="line-h-b"></div>
+            
+            <!-- 红色涂鸦线 -->
+            <div class="red-line-1"></div>
+            <div class="red-line-2"></div> <!-- 中间那条斜线 -->
+            <div class="red-line-3"></div>
+
+            <!-- 顶部装饰字 -->
+            <div class="d-text dt-1">REGISTRATIENUMMER</div>
+            <div class="d-text dt-2">CODE<br>KANTOOR</div>
+            <div class="d-text dt-3">TITELS EN AUTEURS <span style="opacity:0.5">OF BENAMING</span></div>
+            <div class="d-text" style="top:15px; right: 50px; font-size: 24px; font-family: var(--font-hand); opacity: 0.5;">0405</div>
+
+            <!-- 左侧装饰字 -->
+            <div class="d-text dt-4">RODDAM</div> <!-- 红色印章字 -->
+            <div class="d-text" style="top:110px; left:50px; width:80px; text-align:center; line-height:1.1;">CODE<br>WERKZAAMHEID</div>
+            <div class="d-text" style="top:280px; left:30px; width:80px; text-align:center; line-height:1.1;">CODE<br>GEMEENTE</div>
+            <div class="d-text" style="top:280px; left:100px; width:60px; text-align:center; line-height:1.1;">KANT.<br>DIR.-BEL</div>
+
+            <!-- 中间散乱字 -->
+            <div class="d-text dt-mid-1">J.<br>V.</div>
+            <div class="d-text dt-mid-2">POST-<br>NR</div>
+            <div class="d-text dt-mid-3">DAT. WIJZI-<br>GING BLR</div>
+            <div class="d-text" style="top:220px; right:150px; font-size:16px; opacity:0.4; font-family:var(--font-type);">(HINGENE)</div>
+
+            <!-- 底部装饰字 -->
+            <div class="d-text dt-5">Nr 1568</div>
+            <div class="d-text dt-6">ALFABETISCHE FICHE</div>
+            <div class="d-text dt-7">van Leserschaft der Bibliothek</div>
+            <div class="d-text dt-8">1989 - Bon 8448</div>
+            <div class="d-text" style="bottom: 15px; left: 365px;">Paraaf :</div>
+            <div class="d-text" style="bottom: 15px; right: 200px; font-size: 24px; font-family: var(--font-type); opacity: 0.6;">KM '37</div>
+        </div>
+
+        <!-- ================= 3. 图书数据层 ================= -->
+        
+        <!-- 索书号 (左侧竖排) -->
+        <div class="call-number-col">
+            <div class="cn-item">510.0</div> <!-- 装饰性固定编号 -->
+            <div class="cn-item" style="color: var(--ink-blue);">C913.11/5843-3</div>
+            <div class="cn-label">ARCHIVE.NO</div>
+            <div class="cn-item">12007</div> <!-- 装饰性固定编号 -->
+        </div>
+
+        <!-- 书名 (顶部灰色条) -->
+        <div class="book-title-container">
+            <h1 class="book-title">生育制度生育制度生育制度生育制度生育制度生育制度生育制度</h1>
+        </div>
+
+        <!-- 推荐语 (中间打字机) -->
+        <div class="rec-container">
+            <p class="rec-text">费孝通先生的这部作品是中国社会学的奠基石，属于学科内的必读经典与通识教材。鉴于其极高的知名度、费孝通先生的这部作品是中国社会学的奠基石，属于学科内的必读经典与通识教材费孝通先生的这部作品是中国社会学的奠基石，属于学科内的必读经典与通识教材费孝通先生的这部作品是中国社会学的奠基石，属于学科内的必读经典与通识教材
+</p>
+        </div>
+
+        <!-- 作者出版社 (底部灰色条) -->
+        <div class="bottom-meta">
+            <div class="book-author">费孝通</div>
+            <div class="book-publisher">中信出版社</div>
+        </div>
+
+        <!-- 年份与手写 (右侧绿色条) -->
+        <div class="meta-right">
+            <span class="hw-text">enrole</span>
+            <div class="book-year">2018</div>
+            <span class="hw-text">verified</span>
+        </div>
+
+        <!-- 封面 (回形针照片) -->
+        <div class="cover-wrapper">
+            <div class="paperclip"></div>
+            <img src="pic/cover.jpg" alt="Book Cover" class="book-cover"
+                 onerror="this.src='https://via.placeholder.com/150x200?text=No+Cover';">
+        </div>
+
+        <!-- ================= 4. 其它视觉元素 ================= -->
+        
+        <!-- 藏书章 -->
+        <div class="library-stamp">
+            <div class="stamp-inner">
+                LIBRARY<br>ARCHIVE<br>COPY
+            </div>
+        </div>
+
+        <!-- 评分 (右下角) -->
+        <div class="rate-stamp">
+            <div class="rate-circle"></div>
+            <div class="rate-val">7.8</div>
+        </div>
+
+    </div>
+
+</body>
+</html>
