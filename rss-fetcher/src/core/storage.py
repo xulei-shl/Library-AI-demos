@@ -29,7 +29,7 @@ class StorageManager:
             "content", "full_text",
             "filter_pass", "filter_reason", "filter_status",
             "llm_score", "llm_reason",
-            "llm_thematic_essence", "llm_tags",
+            "llm_topic_focus", "llm_thematic_essence", "llm_tags",
             "llm_primary_dimension", "llm_mentioned_books",
             "llm_summary", "llm_summary_status", "llm_summary_error", "llm_summary_last_try",
             "llm_analysis_status", "llm_analysis_error", "llm_analysis_last_try"
@@ -40,7 +40,7 @@ class StorageManager:
     ANALYZE_UPDATE_FIELDS = [
         "filter_pass", "filter_reason", "filter_status",
         "llm_score", "llm_reason",
-        "llm_thematic_essence", "llm_tags",
+        "llm_topic_focus", "llm_thematic_essence", "llm_tags",
         "llm_primary_dimension", "llm_mentioned_books",
         "llm_summary", "llm_summary_status", "llm_summary_error", "llm_summary_last_try",
         "llm_analysis_status", "llm_analysis_error", "llm_analysis_last_try"

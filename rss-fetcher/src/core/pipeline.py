@@ -598,6 +598,7 @@ class SubjectBibliographyPipeline:
                         processed_article["llm_reason"] = filter_result.get("reason", "")
                         processed_article["llm_tags"] = "[]"
                         processed_article["llm_mentioned_books"] = "[]"
+                        processed_article["llm_topic_focus"] = ""
                         processed_article["llm_thematic_essence"] = ""
                         logger.debug(f"  设置 filter_status: '已拒绝'")
                     else:
@@ -609,6 +610,7 @@ class SubjectBibliographyPipeline:
                         processed_article["llm_reason"] = ""
                         processed_article["llm_tags"] = "[]"
                         processed_article["llm_mentioned_books"] = "[]"
+                        processed_article["llm_topic_focus"] = ""
                         processed_article["llm_thematic_essence"] = ""
                         logger.debug(f"  设置 filter_status: '成功'")
                 

@@ -2,7 +2,7 @@
 
 负责对通过初筛并完成总结的文章进行深度分析。
 输入: llm_summary 字段（Contextual Digest JSON）
-输出: score, primary_dimension, reason, thematic_essence, tags, mentioned_books
+输出: score, primary_dimension, reason, topic_focus, thematic_essence, tags, mentioned_books
 """
 
 import json
@@ -41,7 +41,8 @@ class ArticleAnalyst:
                 "score": int,  # 评分 0-100
                 "primary_dimension": str,  # 主要维度（四大原则之一）
                 "reason": str,  # 评分理由
-                "thematic_essence": str,  # 给向量库看的母题本质
+                "topic_focus": str,  # 主题聚焦点（50字，用于聚类）
+                "thematic_essence": str,  # 给向量库看的母题本质（150-200字）
                 "tags": list,  # 标签列表
                 "mentioned_books": list,  # 提及的书籍
                 "status": str,  # 处理状态: "成功", "失败"
@@ -78,6 +79,7 @@ class ArticleAnalyst:
             score = analysis_data.get("score", 0)
             primary_dimension = analysis_data.get("primary_dimension", "")
             reason = analysis_data.get("reason", "")
+            topic_focus = analysis_data.get("topic_focus", "")
             thematic_essence = analysis_data.get("thematic_essence", "")
             tags = analysis_data.get("tags", [])
             mentioned_books = analysis_data.get("mentioned_books", [])
@@ -88,6 +90,7 @@ class ArticleAnalyst:
                 "score": score,
                 "primary_dimension": primary_dimension,
                 "reason": reason,
+                "topic_focus": topic_focus,
                 "thematic_essence": thematic_essence,
                 "tags": tags,
                 "mentioned_books": mentioned_books,
@@ -105,6 +108,7 @@ class ArticleAnalyst:
             "score": 0,
             "primary_dimension": "",
             "reason": "",
+            "topic_focus": "",
             "thematic_essence": "",
             "tags": [],
             "mentioned_books": [],

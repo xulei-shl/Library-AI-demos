@@ -17,7 +17,7 @@ class ArticleAnalysisRunner:
 
     筛选条件: llm_summary_status == "成功" 且 llm_analysis_status 非成功
     输入: llm_summary 字段内容
-    输出: score, primary_dimension, reason, thematic_essence, tags, mentioned_books
+    输出: score, primary_dimension, reason, topic_focus, thematic_essence, tags, mentioned_books
     """
 
     def __init__(
@@ -134,6 +134,7 @@ class ArticleAnalysisRunner:
         article["llm_score"] = result.get("score", 0)
         article["llm_primary_dimension"] = result.get("primary_dimension", "")
         article["llm_reason"] = result.get("reason", "")
+        article["llm_topic_focus"] = result.get("topic_focus", "")
         article["llm_thematic_essence"] = result.get("thematic_essence", "")
         article["llm_tags"] = result.get("tags", [])
         article["llm_mentioned_books"] = result.get("mentioned_books", [])

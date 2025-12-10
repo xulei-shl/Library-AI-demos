@@ -60,17 +60,10 @@ class Reporter:
         candidate_themes = analysis.get("candidate_themes", []) or []
         insights = analysis.get("insights", []) or []
 
-        article_rows = [
-            "| 序号 | 标题 | 评分 | 标签 | 摘要 |",
-            "| --- | --- | --- | --- | --- |",
-        ]
+        # 构建文章详情列表（每篇文章独立 section）
+        article_sections = []
         for idx, article in enumerate(articles, 1):
-            tags = article.get("llm_tags") or ""
-            summary = (article.get("summary_long") or "").replace("\n", " ")
-            summary = summary[:180] + "..." if len(summary) > 180 else summary
-            article_rows.append(
-                f"| {idx} | {article.get('title', '')} | {article.get('llm_score', '')} | {tags} | {summary} |"
-            )
+            article_sections.append(self._build_article_section(article, idx))
 
         candidates_md = "\n".join(
             f"- **{item.get('name', '未命名')}**: {item.get('support_reason', '')}"
@@ -87,13 +80,54 @@ class Reporter:
                 f"- 关键词: {', '.join(main_theme.get('keywords', []) or [])}",
                 f"- 摘要: {main_theme.get('summary', '暂无描述')}",
                 "## 文章列表",
-                "\n".join(article_rows),
+                "\n\n---\n\n".join(article_sections),
                 "## 候选主题",
                 candidates_md,
                 "## 深度洞察",
                 insights_md,
             ]
         )
+
+    def _build_article_section(self, article: Dict, idx: int) -> str:
+        """构建单篇文章的完整展示 section。"""
+        title = article.get("title", "无标题")
+        article_id = article.get("id", "")
+        score = article.get("llm_score", "")
+        thematic_essence = article.get("llm_thematic_essence", "")
+        topic_focus = article.get("llm_topic_focus", "")
+        summary_long = article.get("summary_long", "")
+
+        # 处理列表字段
+        tags = article.get("llm_tags") or []
+        if isinstance(tags, list):
+            tags_str = "、".join(str(t) for t in tags)
+        else:
+            tags_str = str(tags)
+
+        mentioned_books = article.get("llm_mentioned_books") or []
+        if isinstance(mentioned_books, list):
+            books_str = "、".join(str(b) for b in mentioned_books) if mentioned_books else "无"
+        else:
+            books_str = str(mentioned_books) or "无"
+
+        # 构建文章详情表格
+        rows = [
+            f"### 文章 {idx}: {title}",
+            "",
+            "| 字段 | 内容 |",
+            "| --- | --- |",
+            f"| ID | {article_id} |",
+            f"| 评分 | {score} |",
+            f"| 主题精华 | {thematic_essence} |",
+            f"| 主题聚焦 | {topic_focus} |",
+            f"| 标签 | {tags_str} |",
+            f"| 提及书籍 | {books_str} |",
+            "",
+            "**摘要**:",
+            "",
+            summary_long or "无摘要",
+        ]
+        return "\n".join(rows)
 
     def _sanitize(self, text: str) -> str:
         """将主题名转换为安全的文件名片段。"""

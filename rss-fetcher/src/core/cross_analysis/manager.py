@@ -33,10 +33,14 @@ class CrossAnalysisManager:
         """
         cross_conf = (config or {}).get("cross_analysis", {}) or {}
         self.min_score = int(cross_conf.get("min_score", cross_conf.get("score_threshold", 92)))
-        self.batch_size = max(1, int(cross_conf.get("batch_size", 6)))
+        self.distance_threshold = float(cross_conf.get("distance_threshold", 0.8))
+        self.batch_size = max(1, int(cross_conf.get("batch_size", 6)))  # 保留用于降级
         self.output_dir = cross_conf.get("output_dir", os.path.join("runtime", "outputs", "cross_analysis"))
 
-        self.clusterer = clusterer or Clusterer(batch_size=self.batch_size)
+        self.clusterer = clusterer or Clusterer(
+            distance_threshold=self.distance_threshold,
+            batch_size=self.batch_size,
+        )
         self.analyzer = analyzer or Analyzer(task_name=cross_conf.get("task_name", "article_cross_analysis"))
         self.reporter = reporter or Reporter(base_output_dir=self.output_dir)
 
