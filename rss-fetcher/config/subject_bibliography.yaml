@@ -100,8 +100,8 @@ extraction_settings:
 
 # 交叉分析设置
 cross_analysis:
-  score_threshold: 92  # 评分筛选阈值，只分析评分>=此值的文章
-  batch_size: 6       # 每批次分析的文章数量
+  min_score: 92       # 评分筛选阈值，只分析评分>=此值的文章
+  batch_size: 6       # 设定聚类期望的组规模，Clusterer会按len(articles)//batch_size计算聚类数k，控制每组文章数量与LLM上下文长度
 
 # Playwright网站抓取配置
 # 用于不支持RSS的网站，使用浏览器动态抓取

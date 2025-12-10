@@ -17,7 +17,7 @@ from .article_analysis_runner import ArticleAnalysisRunner
 from .storage import StorageManager
 from .content_extractors import ExtractorFactory
 from .score_statistics import ScoreStatistics
-from .cross_analysis import CrossAnalyzer
+from .cross_analysis import CrossAnalysisManager
 
 # Windows平台的输入超时处理
 if sys.platform == 'win32':
@@ -46,7 +46,7 @@ def get_cross_analysis_config():
     config = load_config()
     cross_config = config.get("cross_analysis", {}) or {}
     return {
-        "score_threshold": cross_config.get("score_threshold", 90),
+        "min_score": cross_config.get("min_score", cross_config.get("score_threshold", 90)),
         "batch_size": cross_config.get("batch_size", 10)
     }
 
@@ -770,17 +770,17 @@ class SubjectBibliographyPipeline:
     async def run_stage_cross_analysis(
         self,
         input_file: Optional[str] = None,
-        score_threshold: Optional[int] = None
-    ) -> Optional[str]:
+        min_score: Optional[int] = None
+    ) -> Optional[List[str]]:
         """
         阶段4: 文章交叉主题分析
 
         Args:
             input_file: 输入文件路径，如果不指定则自动查找最新的 analyze 文件
-            score_threshold: 评分筛选阈值
+            min_score: 评分筛选阈值
 
         Returns:
-            报告文件路径，失败返回 None
+            报告文件路径列表，失败返回 None
         """
         logger.info("=" * 60)
         logger.info("开始执行阶段4: 文章交叉主题分析")
@@ -803,10 +803,10 @@ class SubjectBibliographyPipeline:
         logger.info(f"输入文件: {input_file}")
 
         # 若未提供外部阈值，则回退到配置
-        config_threshold = self.config.get("cross_analysis", {}).get("score_threshold", 90)
-        if score_threshold is None:
-            score_threshold = config_threshold
-        logger.info(f"评分筛选阈值: {score_threshold}")
+        config_threshold = self.config.get("cross_analysis", {}).get("min_score", 90)
+        if min_score is None:
+            min_score = config_threshold
+        logger.info(f"评分筛选阈值: {min_score}")
 
         # 加载数据
         articles = self.storage.load_stage_data("analysis", input_file)
@@ -818,12 +818,12 @@ class SubjectBibliographyPipeline:
         # 筛选高质量文章
         high_quality_articles = [
             article for article in articles
-            if article.get("llm_score", 0) >= score_threshold
+            if article.get("llm_score", 0) >= min_score
             and article.get("llm_thematic_essence")
         ]
 
         logger.info(f"文章总数: {len(articles)}")
-        logger.info(f"高质量文章数 (评分>={score_threshold}): {len(high_quality_articles)}")
+        logger.info(f"高质量文章数 (评分>={min_score}): {len(high_quality_articles)}")
 
         if len(high_quality_articles) < 3:
             logger.warning(f"高质量文章数量不足 ({len(high_quality_articles)} < 3)，建议降低评分阈值")
@@ -834,45 +834,42 @@ class SubjectBibliographyPipeline:
         analyzer_config = self.config.copy()
         if "cross_analysis" not in analyzer_config:
             analyzer_config["cross_analysis"] = {}
-        analyzer_config["cross_analysis"]["score_threshold"] = score_threshold
+        analyzer_config["cross_analysis"]["min_score"] = min_score
         analyzer_config["cross_analysis"].setdefault("batch_size", get_cross_analysis_config().get("batch_size", 10))
         
-        analyzer = CrossAnalyzer(config=analyzer_config)
+        manager = CrossAnalysisManager(config=analyzer_config)
 
         # 执行交叉分析
         logger.info("开始执行交叉主题分析...")
-        result = await analyzer.analyze(high_quality_articles)
+        report_paths = await manager.run(high_quality_articles)
 
-        if result.get("success", False):
-            logger.info("=" * 60)
-            logger.info("交叉分析完成！")
-            logger.info(f"共同主题: {'是' if result.get('has_common_theme') else '否'}")
-            if result.get("main_theme"):
-                logger.info(f"主要主题: {result['main_theme'].get('name', '未命名')}")
-            logger.info(f"候选主题数: {len(result.get('candidate_themes', []))}")
-            logger.info(f"报告文件: {result.get('report_path', '')}")
-            logger.info("=" * 60)
-            return result.get("report_path")
-        else:
-            logger.error(f"交叉分析失败: {result.get('metadata', {}).get('error', '未知错误')}")
+        if not report_paths:
+            logger.error("未能生成任何交叉分析报告")
             return None
 
+        logger.info("=" * 60)
+        logger.info("交叉分析完成，多份报告已生成:")
+        for path in report_paths:
+            logger.info(f"- {path}")
+        logger.info("=" * 60)
+        return report_paths
 
-def run_pipeline(stage: str = "all", input_file: Optional[str] = None, score_threshold: Optional[int] = None):
+
+def run_pipeline(stage: str = "all", input_file: Optional[str] = None, min_score: Optional[int] = None):
     """
     运行流程
 
     Args:
         stage: 阶段名称 (fetch/extract/filter/summary/analysis/cross/all)
         input_file: 输入文件路径(可选)
-        score_threshold: 交叉分析的评分阈值(仅对cross有效)，如果不指定则使用配置文件中的默认值
+        min_score: 交叉分析的评分阈值(仅对cross有效)，如果不指定则使用配置文件中的默认值
     """
     # 如果未指定阈值，从配置文件读取
     if stage == "cross":
         cross_config = get_cross_analysis_config()
-        if score_threshold is None:
-            score_threshold = cross_config.get("score_threshold", 90)
-            logger.info(f"使用配置文件中的评分阈值: {score_threshold}")
+        if min_score is None:
+            min_score = cross_config.get("min_score", cross_config.get("score_threshold", 90))
+            logger.info(f"使用配置文件中的评分阈值: {min_score}")
     pipeline = SubjectBibliographyPipeline()
 
     if stage == "fetch":
@@ -888,9 +885,10 @@ def run_pipeline(stage: str = "all", input_file: Optional[str] = None, score_thr
     elif stage == "cross":
         # cross 是异步函数，需要特殊处理
         import asyncio
-        report_path = asyncio.run(pipeline.run_stage_cross_analysis(input_file, score_threshold))
-        if report_path:
-            logger.info(f"交叉分析报告已生成: {report_path}")
+        report_paths = asyncio.run(pipeline.run_stage_cross_analysis(input_file, min_score))
+        if report_paths:
+            for path in report_paths:
+                logger.info(f"交叉分析报告已生成: {path}")
     elif stage == "all":
         pipeline.run_all_stages()
     else:
@@ -913,14 +911,14 @@ if __name__ == "__main__":
         help="输入文件路径(用于阶段2、3、4、5、6)"
     )
     # 获取默认阈值
-    default_threshold = get_cross_analysis_config().get("score_threshold", 90)
+    default_threshold = get_cross_analysis_config().get("min_score", 90)
 
     parser.add_argument(
-        "--score-threshold",
+        "--min-score",
         type=int,
         default=None,
         help=f"交叉分析的评分筛选阈值(仅对cross有效，默认从配置文件读取，当前为{default_threshold})"
     )
 
     args = parser.parse_args()
-    run_pipeline(args.stage, args.input, args.score_threshold)
+    run_pipeline(args.stage, args.input, args.min_score)

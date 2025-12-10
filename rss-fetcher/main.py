@@ -13,7 +13,7 @@
     python main.py --stage filter
     python main.py --stage summary    
     python main.py --stage analysis
-    python main.py --stage cross --score-threshold 70
+    python main.py --stage cross --min-score 70
 
     # 手动指定输入文件
     python main.py --stage extract --input runtime/outputs/2025-12.xlsx
@@ -66,7 +66,7 @@ def setup_args_parser() -> argparse.ArgumentParser:
   %(prog)s --stage summary --input runtime/outputs/2025-12.xlsx
   %(prog)s --stage analysis --input runtime/outputs/2025-12.xlsx
   %(prog)s --stage cross --input runtime/outputs/2025-12.xlsx
-  %(prog)s --stage cross --score-threshold 70  # 自定义评分阈值
+  %(prog)s --stage cross --min-score 70  # 自定义评分阈值
         """
     )
     
@@ -100,7 +100,7 @@ def setup_args_parser() -> argparse.ArgumentParser:
     )
     
     parser.add_argument(
-        "--score-threshold",
+        "--min-score",
         type=int,
         default=None,
         help="交叉分析的评分筛选阈值(仅对cross有效)，如果不指定则使用配置文件中的默认值"
@@ -187,13 +187,13 @@ def run_interactive_stage(stage: str, quick_mode: bool = False):
     # 使用默认配置直接执行
     input_file = None
     config_file = "config/subject_bibliography.yaml"
-    score_threshold = None
+    min_score = None
 
     # 记录执行信息
     logger.info(f"使用默认配置执行阶段: {stage}")
     logger.info(f"配置文件: {config_file}")
     logger.info(f"输入文件: {'默认文件' if input_file is None else input_file}")
-    logger.info(f"评分阈值: {'默认值' if score_threshold is None else score_threshold}")
+    logger.info(f"评分阈值: {'默认值' if min_score is None else min_score}")
 
     # 显示执行信息
     print(f"📋 使用默认配置执行:")
@@ -208,7 +208,7 @@ def run_interactive_stage(stage: str, quick_mode: bool = False):
         run_pipeline(
             stage=stage,
             input_file=input_file,
-            score_threshold=score_threshold
+            min_score=min_score
         )
         print(f"\n✅ 阶段 '{stage}' 执行完成!")
     except Exception as e:
