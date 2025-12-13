@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Echoes - Vintage Spread</title>
+    
+    <!-- 引入字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&family=Inter:wght@500;700&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* 70s Vintage Palette */
+            --c-orange: #B83B26; /* 铁锈红 */
+            --c-black:  #1D1B1A; /* 暖炭黑 */
+            --c-cream:  #D4C5A3; /* 泛黄卡纸 */
+            --c-white:  #D1D1D1; /* 哑光白 */
+            --c-bg-grad: linear-gradient(90deg, var(--c-orange) 38%, var(--c-black) 38%);
+            
+            --card-height: 848px;
+            --right-card-width: 600px;
+            --left-card-width: 500px; /* 封面区域宽度 */
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #222; /* 背景深一点，突出主体 */
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            padding: 50px;
+        }
+
+        /* =========================================================
+           主容器 (Spread Container) - 新增
+           用于包裹左右两部分
+           ========================================================= */
+        .vintage-spread {
+            display: flex;
+            box-shadow: 0 0 60px rgba(0,0,0,0.6);
+            /* 整体复古滤镜 */
+            filter: contrast(1.05) sepia(0.1);
+            max-width: 100%;
+        }
+
+        /* =========================================================
+           通用纹理层 (Shared Textures)
+           ========================================================= */
+        .texture-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .texture-noise {
+            z-index: 90;
+            opacity: 0.15;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            mix-blend-mode: overlay;
+        }
+
+        .texture-age {
+            z-index: 95;
+            background: radial-gradient(circle at center, rgba(255,246,220,0.05) 40%, rgba(0,0,0,0.5) 100%);
+            box-shadow: inset 0 0 80px rgba(20, 10, 0, 0.5);
+            mix-blend-mode: multiply;
+        }
+
+        .texture-scratches {
+            z-index: 96;
+            opacity: 0.04;
+            background: url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='p' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Cpath d='M10,10 L20,30 M50,50 L60,40 M80,10 L90,20' stroke='white' stroke-width='1'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23p)'/%3E%3C/svg%3E");
+            mix-blend-mode: screen;
+        }
+
+        /* =========================================================
+           左侧：封面容器 (Cover Panel) - 新增
+           ========================================================= */
+        .cover-panel {
+            position: relative;
+            width: var(--left-card-width);
+            height: var(--card-height);
+            background-color: var(--c-black); /* 深色背景衬托封面 */
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2; /* 稍微浮起，制造折页阴影 */
+        }
+
+        /* 封面图片的边框容器 */
+        .cover-frame {
+            position: relative;
+            width: 80%;
+            height: 80%;
+            border: 12px solid var(--c-cream); /* 模拟相框或卡纸边缘 */
+            background-color: #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+
+        /* 实际封面图片 */
+        .real-book-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* 关键：调整图片色调以融入复古风格 */
+            filter: grayscale(0.2) sepia(0.3) contrast(1.1);
+        }
+
+        /* 装饰性图片 (pic/b.png) */
+        .deco-sticker {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: auto;
+            z-index: 60;
+            opacity: 0.9;
+            mix-blend-mode: hard-light; /* 让贴纸看起来像印上去的 */
+            transform: rotate(-10deg);
+        }
+
+        /* 左侧面板的装饰性排版 */
+        .spine-text {
+            position: absolute;
+            left: 20px;
+            bottom: 40px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 80px;
+            color: rgba(255,255,255,0.03);
+            transform: rotate(-90deg);
+            transform-origin: bottom left;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 中缝阴影：模拟书脊或折叠处 */
+        .fold-shadow {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            background: linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,0.4));
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        /* =========================================================
+           右侧：原 Library Card
+           ========================================================= */
+        .library-card {
+            position: relative;
+            width: var(--right-card-width);
+            height: var(--card-height);
+            background: var(--c-bg-grad);
+            overflow: hidden; 
+            /* 移除原本的 margin 和 shadow，由父容器接管 */
+            margin: 0;
+        }
+
+        /* ... 原有的内容排版样式保持不变 ... */
+        .content-wrapper {
+            position: relative;
+            z-index: 50;
+            padding-top: 55px;
+            margin-left: 42%; 
+            width: 54%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .book-author {
+            font-family: 'Zilla Slab', serif;
+            font-size: 32px;
+            color: var(--c-cream);
+            line-height: 0.9;
+            text-transform: uppercase;
+            transform: scaleX(1.1); 
+            transform-origin: left;
+            margin-bottom: 25px;
+            letter-spacing: -2px;
+            filter: blur(0.3px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .book-rate-group {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .book-rate {
+            font-family: 'Inter', sans-serif;
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--c-orange); 
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+        
+        .rate-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: var(--c-orange);
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+
+        .book-publisher {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--c-white);
+            text-transform: uppercase;
+            line-height: 1.2;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+            margin-bottom: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .book-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 45px; 
+            font-weight: 500;
+            color: var(--c-cream);
+            line-height: 0.9;
+            text-transform: uppercase;
+            transform: scaleY(1.35) scaleX(0.85); 
+            transform-origin: left top;
+            margin-top: 10px;
+            margin-bottom: 30px; 
+            letter-spacing: -1px;
+            filter: blur(0.3px);
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 115%; 
+        }
+
+        .book-recommendation {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: var(--c-white);
+            opacity: 0.7;
+            line-height: 1.5;
+            margin-bottom: 30px;
+            text-align: justify;
+            border-left: 2px solid var(--c-orange);
+            padding-left: 15px;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .book-meta {
+            font-family: 'Inter', sans-serif;
+            font-size: 10px;
+            color: var(--c-white);
+            opacity: 0.5;
+            line-height: 1.4;
+            margin-top: auto; 
+        }
+
+        /* ... 原有的图形区域样式保持不变 ... */
+        .reel-assembly {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            bottom: -400px; 
+            left: -80px;
+            z-index: 10; 
+            filter: contrast(0.95);
+            pointer-events: none;
+        }
+
+        .reel-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: var(--c-cream);
+            border-radius: 50%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.1);
+        }
+
+        .reel-spoke {
+            position: absolute;
+            width: 12px;
+            height: 600px;
+            background-color: var(--c-black);
+            bottom: 50%;
+            left: 50%;
+            margin-left: -6px;
+            transform-origin: bottom center;
+            transform: rotate(-34deg);
+            z-index: 20;
+        }
+
+        .reel-hub-container {
+            position: absolute;
+            width: 155px;
+            height: 155px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 30;
+            border-radius: 50%;
+            background-color: var(--c-black);
+            overflow: hidden;
+            border: 4px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        /* 转轴中心的封面小图（保持原样） */
+        .book-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.6;
+            transform: rotate(-34deg) scale(1.1); 
+            filter: grayscale(0.2) contrast(1.2);
+        }
+
+        .cutout-right {
+            position: absolute;
+            width: 85px;
+            height: 140px;
+            background-color: var(--c-black);
+            border-radius: 20px;
+            border-bottom-left-radius: 50px;
+            border-bottom-right-radius: 50px;
+            top: 20%; 
+            right: 20%;
+            transform: rotate(60deg);
+            z-index: 20;
+        }
+
+        .cutout-bottom {
+            position: absolute;
+            width: 110px;
+            height: 70px;
+            background-color: var(--c-black);
+            border-radius: 15px;
+            border-bottom-left-radius: 35px;
+            border-bottom-right-radius: 35px;
+            bottom: 15%;
+            left: 35%;
+            transform: rotate(10deg);
+            z-index: 20;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 主双联容器：vintage-spread -->
+    <div class="vintage-spread">
+
+        <!-- 左侧：封面容器 (新增) -->
+        <div class="cover-panel">
+            <!-- 共享纹理层 (确保质感一致) -->
+            <div class="texture-layer texture-noise"></div>
+            <div class="texture-layer texture-age"></div>
+            <div class="texture-layer texture-scratches"></div>
+
+            <!-- 装饰性背景文字 -->
+            <div class="spine-text">STEREO / MONO</div>
+
+            <!-- 封面相框 -->
+            <div class="cover-frame">
+                <!-- 图书封面图 -->
+                <img src="pic/cover.jpg" alt="Book Cover" class="real-book-cover">
+            </div>
+
+
+            <!-- 折痕阴影 -->
+            <div class="fold-shadow"></div>
+        </div>
+
+        <!-- 右侧：原 Library Card -->
+        <div class="library-card">
+            
+            <!-- 纹理叠加层 -->
+            <div class="texture-layer texture-noise"></div>
+            <div class="texture-layer texture-age"></div>
+            <div class="texture-layer texture-scratches"></div>
+
+            <!-- 文本内容区域 -->
+            <div class="content-wrapper">
+                <div class="book-author">{{AUTHOR}}[日] 松冈正刚</div>
+                
+                <div class="book-rate-group">
+                    <div class="book-rate">{{RATE}}7.6</div>
+                    <div class="rate-label">RATING</div>
+                </div>
+
+                <div class="book-publisher">{{PUBLISHER}}岳麓书社</div>
+                
+                <div class="book-title">{{TITLE}}日本 : 文化核心</div>
+
+                <div class="book-recommendation">
+                    {{RECOMMENDATION}}一位编辑泰斗对日本文化基因的冷静解剖。松冈正刚以其惊人的阅读量和独特的"编辑工学"视角，重新梳理了日本文化的底层代码。字字珠玑，直击"缩小"意识的核心，是理解东方美学的必读之作。
+                </div>
+
+                <div class="book-meta">
+                    Year: {{YEAR}}2023<br>
+                    Call Number: {{CALL_NUMBER}}G131.3/4971
+                </div>
+            </div>
+
+            <!-- 图形区域：磁带盘 -->
+            <div class="reel-assembly">
+                <div class="reel-face"></div>
+                <div class="reel-spoke"></div>
+                
+                <!-- 封面放置在磁带轴心 (原位置保留，作为呼应) -->
+                <div class="reel-hub-container">
+                    <img src="pic/cover.jpg" class="book-cover">
+                </div>
+                
+                <div class="cutout-right"></div>
+                <div class="cutout-bottom"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

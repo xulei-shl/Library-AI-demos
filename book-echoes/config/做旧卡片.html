@@ -353,7 +353,7 @@
         .book-cover {
             width: 100%; height: 100%;
             object-fit: cover;
-            filter: sepia(0.15) contrast(1.1);
+            filter: sepia(0.25) contrast(1.15) brightness(0.92) saturate(0.85);
         }
         /* 回形针 */
         .paperclip {
@@ -426,15 +426,16 @@
 			color: var(--ink-burgundy); /* ← 这一行就是控制文字颜色的关键 */
 			font-weight: bold;
 			line-height: 1.2;
+		}
 
         /* 色块上的装饰性文字 */
         .block-texts {
             position: absolute;
-            top: -15%;
-            left: -51%;
-            width: 100%;
-            height: 100%;
-            z-index: 9;
+            top: 0;
+            left: 0;
+            width: 120px;
+            height: 150px;
+            z-index: 30;
             pointer-events: none;
         }
 
@@ -570,14 +571,14 @@
         <!-- 索书号 (左侧竖排) -->
         <div class="call-number-col">
             <div class="cn-item">510.0</div> <!-- 装饰性固定编号 -->
-            <div class="cn-item" style="color: var(--ink-blue);">C913.11/5843-3</div>
+            <div class="cn-item" style="color: var(--ink-blue);">{{CALL_NUMBER}}</div>
             <div class="cn-label">ARCHIVE.NO</div>
             <div class="cn-item">12007</div> <!-- 装饰性固定编号 -->
         </div>
 
         <!-- 书名 (顶部灰色条) -->
         <div class="book-title-container">
-            <h1 class="book-title">生育制度生育制度生育制度生育制度生育制度生育制度生育制度</h1>
+            <h1 class="book-title">{{TITLE}}</h1>
         </div>
 
         <!-- 推荐语 (中间打字机) -->
@@ -588,14 +589,14 @@
 
         <!-- 作者出版社 (底部灰色条) -->
         <div class="bottom-meta">
-            <div class="book-author">费孝通</div>
-            <div class="book-publisher">中信出版社</div>
+            <div class="book-author">{{AUTHOR}}</div>
+            <div class="book-publisher">{{PUBLISHER}}</div>
         </div>
 
         <!-- 年份与手写 (右侧绿色条) -->
         <div class="meta-right">
             <span class="hw-text">enrole</span>
-            <div class="book-year">2018</div>
+            <div class="book-year">{{YEAR}}</div>
             <span class="hw-text">verified</span>
         </div>
 
@@ -618,7 +619,7 @@
         <!-- 评分 (右下角) -->
         <div class="rate-stamp">
             <div class="rate-circle"></div>
-            <div class="rate-val">7.8</div>
+            <div class="rate-val">{{RATE}}</div>
         </div>
 
     </div>
