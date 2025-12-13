@@ -59,59 +59,75 @@ class DataFilterEngine:
         Returns:
             FilterResult 过滤结果
         """
-        self.logger.info(f"开始处理文件: {excel_path}")
-        
-        # 读取 Excel 数据
-        df = self._read_excel(excel_path)
-        if df is None or df.empty:
-            self.logger.warning(f"文件为空或读取失败: {excel_path}")
+        try:
+            self.logger.info(f"开始处理文件: {excel_path}")
+            
+            # 读取 Excel 数据
+            df = self._read_excel(excel_path)
+            if df is None or df.empty:
+                self.logger.warning(f"文件为空或读取失败: {excel_path}")
+                return FilterResult(
+                    source_file=excel_path,
+                    passed_data=pd.DataFrame(),
+                    filtered_data=pd.DataFrame(),
+                    passed_count=0,
+                    filtered_count=0,
+                    filter_reasons={"文件为空或读取失败": 1}
+                )
+            
+            self.logger.info(f"读取数据: {len(df)} 行")
+            
+            # 验证必需列
+            if not self._validate_columns(df):
+                self.logger.error(f"文件缺少必需列，跳过处理: {excel_path}")
+                return FilterResult(
+                    source_file=excel_path,
+                    passed_data=pd.DataFrame(),
+                    filtered_data=pd.DataFrame(),
+                    passed_count=0,
+                    filtered_count=0,
+                    filter_reasons={"文件缺少必需列": 1}
+                )
+            
+            # 应用过滤规则
+            filter_mask, filter_reasons = self._apply_filters(df)
+            
+            # 添加过滤原因列
+            filtered_df = self._add_filter_reason_column(df, filter_reasons)
+            
+            # 分离数据
+            passed_df = df[~filter_mask].copy()  # 符合条件的数据
+            filtered_df = filtered_df[filter_mask].copy()  # 被过滤的数据
+            
+            # 统计过滤原因
+            reason_counts = self._count_filter_reasons(filter_reasons[filter_mask])
+            
+            result = FilterResult(
+                source_file=excel_path,
+                passed_data=passed_df,
+                filtered_data=filtered_df,
+                passed_count=len(passed_df),
+                filtered_count=len(filtered_df),
+                filter_reasons=reason_counts
+            )
+            
+            self.logger.info(f"过滤结果: 符合条件 {result.passed_count} 行, 被过滤 {result.filtered_count} 行")
+            return result
+            
+        except Exception as e:
+            # 捕获所有未处理的异常，确保程序不会因单个文件处理失败而中断
+            self.logger.error(f"处理文件时发生未预期的错误: {excel_path}, 错误: {e}")
+            import traceback
+            self.logger.debug(f"错误详情: {traceback.format_exc()}")
+            
             return FilterResult(
                 source_file=excel_path,
                 passed_data=pd.DataFrame(),
                 filtered_data=pd.DataFrame(),
                 passed_count=0,
                 filtered_count=0,
-                filter_reasons={}
+                filter_reasons={"处理过程中发生错误": 1}
             )
-        
-        self.logger.info(f"读取数据: {len(df)} 行")
-        
-        # 验证必需列
-        if not self._validate_columns(df):
-            self.logger.error(f"文件缺少必需列，跳过处理: {excel_path}")
-            return FilterResult(
-                source_file=excel_path,
-                passed_data=pd.DataFrame(),
-                filtered_data=pd.DataFrame(),
-                passed_count=0,
-                filtered_count=0,
-                filter_reasons={}
-            )
-        
-        # 应用过滤规则
-        filter_mask, filter_reasons = self._apply_filters(df)
-        
-        # 添加过滤原因列
-        filtered_df = self._add_filter_reason_column(df, filter_reasons)
-        
-        # 分离数据
-        passed_df = df[~filter_mask].copy()  # 符合条件的数据
-        filtered_df = filtered_df[filter_mask].copy()  # 被过滤的数据
-        
-        # 统计过滤原因
-        reason_counts = self._count_filter_reasons(filter_reasons[filter_mask])
-        
-        result = FilterResult(
-            source_file=excel_path,
-            passed_data=passed_df,
-            filtered_data=filtered_df,
-            passed_count=len(passed_df),
-            filtered_count=len(filtered_df),
-            filter_reasons=reason_counts
-        )
-        
-        self.logger.info(f"过滤结果: 符合条件 {result.passed_count} 行, 被过滤 {result.filtered_count} 行")
-        return result
     
     def _read_excel(self, excel_path: str) -> Optional[pd.DataFrame]:
         """读取 Excel 文件"""
@@ -149,40 +165,61 @@ class DataFilterEngine:
         Returns:
             (filter_mask, filter_reasons) 过滤掩码和原因
         """
-        # 获取字段映射
-        call_number_col = self.config.filters.field_mapping.get("call_number", "索书号")
-        title_col = self.config.filters.field_mapping.get("title", "题名")
-        
-        # 初始化过滤掩码和原因
-        filter_mask = pd.Series(False, index=df.index)
-        filter_reasons = pd.Series("", index=df.index)
-        
-        # 1. 处理空值
-        null_mask, null_reasons = self._handle_null_values(df, call_number_col, title_col)
-        filter_mask |= null_mask
-        filter_reasons = self._merge_reasons(filter_reasons, null_reasons)
-        
-        # 2. 应用索书号规则
-        if self.call_number_matcher.has_rules:
-            call_number_mask = self.call_number_matcher.apply(df[call_number_col])
-            call_number_reasons = pd.Series(
-                f"索书号匹配排除规则", 
-                index=df.index
-            )
-            filter_mask |= call_number_mask
-            filter_reasons = self._merge_reasons(filter_reasons, call_number_reasons, call_number_mask)
-        
-        # 3. 应用题名关键词规则
-        if self.title_matcher.has_keywords:
-            title_mask = self.title_matcher.apply(df[title_col])
-            title_reasons = pd.Series(
-                f"题名包含排除关键词", 
-                index=df.index
-            )
-            filter_mask |= title_mask
-            filter_reasons = self._merge_reasons(filter_reasons, title_reasons, title_mask)
-        
-        return filter_mask, filter_reasons
+        try:
+            # 获取字段映射
+            call_number_col = self.config.filters.field_mapping.get("call_number", "索书号")
+            title_col = self.config.filters.field_mapping.get("title", "题名")
+            
+            # 检查列是否存在
+            if call_number_col not in df.columns:
+                self.logger.warning(f"数据中不存在索书号列: {call_number_col}")
+                call_number_col = None
+            if title_col not in df.columns:
+                self.logger.warning(f"数据中不存在题名列: {title_col}")
+                title_col = None
+            
+            # 初始化过滤掩码和原因
+            filter_mask = pd.Series(False, index=df.index)
+            filter_reasons = pd.Series("", index=df.index)
+            
+            # 1. 处理空值
+            if call_number_col and title_col:
+                null_mask, null_reasons = self._handle_null_values(df, call_number_col, title_col)
+                filter_mask |= null_mask
+                filter_reasons = self._merge_reasons(filter_reasons, null_reasons)
+            
+            # 2. 应用索书号规则
+            if call_number_col and self.call_number_matcher.has_rules:
+                try:
+                    call_number_mask = self.call_number_matcher.apply(df[call_number_col])
+                    call_number_reasons = pd.Series(
+                        f"索书号匹配排除规则",
+                        index=df.index
+                    )
+                    filter_mask |= call_number_mask
+                    filter_reasons = self._merge_reasons(filter_reasons, call_number_reasons, call_number_mask)
+                except Exception as e:
+                    self.logger.error(f"应用索书号规则时出错: {e}")
+            
+            # 3. 应用题名关键词规则
+            if title_col and self.title_matcher.has_keywords:
+                try:
+                    title_mask = self.title_matcher.apply(df[title_col])
+                    title_reasons = pd.Series(
+                        f"题名包含排除关键词",
+                        index=df.index
+                    )
+                    filter_mask |= title_mask
+                    filter_reasons = self._merge_reasons(filter_reasons, title_reasons, title_mask)
+                except Exception as e:
+                    self.logger.error(f"应用题名关键词规则时出错: {e}")
+            
+            return filter_mask, filter_reasons
+            
+        except Exception as e:
+            self.logger.error(f"应用过滤规则时发生错误: {e}")
+            # 返回空过滤结果，确保所有数据都通过
+            return pd.Series(False, index=df.index), pd.Series("", index=df.index)
     
     def _handle_null_values(self, df: pd.DataFrame, call_number_col: str, title_col: str) -> Tuple[pd.Series, pd.Series]:
         """处理空值"""

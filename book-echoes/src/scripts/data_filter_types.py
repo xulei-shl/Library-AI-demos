@@ -14,8 +14,9 @@ import pandas as pd
 @dataclass
 class InputConfig:
     """输入配置"""
-    excel_files: List[str]
+    excel_files: List[str]  # 可以是文件路径或目录路径
     required_columns: List[str]
+    scan_directories: bool = False  # 是否扫描目录中的Excel文件
 
 
 @dataclass
@@ -110,3 +111,107 @@ class FilterStatistics:
             f"符合条件: {self.total_passed} ({self.get_passed_rate():.1f}%)\n"
             f"被过滤: {self.total_filtered} ({100 - self.get_passed_rate():.1f}%)"
         )
+    
+    def generate_report(self, config: Optional[Dict] = None) -> str:
+        """生成详细的过滤报告
+        
+        Args:
+            config: 配置信息，用于报告中显示配置详情
+            
+        Returns:
+            str: 格式化的报告文本
+        """
+        from datetime import datetime
+        import pandas as pd
+        
+        report = []
+        report.append("=" * 60)
+        report.append("全量书目数据过滤报告")
+        report.append("=" * 60)
+        report.append(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        report.append("")
+        
+        # 总体统计
+        report.append("总体统计:")
+        report.append(f"  处理文件数: {self.total_files}")
+        report.append(f"  总数据行数: {self.total_rows}")
+        report.append(f"  符合条件: {self.total_passed} ({self.get_passed_rate():.1f}%)")
+        report.append(f"  被过滤: {self.total_filtered} ({100 - self.get_passed_rate():.1f}%)")
+        report.append("")
+        
+        # 过滤原因分布
+        if self.filter_reason_distribution:
+            report.append("过滤原因分布:")
+            total_filtered = self.total_filtered
+            for reason, count in sorted(self.filter_reason_distribution.items(), key=lambda x: x[1], reverse=True):
+                percentage = (count / total_filtered * 100) if total_filtered > 0 else 0
+                report.append(f"  - {reason}: {count} ({percentage:.1f}%)")
+            report.append("")
+        
+        # 各文件统计详情
+        if self.file_statistics:
+            report.append("各文件处理详情:")
+            for file_stat in self.file_statistics:
+                file_name = file_stat.get("文件", "未知文件")
+                total_rows = file_stat.get("总行数", 0)
+                passed_count = file_stat.get("符合条件", 0)
+                filtered_count = file_stat.get("被过滤", 0)
+                pass_rate = file_stat.get("通过率", "0.0%")
+                
+                report.append(f"  文件: {file_name}")
+                report.append(f"    总行数: {total_rows}")
+                report.append(f"    符合条件: {passed_count}")
+                report.append(f"    被过滤: {filtered_count}")
+                report.append(f"    通过率: {pass_rate}")
+                report.append("")
+        
+        # 配置信息（如果提供）
+        if config:
+            report.append("配置信息:")
+            
+            # 输入配置
+            input_config = config.get('input', {})
+            excel_files = input_config.get('excel_files', [])
+            report.append(f"  输入文件数: {len(excel_files)}")
+            if len(excel_files) <= 5:  # 只显示前5个文件路径
+                for file_path in excel_files:
+                    report.append(f"    - {file_path}")
+            else:
+                for file_path in excel_files[:3]:
+                    report.append(f"    - {file_path}")
+                report.append(f"    - ... 还有 {len(excel_files) - 3} 个文件")
+            
+            required_columns = input_config.get('required_columns', [])
+            report.append(f"  必需列: {', '.join(required_columns)}")
+            
+            # 过滤配置
+            filters_config = config.get('filters', {})
+            call_number_rules = filters_config.get('call_number_rules', '')
+            title_keywords_rules = filters_config.get('title_keywords_rules', '')
+            
+            if call_number_rules:
+                report.append(f"  索书号规则文件: {call_number_rules}")
+            if title_keywords_rules:
+                report.append(f"  题名关键词规则文件: {title_keywords_rules}")
+            
+            null_handling = filters_config.get('null_handling', {})
+            report.append(f"  空值处理: 索书号={null_handling.get('call_number', 'N/A')}, 题名={null_handling.get('title', 'N/A')}")
+            report.append(f"  过滤逻辑: {filters_config.get('logic', 'N/A')}")
+            
+            # 输出配置
+            output_config = config.get('output', {})
+            output_dir = output_config.get('output_dir', '')
+            if output_dir:
+                report.append(f"  输出目录: {output_dir}")
+            
+            merge_passed = output_config.get('merge_passed_data', False)
+            add_source = output_config.get('add_source_file_column', False)
+            report.append(f"  合并结果: {'是' if merge_passed else '否'}")
+            report.append(f"  添加来源文件列: {'是' if add_source else '否'}")
+            
+            report.append("")
+        
+        # 报告结束
+        report.append("=" * 60)
+        
+        return "\n".join(report)

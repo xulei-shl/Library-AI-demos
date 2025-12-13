@@ -3,9 +3,13 @@
 # 输入配置
 input:
   # Excel 文件路径列表（支持绝对路径和相对路径）
+  # 可以是文件路径或目录路径
   excel_files:
-    - "data/new/验收.xlsx"
-  #  - "data/books_2024.xlsx"
+    - "data/new/"  # 目录路径，将扫描该目录下的所有Excel文件
+  #  - "data/new/验收.xlsx"  # 单个文件路径
+  
+  # 是否扫描目录中的Excel文件（当excel_files包含目录路径时）
+  scan_directories: true
   
   # 必需的列名（用于验证输入文件）
   required_columns:

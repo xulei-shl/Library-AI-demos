@@ -78,6 +78,9 @@ class DataFilterRunner:
         # 保存结果
         self._save_results(results, merged_df)
         
+        # 生成并保存报告
+        self._generate_and_save_report(results, merged_df)
+        
         # 输出统计报告
         self._print_statistics()
         
@@ -122,23 +125,89 @@ class DataFilterRunner:
     def _process_all_files(self) -> List[FilterResult]:
         """处理所有文件"""
         results = []
-        excel_files = self.config.input.excel_files
+        excel_files = self._resolve_excel_files()
         
         self.logger.info(f"开始处理 {len(excel_files)} 个文件")
         
         for i, excel_file in enumerate(excel_files, 1):
             self.logger.info(f"处理文件 {i}/{len(excel_files)}: {excel_file}")
             
-            result = self.engine.process_file(excel_file)
-            results.append(result)
-            
-            # 添加到统计
-            self.statistics.add_file_result(result)
-            
-            # 保存单个文件结果
-            self._save_single_file_result(result)
+            try:
+                result = self.engine.process_file(excel_file)
+                results.append(result)
+                
+                # 添加到统计
+                self.statistics.add_file_result(result)
+                
+                # 保存单个文件结果
+                self._save_single_file_result(result)
+            except Exception as e:
+                # 单个文件处理失败，记录错误但继续处理其他文件
+                self.logger.error(f"处理文件失败: {excel_file}, 错误: {e}")
+                # 创建一个空的结果对象，确保统计信息正确
+                empty_result = FilterResult(
+                    source_file=excel_file,
+                    passed_data=pd.DataFrame(),
+                    filtered_data=pd.DataFrame(),
+                    passed_count=0,
+                    filtered_count=0,
+                    filter_reasons={"处理失败": 1}
+                )
+                results.append(empty_result)
+                self.statistics.add_file_result(empty_result)
         
         return results
+    
+    def _resolve_excel_files(self) -> List[str]:
+        """解析Excel文件列表，支持目录扫描"""
+        excel_files = []
+        
+        for path_str in self.config.input.excel_files:
+            path = Path(path_str)
+            
+            if not path.exists():
+                self.logger.warning(f"路径不存在: {path_str}")
+                continue
+                
+            if path.is_file():
+                # 直接是文件
+                if self._is_excel_file(path):
+                    excel_files.append(str(path))
+                else:
+                    self.logger.warning(f"不是Excel文件: {path_str}")
+            elif path.is_dir():
+                # 是目录，扫描目录下的所有Excel文件
+                if self.config.input.scan_directories:
+                    self.logger.info(f"扫描目录: {path_str}")
+                    found_files = self._scan_directory_for_excel(path)
+                    excel_files.extend(found_files)
+                    self.logger.info(f"在目录 {path_str} 中找到 {len(found_files)} 个Excel文件")
+                else:
+                    self.logger.warning(f"路径是目录但未启用目录扫描: {path_str}")
+            else:
+                self.logger.warning(f"无效路径: {path_str}")
+        
+        if not excel_files:
+            self.logger.warning("未找到任何可处理的Excel文件")
+            
+        return excel_files
+    
+    def _is_excel_file(self, path: Path) -> bool:
+        """检查是否为Excel文件"""
+        return path.suffix.lower() in ['.xlsx', '.xls']
+    
+    def _scan_directory_for_excel(self, directory: Path) -> List[str]:
+        """扫描目录中的所有Excel文件"""
+        excel_files = []
+        
+        try:
+            for file_path in directory.iterdir():
+                if file_path.is_file() and self._is_excel_file(file_path):
+                    excel_files.append(str(file_path))
+        except Exception as e:
+            self.logger.error(f"扫描目录失败: {directory}, 错误: {e}")
+            
+        return excel_files
     
     def _save_single_file_result(self, result: FilterResult) -> None:
         """保存单个文件的过滤结果"""
@@ -221,3 +290,58 @@ class DataFilterRunner:
                 self.logger.info(f"  {file_stat}")
         
         self.logger.info("==============================")
+    
+    def _generate_and_save_report(self, results: List[FilterResult], merged_df: Optional[pd.DataFrame]) -> None:
+        """生成并保存详细报告
+        
+        Args:
+            results: 所有文件的过滤结果
+            merged_df: 合并后的数据
+        """
+        try:
+            # 生成报告内容
+            report_content = self.statistics.generate_report(self._get_config_dict())
+            
+            # 保存报告到文件
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_dir = Path(self.config.output.output_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            report_filename = f"过滤报告_{timestamp}.txt"
+            report_path = output_dir / report_filename
+            
+            with open(report_path, 'w', encoding='utf-8') as f:
+                f.write(report_content)
+            
+            self.logger.info(f"过滤报告已保存: {report_path}")
+            
+        except Exception as e:
+            self.logger.error(f"生成或保存报告时出错: {e}")
+    
+    def _get_config_dict(self) -> Dict:
+        """获取配置字典，用于报告生成
+        
+        Returns:
+            Dict: 配置字典
+        """
+        config_dict = {
+            'input': {
+                'excel_files': self.config.input.excel_files,
+                'required_columns': self.config.input.required_columns,
+                'scan_directories': self.config.input.scan_directories
+            },
+            'filters': {
+                'call_number_rules': self.config.filters.call_number_rules,
+                'title_keywords_rules': self.config.filters.title_keywords_rules,
+                'field_mapping': self.config.filters.field_mapping,
+                'null_handling': self.config.filters.null_handling,
+                'logic': self.config.filters.logic
+            },
+            'output': {
+                'output_dir': self.config.output.output_dir,
+                'merge_passed_data': self.config.output.merge_passed_data,
+                'add_source_file_column': self.config.output.add_source_file_column
+            }
+        }
+        
+        return config_dict
