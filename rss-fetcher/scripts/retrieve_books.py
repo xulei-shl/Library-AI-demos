@@ -486,7 +486,7 @@ def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever) ->
     for item in results:
         source = item.get('match_source')
         if source:
-            item['display_source'] = f" ({{'title': '标题', 'author': '作者', 'custom_keywords': '关键词'}.get(source, source)}精确命中)"
+            item['display_source'] = f" ({({'title': '标题', 'author': '作者', 'custom_keywords': '关键词'}.get(source, source))}精确命中)"
         else:
             item['display_source'] = ''
     _print_text_results(results, extra_field_name='display_source')
