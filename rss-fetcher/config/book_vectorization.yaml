@@ -1,0 +1,99 @@
+# ============================================================================
+# 图书向量化配置文件
+# ============================================================================
+
+# 数据库配置
+database:
+  path: "F:\\Github\\Library-AI-demos\\book-echoes\\runtime\\database\\books_history.db"
+  table: "books"
+
+# 向量数据库配置
+vector_db:
+  type: "chromadb"
+  persist_directory: "runtime/vector_db/books"
+  collection_name: "books_collection"
+  distance_metric: "cosine"  # cosine / l2 / ip
+
+# Embedding 模型配置
+embedding:
+  provider: "openai"  # openai / local_bge
+  model: "text-embedding-3-large"
+  api_key: "env:ONEAPI_API_KEY"
+  base_url: "http://47.103.50.106:3000/v1"
+  dimensions: 1536  # text-embedding-3-large 的维度
+  batch_size: 50    # 每批处理数量
+  max_retries: 3    # 单次调用重试次数
+  timeout: 30       # 超时时间(秒)
+  retry_delay: 2    # 重试间隔(秒)
+
+# 数据过滤规则
+filters:
+  # 必填字段检查
+  required_fields:
+    - douban_summary
+    - douban_title
+    - douban_author
+    - douban_catalog
+  
+  # 评分阈值(根据索书号首字母)
+  rating_thresholds:
+    B: 8.2
+    C: 7.5
+    D: 7.1
+    E: 7.4
+    F: 7.1
+    G: 7.3
+    H: 7.2
+    I: 7.3
+    J: 7.7
+    K: 8.0
+    N: 7.6
+    S: 7.4
+    T: 7.6
+    default: 7.5  # 其他分类默认阈值
+
+# 向量化文本构建
+text_construction:
+  # 文本模板
+  template: |
+    书名: {douban_title}
+    作者: {douban_author}
+    简介: {douban_summary}
+    {douban_summary}
+    目录: {douban_catalog}
+  
+  # 字段处理规则
+  max_catalog_length: 3000  # 目录最大长度,避免超过模型限制
+  summary_weight: 2         # 简介重复次数(加权)
+  empty_placeholder: "[无]" # 空字段占位符
+
+# 运行模式
+mode:
+  incremental: true         # 增量处理(处理 pending/failed/failed_final 状态)
+  skip_on_error: true       # 单本书失败是否跳过
+  final_retry: true         # 全部处理完后,对失败数据进行兜底重试
+  final_retry_count: 1      # 兜底重试次数
+  max_retry_count: 5        # 单本书最大重试次数(超过后不再自动重试)
+
+# Metadata 存储策略
+metadata:
+  # 存储到 ChromaDB 的元数据字段
+  fields:
+    - book_id
+    - douban_title
+    - douban_author
+    - call_no
+    - douban_rating
+    - douban_pub_year
+
+# 日志配置
+logging:
+  level: "INFO"
+  progress_interval: 10     # 每处理N本书输出一次进度
+  save_failed_report: true  # 是否生成失败报告
+  failed_report_path: "runtime/logs/vectorization_failed_{timestamp}.json"
+
+# 性能优化
+performance:
+  batch_commit_size: 100    # 每处理N本书提交一次 ChromaDB
+  enable_progress_bar: true # 是否显示进度条
