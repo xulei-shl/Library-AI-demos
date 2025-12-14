@@ -69,8 +69,8 @@ class VectorStore:
         Returns:
             embedding_id: ChromaDB 中的文档ID
         """
-        # 生成唯一 ID
-        embedding_id = f"book_{metadata['book_id']}_{int(time.time())}"
+        # 生成唯一 ID - 使用 'id' 字段而不是 'book_id'
+        embedding_id = f"book_{metadata['id']}_{int(time.time())}"
         
         self.collection.add(
             embeddings=[embedding],
@@ -94,9 +94,9 @@ class VectorStore:
         Returns:
             embedding_ids: ChromaDB 中的文档ID列表
         """
-        # 生成唯一 ID 列表
+        # 生成唯一 ID 列表 - 使用 'id' 字段而不是 'book_id'
         embedding_ids = [
-            f"book_{metadata['book_id']}_{int(time.time())}_{i}"
+            f"book_{metadata['id']}_{int(time.time())}_{i}"
             for i, metadata in enumerate(metadatas)
         ]
         

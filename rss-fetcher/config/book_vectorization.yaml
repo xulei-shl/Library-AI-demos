@@ -16,11 +16,11 @@ vector_db:
 
 # Embedding 模型配置
 embedding:
-  provider: "openai"  # openai / local_bge
-  model: "text-embedding-3-large"
-  api_key: "env:ONEAPI_API_KEY"
-  base_url: "http://47.103.50.106:3000/v1"
-  dimensions: 1536  # text-embedding-3-large 的维度
+  provider: "SiliconFlow"
+  model: "Qwen/Qwen3-Embedding-8B"
+  api_key: "env:SiliconFlow_API_KEY"
+  base_url: "https://api.siliconflow.cn/v1"
+  dimensions: 4096  # text-embedding-3-large 的维度
   batch_size: 50    # 每批处理数量
   max_retries: 3    # 单次调用重试次数
   timeout: 30       # 超时时间(秒)
@@ -79,12 +79,47 @@ mode:
 metadata:
   # 存储到 ChromaDB 的元数据字段
   fields:
-    - book_id
+    - id
     - douban_title
     - douban_author
     - call_no
     - douban_rating
     - douban_pub_year
+
+# 多子查询检索配置
+multi_query:
+  enabled: false               # 默认保持单查询模式
+  top_k_per_query: 20          # 每个子查询的候选数量
+  priorities:                  # 执行顺序
+    - primary
+    - tags
+    - insight
+    - books
+  min_results:                 # 关键查询至少返回结果数
+    primary: 5
+    tags: 5
+  max_queries_per_type:        # 控制成本，限定每类子查询数量
+    tags: 8
+    insight: 4
+    books: 5
+
+# 结果融合规则
+fusion:
+  weights:
+    max_similarity: 0.6
+    avg_similarity: 0.2
+    match_count: 0.2
+  final_top_k: 15
+
+# Reranker 配置
+reranker:
+  enabled: false
+  provider: "siliconflow"
+  model: "Qwen/Qwen3-Reranker-8B"
+  api_key: "env:SiliconFlow_API_KEY"
+  base_url: "https://api.siliconflow.cn/v1"
+  top_n: 30
+  timeout: 15
 
 # 日志配置
 logging:

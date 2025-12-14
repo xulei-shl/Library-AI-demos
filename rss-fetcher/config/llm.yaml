@@ -192,6 +192,23 @@ tasks:
         project: "book-echoes"
         module: "模块7"
 
+  query_assets_expansion:
+    provider_type: text-small
+    temperature: 0.35
+    prompt:
+      type: langfuse
+      langfuse_name: "query_assets_expansion"
+    json_repair:
+      enabled: true
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "检索资产扩写"
+      tags: ["book-echoes", "retrieval"]
+      metadata:
+        project: "book-echoes"
+        module: "检索优化"
+
 defaults:
   temperature: 0.45
   top_p: 0.9
