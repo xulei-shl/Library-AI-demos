@@ -5,7 +5,7 @@ input:
   # Excel 文件路径列表（支持绝对路径和相对路径）
   # 可以是文件路径或目录路径
   excel_files:
-    - "data/new/"  # 目录路径，将扫描该目录下的所有Excel文件
+    - "data/new/2025"  # 目录路径，将扫描该目录下的所有Excel文件
   #  - "data/new/验收.xlsx"  # 单个文件路径
   
   # 是否扫描目录中的Excel文件（当excel_files包含目录路径时）
@@ -46,7 +46,7 @@ output:
   filename_template:
     passed: "数据筛选结果_{timestamp}.xlsx"      # 符合条件的数据
     filtered: "被过滤数据_{timestamp}.xlsx"      # 被过滤的数据
-    merged: "合并结果_{timestamp}.xlsx"          # 合并后的总表
+    merged: "数据筛选结果_{timestamp}.xlsx"          # 合并后的总表
   
   # 是否添加过滤原因列
   add_filter_reason: true

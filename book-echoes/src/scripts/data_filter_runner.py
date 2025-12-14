@@ -251,6 +251,22 @@ class DataFilterRunner:
         
         # 合并所有数据
         merged_df = pd.concat(passed_dataframes, ignore_index=True)
+        
+        # 重命名列名
+        column_mapping = {
+            '标识号': 'ISBN',
+            '题名': '书名'
+        }
+        
+        # 只重命名存在的列
+        existing_columns = set(merged_df.columns)
+        valid_mapping = {old: new for old, new in column_mapping.items() if old in existing_columns}
+        
+        if valid_mapping:
+            merged_df = merged_df.rename(columns=valid_mapping)
+            renamed_columns = ', '.join([f"{old} -> {new}" for old, new in valid_mapping.items()])
+            self.logger.info(f"重命名列: {renamed_columns}")
+        
         self.logger.info(f"合并所有符合条件数据: {len(merged_df)} 行")
         
         return merged_df
