@@ -115,22 +115,21 @@ fusion:
 
 # Reranker 配置
 reranker:
-  enabled: false
+  enabled: true
   provider: "siliconflow"
   model: "Qwen/Qwen3-Reranker-8B"
   api_key: "env:SiliconFlow_API_KEY"
   base_url: "https://api.siliconflow.cn/v1"
-  top_n: 30
+  top_n: 20
   timeout: 15
 
 # 精确匹配配置
 exact_match:
-  enabled: false
-  top_k: 20
+  enabled: true
+  top_k: 10
   match_fields:
     - douban_title
-    - douban_author
-    - custom_keywords
+    - douban_summary
   title_weight: 1.0
   keyword_weight: 0.8
   final_weight: 1.1
@@ -141,6 +140,16 @@ logging:
   progress_interval: 10     # 每处理N本书输出一次进度
   save_failed_report: true  # 是否生成失败报告
   failed_report_path: "runtime/logs/vectorization_failed_{timestamp}.json"
+
+# 结果输出配置
+output:
+  enabled: true                    # 是否启用文件输出
+  formats: ["markdown", "json"]    # 输出格式列表
+  base_directory: "runtime/outputs/retrieval"  # 输出基础目录
+  filename_template: "books_{mode}_{timestamp}"  # 文件名模板
+  include_timestamp: true          # 是否包含时间戳
+  timestamp_format: "%Y%m%d_%H%M%S"  # 时间戳格式
+  auto_create_directory: true     # 自动创建目录
 
 # 性能优化
 performance:

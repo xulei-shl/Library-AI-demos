@@ -42,8 +42,10 @@ try:
 except ImportError:
     pass
 
+from src.core.book_vectorization.output_formatter import OutputFormatter
 from src.core.book_vectorization.query_assets import build_query_package_from_md
 from src.core.book_vectorization.retriever import BookRetriever
+from src.utils.config_manager import ConfigManager
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -446,7 +448,7 @@ def _print_category_results(results: List[Dict]):
         print('-' * 50)
 
 
-def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever) -> Dict:
+def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever, output_formatter: OutputFormatter) -> Dict:
     """执行 Markdown → 多子查询 → 融合 → 可选 rerank 的完整流程。"""
 
     if not args.from_md:
@@ -494,6 +496,19 @@ def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever) ->
     if args.enable_rerank:
         print("✨ 已完成 SiliconFlow Reranker 重排序")
     
+    # 构建元数据并保存结果
+    metadata = {
+        'mode': 'multi',
+        'from_md': args.from_md,
+        'query_package_origin': query_package.origin,
+        'enable_rerank': args.enable_rerank,
+        'disable_exact_match': getattr(args, 'disable_exact_match', False),
+        'min_rating': args.min_rating,
+        'per_query_top_k': args.per_query_top_k,
+        'final_top_k': args.final_top_k
+    }
+    _save_results_if_enabled(output_formatter, results, metadata)
+    
     return {
         'mode': 'multi',
         'results': results,
@@ -504,6 +519,26 @@ def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever) ->
         'enable_rerank': args.enable_rerank,
         'disable_exact_match': getattr(args, 'disable_exact_match', False),
     }
+
+
+def _save_results_if_enabled(output_formatter: OutputFormatter, results: List[Dict], metadata: Dict) -> None:
+    """如果启用了输出功能，则保存检索结果
+    
+    Args:
+        output_formatter: 输出格式化器实例
+        results: 检索结果列表
+        metadata: 元数据字典
+    """
+    try:
+        saved_files = output_formatter.save_results(results, metadata)
+        if saved_files:
+            print("\n📄 检索结果已保存到文件:")
+            for format_name, file_path in saved_files.items():
+                print(f"  {format_name.upper()}: {file_path}")
+            print()
+    except Exception as e:
+        logger.error(f"保存检索结果时发生错误: {e}")
+        print(f"\n⚠️ 保存检索结果失败: {e}")
 
 
 def run_cli(args: argparse.Namespace) -> Dict:
@@ -523,12 +558,28 @@ def run_cli(args: argparse.Namespace) -> Dict:
     if args.final_top_k is not None and args.final_top_k <= 0:
         raise ValueError('参数 --final-top-k 必须为正整数')
 
+    # 初始化检索器
     retriever = BookRetriever(config_path=args.config)
+    
+    # 初始化输出格式化器
+    config_manager = ConfigManager(args.config)
+    output_config = config_manager.get('output', {})
+    output_formatter = OutputFormatter(output_config)
+    
     try:
         if args.category:
             logger.info(f"执行分类检索: category={args.category}, top_k={args.top_k}")
             results = retriever.search_by_category(args.category.upper(), top_k=args.top_k)
             _print_category_results(results)
+            
+            # 构建元数据并保存结果
+            metadata = {
+                'mode': 'category',
+                'category': args.category.upper(),
+                'top_k': args.top_k
+            }
+            _save_results_if_enabled(output_formatter, results, metadata)
+            
             return {
                 'mode': 'category',
                 'results': results,
@@ -540,7 +591,7 @@ def run_cli(args: argparse.Namespace) -> Dict:
             query_mode = 'multi'
 
         if query_mode == 'multi':
-            return _run_multi_query_flow(args, retriever)
+            return _run_multi_query_flow(args, retriever, output_formatter)
         else:
             # 单文本检索模式
             query_text = _resolve_query_text(args.query, args.query_file)
@@ -551,6 +602,16 @@ def run_cli(args: argparse.Namespace) -> Dict:
                 min_rating=args.min_rating
             )
             _print_text_results(results)
+            
+            # 构建元数据并保存结果
+            metadata = {
+                'mode': 'single',
+                'query': query_text,
+                'top_k': args.top_k,
+                'min_rating': args.min_rating
+            }
+            _save_results_if_enabled(output_formatter, results, metadata)
+            
             return {
                 'mode': 'single',
                 'results': results,

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 from dataclasses import dataclass, field
@@ -27,6 +28,7 @@ SUMMARY_PATTERN = re.compile(r"-\s*摘要[:：]\s*(.+)")
 TAG_LINE_PATTERN = re.compile(r"\|\s*标签\s*\|\s*(.+?)\s*\|")
 BOOK_LINE_PATTERN = re.compile(r"\|\s*提及书籍\s*\|\s*(.+?)\s*\|")
 BULLET_LINE_PATTERN = re.compile(r"^-\s+(.*)")
+BOOK_TITLE_FIELD_PATTERN = re.compile(r"title\s*[:：]\s*['\"]?([^'\"}]+)")
 
 DEFAULT_PRIORITY = ["primary", "tags", "insight", "books"]
 DEFAULT_EXPANSION_TASK = "query_assets_expansion"
@@ -124,6 +126,10 @@ class MarkdownAssetParser:
         matches = BOOK_LINE_PATTERN.findall(content)
         books: List[str] = []
         for raw in matches:
+            parsed_books = self._parse_book_entries(raw)
+            if parsed_books:
+                books.extend(parsed_books)
+                continue
             values = self._split_list_text(raw)
             books.extend(values)
         return self._deduplicate([b for b in books if b and b not in {"无", "none", "None"}])
@@ -300,6 +306,56 @@ class MarkdownAssetParser:
             seen.add(norm)
             ordered.append(norm)
         return ordered
+
+    def _parse_book_entries(self, raw: str) -> List[str]:
+        """解析表格中的提及书籍字段，优先提取 title。"""
+        normalized = self._normalize_book_cell(raw)
+        if not normalized or normalized.lower() in {"无", "none"}:
+            return []
+        literal = normalized if normalized.startswith("[") else f"[{normalized}]"
+        try:
+            payload = ast.literal_eval(literal)
+        except (ValueError, SyntaxError):
+            return self._extract_titles_from_text(normalized)
+        return self._collect_titles_from_literal(payload)
+
+    def _normalize_book_cell(self, text: str) -> str:
+        """标准化标点，方便进一步解析。"""
+        normalized = text.strip()
+        if not normalized:
+            return ""
+        replacements = {
+            "、": ",",
+            "，": ",",
+            "；": ",",
+            "：": ":",
+            "“": '"',
+            "”": '"',
+            "‘": "'",
+            "’": "'",
+        }
+        for old, new in replacements.items():
+            normalized = normalized.replace(old, new)
+        return normalized
+
+    def _collect_titles_from_literal(self, payload: Any) -> List[str]:
+        """从字面量结构中收集 title 字段。"""
+        items = payload if isinstance(payload, list) else [payload]
+        titles: List[str] = []
+        for item in items:
+            if isinstance(item, dict):
+                title = item.get("title") or item.get("name")
+                if isinstance(title, str) and title.strip():
+                    titles.append(title.strip())
+            elif isinstance(item, str) and item.strip():
+                titles.append(item.strip())
+        return titles
+
+    def _extract_titles_from_text(self, text: str) -> List[str]:
+        """回退：直接基于文本模式提取 title。"""
+        matches = BOOK_TITLE_FIELD_PATTERN.findall(text)
+        titles = [match.strip().strip(",") for match in matches if match.strip()]
+        return titles
 
 
 def build_query_package_from_md(

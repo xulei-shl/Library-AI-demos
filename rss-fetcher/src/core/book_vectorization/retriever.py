@@ -243,16 +243,25 @@ class BookRetriever:
         exact_match_top_k: int,
     ) -> List[Dict]:
         """精确匹配分支：从 QueryPackage 提取关键词/书名进行 SQL 精确匹配。"""
+        raw_terms: List[str] = []
+        raw_terms.extend(query_package.books)
+        raw_terms.extend(query_package.tags)
+
+        primary_max_len = self.exact_match_config.get('primary_max_length', 10)
+        for short_term in query_package.primary:
+            if len(short_term) <= primary_max_len:
+                raw_terms.append(short_term)
+
         terms: List[str] = []
-
-        # 收集书名（优先）
-        terms.extend(query_package.books)
-
-        # 从 primary/short tags 提取短语（长度<=10）
-        max_len = 10
-        for short_term in query_package.primary + query_package.tags:
-            if len(short_term) <= max_len:
-                terms.append(short_term)
+        seen = set()
+        for term in raw_terms:
+            normalized = (term or "").strip()
+            if not normalized or normalized.lower() in {"无", "none"}:
+                continue
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            terms.append(normalized)
 
         if not terms:
             logger.info("无可用关键词/书名，跳过精确匹配分支")
