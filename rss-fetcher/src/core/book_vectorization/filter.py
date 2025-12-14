@@ -46,8 +46,8 @@ class BookFilter:
                 filtered_count += 1
                 continue
             
-            # 检查评分阈值
-            if not self._check_rating_threshold(book):
+            # 检查评分阈值（如果启用）
+            if self.config.get('enable_rating_filter', True) and not self._check_rating_threshold(book):
                 self._mark_filtered(book, "评分未达标")
                 filtered_count += 1
                 continue

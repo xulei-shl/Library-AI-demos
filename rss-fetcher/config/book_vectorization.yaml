@@ -35,6 +35,8 @@ filters:
     - douban_author
     - douban_catalog
   
+  # 是否启用评分过滤
+  enable_rating_filter: true
   # 评分阈值(根据索书号首字母)
   rating_thresholds:
     B: 8.2

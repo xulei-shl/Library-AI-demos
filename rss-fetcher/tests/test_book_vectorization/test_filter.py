@@ -21,6 +21,7 @@ class TestBookFilter:
         """测试配置"""
         return {
             'required_fields': ['douban_title', 'douban_author', 'douban_summary', 'douban_catalog'],
+            'enable_rating_filter': True,
             'rating_thresholds': {
                 'B': 8.2,
                 'C': 7.5,
@@ -170,6 +171,118 @@ class TestBookFilter:
         assert len(filtered) == 2
         assert filtered[0]['id'] == 1
         assert filtered[1]['id'] == 4
+    
+    def test_apply_filter_with_rating_disabled(self):
+        """测试禁用评分过滤时的过滤流程"""
+        # 创建禁用评分过滤的配置
+        config = {
+            'required_fields': ['douban_title', 'douban_author', 'douban_summary', 'douban_catalog'],
+            'enable_rating_filter': False,  # 禁用评分过滤
+            'rating_thresholds': {
+                'B': 8.2,
+                'C': 7.5,
+                'D': 7.1,
+                'default': 7.5
+            }
+        }
+        
+        book_filter = BookFilter(config, db_reader=None)
+        
+        books = [
+            # 符合条件
+            {
+                'id': 1,
+                'douban_title': '书籍1',
+                'douban_author': '作者1',
+                'douban_summary': '简介1',
+                'douban_catalog': '目录1',
+                'call_no': 'B123',
+                'douban_rating': 8.5
+            },
+            # 缺少必填字段
+            {
+                'id': 2,
+                'douban_title': '书籍2',
+                'douban_author': '作者2',
+                # 缺少 douban_summary
+                'douban_catalog': '目录2',
+                'call_no': 'C123',
+                'douban_rating': 8.0
+            },
+            # 评分未达标（但评分过滤已禁用，应该通过）
+            {
+                'id': 3,
+                'douban_title': '书籍3',
+                'douban_author': '作者3',
+                'douban_summary': '简介3',
+                'douban_catalog': '目录3',
+                'call_no': 'B123',
+                'douban_rating': 7.0  # 小于 B 类阈值 8.2
+            },
+            # 符合条件
+            {
+                'id': 4,
+                'douban_title': '书籍4',
+                'douban_author': '作者4',
+                'douban_summary': '简介4',
+                'douban_catalog': '目录4',
+                'call_no': 'D123',
+                'douban_rating': 7.5  # 大于 D 类阈值 7.1
+            }
+        ]
+        
+        filtered = book_filter.apply(books)
+        
+        # 由于评分过滤被禁用，只有缺少必填字段的书籍被过滤掉
+        assert len(filtered) == 3
+        assert filtered[0]['id'] == 1
+        assert filtered[1]['id'] == 3  # 评分未达标但通过了过滤
+        assert filtered[2]['id'] == 4
+    
+    def test_apply_filter_with_rating_enabled_by_default(self):
+        """测试默认启用评分过滤时的过滤流程"""
+        # 创建没有明确指定 enable_rating_filter 的配置
+        config = {
+            'required_fields': ['douban_title', 'douban_author', 'douban_summary', 'douban_catalog'],
+            # 没有设置 enable_rating_filter，应该默认为 True
+            'rating_thresholds': {
+                'B': 8.2,
+                'C': 7.5,
+                'D': 7.1,
+                'default': 7.5
+            }
+        }
+        
+        book_filter = BookFilter(config, db_reader=None)
+        
+        books = [
+            # 符合条件
+            {
+                'id': 1,
+                'douban_title': '书籍1',
+                'douban_author': '作者1',
+                'douban_summary': '简介1',
+                'douban_catalog': '目录1',
+                'call_no': 'B123',
+                'douban_rating': 8.5
+            },
+            # 评分未达标
+            {
+                'id': 2,
+                'douban_title': '书籍2',
+                'douban_author': '作者2',
+                'douban_summary': '简介2',
+                'douban_catalog': '目录2',
+                'call_no': 'B123',
+                'douban_rating': 7.0  # 小于 B 类阈值 8.2
+            }
+        ]
+        
+        filtered = book_filter.apply(books)
+        
+        # 默认启用评分过滤，评分未达标的书籍应该被过滤掉
+        assert len(filtered) == 1
+        assert filtered[0]['id'] == 1
 
 
 if __name__ == '__main__':
