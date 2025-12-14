@@ -479,12 +479,28 @@ def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever, ou
             print(f"    ⏱️ LLM 耗时: {latency} ms")
 
     print("🔍 正在执行多轮检索与融合...")
+    logger.info(
+        "开始多查询检索: md=%s, per_query_top_k=%s, final_top_k=%s, min_rating=%s, rerank=%s, disable_exact_match=%s",
+        args.from_md,
+        args.per_query_top_k,
+        args.final_top_k,
+        args.min_rating,
+        args.enable_rerank,
+        getattr(args, "disable_exact_match", False),
+    )
     results = retriever.search_multi_query(
         query_package=query_package,
         min_rating=args.min_rating,
         per_query_top_k=args.per_query_top_k,
         rerank=args.enable_rerank,
         final_top_k=args.final_top_k,
+    )
+    exact_hits = sum(1 for item in results if item.get('match_source'))
+    logger.info(
+        "多查询检索完成: total_results=%s, exact_match_hits=%s, rerank=%s",
+        len(results),
+        exact_hits,
+        args.enable_rerank,
     )
     # 精确命中标注
     for item in results:

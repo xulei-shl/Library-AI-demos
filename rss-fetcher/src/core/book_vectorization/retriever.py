@@ -7,7 +7,7 @@
 """
 
 import yaml
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 from src.utils.logger import get_logger
 from .embedding_client import EmbeddingClient
 from .vector_store import VectorStore
@@ -158,7 +158,12 @@ class BookRetriever:
             if isinstance(limit, int) and limit > 0:
                 queries = queries[:limit]
             for query_text in queries:
-                logger.info("执行子查询: type=%s, top_k=%s", bucket, top_k_each)
+                logger.info(
+                    "执行子查询: type=%s, top_k=%s, query=%s",
+                    bucket,
+                    top_k_each,
+                    self._shorten_text(query_text),
+                )
                 results = self.search_by_text(
                     query_text=query_text,
                     top_k=top_k_each,
@@ -243,18 +248,27 @@ class BookRetriever:
         exact_match_top_k: int,
     ) -> List[Dict]:
         """精确匹配分支：从 QueryPackage 提取关键词/书名进行 SQL 精确匹配。"""
-        raw_terms: List[str] = []
-        raw_terms.extend(query_package.books)
-        raw_terms.extend(query_package.tags)
+        raw_terms: List[Tuple[str, str]] = []
+        raw_terms.extend((book, "books") for book in query_package.books)
+        raw_terms.extend((tag, "tags") for tag in query_package.tags)
 
         primary_max_len = self.exact_match_config.get('primary_max_length', 10)
+        primary_candidates = [term for term in query_package.primary if term and len(term) <= primary_max_len]
+        logger.info(
+            "精确匹配关键词准备: books=%s, tags=%s, primary候选(<=%s)=%s",
+            len(query_package.books),
+            len(query_package.tags),
+            primary_max_len,
+            len(primary_candidates),
+        )
         for short_term in query_package.primary:
             if len(short_term) <= primary_max_len:
-                raw_terms.append(short_term)
+                raw_terms.append((short_term, "primary"))
 
         terms: List[str] = []
         seen = set()
-        for term in raw_terms:
+        source_counts = {"books": 0, "tags": 0, "primary": 0}
+        for term, source in raw_terms:
             normalized = (term or "").strip()
             if not normalized or normalized.lower() in {"无", "none"}:
                 continue
@@ -262,12 +276,14 @@ class BookRetriever:
                 continue
             seen.add(normalized)
             terms.append(normalized)
+            if source in source_counts:
+                source_counts[source] += 1
 
         if not terms:
             logger.info("无可用关键词/书名，跳过精确匹配分支")
             return []
 
-        logger.info("正在执行精确匹配，terms=%s", terms)
+        logger.info("正在执行精确匹配，terms=%s，来源统计=%s", terms, source_counts)
 
         match_fields = self.exact_match_config.get('match_fields', ['douban_title', 'douban_author', 'custom_keywords'])
         title_weight = self.exact_match_config.get('title_weight', 1.0)
@@ -295,3 +311,10 @@ class BookRetriever:
     def _compose_candidate_text(candidate: Dict) -> str:
         parts = [candidate.get('title', ''), candidate.get('author', ''), candidate.get('summary', '')]
         return '\n'.join(part for part in parts if part)
+
+    @staticmethod
+    def _shorten_text(text: str, limit: int = 80) -> str:
+        snippet = (text or "").strip().replace("\n", " ")
+        if len(snippet) <= limit:
+            return snippet
+        return snippet[:limit] + "..."

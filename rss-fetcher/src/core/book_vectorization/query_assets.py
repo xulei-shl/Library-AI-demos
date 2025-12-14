@@ -28,7 +28,10 @@ SUMMARY_PATTERN = re.compile(r"-\s*摘要[:：]\s*(.+)")
 TAG_LINE_PATTERN = re.compile(r"\|\s*标签\s*\|\s*(.+?)\s*\|")
 BOOK_LINE_PATTERN = re.compile(r"\|\s*提及书籍\s*\|\s*(.+?)\s*\|")
 BULLET_LINE_PATTERN = re.compile(r"^-\s+(.*)")
-BOOK_TITLE_FIELD_PATTERN = re.compile(r"title\s*[:：]\s*['\"]?([^'\"}]+)")
+BOOK_TITLE_FIELD_PATTERN = re.compile(
+    r"[\"']?title[\"']?\s*[:：]\s*(?P<quote>['\"])(?P<value>.+?)(?P=quote)",
+    re.IGNORECASE,
+)
 
 DEFAULT_PRIORITY = ["primary", "tags", "insight", "books"]
 DEFAULT_EXPANSION_TASK = "query_assets_expansion"
@@ -96,6 +99,19 @@ class MarkdownAssetParser:
         books = self._extract_books(content)
 
         package = QueryPackage(primary=primary, tags=tags, insight=insight, books=books)
+        logger.info(
+            "Markdown 解析完成: file=%s, origin=%s, primary=%s(%s), tags=%s(%s), insight=%s(%s), books=%s(%s)",
+            self.md_path,
+            package.origin,
+            len(primary),
+            self._preview_values(primary),
+            len(tags),
+            self._preview_values(tags),
+            len(insight),
+            self._preview_values(insight),
+            len(books),
+            self._preview_values(books),
+        )
         if expand_with_llm and llm_client:
             self._augment_with_llm(package, llm_client, expansion_task)
         return package
@@ -128,8 +144,14 @@ class MarkdownAssetParser:
         for raw in matches:
             parsed_books = self._parse_book_entries(raw)
             if parsed_books:
+                logger.debug(
+                    "提及书籍解析命中字面量: snippet=%s -> titles=%s",
+                    self._shorten_text(raw),
+                    parsed_books,
+                )
                 books.extend(parsed_books)
                 continue
+            logger.debug("提及书籍解析回退拆分: snippet=%s", self._shorten_text(raw))
             values = self._split_list_text(raw)
             books.extend(values)
         return self._deduplicate([b for b in books if b and b not in {"无", "none", "None"}])
@@ -324,6 +346,7 @@ class MarkdownAssetParser:
         normalized = text.strip()
         if not normalized:
             return ""
+        normalized = normalized.replace("\r", " ").replace("\n", " ")
         replacements = {
             "、": ",",
             "，": ",",
@@ -331,12 +354,13 @@ class MarkdownAssetParser:
             "：": ":",
             "“": '"',
             "”": '"',
-            "‘": "'",
-            "’": "'",
+            "‘": '"',
+            "’": '"',
         }
         for old, new in replacements.items():
             normalized = normalized.replace(old, new)
-        return normalized
+        normalized = re.sub(r"\s+", " ", normalized)
+        return normalized.strip()
 
     def _collect_titles_from_literal(self, payload: Any) -> List[str]:
         """从字面量结构中收集 title 字段。"""
@@ -353,9 +377,27 @@ class MarkdownAssetParser:
 
     def _extract_titles_from_text(self, text: str) -> List[str]:
         """回退：直接基于文本模式提取 title。"""
-        matches = BOOK_TITLE_FIELD_PATTERN.findall(text)
-        titles = [match.strip().strip(",") for match in matches if match.strip()]
+        matches = BOOK_TITLE_FIELD_PATTERN.finditer(text)
+        titles = []
+        for match in matches:
+            title = match.group("value").strip().strip(",")
+            if title:
+                titles.append(title)
         return titles
+
+    @staticmethod
+    def _preview_values(values: Sequence[str], limit: int = 3) -> str:
+        if not values:
+            return "-"
+        sample = [MarkdownAssetParser._shorten_text(val) for val in values[:limit]]
+        return " | ".join(sample)
+
+    @staticmethod
+    def _shorten_text(text: str, limit: int = 40) -> str:
+        sanitized = (text or "").strip().replace("\n", " ")
+        if len(sanitized) <= limit:
+            return sanitized
+        return sanitized[:limit] + "..."
 
 
 def build_query_package_from_md(
