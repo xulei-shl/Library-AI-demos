@@ -246,7 +246,9 @@ def interactive_mode():
     if args.from_md:
         print(f"Markdown文件: {args.from_md}")
         print(f"启用重排序: {'是' if args.enable_rerank else '否'}")
-    print(f"返回数量: {args.top_k}")
+        print(f"返回数量: {args.final_top_k}")
+    else:
+        print(f"返回数量: {args.top_k}")
     if args.min_rating:
         print(f"最低评分: {args.min_rating}")
     print("=" * 40)

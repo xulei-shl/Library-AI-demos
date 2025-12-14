@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.core.book_vectorization.output_formatter import OutputFormatter
+from src.core.book_vectorization.output_formatter import OutputFormatter, extract_md_filename
 
 
 class TestOutputFormatter:
@@ -261,3 +261,197 @@ class TestOutputFormatter:
         assert len(saved_files) == 2
         assert 'markdown' in saved_files
         assert 'json' in saved_files
+
+
+class TestMdFilenameExtraction:
+    """MD文件名提取功能测试类"""
+    
+    def test_extract_md_filename_success(self):
+        """测试正常MD文件名提取"""
+        # 测试标准路径
+        result = extract_md_filename("runtime/outputs/cross_analysis/20251211_091218_数字平台的情绪操控与劳动异化_g7.md")
+        assert result == "20251211_091218_数字平台的情绪操控与劳动异化_g7"
+        
+        # 测试相对路径
+        result = extract_md_filename("./test_file.md")
+        assert result == "test_file"
+        
+        # 测试绝对路径
+        result = extract_md_filename("/path/to/test_document.md")
+        assert result == "test_document"
+        
+        # 测试包含特殊字符的文件名
+        result = extract_md_filename("path/test-file_with.special@chars.md")
+        assert result == "test-file_with.special@chars"
+    
+    def test_extract_md_filename_empty_path(self):
+        """测试空路径处理"""
+        result = extract_md_filename("")
+        assert result is None
+        
+        result = extract_md_filename(None)
+        assert result is None
+    
+    def test_extract_md_filename_invalid_path(self):
+        """测试无效路径处理"""
+        # 测试只有扩展名的路径
+        result = extract_md_filename(".md")
+        assert result is None
+        
+        # 测试没有文件名的路径
+        result = extract_md_filename("/path/to/")
+        assert result is None
+    
+    @patch('src.core.book_vectorization.output_formatter.logger')
+    def test_extract_md_filename_exception_handling(self, mock_logger):
+        """测试异常处理"""
+        # 模拟Path.stem抛出异常的情况
+        with patch('src.core.book_vectorization.output_formatter.Path') as mock_path:
+            mock_path.side_effect = Exception("模拟异常")
+            
+            result = extract_md_filename("test.md")
+            assert result is None
+            mock_logger.error.assert_called_once()
+
+
+class TestMdSmartNaming:
+    """MD智能命名功能测试类"""
+    
+    def setup_method(self):
+        """测试前准备"""
+        self.temp_dir = tempfile.mkdtemp()
+        self.config = {
+            'enabled': True,
+            'formats': ['markdown', 'json'],
+            'base_directory': self.temp_dir,
+            'filename_template': 'books_{mode}_{timestamp}',
+            'include_timestamp': True,
+            'timestamp_format': '%Y%m%d_%H%M%S',
+            'auto_create_directory': True
+        }
+        self.formatter = OutputFormatter(self.config)
+        
+        # 测试数据
+        self.sample_results = [
+            {
+                'title': '测试书籍1',
+                'author': '作者1',
+                'rating': 8.5,
+                'call_no': 'TP123',
+                'summary': '这是一本测试书籍的简介'
+            }
+        ]
+    
+    def teardown_method(self):
+        """测试后清理"""
+        import shutil
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+    
+    def test_save_results_with_md_filename(self):
+        """测试MD解析检索模式的文件命名"""
+        metadata = {
+            'mode': 'multi',
+            'from_md': 'runtime/outputs/cross_analysis/20251211_091218_数字平台的情绪操控与劳动异化_g7.md'
+        }
+        
+        saved_files = self.formatter.save_results(self.sample_results, metadata)
+        
+        # 检查文件名是否包含MD文件名
+        for file_path in saved_files.values():
+            filename = os.path.basename(file_path)
+            assert "20251211_091218_数字平台的情绪操控与劳动异化_g7_相关书目_" in filename
+            assert filename.endswith('.md') or filename.endswith('.json')
+    
+    def test_save_results_with_md_filename_extraction_failure(self):
+        """测试MD文件名提取失败时的降级处理"""
+        metadata = {
+            'mode': 'multi',
+            'from_md': ''  # 空字符串会导致提取失败
+        }
+        
+        saved_files = self.formatter.save_results(self.sample_results, metadata)
+        
+        # 应该使用默认命名模板
+        for file_path in saved_files.values():
+            filename = os.path.basename(file_path)
+            assert filename.startswith('books_multi_')
+            assert "相关书目" not in filename
+    
+    def test_save_results_without_md_field(self):
+        """测试非MD解析检索模式的文件命名"""
+        metadata = {
+            'mode': 'single',
+            'query': '测试查询'
+        }
+        
+        saved_files = self.formatter.save_results(self.sample_results, metadata)
+        
+        # 应该使用默认命名模板
+        for file_path in saved_files.values():
+            filename = os.path.basename(file_path)
+            assert filename.startswith('books_single_')
+            assert "相关书目" not in filename
+    
+    def test_save_results_with_md_special_characters(self):
+        """测试MD文件名包含特殊字符时的处理"""
+        metadata = {
+            'mode': 'multi',
+            'from_md': 'path/test-file_with:invalid*chars.md'
+        }
+        
+        saved_files = self.formatter.save_results(self.sample_results, metadata)
+        
+        # 检查文件是否存在且内容正确
+        for file_path in saved_files.values():
+            assert os.path.exists(file_path)
+            
+            # 检查文件名中的特殊字符是否被正确处理
+            filename = os.path.basename(file_path)
+            assert "test-file_with_invalid_chars_相关书目_" in filename
+            assert ":" not in filename  # 冒号应该被替换
+            assert "*" not in filename  # 星号应该被替换
+    
+    @patch('src.core.book_vectorization.output_formatter.extract_md_filename')
+    def test_save_results_with_mock_extraction(self, mock_extract):
+        """测试使用mock的MD文件名提取"""
+        mock_extract.return_value = "mocked_filename"
+        
+        metadata = {
+            'mode': 'multi',
+            'from_md': 'some/path/file.md'
+        }
+        
+        saved_files = self.formatter.save_results(self.sample_results, metadata)
+        
+        # 验证extract_md_filename被调用
+        mock_extract.assert_called_once_with('some/path/file.md')
+        
+        # 检查文件名是否使用了mock的结果
+        for file_path in saved_files.values():
+            filename = os.path.basename(file_path)
+            assert "mocked_filename_相关书目_" in filename
+    
+    @patch('src.core.book_vectorization.output_formatter.logger')
+    def test_save_results_md_extraction_logging(self, mock_logger):
+        """测试MD文件名提取的日志记录"""
+        # 测试成功提取的日志
+        metadata = {
+            'mode': 'multi',
+            'from_md': 'test_file.md'
+        }
+        
+        self.formatter.save_results(self.sample_results, metadata)
+        
+        # 验证成功日志被记录
+        mock_logger.info.assert_any_call("检测到MD解析检索模式，使用MD文件名: test_file")
+        
+        # 测试提取失败的情况
+        metadata['from_md'] = ''
+        
+        # 重置mock调用记录
+        mock_logger.reset_mock()
+        
+        self.formatter.save_results(self.sample_results, metadata)
+        
+        # 验证至少有一些日志调用发生（具体消息可能因实现而异）
+        assert mock_logger.info.called or mock_logger.warning.called

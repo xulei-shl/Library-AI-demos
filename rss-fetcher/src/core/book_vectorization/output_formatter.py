@@ -8,7 +8,8 @@
 
 import json
 from datetime import datetime
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from src.utils.file_utils import (
     ensure_directory_exists,
@@ -19,6 +20,45 @@ from src.utils.file_utils import (
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+def extract_md_filename(md_path: str) -> Optional[str]:
+    """
+    从MD文件路径中提取文件名（不含扩展名）
+    
+    Args:
+        md_path: Markdown文件路径
+        
+    Returns:
+        提取的文件名（不含扩展名），失败时返回None
+    """
+    try:
+        if not md_path:
+            logger.warning("MD文件路径为空")
+            return None
+            
+        # 创建Path对象并获取文件名（不含扩展名）
+        path_obj = Path(md_path)
+        
+        # 检查是否为文件（有文件名且以.md结尾）
+        if path_obj.suffix.lower() != '.md':
+            logger.warning(f"路径不是MD文件: {md_path}")
+            return None
+            
+        filename_without_ext = path_obj.stem
+        
+        # 检查提取的文件名是否有效
+        # 排除以点开头的隐藏文件（如.gitignore）和只有扩展名的情况
+        if not filename_without_ext or filename_without_ext.startswith('.'):
+            logger.warning(f"无法从路径中提取有效文件名: {md_path}")
+            return None
+            
+        logger.debug(f"成功提取MD文件名: {filename_without_ext}")
+        return filename_without_ext
+        
+    except Exception as e:
+        logger.error(f"提取MD文件名失败: {md_path}, 错误: {e}")
+        return None
 
 
 class OutputFormatter:
@@ -193,6 +233,15 @@ class OutputFormatter:
         if self.auto_create_directory:
             ensure_directory_exists(self.base_directory)
         
+        # 检测是否为MD解析检索模式
+        md_filename = None
+        if 'from_md' in metadata and metadata['from_md']:
+            md_filename = extract_md_filename(metadata['from_md'])
+            if md_filename:
+                logger.info(f"检测到MD解析检索模式，使用MD文件名: {md_filename}")
+            else:
+                logger.warning("MD文件名提取失败，将使用默认命名模板")
+        
         # 准备文件名生成所需的元数据
         filename_metadata = {
             'mode': metadata.get('mode', 'unknown'),
@@ -205,12 +254,20 @@ class OutputFormatter:
             filename_metadata['query'] = query_preview
         
         # 生成基础文件名
-        base_filename = generate_filename(
-            self.filename_template,
-            filename_metadata,
-            self.timestamp_format,
-            self.include_timestamp
-        )
+        if md_filename:
+            # MD解析检索模式：使用MD文件名作为前缀
+            base_filename = f"{md_filename}_相关书目_{filename_metadata['timestamp']}"
+            # 清理文件名中的非法字符
+            base_filename = self._clean_filename(base_filename)
+            logger.info(f"使用MD智能命名模板: {base_filename}")
+        else:
+            # 非MD解析或提取失败：使用原有命名模板
+            base_filename = generate_filename(
+                self.filename_template,
+                filename_metadata,
+                self.timestamp_format,
+                self.include_timestamp
+            )
         
         saved_files = {}
         
@@ -243,3 +300,24 @@ class OutputFormatter:
                 continue
         
         return saved_files
+    
+    def _clean_filename(self, filename: str) -> str:
+        """
+        清理文件名中的非法字符
+        
+        Args:
+            filename: 原始文件名
+            
+        Returns:
+            清理后的文件名
+        """
+        # 清理文件名中的非法字符
+        invalid_chars = '<>:"/\\|?*'
+        for char in invalid_chars:
+            filename = filename.replace(char, "_")
+        
+        # 移除多余的连续下划线
+        while "__" in filename:
+            filename = filename.replace("__", "_")
+        
+        return filename
