@@ -189,7 +189,94 @@ class DatabaseReader:
         books = [dict(row) for row in rows]
         
         return books
-    
+
+    def search_books_by_terms(self, terms: List[str], limit: int = 20, match_fields: List[str] = None) -> List[Dict]:
+        """
+        根据关键词/书名进行精确匹配检索
+
+        Args:
+            terms: 待匹配的关键词列表
+            limit: 返回数量上限
+            match_fields: 检索字段列表，默认为 ['douban_title', 'douban_author', 'custom_keywords']
+
+        Returns:
+            匹配的书籍列表，每条记录包含 exact_match_score 与 match_source
+        """
+        if not terms:
+            return []
+
+        if match_fields is None:
+            match_fields = ['douban_title', 'douban_author', 'custom_keywords']
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        # 权重定义
+        field_weight = {
+            'douban_title': 1.0,
+            'douban_author': 0.9,
+            'custom_keywords': 0.8,
+        }
+
+        # 构造查询条件
+        where_clauses = []
+        params: List[str] = []
+        for term in terms:
+            term_lower = term.lower()
+            for field in match_fields:
+                if field in field_weight:
+                    where_clauses.append(f"LOWER({field}) LIKE ?")
+                    params.append(f"%{term_lower}%")
+
+        # 只检索已完成向量化的书
+        where_clauses.append("embedding_status = 'completed'")
+        params.append(limit)
+
+        sql = f"""
+            SELECT id, douban_title, douban_author, douban_rating, douban_summary, call_no
+            FROM {self.table}
+            WHERE ({' OR '.join(where_clauses)})
+            ORDER BY douban_rating DESC
+            LIMIT ?
+        """
+
+        cursor.execute(sql, params)
+        rows = cursor.fetchall()
+        result: List[Dict] = []
+
+        for row in rows:
+            book_dict = dict(row)
+            term_lower = [t.lower() for t in terms]
+
+            # 计算最佳匹配源与得分
+            best_score = 0.0
+            best_source = ""
+            for field in match_fields:
+                if field not in field_weight:
+                    continue
+                value = str(book_dict.get(field, ""))
+                if not value:
+                    continue
+                for t in term_lower:
+                    if t in value.lower():
+                        score = field_weight[field]
+                        if score > best_score:
+                            best_score = score
+                            best_source = field
+
+            if best_score > 0:
+                book_dict["exact_match_score"] = best_score
+                book_dict["match_source"] = best_source
+                result.append(book_dict)
+
+        logger.info(
+            "精确匹配检索: terms=%s, 返回=%s条, top_score=%.2f",
+            terms,
+            len(result),
+            max((r.get("exact_match_score", 0) for r in result), default=0),
+        )
+        return result
+
     def get_statistics(self) -> Dict:
         """
         获取向量化统计信息

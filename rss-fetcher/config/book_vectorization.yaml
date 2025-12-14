@@ -121,6 +121,18 @@ reranker:
   top_n: 30
   timeout: 15
 
+# 精确匹配配置
+exact_match:
+  enabled: false
+  top_k: 20
+  match_fields:
+    - douban_title
+    - douban_author
+    - custom_keywords
+  title_weight: 1.0
+  keyword_weight: 0.8
+  final_weight: 1.1
+
 # 日志配置
 logging:
   level: "INFO"

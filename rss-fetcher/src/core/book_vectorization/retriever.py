@@ -36,6 +36,7 @@ class BookRetriever:
         self.multi_query_options = self.config.get('multi_query', {})
         self.fusion_config = build_fusion_config(self.config.get('fusion'))
         self.reranker = RerankerClient(self.config.get('reranker', {}))
+        self.exact_match_config = self.config.get('exact_match', {})
         
         logger.info("图书检索器初始化完成")
     
@@ -179,13 +180,29 @@ class BookRetriever:
             )
 
         fused_results = fuse_query_results(query_results, active_fusion_config)
+        # 并行精确匹配（若启用且未显式禁用）
+        exact_enabled = self.exact_match_config.get('enabled', False) and not getattr(query_package, 'disable_exact_match', False)
+        if exact_enabled:
+            exact_results = self._search_exact_matches(query_package, min_rating, self.exact_match_config.get('top_k', 20))
+        else:
+            exact_results = []
+
         if rerank:
             if not self.reranker.enabled:
                 logger.warning("已请求 rerank 但配置未启用，将跳过该步骤。")
             else:
                 anchor_query = self._select_anchor_query(package_dict, priorities)
                 fused_results = self._apply_rerank(anchor_query, fused_results)
-        return fused_results
+
+        # 合并向量与精确匹配结果
+        if exact_results:
+            from .fusion import merge_exact_matches
+            exact_weight = self.exact_match_config.get('final_weight', 1.1)
+            final_results = merge_exact_matches(fused_results, exact_results, exact_weight)
+        else:
+            final_results = fused_results
+
+        return final_results
     
     def close(self):
         """关闭资源"""
@@ -218,6 +235,52 @@ class BookRetriever:
                 candidate['final_score'] = base_score
         candidates.sort(key=lambda item: item.get('final_score', item.get('fused_score', 0.0)), reverse=True)
         return candidates
+
+    def _search_exact_matches(
+        self,
+        query_package: QueryPackage,
+        min_rating: Optional[float],
+        exact_match_top_k: int,
+    ) -> List[Dict]:
+        """精确匹配分支：从 QueryPackage 提取关键词/书名进行 SQL 精确匹配。"""
+        terms: List[str] = []
+
+        # 收集书名（优先）
+        terms.extend(query_package.books)
+
+        # 从 primary/short tags 提取短语（长度<=10）
+        max_len = 10
+        for short_term in query_package.primary + query_package.tags:
+            if len(short_term) <= max_len:
+                terms.append(short_term)
+
+        if not terms:
+            logger.info("无可用关键词/书名，跳过精确匹配分支")
+            return []
+
+        logger.info("正在执行精确匹配，terms=%s", terms)
+
+        match_fields = self.exact_match_config.get('match_fields', ['douban_title', 'douban_author', 'custom_keywords'])
+        title_weight = self.exact_match_config.get('title_weight', 1.0)
+        keyword_weight = self.exact_match_config.get('keyword_weight', 0.8)
+
+        # 调用 DatabaseReader
+        exact_results = self.db_reader.search_books_by_terms(
+            terms=terms,
+            limit=exact_match_top_k,
+            match_fields=match_fields,
+        )
+
+        # 按评分过滤
+        if min_rating is not None:
+            exact_results = [r for r in exact_results if r.get('douban_rating', 0) >= min_rating]
+
+        logger.info(
+            "精确匹配完成: 返回=%s条，命中字段=[%s]",
+            len(exact_results),
+            ",".join(set(r.get('match_source', '') for r in exact_results)),
+        )
+        return exact_results
 
     @staticmethod
     def _compose_candidate_text(candidate: Dict) -> str:

@@ -173,3 +173,75 @@ def test_run_cli_multi_from_md(tmp_path, capsys):
     assert dummy.multi_query_calls
     captured = capsys.readouterr()
     assert '文本相似度检索结果' in captured.out
+
+
+def test_llm_fallback_when_md_parsing_empty(tmp_path, capsys):
+    """Markdown 解析结果为空且未禁用兜底时，应触发 LLM 兜底（模拟）"""
+    from unittest.mock import patch
+
+    md_file = tmp_path / 'empty.md'
+    md_file.write_text('## 无结构内容', encoding='utf-8')
+
+    # 模拟 LLM 客户端兜底返回
+    mock_response = {
+        "keywords": ["主题A"],
+        "query_sentences": ["用于检索的句子"],
+        "tags": ["标签A"],
+        "books": [],
+    }
+    def mock_generate_json(task_name, messages):
+        return mock_response
+
+    with patch('src.core.book_vectorization.query_assets.UnifiedLLMClient') as MockClient:
+        mock_instance = MockClient.return_value
+        mock_instance.generate_json = mock_generate_json
+
+        args = SimpleNamespace(
+            config='config/book_vectorization.yaml',
+            query=None,
+            query_file=None,
+            category=None,
+            top_k=5,
+            min_rating=None,
+            query_mode='multi',
+            from_md=str(md_file),
+            per_query_top_k=2,
+            enable_rerank=False,
+            final_top_k=2,
+            disable_llm_fallback=False,
+        )
+
+        context = retrieve_cli.run_cli(args)
+        assert context['query_package_origin'] == 'llm_recovered'
+        assert 'primary' in context['query_package']
+        captured = capsys.readouterr()
+        assert 'LLM 兜底生成查询' in captured.out
+
+
+def test_exact_match_disabled_when_flag_set(tmp_path, capsys):
+    """设置 --disable-exact-match 应禁用精确匹配"""
+    md_file = tmp_path / 'report.md'
+    md_file.write_text(
+        """# 报告\n\n## 共同母题\n- 名称: 测试母题\n- 关键词: 关键词A\n- 摘要: 这是摘要\n\n## 文章列表\n| 标签 | 测试标签 |\n| 提及书籍 | 《测试书》 |\n\n## 深度洞察\n- 洞察一句\n""",
+        encoding='utf-8',
+    )
+
+    args = SimpleNamespace(
+        config='config/book_vectorization.yaml',
+        query=None,
+        query_file=None,
+        category=None,
+        top_k=5,
+        min_rating=None,
+        query_mode='multi',
+        from_md=str(md_file),
+        per_query_top_k=2,
+        enable_rerank=False,
+        final_top_k=2,
+        disable_llm_fallback=False,
+        disable_exact_match=True,
+    )
+
+    context = retrieve_cli.run_cli(args)
+    assert context['disable_exact_match'] is True
+    # 无需进一步断言，因为测试环境无实际向量库/数据库，仅验证 CLI 传递标记

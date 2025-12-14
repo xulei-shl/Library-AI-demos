@@ -114,3 +114,56 @@ def _prefer_higher_similarity(current: Dict, candidate: Dict) -> Dict:
     if candidate_score > current_score:
         return dict(candidate)
     return current
+
+
+def merge_exact_matches(
+    vector_results: List[Dict],
+    exact_matches: List[Dict],
+    exact_match_weight: float = 1.1,
+) -> List[Dict]:
+    """将精确匹配结果与向量检索结果融合，去重并调整排序。"""
+    if not exact_matches:
+        return vector_results
+
+    # 以 book_id 为键聚合
+    merged: Dict[str, Dict] = {}
+    for item in vector_results:
+        book_id = _resolve_book_id(item)
+        if book_id:
+            merged[book_id] = item
+
+    for item in exact_matches:
+        book_id = _resolve_book_id(item)
+        if not book_id or book_id in merged:
+            continue
+        # 为仅精确匹配的条目构造基础结果
+        merged[book_id] = {
+            "book_id": int(book_id),
+            "id": int(book_id),
+            "title": item.get("douban_title", "未知"),
+            "author": item.get("douban_author", "未知"),
+            "rating": item.get("douban_rating"),
+            "summary": item.get("douban_summary"),
+            "call_no": item.get("call_no"),
+            "similarity_score": None,
+            "fused_score": None,
+            "match_count": 0,
+            "query_types": [],
+            "exact_match_score": item.get("exact_match_score"),
+            "match_source": item.get("match_source"),
+        }
+
+    # 重算最终得分，并确保精确匹配不被压过
+    final: List[Dict] = []
+    for item in merged.values():
+        exact_score = float(item.get("exact_match_score", 0))
+        current_final = float(item.get("fused_score") or 0)
+        if exact_score > 0:
+            item["final_score"] = max(current_final, exact_match_weight * exact_score)
+        else:
+            item["final_score"] = current_final
+        final.append(item)
+
+    final.sort(key=lambda x: x["final_score"], reverse=True)
+    return final
+

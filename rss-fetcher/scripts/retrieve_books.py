@@ -137,6 +137,8 @@ def interactive_mode():
     args.per_query_top_k = None
     args.enable_rerank = False
     args.final_top_k = None
+    args.disable_llm_fallback = False
+    args.disable_exact_match = False
     
     if mode_choice == 0:  # 文本检索
         print("\n🔍 文本检索模式")
@@ -345,6 +347,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help='多查询模式下融合阶段最终返回的候选数量（默认使用配置）'
     )
+    parser.add_argument(
+        '--disable-llm-fallback',
+        action='store_true',
+        help='禁用 Markdown 解析失败时的 LLM 兜底流程'
+    )
+    parser.add_argument(
+        '--disable-exact-match',
+        action='store_true',
+        help='禁用关键词/书名精确匹配分支（仅在精确匹配开启时生效）'
+    )
 
     return parser
 
@@ -378,11 +390,12 @@ def _resolve_query_text(query: Optional[str], query_file: Optional[str]) -> str:
     raise ValueError('必须提供 --query 或 --query-file 之一')
 
 
-def _print_text_results(results: List[Dict]):
+def _print_text_results(results: List[Dict], extra_field_name: str = None):
     """打印文本检索结果。
 
     Args:
         results: 检索返回的书籍结果列表。
+        extra_field_name: 可选的额外字段名（用于精确匹配标注）。
     """
     print(SEPARATOR)
     print('📖 文本相似度检索结果')
@@ -394,8 +407,16 @@ def _print_text_results(results: List[Dict]):
     for idx, item in enumerate(results, start=1):
         similarity = item.get('similarity_score')
         similarity_str = f"{similarity:.4f}" if similarity is not None else 'N/A'
-        print(f"[{idx}] 📚 {item.get('title', '未知')}")
-        print(f"    👤 作者: {item.get('author', '未知')} | ⭐ 评分: {item.get('rating', '未知')} | 🎯 相似度: {similarity_str}")
+        fused = item.get('fused_score')
+        fused_str = f"{fused:.4f}" if fused is not None else ''
+        extra_info = item.get(extra_field_name, '') if extra_field_name else ''
+        title = item.get('title', '未知')
+        print(f"[{idx}] 📚 {title}{extra_info}")
+        detail = f"👤 作者: {item.get('author', '未知')} | ⭐ 评分: {item.get('rating', '未知')}"
+        if fused_str:
+            detail += f" | 🎯 融合: {fused_str}"
+        detail += f" | 相似度: {similarity_str}"
+        print(f"    {detail}")
         print(f"    🏷️  索书号: {item.get('call_no', '-')}")
         summary = item.get('summary', '')
         if summary:
@@ -432,14 +453,26 @@ def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever) ->
         raise ValueError('多查询模式必须提供 --from-md')
 
     print("🔄 正在解析Markdown文件并生成子查询...")
-    query_package = build_query_package_from_md(args.from_md)
+    query_package = build_query_package_from_md(
+        args.from_md,
+        enable_llm_fallback=not getattr(args, "disable_llm_fallback", False),
+    )
+    # 若 CLI 要求禁用精确匹配，则设置标记，供检索器读取
+    query_package.disable_exact_match = getattr(args, "disable_exact_match", False)
+
     logger.info(
-        "已解析 Markdown: primary=%s, tags=%s, insight=%s, books=%s",
+        "已解析 Markdown(origin=%s): primary=%s, tags=%s, insight=%s, books=%s",
+        query_package.origin,
         len(query_package.primary),
         len(query_package.tags),
         len(query_package.insight),
         len(query_package.books),
     )
+    if query_package.origin == "llm_recovered":
+        print("⚠️ Markdown 结构未匹配，已调用 LLM 兜底生成查询")
+        latency = query_package.metadata.get("llm_latency_ms")
+        if latency:
+            print(f"    ⏱️ LLM 耗时: {latency} ms")
 
     print("🔍 正在执行多轮检索与融合...")
     results = retriever.search_multi_query(
@@ -449,7 +482,14 @@ def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever) ->
         rerank=args.enable_rerank,
         final_top_k=args.final_top_k,
     )
-    _print_text_results(results)
+    # 精确命中标注
+    for item in results:
+        source = item.get('match_source')
+        if source:
+            item['display_source'] = f" ({{'title': '标题', 'author': '作者', 'custom_keywords': '关键词'}.get(source, source)}精确命中)"
+        else:
+            item['display_source'] = ''
+    _print_text_results(results, extra_field_name='display_source')
     
     if args.enable_rerank:
         print("✨ 已完成 SiliconFlow Reranker 重排序")
@@ -459,7 +499,10 @@ def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever) ->
         'results': results,
         'from_md': args.from_md,
         'query_package': query_package.as_dict(),
+        'query_package_origin': query_package.origin,
+        'query_package_metadata': dict(query_package.metadata),
         'enable_rerank': args.enable_rerank,
+        'disable_exact_match': getattr(args, 'disable_exact_match', False),
     }
 
 

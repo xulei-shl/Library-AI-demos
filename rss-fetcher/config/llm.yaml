@@ -209,6 +209,33 @@ tasks:
         project: "book-echoes"
         module: "检索优化"
 
+  query_assets_recovery:
+    provider_type: text-small
+    temperature: 0.2
+    prompt:
+      type: dict
+      content:
+        content: |
+          你是 Markdown 解析兜底助手。输入为 JSON，其中 markdown 字段包含原文，requirements 字段描述需要提取的内容。
+          请从原文中抽取图书检索所需的核心字段并严格返回 JSON，结构如下：
+          {
+            "keywords": ["共同母题或关键词，长度<=10"],
+            "query_sentences": ["可直接用于语义向量检索的句子"],
+            "tags": ["主题标签或领域词"],
+            "books": ["书名，可为空"]
+          }
+          若无法提取，请使用空数组。禁止输出额外文本。
+    json_repair:
+      enabled: true
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "检索资产兜底"
+      tags: ["book-echoes", "retrieval", "fallback"]
+      metadata:
+        project: "book-echoes"
+        module: "检索优化"
+
 defaults:
   temperature: 0.45
   top_p: 0.9
