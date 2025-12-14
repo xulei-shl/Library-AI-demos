@@ -45,6 +45,8 @@ except ImportError:
 from src.core.book_vectorization.output_formatter import OutputFormatter
 from src.core.book_vectorization.query_assets import build_query_package_from_md
 from src.core.book_vectorization.retriever import BookRetriever
+from src.core.book_vectorization.json_parser import JsonParser
+from src.core.book_vectorization.excel_exporter import ExcelExporter
 from src.utils.config_manager import ConfigManager
 from src.utils.logger import get_logger
 
@@ -121,7 +123,8 @@ def interactive_mode():
     search_modes = [
         "文本检索 - 根据关键词搜索相似书籍",
         "分类检索 - 按索书号分类浏览高评分书籍",
-        "多查询检索 - 从Markdown文件生成多个子查询"
+        "多查询检索 - 从Markdown文件生成多个子查询",
+        "Excel导出 - 从JSON结果导出完整书籍信息到Excel"
     ]
     
     mode_choice = get_user_choice("请选择检索模式", search_modes)
@@ -233,6 +236,53 @@ def interactive_mode():
             args.enable_rerank = False
         
         args.query_mode = 'multi'
+    
+    elif mode_choice == 3:  # Excel导出
+        print("\n📊 Excel导出模式")
+        
+        json_file_path = get_user_input("请输入JSON结果文件路径", required=True)
+        if not Path(json_file_path).exists():
+            print(f"❌ 文件不存在: {json_file_path}")
+            return None
+        
+        # 使用默认输出路径或用户自定义路径
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        default_excel_path = f"runtime/outputs/excel/books_full_info_{timestamp}.xlsx"
+        excel_path = get_user_input("Excel输出路径", default_excel_path, required=False)
+        
+        # 执行Excel导出
+        try:
+            # 初始化JSON解析器
+            json_parser = JsonParser()
+            book_ids = json_parser.extract_book_ids(json_file_path)
+            
+            if not book_ids:
+                print("❌ 未能从JSON文件中提取到任何书籍ID")
+                return None
+            
+            print(f"✅ 成功提取到{len(book_ids)}个书籍ID")
+            
+            # 初始化Excel导出器
+            config_manager = ConfigManager(args.config)
+            db_config = config_manager.get('database', {})
+            excel_config = config_manager.get('excel_export', {})
+            
+            excel_exporter = ExcelExporter(db_config, excel_config)
+            
+            # 导出Excel
+            output_file = excel_exporter.export_books_to_excel(book_ids, excel_path)
+            print(f"✅ Excel导出完成: {output_file}")
+            
+            # 关闭资源
+            excel_exporter.close()
+            
+            return None  # Excel导出模式不需要继续执行检索
+            
+        except Exception as e:
+            print(f"❌ Excel导出失败: {e}")
+            logger.error(f"Excel导出失败: {e}")
+            return None
     
     # 确认参数
     print("\n📋 参数确认")

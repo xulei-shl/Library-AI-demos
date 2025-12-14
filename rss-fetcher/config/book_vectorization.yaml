@@ -151,6 +151,14 @@ output:
   timestamp_format: "%Y%m%d_%H%M%S"  # 时间戳格式
   auto_create_directory: true     # 自动创建目录
 
+# Excel导出配置
+excel_export:
+  enabled: true
+  default_directory: "runtime/outputs/excel"
+  filename_template: "books_full_info_{timestamp}"
+  timestamp_format: "%Y%m%d_%H%M%S"
+  auto_create_directory: true
+
 # 性能优化
 performance:
   batch_commit_size: 100    # 每处理N本书提交一次 ChromaDB
