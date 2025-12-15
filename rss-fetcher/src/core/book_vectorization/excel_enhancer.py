@@ -25,13 +25,13 @@ class ExcelEnhancer:
     
     # 主题筛选新增列的命名规范
     THEME_COLUMNS = {
-        "is_selected": "主题筛选_是否通过",
-        "score": "主题筛选_评分",
-        "relevance_check": "主题筛选_相关性",
-        "dimension_match": "主题筛选_契合度",
-        "reason": "主题筛选_评语",
-        "llm_status": "主题筛选_状态",
-        "error_message": "主题筛选_错误信息"
+        "is_selected": "初评结果",
+        "score": "初评分数",
+        "relevance_check": "初评相关性",
+        "dimension_match": "初评契合度",
+        "reason": "初评理由",
+        "llm_status": "初评状态",
+        "error_message": "初评错误信息"
     }
     
     def __init__(self, excel_path: str):
