@@ -58,8 +58,13 @@ def run_command(args):
 
     # 加载配置
     config_manager = get_config_manager()
+    full_config = config_manager.get_config()
     douban_config = config_manager.get_douban_config()
     isbn_api_config = douban_config.get("isbn_api", {})
+    
+    # 读取评分过滤配置
+    rating_filter_config = full_config.get("rating_filter", {})
+    dynamic_filter_enabled = rating_filter_config.get("dynamic_filter_enabled", True)
 
     # 构建流水线选项
     options = DoubanIsbnApiPipelineOptions(
@@ -78,8 +83,8 @@ def run_command(args):
         save_interval=args.save_interval,
         # 报告配置
         generate_report=not args.disable_report,
-        # 评分过滤配置
-        enable_rating_filter=not args.disable_rating_filter,
+        # 评分过滤配置：优先使用配置文件中的设置
+        enable_rating_filter=dynamic_filter_enabled and not args.disable_rating_filter,
     )
 
     # 从配置文件加载随机延迟和批次冷却配置
@@ -110,7 +115,17 @@ def run_command(args):
     print(f"并发数: {options.max_concurrent}")
     print(f"QPS: {options.qps}")
     print(f"数据库: {'禁用' if options.disable_database else '启用'}")
-    print(f"评分过滤: {'禁用' if not options.enable_rating_filter else '启用'}")
+    
+    # 显示评分过滤状态，考虑配置文件中的动态过滤设置
+    rating_filter_status = "启用"
+    if not dynamic_filter_enabled:
+        rating_filter_status = "配置禁用"
+    elif not options.enable_rating_filter:
+        rating_filter_status = "命令行禁用"
+    
+    print(f"评分过滤: {rating_filter_status}")
+    print(f"  - 配置文件 dynamic_filter_enabled: {dynamic_filter_enabled}")
+    print(f"  - 命令行 enable_rating_filter: {options.enable_rating_filter}")
     print("=" * 60)
 
     # 执行流水线

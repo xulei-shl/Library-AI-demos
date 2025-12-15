@@ -212,8 +212,8 @@ douban:
     base_url: "https://m.douban.com/rexxar/api/v2/book/isbn"
 
     # 并发与限流（保守配置，避免触发反爬）
-    max_concurrent: 2      # 最大并发数
-    qps: 0.5              # 每秒请求数（0.5 = 每 2 秒 1 次）
+    max_concurrent: 5      # 最大并发数
+    qps: 1              # 每秒请求数（0.5 = 每 2 秒 1 次）
     timeout: 15           # 请求超时（秒）
 
     # 随机延迟配置（模拟人类操作）
@@ -225,7 +225,7 @@ douban:
     # 批次冷却配置（避免持续请求触发反爬）
     batch_cooldown:
       enabled: true
-      interval: 100        # 每处理 N 条触发冷却
+      interval: 300        # 每处理 N 条触发冷却
       min: 10             # 冷却最小时间（秒）
       max: 30             # 冷却最大时间（秒）
 
@@ -297,7 +297,7 @@ douban:
     refresh_strategy:
       enabled: true
       stale_days: 180      # 如果记录的更新时间超过180天，则认为数据“陈旧”，需要重新获取
-      force_update: false  # 是否强制更新所有记录，忽略 stale_days 限制
+      force_update: true  # 是否强制更新所有记录，忽略 stale_days 限制
       update_mode: "merge" # 更新数据的方式：'merge'（合并新旧数据，保留旧记录字段）或 'overwrite'（完全用新数据覆盖）
       crawl_empty_url: false  # 当douban_url为空时是否需要重新爬取（true=爬取，false=跳过）
       required_fields:      # 用于判定DB数据是否完整，缺少则进入待补API流程
@@ -366,7 +366,7 @@ fields_mapping:
       "清理后索书号": "cleaned_call_no"
       "书名": "book_title"
       "附加信息": "additional_info"
-      "ISBN号": "isbn"
+      "ISBN": "isbn"
       "豆瓣链接": "douban_url"
       "豆瓣评分": "douban_rating"
       "豆瓣书名": "douban_title"
@@ -436,7 +436,7 @@ fields_mapping:
       "cleaned_call_no": "清理后索书号"
       "book_title": "书名"
       "additional_info": "附加信息"
-      "isbn": "ISBN号"
+      "isbn": "ISBN"
       # 豆瓣字段
       "douban_url": "豆瓣链接"
       "douban_rating": "豆瓣评分"

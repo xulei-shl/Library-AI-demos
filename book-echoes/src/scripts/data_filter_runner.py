@@ -255,7 +255,8 @@ class DataFilterRunner:
         # 重命名列名
         column_mapping = {
             '标识号': 'ISBN',
-            '题名': '书名'
+            '题名': '书名',
+            '馆藏条码': '书目条码'
         }
         
         # 只重命名存在的列
