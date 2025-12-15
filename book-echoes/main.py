@@ -58,9 +58,11 @@ def find_latest_screening_result_excel():
 def find_latest_module3_excel():
     """
     查找模块3生成的最终豆瓣结果Excel：
-    支持两种格式：
-    - 模块3: 数据筛选结果_YYYYMMDD_HHMMSS_豆瓣结果_YYYYMMDD_HHMMSS.xlsx
-    - 模块3-B: 数据筛选结果_YYYYMMDD_HHMMSS_ISBN_API结果_YYYYMMDD_HHMMSS.xlsx
+    支持四种格式：
+    - 模块3完整格式: 数据筛选结果_YYYYMMDD_HHMMSS_豆瓣结果_YYYYMMDD_HHMMSS.xlsx
+    - 模块3-B完整格式: 数据筛选结果_YYYYMMDD_HHMMSS_ISBN_API结果_YYYYMMDD_HHMMSS.xlsx
+    - 模块3简化格式: 数据筛选结果_豆瓣结果_YYYYMMDD_HHMMSS.xlsx
+    - 模块3-B简化格式: 数据筛选结果_ISBN_API结果_YYYYMMDD_HHMMSS.xlsx
     （过滤掉任何"partial""副本"等临时或中间文件）
     """
     outputs_dir = get_outputs_dir()
@@ -79,10 +81,15 @@ def find_latest_module3_excel():
     )
 
     import re
-    # 匹配两种格式：豆瓣结果 或 ISBN_API结果
-    pattern = re.compile(r"^数据筛选结果_\d{8}_\d{6}_(豆瓣结果|ISBN_API结果)_\d{8}_\d{6}\.xlsx$")
+    # 匹配四种格式：
+    # 1. 完整格式：数据筛选结果_YYYYMMDD_HHMMSS_(豆瓣结果|ISBN_API结果)_YYYYMMDD_HHMMSS.xlsx
+    # 2. 简化格式：数据筛选结果_(豆瓣结果|ISBN_API结果)_YYYYMMDD_HHMMSS.xlsx
+    full_pattern = re.compile(r"^数据筛选结果_\d{8}_\d{6}_(豆瓣结果|ISBN_API结果)_\d{8}_\d{6}\.xlsx$")
+    simple_pattern = re.compile(r"^数据筛选结果_(豆瓣结果|ISBN_API结果)_\d{8}_\d{6}\.xlsx$")
+    
     for p in all_candidates:
-        if pattern.match(p.name):
+        # 先检查完整格式，再检查简化格式
+        if full_pattern.match(p.name) or simple_pattern.match(p.name):
             return p
     return None
 
