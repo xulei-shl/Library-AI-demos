@@ -155,7 +155,7 @@ output:
 excel_export:
   enabled: true
   default_directory: "runtime/outputs"
-  filename_template: "book_full_info_{timestamp}"
+  filename_template: "数据筛选结果_ISBN_API结果_{timestamp}"
   timestamp_format: "%Y%m%d_%H%M%S"
   auto_create_directory: true
 

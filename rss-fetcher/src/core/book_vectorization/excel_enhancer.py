@@ -161,6 +161,12 @@ class ExcelEnhancer:
         for field, column_name in self.THEME_COLUMNS.items():
             df[column_name] = None
         
+        # 添加终评结果、人工评选和人工推荐语列
+        df["终评结果"] = None
+        df["终评理由"] = None
+        df["人工评选"] = None
+        df["人工推荐语"] = None
+        
         # 填充评估结果
         failed_books = []
         
@@ -180,6 +186,13 @@ class ExcelEnhancer:
             for field, column_name in self.THEME_COLUMNS.items():
                 if field in result:
                     df.at[i, column_name] = result[field]
+            
+            # 将is_selected的值同时保存到终评结果列
+            if "is_selected" in result:
+                df.at[i, "终评结果"] = result["is_selected"]
+            if "reason" in result:
+                df.at[i, "终评理由"] = result["reason"]            
+               
         
         # 更新失败书籍列表
         self._failed_books = failed_books

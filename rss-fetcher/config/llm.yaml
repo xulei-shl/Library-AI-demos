@@ -262,6 +262,28 @@ tasks:
       metadata:
         module: "图书向量化"
 
+  # ----------------------------------------------------------------------------
+  # 任务: 推荐导语生成
+  # 逻辑位置: src/core/book_vectorization/recommendation_writer.py
+  # ----------------------------------------------------------------------------
+  recommendation_writer:
+    provider_type: text
+    temperature: 0.4
+    prompt:
+      type: langfuse
+      langfuse_name: "推荐导语"
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+    langfuse:
+      enabled: true
+      name: "推荐导语生成"
+      tags: ["book-echoes", "推荐导语"]
+      metadata:
+        module: "图书向量化"
+
 defaults:
   temperature: 0.45
   top_p: 0.9

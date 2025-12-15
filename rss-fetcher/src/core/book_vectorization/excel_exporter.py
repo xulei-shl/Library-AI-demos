@@ -174,7 +174,7 @@ class ExcelExporter:
             'douban_summary': '豆瓣内容简介',
             'douban_author_intro': '豆瓣作者简介',
             'douban_catalog': '豆瓣目录',
-            'douban_cover_image': '豆瓣封面图片',
+            'douban_cover_image': '豆瓣封面图片链接',
         #    'candidate_status': '候选状态'
         }
         
