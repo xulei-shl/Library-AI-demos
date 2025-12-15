@@ -126,6 +126,9 @@ class ExcelExporter:
             if field not in exclude_fields:
                 filtered_info[field] = value
         
+        # # 添加固定字段：候选状态
+        # filtered_info['candidate_status'] = '候选'
+        
         return filtered_info
     
     def _export_to_excel(self, books_data: List[Dict], output_path: str) -> str:
@@ -145,7 +148,7 @@ class ExcelExporter:
         # 重命名列，使其更友好
         column_mapping = {
             'id': 'ID',
-            'barcode': '条形码',
+            'barcode': '书目条码',
             'call_no': '索书号',
             'cleaned_call_no': '清理后索书号',
             'book_title': '书名',
@@ -162,16 +165,17 @@ class ExcelExporter:
             'douban_producer': '豆瓣出品方',
             'douban_series': '豆瓣丛书',
             'douban_series_link': '豆瓣丛书链接',
-            'douban_price': '豆瓣价格',
+            'douban_price': '豆瓣定价',
             'douban_isbn': '豆瓣ISBN',
             'douban_pages': '豆瓣页数',
             'douban_binding': '豆瓣装帧',
             'douban_pub_year': '豆瓣出版年份',
-            'douban_rating_count': '豆瓣评分人数',
-            'douban_summary': '豆瓣简介',
+            'douban_rating_count': '豆瓣评价人数',
+            'douban_summary': '豆瓣内容简介',
             'douban_author_intro': '豆瓣作者简介',
             'douban_catalog': '豆瓣目录',
-            'douban_cover_image': '豆瓣封面图片'
+            'douban_cover_image': '豆瓣封面图片',
+        #    'candidate_status': '候选状态'
         }
         
         # 重命名存在的列

@@ -255,13 +255,18 @@ class TestExcelExporter:
         assert result['douban_title'] == '自然语言理解'
         assert result['douban_author'] == '赵海'
         assert result['isbn'] == '9787302627784'
+        # 验证新增的候选状态字段
+        assert result['candidate_status'] == '候选'
     
     def test_export_to_excel(self, excel_exporter, sample_books_data):
         """测试导出到Excel文件"""
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / 'test_output.xlsx'
             
-            result_path = excel_exporter._export_to_excel(sample_books_data, str(output_path))
+            # 过滤书籍数据（模拟实际使用场景）
+            filtered_books_data = [excel_exporter._filter_book_fields(book) for book in sample_books_data]
+            
+            result_path = excel_exporter._export_to_excel(filtered_books_data, str(output_path))
             
             assert Path(result_path).exists()
             assert result_path == str(output_path)
@@ -274,14 +279,17 @@ class TestExcelExporter:
             assert 'ID' in df.columns
             assert '豆瓣书名' in df.columns
             assert '豆瓣作者' in df.columns
-            assert '条形码' in df.columns
+            assert '书目条码' in df.columns
             assert '索书号' in df.columns
+            assert '候选状态' in df.columns
             assert df.iloc[0]['ID'] == 1
             assert df.iloc[0]['豆瓣书名'] == '自然语言理解'
             assert df.iloc[0]['豆瓣作者'] == '赵海'
+            assert df.iloc[0]['候选状态'] == '候选'
             assert df.iloc[1]['ID'] == 2
             assert df.iloc[1]['豆瓣书名'] == '机器学习'
             assert df.iloc[1]['豆瓣作者'] == '李四'
+            assert df.iloc[1]['候选状态'] == '候选'
     
     def test_export_to_excel_auto_extension(self, excel_exporter, sample_books_data):
         """测试自动添加文件扩展名"""

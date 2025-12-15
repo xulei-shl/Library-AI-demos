@@ -47,8 +47,11 @@ from src.core.book_vectorization.query_assets import build_query_package_from_md
 from src.core.book_vectorization.retriever import BookRetriever
 from src.core.book_vectorization.json_parser import JsonParser
 from src.core.book_vectorization.excel_exporter import ExcelExporter
+from src.core.book_vectorization.theme_screener import ThemeScreener
+from src.core.book_vectorization.excel_enhancer import ExcelEnhancer
 from src.utils.config_manager import ConfigManager
 from src.utils.logger import get_logger
+from src.utils.llm.client import UnifiedLLMClient
 
 logger = get_logger(__name__)
 
@@ -124,7 +127,8 @@ def interactive_mode():
         "文本检索 - 根据关键词搜索相似书籍",
         "分类检索 - 按索书号分类浏览高评分书籍",
         "多查询检索 - 从Markdown文件生成多个子查询",
-        "Excel导出 - 从JSON结果导出完整书籍信息到Excel"
+        "Excel导出 - 从JSON结果导出完整书籍信息到Excel",
+        "大模型主题筛选 - 基于文章主题分析报告筛选书籍"
     ]
     
     mode_choice = get_user_choice("请选择检索模式", search_modes)
@@ -218,7 +222,7 @@ def interactive_mode():
             print(f"❌ 文件不存在: {args.from_md}")
             return None
             
-        args.per_query_top_k = int(get_user_input("每个子查询候选数量", "20"))
+        args.per_query_top_k = int(get_user_input("每个子查询候选数量", "15"))
         args.final_top_k = int(get_user_input("最终返回结果数量", "15"))
         args.min_rating = get_user_input("最低豆瓣评分过滤(可选)", None, required=False)
         if args.min_rating:
@@ -295,6 +299,76 @@ def interactive_mode():
         except Exception as e:
             print(f"❌ Excel导出失败: {e}")
             logger.error(f"Excel导出失败: {e}")
+            return None
+            
+    elif mode_choice == 4:  # 大模型主题筛选
+        print("\n🤖 大模型主题筛选模式")
+        
+        article_report_path = get_user_input("请输入文章主题分析报告文件路径", required=True)
+        if not Path(article_report_path).exists():
+            print(f"❌ 文件不存在: {article_report_path}")
+            return None
+            
+        excel_path = get_user_input("请输入图书元数据Excel文件路径", required=True)
+        if not Path(excel_path).exists():
+            print(f"❌ 文件不存在: {excel_path}")
+            return None
+        
+        # 执行主题筛选
+        try:
+            print("\n🔄 开始执行大模型主题筛选...")
+            
+            # 读取文章主题分析报告
+            with open(article_report_path, 'r', encoding='utf-8') as f:
+                article_report = f.read()
+            
+            print(f"✅ 成功读取文章主题分析报告: {len(article_report)} 字符")
+            
+            # 初始化Excel增强器
+            excel_enhancer = ExcelEnhancer(excel_path)
+            
+            # 加载书籍数据
+            books_data = excel_enhancer.load_books_data()
+            print(f"✅ 成功加载{len(books_data)}本书籍数据")
+            
+            # 初始化LLM客户端和主题筛选器
+            llm_client = UnifiedLLMClient()
+            theme_screener = ThemeScreener(llm_client, {})
+            
+            # 批量评估书籍
+            print("\n🔍 开始批量评估书籍...")
+            results = theme_screener.evaluate_books_batch(article_report, books_data)
+            
+            # 统计结果
+            selected_count = sum(1 for r in results if r.get("is_selected", False))
+            success_count = sum(1 for r in results if r.get("llm_status") == "success")
+            
+            print(f"\n📊 筛选结果统计:")
+            print(f"  总书籍数: {len(books_data)}")
+            print(f"  评估成功: {success_count}")
+            print(f"  通过筛选: {selected_count}")
+            print(f"  筛选通过率: {selected_count/len(books_data)*100:.1f}%")
+            
+            # 添加评估结果到Excel
+            print("\n📝 正在将评估结果添加到Excel文件...")
+            enhanced_excel_path = excel_enhancer.add_evaluation_results(results)
+            
+            # 生成摘要报告
+            failed_books = excel_enhancer.get_failed_books()
+            if failed_books:
+                summary_path = excel_enhancer.create_summary_report()
+                if summary_path:  # 检查是否成功生成报告
+                    print(f"⚠️ 有{len(failed_books)}本书籍评估失败，已生成摘要报告: {summary_path}")
+                else:
+                    print(f"⚠️ 有{len(failed_books)}本书籍评估失败，但摘要报告生成失败")
+            
+            print(f"✅ 主题筛选完成，增强后的Excel文件: {enhanced_excel_path}")
+            
+            return None  # 主题筛选模式不需要继续执行检索
+            
+        except Exception as e:
+            print(f"❌ 主题筛选失败: {e}")
+            logger.error(f"主题筛选失败: {e}")
             return None
     
     # 确认参数

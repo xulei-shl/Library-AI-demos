@@ -236,6 +236,32 @@ tasks:
         project: "book-echoes"
         module: "检索优化"
 
+  # ----------------------------------------------------------------------------
+  # 任务: 主题筛选
+  # 逻辑位置: src/core/book_vectorization/theme_screener.py
+  # ----------------------------------------------------------------------------
+  theme_screening:
+    provider_type: text
+    temperature: 0.3
+    prompt:
+      type: langfuse
+      langfuse_name: "主题筛选"
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+    langfuse:
+      enabled: true
+      name: "根据主题报告筛选图书"
+      tags: ["book-echoes", "主题筛选"]
+      metadata:
+        module: "图书向量化"
+
 defaults:
   temperature: 0.45
   top_p: 0.9

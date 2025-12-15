@@ -154,8 +154,8 @@ output:
 # Excel导出配置
 excel_export:
   enabled: true
-  default_directory: "F:/Github/Library-AI-demos/book-echoes/runtime/outputs"
-  filename_template: "books_full_info_豆瓣结果_{timestamp}"
+  default_directory: "runtime/outputs"
+  filename_template: "book_full_info_{timestamp}"
   timestamp_format: "%Y%m%d_%H%M%S"
   auto_create_directory: true
 
