@@ -20,3 +20,5 @@ metadata-editor/jsondata/llm_settings.json
 metadata-editor/jsondata/knowledge_settings.json
 .cursorignore
 .vscode/settings.json
+*.bin
+*.pickle

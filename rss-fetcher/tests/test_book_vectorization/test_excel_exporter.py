@@ -40,37 +40,79 @@ class TestExcelExporter:
         return [
             {
                 'id': 1,
-                'douban_title': '测试书籍1',
-                'douban_author': '测试作者1',
+                'barcode': '54121111261793',
+                'call_no': 'TP391/4831-1',
+                'cleaned_call_no': 'TP391/4831-1',
+                'book_title': '自然语言理解',
+                'additional_info': '200454818',
+                'isbn': '9787302627784',
+                'douban_url': 'https://book.douban.com/subject/36481873/',
                 'douban_rating': 8.5,
-                'douban_pub_year': '2023',
-                'douban_publisher': '测试出版社',
-                'douban_summary': '这是一本测试书籍',
-                'douban_catalog': '第一章\n第二章\n第三章',
-                'call_no': 'TP123/456',
-                'isbn': '9781234567890',
-                'pages': 200,
-                'price': '59.00',
-                'douban_tags': '技术,编程',
+                'douban_title': '自然语言理解',
+                'douban_subtitle': '自然语言处理',
+                'douban_original_title': 'Natural Language Understanding',
+                'douban_author': '赵海',
+                'douban_translator': '张三',
+                'douban_publisher': '清华大学出版社',
+                'douban_producer': '清华出版社',
+                'douban_series': '计算机科学丛书',
+                'douban_series_link': 'https://book.douban.com/series/123/',
+                'douban_price': '89.00',
+                'douban_isbn': '9787302627784',
+                'douban_pages': 388,
+                'douban_binding': '平装',
+                'douban_pub_year': 2023,
+                'douban_rating_count': 1250,
+                'douban_summary': '本书系统介绍自然语言处理的经典和前沿技术',
+                'douban_author_intro': '赵海，教授，博士生导师',
+                'douban_catalog': '目录\n第1章 绪论\n第2章 基础知识',
+                'douban_cover_image': 'https://img2.doubanio.com/view/subject/s/public/s34590761.jpg',
+                'data_version': '1.0',
+                'created_at': '2025-11-05 16:43:01',
+                'updated_at': '2025-11-05 16:43:01',
+                'embedding_id': 'abc123',
                 'embedding_status': 'completed',
-                'embedding_date': '2023-01-01'
+                'embedding_date': '2025-11-05 16:43:01',
+                'embedding_error': None,
+                'retry_count': 0
             },
             {
                 'id': 2,
-                'douban_title': '测试书籍2',
-                'douban_author': '测试作者2',
+                'barcode': '54121111261794',
+                'call_no': 'TP392/4832-2',
+                'cleaned_call_no': 'TP392/4832-2',
+                'book_title': '机器学习',
+                'additional_info': '200454819',
+                'isbn': '9787302627791',
+                'douban_url': 'https://book.douban.com/subject/36481874/',
                 'douban_rating': 9.0,
-                'douban_pub_year': '2022',
-                'douban_publisher': '测试出版社2',
-                'douban_summary': '这是另一本测试书籍',
-                'douban_catalog': '第一章\n第二章',
-                'call_no': 'TP124/789',
-                'isbn': '9780987654321',
-                'pages': 150,
-                'price': '49.00',
-                'douban_tags': '技术,设计',
+                'douban_title': '机器学习',
+                'douban_subtitle': '机器学习基础',
+                'douban_original_title': 'Machine Learning',
+                'douban_author': '李四',
+                'douban_translator': '王五',
+                'douban_publisher': '北京大学出版社',
+                'douban_producer': '北大出版社',
+                'douban_series': '人工智能丛书',
+                'douban_series_link': 'https://book.douban.com/series/124/',
+                'douban_price': '99.00',
+                'douban_isbn': '9787302627791',
+                'douban_pages': 450,
+                'douban_binding': '精装',
+                'douban_pub_year': 2022,
+                'douban_rating_count': 2100,
+                'douban_summary': '本书全面介绍机器学习的理论和方法',
+                'douban_author_intro': '李四，教授，人工智能专家',
+                'douban_catalog': '目录\n第1章 机器学习概述\n第2章 监督学习',
+                'douban_cover_image': 'https://img2.doubanio.com/view/subject/s/public/s34590762.jpg',
+                'data_version': '1.0',
+                'created_at': '2025-11-05 16:43:02',
+                'updated_at': '2025-11-05 16:43:02',
+                'embedding_id': 'def456',
                 'embedding_status': 'completed',
-                'embedding_date': '2022-01-01'
+                'embedding_date': '2025-11-05 16:43:02',
+                'embedding_error': None,
+                'retry_count': 0
             }
         ]
     
@@ -155,40 +197,64 @@ class TestExcelExporter:
         """测试过滤书籍字段"""
         book_info = {
             'id': 1,
-            'douban_title': '测试书籍',
-            'douban_author': '测试作者',
+            'barcode': '54121111261793',
+            'call_no': 'TP391/4831-1',
+            'cleaned_call_no': 'TP391/4831-1',
+            'book_title': '自然语言理解',
+            'additional_info': '200454818',
+            'isbn': '9787302627784',
+            'douban_url': 'https://book.douban.com/subject/36481873/',
             'douban_rating': 8.5,
-            'douban_pub_year': '2023',
-            'douban_publisher': '测试出版社',
-            'douban_summary': '测试简介',
-            'douban_catalog': '测试目录',
-            'call_no': 'TP123/456',
-            'isbn': '9781234567890',
-            'pages': 200,
-            'price': '59.00',
-            'douban_tags': '技术,编程',
+            'douban_title': '自然语言理解',
+            'douban_subtitle': '自然语言处理',
+            'douban_original_title': 'Natural Language Understanding',
+            'douban_author': '赵海',
+            'douban_translator': '张三',
+            'douban_publisher': '清华大学出版社',
+            'douban_producer': '清华出版社',
+            'douban_series': '计算机科学丛书',
+            'douban_series_link': 'https://book.douban.com/series/123/',
+            'douban_price': '89.00',
+            'douban_isbn': '9787302627784',
+            'douban_pages': 388,
+            'douban_binding': '平装',
+            'douban_pub_year': 2023,
+            'douban_rating_count': 1250,
+            'douban_summary': '本书系统介绍自然语言处理的经典和前沿技术',
+            'douban_author_intro': '赵海，教授，博士生导师',
+            'douban_catalog': '目录\n第1章 绪论\n第2章 基础知识',
+            'douban_cover_image': 'https://img2.doubanio.com/view/subject/s/public/s34590761.jpg',
+            'data_version': '1.0',
+            'created_at': '2025-11-05 16:43:01',
+            'updated_at': '2025-11-05 16:43:01',
+            'embedding_id': 'abc123',
             'embedding_status': 'completed',
-            'embedding_date': '2023-01-01',
-            'extra_field': '不需要的字段',
-            'another_extra': '也不需要'
+            'embedding_date': '2025-11-05 16:43:01',
+            'embedding_error': None,
+            'retry_count': 0
         }
         
         result = excel_exporter._filter_book_fields(book_info)
         
-        # 检查只包含需要的字段
-        expected_fields = [
-            'id', 'douban_title', 'douban_author', 'douban_rating', 
-            'douban_pub_year', 'douban_publisher', 'douban_summary', 
-            'douban_catalog', 'call_no', 'isbn', 'pages', 'price', 
-            'douban_tags', 'embedding_status', 'embedding_date'
+        # 检查排除的字段不存在
+        exclude_fields = [
+            'data_version', 'created_at', 'updated_at', 'embedding_id',
+            'embedding_status', 'embedding_date', 'embedding_error', 'retry_count'
         ]
         
-        for field in expected_fields:
-            assert field in result
+        for field in exclude_fields:
+            assert field not in result, f"字段 {field} 应该被排除"
         
-        # 检查不包含不需要的字段
-        assert 'extra_field' not in result
-        assert 'another_extra' not in result
+        # 检查其他字段都存在
+        for field in book_info:
+            if field not in exclude_fields:
+                assert field in result, f"字段 {field} 应该被保留"
+        
+        # 验证一些关键字段
+        assert result['id'] == 1
+        assert result['douban_title'] == '自然语言理解'
+        assert result['douban_author'] == '赵海'
+        assert result['isbn'] == '9787302627784'
     
     def test_export_to_excel(self, excel_exporter, sample_books_data):
         """测试导出到Excel文件"""
@@ -206,12 +272,16 @@ class TestExcelExporter:
             
             assert len(df) == 2
             assert 'ID' in df.columns
-            assert '书名' in df.columns
-            assert '作者' in df.columns
+            assert '豆瓣书名' in df.columns
+            assert '豆瓣作者' in df.columns
+            assert '条形码' in df.columns
+            assert '索书号' in df.columns
             assert df.iloc[0]['ID'] == 1
-            assert df.iloc[0]['书名'] == '测试书籍1'
+            assert df.iloc[0]['豆瓣书名'] == '自然语言理解'
+            assert df.iloc[0]['豆瓣作者'] == '赵海'
             assert df.iloc[1]['ID'] == 2
-            assert df.iloc[1]['书名'] == '测试书籍2'
+            assert df.iloc[1]['豆瓣书名'] == '机器学习'
+            assert df.iloc[1]['豆瓣作者'] == '李四'
     
     def test_export_to_excel_auto_extension(self, excel_exporter, sample_books_data):
         """测试自动添加文件扩展名"""

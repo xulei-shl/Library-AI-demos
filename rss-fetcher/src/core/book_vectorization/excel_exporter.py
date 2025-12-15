@@ -115,18 +115,16 @@ class ExcelExporter:
         Returns:
             过滤后的书籍信息
         """
-        # 定义需要导出的字段
-        export_fields = [
-            'id', 'douban_title', 'douban_author', 'douban_rating', 
-            'douban_pub_year', 'douban_publisher', 'douban_summary', 
-            'douban_catalog', 'call_no', 'isbn', 'pages', 'price', 
-            'douban_tags', 'embedding_status', 'embedding_date'
+        # 定义需要排除的字段（不导出的字段）
+        exclude_fields = [
+            'data_version', 'created_at', 'updated_at', 'embedding_id',
+            'embedding_status', 'embedding_date', 'embedding_error', 'retry_count'
         ]
         
         filtered_info = {}
-        for field in export_fields:
-            if field in book_info:
-                filtered_info[field] = book_info[field]
+        for field, value in book_info.items():
+            if field not in exclude_fields:
+                filtered_info[field] = value
         
         return filtered_info
     
@@ -147,20 +145,33 @@ class ExcelExporter:
         # 重命名列，使其更友好
         column_mapping = {
             'id': 'ID',
-            'douban_title': '书名',
-            'douban_author': '作者',
-            'douban_rating': '豆瓣评分',
-            'douban_pub_year': '出版年份',
-            'douban_publisher': '出版社',
-            'douban_summary': '简介',
-            'douban_catalog': '目录',
+            'barcode': '条形码',
             'call_no': '索书号',
+            'cleaned_call_no': '清理后索书号',
+            'book_title': '书名',
+            'additional_info': '附加信息',
             'isbn': 'ISBN',
-            'pages': '页数',
-            'price': '价格',
-            'douban_tags': '标签',
-            'embedding_status': '向量化状态',
-            'embedding_date': '向量化日期'
+            'douban_url': '豆瓣链接',
+            'douban_rating': '豆瓣评分',
+            'douban_title': '豆瓣书名',
+            'douban_subtitle': '豆瓣副标题',
+            'douban_original_title': '豆瓣原书名',
+            'douban_author': '豆瓣作者',
+            'douban_translator': '豆瓣译者',
+            'douban_publisher': '豆瓣出版社',
+            'douban_producer': '豆瓣出品方',
+            'douban_series': '豆瓣丛书',
+            'douban_series_link': '豆瓣丛书链接',
+            'douban_price': '豆瓣价格',
+            'douban_isbn': '豆瓣ISBN',
+            'douban_pages': '豆瓣页数',
+            'douban_binding': '豆瓣装帧',
+            'douban_pub_year': '豆瓣出版年份',
+            'douban_rating_count': '豆瓣评分人数',
+            'douban_summary': '豆瓣简介',
+            'douban_author_intro': '豆瓣作者简介',
+            'douban_catalog': '豆瓣目录',
+            'douban_cover_image': '豆瓣封面图片'
         }
         
         # 重命名存在的列

@@ -91,7 +91,7 @@ metadata:
 # 多子查询检索配置
 multi_query:
   enabled: false               # 默认保持单查询模式
-  top_k_per_query: 20          # 每个子查询的候选数量
+  top_k_per_query: 15          # 每个子查询的候选数量
   priorities:                  # 执行顺序
     - primary
     - tags
@@ -154,8 +154,8 @@ output:
 # Excel导出配置
 excel_export:
   enabled: true
-  default_directory: "runtime/outputs/excel"
-  filename_template: "books_full_info_{timestamp}"
+  default_directory: "F:/Github/Library-AI-demos/book-echoes/runtime/outputs"
+  filename_template: "books_full_info_豆瓣结果_{timestamp}"
   timestamp_format: "%Y%m%d_%H%M%S"
   auto_create_directory: true
 

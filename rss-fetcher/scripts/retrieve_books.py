@@ -245,12 +245,6 @@ def interactive_mode():
             print(f"❌ 文件不存在: {json_file_path}")
             return None
         
-        # 使用默认输出路径或用户自定义路径
-        from datetime import datetime
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        default_excel_path = f"runtime/outputs/excel/books_full_info_{timestamp}.xlsx"
-        excel_path = get_user_input("Excel输出路径", default_excel_path, required=False)
-        
         # 执行Excel导出
         try:
             # 初始化JSON解析器
@@ -269,6 +263,25 @@ def interactive_mode():
             excel_config = config_manager.get('excel_export', {})
             
             excel_exporter = ExcelExporter(db_config, excel_config)
+            
+            # 使用配置文件中的默认路径和文件名格式
+            from datetime import datetime
+            timestamp = datetime.now().strftime(excel_config.get('timestamp_format', '%Y%m%d_%H%M%S'))
+            filename_template = excel_config.get('filename_template', 'books_full_info_{timestamp}')
+            default_filename = filename_template.format(timestamp=timestamp)
+            
+            # 构建完整输出路径
+            default_directory = Path(excel_config.get('default_directory', 'runtime/outputs/excel'))
+            default_excel_path = default_directory / f"{default_filename}.xlsx"
+            
+            # 询问用户是否使用默认路径
+            print(f"默认输出路径: {default_excel_path}")
+            use_default_path = get_user_yes_no("是否使用默认输出路径?", default=True)
+            
+            if not use_default_path:
+                excel_path = get_user_input("请输入自定义Excel输出路径", required=True)
+            else:
+                excel_path = str(default_excel_path)
             
             # 导出Excel
             output_file = excel_exporter.export_books_to_excel(book_ids, excel_path)
@@ -575,7 +588,141 @@ def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever, ou
         'per_query_top_k': args.per_query_top_k,
         'final_top_k': args.final_top_k
     }
-    _save_results_if_enabled(output_formatter, results, metadata)
+    saved_files = _save_results_if_enabled(output_formatter, results, metadata)
+    
+    # 询问是否执行Excel导出
+    if get_user_yes_no("是否执行完整元数据检索并导出Excel文件?"):
+        try:
+            print("\n📊 开始执行完整元数据检索和Excel导出...")
+            
+            # 从保存的JSON文件中提取book_id
+            json_file_path = None
+            if saved_files and 'json' in saved_files:
+                json_file_path = saved_files['json']
+            else:
+                # 如果没有保存JSON文件，直接从结果中提取book_id
+                book_ids = []
+                for item in results:
+                    if 'book_id' in item:
+                        book_ids.append(item['book_id'])
+                
+                if not book_ids:
+                    print("❌ 未能从检索结果中提取到任何书籍ID")
+                    return {
+                        'mode': 'multi',
+                        'results': results,
+                        'from_md': args.from_md,
+                        'query_package': query_package.as_dict(),
+                        'query_package_origin': query_package.origin,
+                        'query_package_metadata': dict(query_package.metadata),
+                        'enable_rerank': args.enable_rerank,
+                        'disable_exact_match': getattr(args, 'disable_exact_match', False),
+                    }
+                
+                # 使用配置文件中的默认路径和文件名格式
+                from datetime import datetime
+                config_manager = ConfigManager(args.config)
+                excel_config = config_manager.get('excel_export', {})
+                
+                timestamp = datetime.now().strftime(excel_config.get('timestamp_format', '%Y%m%d_%H%M%S'))
+                filename_template = excel_config.get('filename_template', 'books_full_info_{timestamp}')
+                default_filename = filename_template.format(timestamp=timestamp)
+                
+                # 构建完整输出路径
+                default_directory = Path(excel_config.get('default_directory', 'runtime/outputs/excel'))
+                default_excel_path = default_directory / f"{default_filename}.xlsx"
+                
+                # 初始化Excel导出器
+                db_config = config_manager.get('database', {})
+                excel_exporter = ExcelExporter(db_config, excel_config)
+                
+                # 导出Excel
+                output_file = excel_exporter.export_books_to_excel(book_ids, str(default_excel_path))
+                print(f"✅ Excel导出完成: {output_file}")
+                
+                # 关闭资源
+                excel_exporter.close()
+                
+                return {
+                    'mode': 'multi',
+                    'results': results,
+                    'from_md': args.from_md,
+                    'query_package': query_package.as_dict(),
+                    'query_package_origin': query_package.origin,
+                    'query_package_metadata': dict(query_package.metadata),
+                    'enable_rerank': args.enable_rerank,
+                    'disable_exact_match': getattr(args, 'disable_exact_match', False),
+                    'excel_export_path': output_file
+                }
+            
+            # 如果有保存的JSON文件，使用JSON解析器
+            if json_file_path:
+                json_parser = JsonParser()
+                book_ids = json_parser.extract_book_ids(json_file_path)
+                
+                if not book_ids:
+                    print("❌ 未能从JSON文件中提取到任何书籍ID")
+                    return {
+                        'mode': 'multi',
+                        'results': results,
+                        'from_md': args.from_md,
+                        'query_package': query_package.as_dict(),
+                        'query_package_origin': query_package.origin,
+                        'query_package_metadata': dict(query_package.metadata),
+                        'enable_rerank': args.enable_rerank,
+                        'disable_exact_match': getattr(args, 'disable_exact_match', False),
+                    }
+                
+                print(f"✅ 成功提取到{len(book_ids)}个书籍ID")
+                
+                # 初始化Excel导出器
+                config_manager = ConfigManager(args.config)
+                db_config = config_manager.get('database', {})
+                excel_config = config_manager.get('excel_export', {})
+                
+                excel_exporter = ExcelExporter(db_config, excel_config)
+                
+                # 使用配置文件中的默认路径和文件名格式
+                from datetime import datetime
+                timestamp = datetime.now().strftime(excel_config.get('timestamp_format', '%Y%m%d_%H%M%S'))
+                filename_template = excel_config.get('filename_template', 'books_full_info_{timestamp}')
+                default_filename = filename_template.format(timestamp=timestamp)
+                
+                # 构建完整输出路径
+                default_directory = Path(excel_config.get('default_directory', 'runtime/outputs/excel'))
+                default_excel_path = default_directory / f"{default_filename}.xlsx"
+                
+                # 询问用户是否使用默认路径
+                print(f"默认输出路径: {default_excel_path}")
+                use_default_path = get_user_yes_no("是否使用默认输出路径?", default=True)
+                
+                if not use_default_path:
+                    excel_path = get_user_input("请输入自定义Excel输出路径", required=True)
+                else:
+                    excel_path = str(default_excel_path)
+                
+                # 导出Excel
+                output_file = excel_exporter.export_books_to_excel(book_ids, excel_path)
+                print(f"✅ Excel导出完成: {output_file}")
+                
+                # 关闭资源
+                excel_exporter.close()
+                
+                return {
+                    'mode': 'multi',
+                    'results': results,
+                    'from_md': args.from_md,
+                    'query_package': query_package.as_dict(),
+                    'query_package_origin': query_package.origin,
+                    'query_package_metadata': dict(query_package.metadata),
+                    'enable_rerank': args.enable_rerank,
+                    'disable_exact_match': getattr(args, 'disable_exact_match', False),
+                    'excel_export_path': output_file
+                }
+                
+        except Exception as e:
+            print(f"❌ Excel导出失败: {e}")
+            logger.error(f"Excel导出失败: {e}")
     
     return {
         'mode': 'multi',
@@ -589,14 +736,18 @@ def _run_multi_query_flow(args: argparse.Namespace, retriever: BookRetriever, ou
     }
 
 
-def _save_results_if_enabled(output_formatter: OutputFormatter, results: List[Dict], metadata: Dict) -> None:
+def _save_results_if_enabled(output_formatter: OutputFormatter, results: List[Dict], metadata: Dict) -> Dict:
     """如果启用了输出功能，则保存检索结果
     
     Args:
         output_formatter: 输出格式化器实例
         results: 检索结果列表
         metadata: 元数据字典
+        
+    Returns:
+        Dict: 保存的文件路径字典，格式为 {format_name: file_path}
     """
+    saved_files = {}
     try:
         saved_files = output_formatter.save_results(results, metadata)
         if saved_files:
@@ -607,6 +758,8 @@ def _save_results_if_enabled(output_formatter: OutputFormatter, results: List[Di
     except Exception as e:
         logger.error(f"保存检索结果时发生错误: {e}")
         print(f"\n⚠️ 保存检索结果失败: {e}")
+    
+    return saved_files
 
 
 def run_cli(args: argparse.Namespace) -> Dict:

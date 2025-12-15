@@ -118,6 +118,7 @@ dmypy.json
 
 # 运行时日志目录（包含敏感信息）
 runtime/logs/
+runtime/vector_db/
 
 # 运行时输出目录（可能包含临时数据）
 # runtime/outputs/
