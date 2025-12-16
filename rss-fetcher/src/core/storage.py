@@ -517,14 +517,29 @@ class StorageManager:
         processed_articles_map = {}
         for article in ready_articles:
             # 优先使用link作为键
-            link = article.get("link", "").strip()
-            title = article.get("title", "").strip()
-            
+            link = article.get("link", "")
+            # 检查是否为字符串，处理MD文档中的nan值
+            if link is None or (isinstance(link, float) and str(link).lower() == 'nan'):
+                link = ""
+            else:
+                link = str(link).strip()
+
+            title = article.get("title", "")
+            # 检查是否为字符串
+            if title is None or (isinstance(title, float) and str(title).lower() == 'nan'):
+                title = ""
+            else:
+                title = str(title).strip()
+
             if link:
                 processed_articles_map[link] = article
             else:
                 # 如果没有link，使用title+published_date组合
-                published_date = article.get("published_date", "").strip()
+                published_date = article.get("published_date", "")
+                if published_date is None or (isinstance(published_date, float) and str(published_date).lower() == 'nan'):
+                    published_date = ""
+                else:
+                    published_date = str(published_date).strip()
                 key = f"{title}_{published_date}"
                 processed_articles_map[key] = article
         
@@ -533,13 +548,28 @@ class StorageManager:
             processed_article = None
             
             # 优先使用link匹配
-            link = existing_article.get("link", "").strip()
+            link = existing_article.get("link", "")
+            if link is None or (isinstance(link, float) and str(link).lower() == 'nan'):
+                link = ""
+            else:
+                link = str(link).strip()
+
             if link and link in processed_articles_map:
                 processed_article = processed_articles_map[link]
             else:
                 # 回退到title+published_date匹配
-                title = existing_article.get("title", "").strip()
-                published_date = existing_article.get("published_date", "").strip()
+                title = existing_article.get("title", "")
+                if title is None or (isinstance(title, float) and str(title).lower() == 'nan'):
+                    title = ""
+                else:
+                    title = str(title).strip()
+
+                published_date = existing_article.get("published_date", "")
+                if published_date is None or (isinstance(published_date, float) and str(published_date).lower() == 'nan'):
+                    published_date = ""
+                else:
+                    published_date = str(published_date).strip()
+
                 key = f"{title}_{published_date}"
                 if key in processed_articles_map:
                     processed_article = processed_articles_map[key]
