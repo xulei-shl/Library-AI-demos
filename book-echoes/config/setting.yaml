@@ -212,15 +212,15 @@ douban:
     base_url: "https://m.douban.com/rexxar/api/v2/book/isbn"
 
     # 并发与限流（保守配置，避免触发反爬）
-    max_concurrent: 5      # 最大并发数
-    qps: 1              # 每秒请求数（0.5 = 每 2 秒 1 次）
+    max_concurrent: 8      # 最大并发数
+    qps: 2              # 每秒请求数（0.5 = 每 2 秒 1 次）
     timeout: 15           # 请求超时（秒）
 
     # 随机延迟配置（模拟人类操作）
     random_delay:
       enabled: true
-      min: 1.5            # 最小延迟（秒）
-      max: 3.5            # 最大延迟（秒）
+      min: 0.8            # 最小延迟（秒）
+      max: 1.5            # 最大延迟（秒）
 
     # 批次冷却配置（避免持续请求触发反爬）
     batch_cooldown:
