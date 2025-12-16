@@ -663,14 +663,163 @@ class StorageManager:
         logger.info(f"找到最新的按月聚合文件: {latest_file}")
         return latest_file
 
+    def save_md_results(self, articles: List[Dict], output_filename: Optional[str] = None) -> Optional[str]:
+        """
+        保存MD文档处理结果到Excel文件
+
+        Args:
+            articles: MD文档转换后的文章列表
+            output_filename: 指定输出文件名(可选)，如果不指定则自动生成
+
+        Returns:
+            保存的文件路径，失败返回 None
+        """
+        if not articles:
+            logger.info("没有MD文档数据需要保存。")
+            return None
+
+        # 生成输出文件路径
+        if output_filename:
+            # 如果用户指定了文件名，确保它有正确的扩展名
+            if not output_filename.endswith('.xlsx'):
+                output_filename += '.xlsx'
+            filepath = os.path.join(self.output_dir, output_filename)
+        else:
+            # 使用当前时间生成文件名
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filepath = os.path.join(self.output_dir, f"文章汇总分析_{timestamp}.xlsx")
+
+        logger.info(f"准备保存MD文档结果到: {filepath}")
+
+        try:
+            # 确保输出目录存在
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+            # 创建DataFrame
+            df = pd.DataFrame(articles)
+
+            # 确保所有必要的列都存在
+            required_columns = [
+                'filename', 'title', 'content', 'source',
+                'filter_status', 'filter_pass', 'filter_reason',
+                'llm_score', 'llm_summary', 'llm_analysis',
+                'file_size', 'modified_time'
+            ]
+
+            for col in required_columns:
+                if col not in df.columns:
+                    df[col] = ""
+
+            # 重新排列列顺序，将重要信息放在前面
+            column_order = [
+                'filename', 'title', 'content', 'source',
+                'file_size', 'modified_time', 'filter_status',
+                'filter_pass', 'filter_reason', 'llm_score',
+                'llm_summary', 'llm_analysis'
+            ]
+
+            # 添加其他可能的列
+            for col in df.columns:
+                if col not in column_order:
+                    column_order.append(col)
+
+            df = df[column_order]
+
+            # 保存到Excel
+            df.to_excel(filepath, index=False)
+
+            logger.info(f"MD文档结果已保存: {filepath} (共 {len(articles)} 篇文档)")
+            return filepath
+
+        except Exception as e:
+            logger.error(f"保存MD文档结果失败: {e}")
+            return None
+
+    def append_md_analysis_results(self, articles: List[Dict], input_file: str) -> Optional[str]:
+        """
+        将MD文档的LLM分析结果追加到现有Excel文件
+
+        Args:
+            articles: 包含LLM分析结果的文章列表
+            input_file: 输入Excel文件路径
+
+        Returns:
+            保存的文件路径，失败返回 None
+        """
+        if not articles:
+            logger.info("没有分析结果需要追加。")
+            return None
+
+        if not os.path.exists(input_file):
+            logger.error(f"输入文件不存在: {input_file}")
+            return None
+
+        try:
+            # 读取现有数据
+            existing_df = pd.read_excel(input_file)
+            existing_articles = existing_df.to_dict('records')
+
+            # 创建文章映射，使用filename作为唯一标识
+            existing_map = {}
+            for article in existing_articles:
+                filename = article.get('filename', '')
+                if filename:
+                    existing_map[filename] = article
+
+            # 更新现有数据或添加新数据
+            updated_articles = existing_articles.copy()
+
+            for new_article in articles:
+                filename = new_article.get('filename', '')
+                if filename and filename in existing_map:
+                    # 更新现有文章的分析结果
+                    for i, existing_article in enumerate(updated_articles):
+                        if existing_article.get('filename') == filename:
+                            # 只更新分析相关的字段
+                            analysis_fields = [
+                                'filter_status', 'filter_pass', 'filter_reason',
+                                'llm_score', 'llm_summary', 'llm_analysis',
+                                'llm_tags', 'llm_mentioned_books', 'llm_topic_focus',
+                                'llm_thematic_essence', 'llm_primary_dimension',
+                                'llm_reason', 'llm_error', 'llm_raw_response',
+                                'llm_status'
+                            ]
+
+                            for field in analysis_fields:
+                                if field in new_article:
+                                    updated_articles[i][field] = new_article[field]
+
+                            break
+                else:
+                    # 添加新文章
+                    updated_articles.append(new_article)
+
+            # 保存更新后的数据
+            updated_df = pd.DataFrame(updated_articles)
+
+            # 保持列顺序一致
+            if 'filename' in updated_df.columns:
+                # 将filename移到第一列
+                cols = ['filename'] + [col for col in updated_df.columns if col != 'filename']
+                updated_df = updated_df[cols]
+
+            updated_df.to_excel(input_file, index=False)
+
+            logger.info(f"MD文档分析结果已追加: {input_file} (更新了 {len(articles)} 篇文档)")
+            return input_file
+
+        except Exception as e:
+            logger.error(f"追加MD文档分析结果失败: {e}")
+            return None
+
     def append_new_data(self, stage: str, new_articles: List[Dict]) -> Optional[str]:
         """
         追加新数据到现有的按月聚合Excel文件（推荐用法）
-        
+
         Args:
             stage: 阶段名称 (fetch/extract/analyze)
             new_articles: 新文章列表
-            
+
         Returns:
             保存的文件路径，失败返回 None
         """

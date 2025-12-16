@@ -18,6 +18,7 @@ from .storage import StorageManager
 from .content_extractors import ExtractorFactory
 from .score_statistics import ScoreStatistics
 from .cross_analysis import CrossAnalysisManager
+from .md_reader import MDReader
 
 # Windows平台的输入超时处理
 if sys.platform == 'win32':
@@ -443,6 +444,90 @@ class SubjectBibliographyPipeline:
         
         return output_file
 
+    def run_stage_md_processing(self, md_directory: Optional[str] = None) -> Optional[str]:
+        """
+        MD文档处理阶段 - 读取本地MD文档并转换为标准格式
+
+        Args:
+            md_directory: MD文档目录路径，如果不指定则使用配置中的默认路径
+
+        Returns:
+            输出Excel文件路径，失败返回 None
+        """
+        logger.info("=" * 60)
+        logger.info("开始执行MD文档处理阶段")
+        logger.info("=" * 60)
+
+        # 获取MD处理配置
+        md_config = self.config.get("md_processing", {})
+
+        # 确定MD文档目录
+        if md_directory is None:
+            # 使用配置中的默认路径
+            md_directory = md_config.get("default_base_path", "data/md_documents")
+
+        logger.info(f"MD文档目录: {md_directory}")
+
+        # 验证目录存在
+        if not os.path.exists(md_directory):
+            logger.error(f"MD文档目录不存在: {md_directory}")
+            return None
+
+        if not os.path.isdir(md_directory):
+            logger.error(f"指定路径不是目录: {md_directory}")
+            return None
+
+        try:
+            # 初始化MDReader
+            reader = MDReader(config=md_config)
+
+            # 处理MD文档目录
+            result = reader.process_directory(md_directory)
+
+            if not result['success']:
+                logger.error(f"MD文档处理失败: {result.get('error', '未知错误')}")
+                return None
+
+            articles = result['articles']
+            logger.info(f"成功处理 {len(articles)} 个MD文档")
+
+            # 保存到Excel
+            excel_filename = result.get('excel_filename')
+            output_file = self.storage.save_md_results(articles, excel_filename)
+
+            if output_file:
+                logger.info("=" * 60)
+                logger.info(f"MD文档处理完成，输出文件: {output_file}")
+
+                # 询问是否继续执行文章过滤
+                try:
+                    user_choice = get_user_input_with_timeout(
+                        "是否继续执行文章过滤？",
+                        timeout=10,
+                        default="y"
+                    )
+                    if user_choice in ['y', 'yes', '是', '']:
+                        logger.info("继续执行文章过滤...")
+                        # 使用生成的Excel文件作为输入，执行过滤阶段
+                        filter_output = self.run_stage_filter(output_file)
+                        if filter_output:
+                            logger.info(f"文章过滤完成，输出文件: {filter_output}")
+                            output_file = filter_output
+                    else:
+                        logger.info("用户选择跳过文章过滤")
+                except Exception as e:
+                    logger.warning(f"用户交互失败，跳过过滤: {e}")
+
+                logger.info("=" * 60)
+                return output_file
+            else:
+                logger.error("保存MD文档结果失败")
+                return None
+
+        except Exception as e:
+            logger.error(f"MD文档处理阶段失败: {e}", exc_info=True)
+            return None
+
     def run_stage_filter(self, input_file: Optional[str] = None) -> Optional[str]:
         """
         阶段3: 文章过滤
@@ -857,14 +942,15 @@ class SubjectBibliographyPipeline:
         return report_paths
 
 
-def run_pipeline(stage: str = "all", input_file: Optional[str] = None, min_score: Optional[int] = None):
+def run_pipeline(stage: str = "all", input_file: Optional[str] = None, min_score: Optional[int] = None, md_directory: Optional[str] = None):
     """
     运行流程
 
     Args:
-        stage: 阶段名称 (fetch/extract/filter/summary/analysis/cross/all)
+        stage: 阶段名称 (fetch/extract/filter/summary/analysis/cross/md_processing/all)
         input_file: 输入文件路径(可选)
         min_score: 交叉分析的评分阈值(仅对cross有效)，如果不指定则使用配置文件中的默认值
+        md_directory: MD文档目录路径(仅对md_processing有效)
     """
     # 如果未指定阈值，从配置文件读取
     if stage == "cross":
@@ -891,10 +977,12 @@ def run_pipeline(stage: str = "all", input_file: Optional[str] = None, min_score
         if report_paths:
             for path in report_paths:
                 logger.info(f"交叉分析报告已生成: {path}")
+    elif stage == "md_processing":
+        pipeline.run_stage_md_processing(md_directory)
     elif stage == "all":
         pipeline.run_all_stages()
     else:
-        logger.error(f"未知的阶段: {stage}，支持的阶段: fetch/extract/filter/summary/analysis/cross/all")
+        logger.error(f"未知的阶段: {stage}，支持的阶段: fetch/extract/filter/summary/analysis/cross/md_processing/all")
 
 
 if __name__ == "__main__":
@@ -903,8 +991,8 @@ if __name__ == "__main__":
         "--stage",
         type=str,
         default="all",
-        choices=["fetch", "extract", "filter", "summary", "analysis", "cross", "all"],
-        help="运行阶段: fetch(RSS获取) / extract(全文解析) / filter(文章过滤) / summary(LLM总结) / analysis(深度分析) / cross(交叉主题分析) / all(完整流程)"
+        choices=["fetch", "extract", "filter", "summary", "analysis", "cross", "md_processing", "all"],
+        help="运行阶段: fetch(RSS获取) / extract(全文解析) / filter(文章过滤) / summary(LLM总结) / analysis(深度分析) / cross(交叉主题分析) / md_processing(MD文档处理) / all(完整流程)"
     )
     parser.add_argument(
         "--input",
@@ -922,5 +1010,12 @@ if __name__ == "__main__":
         help=f"交叉分析的评分筛选阈值(仅对cross有效，默认从配置文件读取，当前为{default_threshold})"
     )
 
+    parser.add_argument(
+        "--md-dir",
+        type=str,
+        default=None,
+        help="MD文档目录路径(仅对md_processing有效)"
+    )
+
     args = parser.parse_args()
-    run_pipeline(args.stage, args.input, args.min_score)
+    run_pipeline(args.stage, args.input, args.min_score, args.md_dir)

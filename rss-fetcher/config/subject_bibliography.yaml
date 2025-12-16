@@ -134,3 +134,20 @@ playwright_sites:
       headless: true  # 是否无头模式
     # 全文提取器配置 - 可选
     extractor: "pengpai_playwright"  # 对应的提取器名称，如不需要全文提取可留空
+
+# MD文档处理配置
+md_processing:
+  # 默认MD文档路径
+  default_base_path: "data/md_documents"
+  # 是否递归扫描子目录
+  recursive_scan: true
+  # Excel文件命名规则
+  excel_filename_pattern: "文章汇总分析_{timestamp}"
+  # 支持的文件扩展名
+  supported_extensions: [".md", ".markdown"]
+  # 标题提取规则
+  title_extraction:
+    # 是否去除文件扩展名
+    remove_extension: true
+    # 标题清理规则（去除特殊字符等）
+    cleanup_rules: true

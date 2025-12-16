@@ -67,6 +67,7 @@ def setup_args_parser() -> argparse.ArgumentParser:
   %(prog)s --stage analysis --input runtime/outputs/2025-12.xlsx
   %(prog)s --stage cross --input runtime/outputs/2025-12.xlsx
   %(prog)s --stage cross --min-score 70  # 自定义评分阈值
+  %(prog)s --stage md_processing --md-dir data/md_documents  # 处理MD文档
         """
     )
     
@@ -74,15 +75,16 @@ def setup_args_parser() -> argparse.ArgumentParser:
         "--stage",
         type=str,
         default="all",
-        choices=["fetch", "extract", "filter", "summary", "analysis", "cross", "all"],
+        choices=["fetch", "extract", "filter", "summary", "analysis", "cross", "md_processing", "all"],
         help="""运行阶段:
-  fetch     - 阶段1: RSS获取 (按月聚合)
-  extract   - 阶段2: 全文解析 (基于月文件)
-  filter    - 阶段3: 文章过滤 (基于月文件)
-  summary   - 阶段4: 文章总结 (基于过滤结果)
-  analysis  - 阶段5: 深度分析 (基于总结结果)
-  cross     - 阶段6: 文章交叉主题分析 (基于月文件)
-  all       - 完整流程 (默认)"""
+  fetch         - 阶段1: RSS获取 (按月聚合)
+  extract       - 阶段2: 全文解析 (基于月文件)
+  filter        - 阶段3: 文章过滤 (基于月文件)
+  summary       - 阶段4: 文章总结 (基于过滤结果)
+  analysis      - 阶段5: 深度分析 (基于总结结果)
+  cross         - 阶段6: 文章交叉主题分析 (基于月文件)
+  md_processing - MD文档处理 (读取本地MD文件)
+  all           - 完整流程 (默认)"""
     )
     
     parser.add_argument(
@@ -104,6 +106,13 @@ def setup_args_parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
         help="交叉分析的评分筛选阈值(仅对cross有效)，如果不指定则使用配置文件中的默认值"
+    )
+
+    parser.add_argument(
+        "--md-dir",
+        type=str,
+        default=None,
+        help="MD文档目录路径(仅对md_processing有效)"
     )
     
     parser.add_argument(
@@ -132,7 +141,7 @@ def interactive_mode():
         print("1. 完整流程 (all) - 执行所有阶段")
         print("2. RSS获取 (fetch) - 获取RSS源文章")
         print("3. 全文解析 (extract) - 解析文章全文内容")
-        print("4. 文章过滤 (filter) - 根据规则过滤文章")
+        print("4. 文章处理 - 包含RSS过滤和MD文档处理")
         print("5. 文章总结 (summary) - 生成文章摘要")
         print("6. 深度分析 (analysis) - 对文章进行深度分析")
         print("7. 交叉主题分析 (cross) - 文章间交叉分析")
@@ -150,7 +159,7 @@ def interactive_mode():
             elif choice == '3':
                 run_interactive_stage('extract')
             elif choice == '4':
-                run_interactive_stage('filter')
+                handle_filter_submenu()
             elif choice == '5':
                 run_interactive_stage('summary')
             elif choice == '6':
@@ -216,6 +225,107 @@ def run_interactive_stage(stage: str, quick_mode: bool = False):
         logger.error(f"交互式执行失败: {e}", exc_info=True)
 
 
+def handle_filter_submenu():
+    """处理文章过滤子菜单"""
+    while True:
+        print("\n" + "="*60)
+        print("                文章处理子菜单")
+        print("="*60)
+        print("\n请选择处理类型：")
+        print("4.1 RSS文章过滤 (filter) - 对RSS文章进行质量筛选")
+        print("4.2 MD文档处理 (md_processing) - 处理本地MD文档")
+        print("4.3 返回主菜单")
+        print("="*60)
+
+        try:
+            sub_choice = input("\n请输入选项 (4.1-4.3): ").strip()
+
+            if sub_choice == '4.1' or sub_choice == '1':
+                run_interactive_stage('filter')
+            elif sub_choice == '4.2' or sub_choice == '2':
+                handle_md_processing()
+            elif sub_choice == '4.3' or sub_choice == '3':
+                break
+            else:
+                print("\n❌ 无效选项，请输入 4.1, 4.2, 4.3 或 1, 2, 3")
+
+        except KeyboardInterrupt:
+            print("\n\n用户中断，返回主菜单")
+            break
+        except Exception as e:
+            print(f"\n❌ 发生错误: {e}")
+
+
+def handle_md_processing():
+    """处理MD文档流程"""
+    print("\n" + "="*60)
+    print("            MD文档处理")
+    print("="*60)
+
+    # 获取MD文档目录
+    while True:
+        md_directory = input("\n请输入MD文档目录路径（直接回车使用默认路径）: ").strip()
+
+        if not md_directory:
+            # 使用默认路径
+            import yaml
+            try:
+                config_path = "config/subject_bibliography.yaml"
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config = yaml.safe_load(f)
+                    md_directory = config.get("md_processing", {}).get("default_base_path", "data/md_documents")
+                print(f"使用默认路径: {md_directory}")
+            except Exception as e:
+                print(f"读取配置文件失败: {e}")
+                print("使用默认路径: data/md_documents")
+                md_directory = "data/md_documents"
+
+        # 验证路径
+        if not os.path.exists(md_directory):
+            print(f"❌ 路径不存在: {md_directory}")
+            retry = input("是否重新输入？(y/n): ").strip().lower()
+            if retry != 'y' and retry != 'yes':
+                return
+            continue
+
+        if not os.path.isdir(md_directory):
+            print(f"❌ 路径不是目录: {md_directory}")
+            retry = input("是否重新输入？(y/n): ").strip().lower()
+            if retry != 'y' and retry != 'yes':
+                return
+            continue
+
+        # 检查目录中是否有MD文件
+        md_files = []
+        for ext in ['.md', '.markdown']:
+            md_files.extend([f for f in os.listdir(md_directory) if f.endswith(ext)])
+
+        if not md_files:
+            print(f"⚠️ 目录中未找到MD文件: {md_directory}")
+            retry = input("是否重新输入？(y/n): ").strip().lower()
+            if retry != 'y' and retry != 'yes':
+                return
+            continue
+
+        print(f"✅ 找到 {len(md_files)} 个MD文件")
+        break
+
+    # 确认执行
+    confirm = input(f"\n确认处理目录 {md_directory} 中的MD文档？(y/n): ").strip().lower()
+    if confirm not in ['y', 'yes', '是']:
+        print("用户取消操作")
+        return
+
+    # 执行MD处理
+    print(f"\n🚀 开始处理MD文档...")
+    try:
+        run_pipeline(stage='md_processing', md_directory=md_directory)
+        print("\n✅ MD文档处理完成！")
+    except Exception as e:
+        print(f"\n❌ 处理失败: {e}")
+        logger.error(f"MD处理失败: {e}", exc_info=True)
+
+
 def show_help():
     """显示帮助信息"""
     print("\n" + "="*60)
@@ -225,7 +335,9 @@ def show_help():
     print("1. 完整流程 (all) - 按顺序执行所有阶段，从RSS获取到交叉分析")
     print("2. RSS获取 (fetch) - 从配置的RSS源获取最新文章")
     print("3. 全文解析 (extract) - 下载并解析文章的完整内容")
-    print("4. 文章过滤 (filter) - 使用LLM对文章进行质量筛选")
+    print("4. 文章处理 - 包含以下子选项：")
+    print("   4.1 RSS文章过滤 - 对RSS文章进行质量筛选")
+    print("   4.2 MD文档处理 - 处理本地MD文档文件")
     print("5. 文章总结 (summary) - 为通过筛选的文章生成摘要")
     print("6. 深度分析 (analysis) - 对文章进行深度主题分析")
     print("7. 交叉主题分析 (cross) - 分析文章间的主题关联性")
@@ -233,8 +345,10 @@ def show_help():
     print("- 输入文件通常位于: runtime/outputs/YYYY-MM.xlsx")
     print("- 配置文件默认: config/subject_bibliography.yaml")
     print("- 日志文件位于: runtime/logs/")
+    print("- MD文档默认路径: data/md_documents（可在配置文件中修改）")
     print("\n💡 使用提示:")
     print("- 大部分阶段支持使用默认文件，无需手动指定")
+    print("- MD文档处理支持 .md 和 .markdown 文件")
     print("- 启用详细日志可以看到更多执行信息")
     print("- 按 Ctrl+C 可以随时中断执行")
     print("="*60)
@@ -344,7 +458,7 @@ def main():
     
     try:
         # 执行pipeline
-        run_pipeline(stage=args.stage, input_file=args.input, score_threshold=args.score_threshold)
+        run_pipeline(stage=args.stage, input_file=args.input, min_score=args.min_score, md_directory=args.md_dir)
         
         # 记录完成信息
         end_time = datetime.now()
