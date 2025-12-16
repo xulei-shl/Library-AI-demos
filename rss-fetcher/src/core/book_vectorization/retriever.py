@@ -80,7 +80,7 @@ class BookRetriever:
         # 2. 构建过滤条件
         filter_metadata = {}
         if min_rating:
-            filter_metadata['douban_rating'] = {"$gte": str(min_rating)}
+            filter_metadata['douban_rating'] = {"$gte": min_rating}
         
         # 3. 向量检索
         results = self.vector_store.search(

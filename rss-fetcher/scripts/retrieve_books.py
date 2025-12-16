@@ -12,7 +12,7 @@
     python scripts/retrieve_books.py --query "网络亚文化中的身份表演与情感部落" --top-k 5
 
     # 从文件读取查询文本
-    python scripts/retrieve_books.py --query-file samples/query.txt --min-rating 8
+    python scripts/retrieve_books.py --query-file scripts/query-samples.txt --min-rating 8
 
     # 根据分类编号查看高评分图书
     python scripts/retrieve_books.py --category H --top-k 5
