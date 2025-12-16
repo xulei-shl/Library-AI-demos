@@ -28,6 +28,10 @@ openai>=1.40.0         # OpenAI API客户端
 python-dateutil>=2.8.2 # 时间处理增强，版本要求较高
 pytz>=2023.3          # 时区处理
 
+# API服务
+fastapi>=0.111.0       # Web接口框架
+uvicorn>=0.23.0        # ASGI服务器
+
 # 数据验证 (可选依赖 - 部分代码引用)
 numpy>=1.24.0          # 数值计算，版本要求较高以兼容现代pandas
 
