@@ -9,6 +9,7 @@ Embedding API 调用封装
 import os
 import time
 from typing import Dict, List
+import httpx
 from openai import OpenAI
 from src.utils.logger import get_logger
 
@@ -37,10 +38,16 @@ class EmbeddingClient:
         """
         api_key = self._resolve_env(self.config['api_key'])
         
+        # 创建自定义的httpx客户端，避免代理参数问题
+        http_client = httpx.Client(
+            timeout=self.config['timeout'],
+            trust_env=False  # 禁用环境变量中的代理设置
+        )
+        
         client = OpenAI(
             api_key=api_key,
             base_url=self.config['base_url'],
-            timeout=self.config['timeout']
+            http_client=http_client
         )
         
         logger.info(f"Embedding 客户端初始化成功: model={self.config['model']}")

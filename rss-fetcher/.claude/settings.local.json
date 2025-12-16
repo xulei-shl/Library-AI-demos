@@ -5,7 +5,11 @@
       "Bash(cat:*)",
       "Bash(python:*)",
       "Bash(del:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Skill(skill-creator)",
+      "Bash(tree:*)",
+      "Bash(unzip:*)",
+      "Skill(local-book-researcher)"
     ],
     "deny": [],
     "ask": []
