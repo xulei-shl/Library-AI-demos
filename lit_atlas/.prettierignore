@@ -1,0 +1,13 @@
+# 生成产物
+.next
+out
+build
+coverage
+runtime/logs
+runtime/outputs
+
+# 依赖缓存
+node_modules
+
+# 其他
+*.log

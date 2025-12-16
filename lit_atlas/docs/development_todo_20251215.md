@@ -7,6 +7,7 @@
 ## Sprint 0 ——基础设施与规范
 1. [ ] 初始化 Next.js + TypeScript + App Router 脚手架，接入 ESLint/Prettier/Husky/Storybook，建立 CI 管线。
    - 参考：@docs/墨迹与边界-0.3.md
+   - 进度（2025-12-16）: 已完成 create-next-app 脚手架初始化，并按 `.rules/00_STANDARDS.md` 建立 `src/core`、`src/utils`、`tests`、`runtime/logs`、`runtime/outputs` 目录；已补齐 Prettier 配置（`prettier.config.mjs`, `.prettierignore`）并通过 `npm run lint` 验证 ESLint+Prettier；`npm install --legacy-peer-deps` 完成依赖安装；Husky 目录已初始化（待改写 pre-commit 为 `lint-staged` 并设置 hooksPath）；Storybook 与 CI 仍待接入。
 2. [ ] 配置全局状态与事件基础：安装 Zustand、RxJS，创建占位 store、Subject。
    - 参考：@docs/design/data_orchestrator_20251215.md
 3. [ ] 搭建 Geo 渲染基础：引入 React-Simple-Maps、D3 投影与纸张纹理主题，输出空白 NarrativeMap。
