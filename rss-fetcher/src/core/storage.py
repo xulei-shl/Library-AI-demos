@@ -700,8 +700,9 @@ class StorageManager:
 
             # 确保所有必要的列都存在
             required_columns = [
-                'filename', 'title', 'content', 'source',
+                'filename', 'title', 'content', 'full_text', 'source',
                 'filter_status', 'filter_pass', 'filter_reason',
+                'extract_status', 'extract_error',
                 'llm_score', 'llm_summary', 'llm_analysis',
                 'file_size', 'modified_time'
             ]
@@ -712,8 +713,8 @@ class StorageManager:
 
             # 重新排列列顺序，将重要信息放在前面
             column_order = [
-                'filename', 'title', 'content', 'source',
-                'file_size', 'modified_time', 'filter_status',
+                'filename', 'title', 'content', 'full_text', 'source',
+                'file_size', 'modified_time', 'extract_status', 'extract_error', 'filter_status',
                 'filter_pass', 'filter_reason', 'llm_score',
                 'llm_summary', 'llm_analysis'
             ]

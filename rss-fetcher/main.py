@@ -35,6 +35,7 @@
 import argparse
 import sys
 import os
+import glob
 from datetime import datetime
 from typing import Optional
 
@@ -141,7 +142,7 @@ def interactive_mode():
         print("1. 完整流程 (all) - 执行所有阶段")
         print("2. RSS获取 (fetch) - 获取RSS源文章")
         print("3. 全文解析 (extract) - 解析文章全文内容")
-        print("4. 文章处理 - 包含RSS过滤和MD文档处理")
+        print("4. 文章过滤 (filter) - 包含RSS和MD文档处理")
         print("5. 文章总结 (summary) - 生成文章摘要")
         print("6. 深度分析 (analysis) - 对文章进行深度分析")
         print("7. 交叉主题分析 (cross) - 文章间交叉分析")
@@ -194,23 +195,84 @@ def run_interactive_stage(stage: str, quick_mode: bool = False):
     logger.debug(f"开始交互式执行阶段: {stage}, 快速模式: {quick_mode}")
 
     # 使用默认配置直接执行
-    input_file = None
     config_file = "config/subject_bibliography.yaml"
     min_score = None
+    input_file = None
+
+    # 对于需要输入文件的阶段，询问用户输入文件路径
+    if stage in ['summary', 'analysis', 'cross']:
+        print(f"\n📂 请选择要处理的文件（直接回车使用默认最新文件）:")
+
+        # 列出可能的文件选项
+        output_dir = "runtime/outputs"
+        if os.path.exists(output_dir):
+            # 查找所有相关的Excel文件
+            excel_files = []
+            for pattern in ["*汇总分析*.xlsx", "*-*.xlsx", "*_*.xlsx"]:
+                excel_files.extend(glob.glob(os.path.join(output_dir, pattern)))
+
+            if excel_files:
+                # 按修改时间排序，最新的在前
+                excel_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+                print("\n可用文件列表:")
+                for i, file in enumerate(excel_files[:10], 1):  # 只显示最新的10个文件
+                    file_time = os.path.getmtime(file)
+                    time_str = datetime.fromtimestamp(file_time).strftime("%Y-%m-%d %H:%M:%S")
+                    rel_path = os.path.relpath(file, ".")
+                    print(f"{i:2d}. {rel_path} ({time_str})")
+
+                while True:
+                    choice = input(f"\n请输入文件编号（1-{len(excel_files)}）或完整文件路径: ").strip()
+
+                    if not choice:
+                        # 用户选择默认文件
+                        break
+
+                    try:
+                        # 尝试作为数字选择
+                        if choice.isdigit():
+                            idx = int(choice) - 1
+                            if 0 <= idx < min(len(excel_files), 10):
+                                input_file = excel_files[idx]
+                                break
+                            else:
+                                print("❌ 超出范围，请重新输入")
+                                continue
+                        else:
+                            # 作为文件路径处理
+                            if os.path.exists(choice):
+                                input_file = choice
+                                break
+                            else:
+                                print("❌ 文件不存在，请重新输入")
+                                continue
+                    except Exception as e:
+                        print(f"❌ 输入错误: {e}")
+                        continue
+
+    # 对于cross阶段，询问评分阈值
+    if stage == 'cross':
+        score_input = input("\n请输入评分筛选阈值（直接回车使用默认值90）: ").strip()
+        if score_input:
+            try:
+                min_score = int(score_input)
+            except ValueError:
+                print("❌ 无效数字，将使用默认值90")
+                min_score = None
 
     # 记录执行信息
-    logger.info(f"使用默认配置执行阶段: {stage}")
+    logger.info(f"使用配置执行阶段: {stage}")
     logger.info(f"配置文件: {config_file}")
     logger.info(f"输入文件: {'默认文件' if input_file is None else input_file}")
     logger.info(f"评分阈值: {'默认值' if min_score is None else min_score}")
 
     # 显示执行信息
-    print(f"📋 使用默认配置执行:")
+    print(f"\n📋 配置信息:")
     print(f"   阶段: {stage}")
-    print(f"   输入文件: 默认文件")
+    print(f"   输入文件: {'默认最新文件' if input_file is None else os.path.relpath(input_file, '.')}")
     print(f"   配置文件: {config_file}")
     if stage == 'cross':
-        print(f"   评分阈值: 默认值")
+        print(f"   评分阈值: {'默认值 (90)' if min_score is None else min_score}")
 
     try:
         print(f"\n🎯 开始执行阶段: {stage}")

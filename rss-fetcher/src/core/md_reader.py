@@ -84,8 +84,11 @@ class MDDocument:
             'url': '',  # MD文档无URL
             'file_size': self.size,
             'modified_time': self.modified_time.isoformat() if self.modified_time else '',
+            # 标记提取状态，确保后续流程视为已完成全文提取
+            'extract_status': 'success',
+            'extract_error': '',
             # 以下字段由后续处理步骤填充
-            'filter_status': '',
+            'filter_status': None,
             'filter_pass': False,
             'filter_reason': '',
             'llm_score': 0,

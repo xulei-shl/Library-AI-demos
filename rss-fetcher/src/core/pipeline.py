@@ -588,19 +588,32 @@ class SubjectBibliographyPipeline:
             logger.debug(f"  llm_status: '{llm_status}' (向后兼容)")
             logger.debug(f"  llm_raw_response存在: {bool(llm_raw_response)}")
             
-            # 处理NaN值：将NaN视为空值
-            filter_status_is_valid = (
-                filter_status and
-                str(filter_status).lower() not in ('nan', 'none', '')
-            )
-            llm_status_is_valid = (
-                llm_status and
-                str(llm_status).lower() not in ('nan', 'none', '')
-            )
-            llm_raw_response_is_valid = (
-                llm_raw_response and
-                str(llm_raw_response).lower() not in ('nan', 'none', '')
-            )
+            # 处理NaN值和空值：将NaN、None、空字符串都视为未处理
+            # 首先使用pd.isna检测NaN值（包括np.nan、None等）
+            import pandas as pd
+            if pd.isna(filter_status):
+                filter_status_is_valid = False
+            else:
+                filter_status_is_valid = (
+                    filter_status is not None and
+                    filter_status and
+                    str(filter_status).strip() and
+                    str(filter_status).lower() not in ('nan', 'none', '')
+                )
+            if pd.isna(llm_status):
+                llm_status_is_valid = False
+            else:
+                llm_status_is_valid = (
+                    llm_status and
+                    str(llm_status).lower() not in ('nan', 'none', '')
+                )
+            if pd.isna(llm_raw_response):
+                llm_raw_response_is_valid = False
+            else:
+                llm_raw_response_is_valid = (
+                    llm_raw_response and
+                    str(llm_raw_response).lower() not in ('nan', 'none', '')
+                )
             
             # 如果有有效的filter_status或llm_raw_response，认为已处理
             # 同时保留llm_status的检查以实现向后兼容
