@@ -198,6 +198,7 @@ douban:
   subject_api:
     base_url: "https://m.douban.com/rexxar/api/v2/subject" # 豆瓣移动版API地址
     max_concurrent: 2 # 并发API请求数
+    
     qps: 2            # 每秒请求数限制（Query Per Second），用于API速率控制
     timeout: 10       # API请求超时时间（秒）
     retry:
