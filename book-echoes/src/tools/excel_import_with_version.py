@@ -177,6 +177,13 @@ class ExcelImporterWithVersion:
             elif target_type == 'TEXT':
                 value_str = str(value).strip()
 
+                # 条码字段可能被Excel解析为浮点格式，这里去掉无意义的小数部分
+                if target_field == 'barcode':
+                    if isinstance(value, (int, float)):
+                        value_str = f"{int(value)}"
+                    elif value_str.endswith('.0') and value_str[:-2].isdigit():
+                        value_str = value_str[:-2]
+
                 # 特殊处理 additional_info 字段
                 if target_field == 'additional_info':
                     clean_match = re.match(r'^(\d+)', value_str)

@@ -12,12 +12,74 @@ import requests
 BASE_URL = "http://localhost:8000"
 
 
+def print_book_details(book: dict, index: int = 1) -> None:
+    """打印完整的书籍信息（显示所有字段）
+    
+    Args:
+        book: 书籍信息字典
+        index: 书籍序号
+    """
+    print(f"\n[{index}] 📚 {book.get('title', 'N/A')}")
+    
+    # 基本信息
+    detail_parts = []
+    detail_parts.append(f"作者: {book.get('author', 'N/A')}")
+    detail_parts.append(f"评分: {book.get('rating', 'N/A')}")
+    
+    # 分数信息
+    if book.get('fused_score') is not None:
+        detail_parts.append(f"融合分数: {book.get('fused_score', 0):.4f}")
+    if book.get('similarity_score') is not None:
+        detail_parts.append(f"相似度: {book.get('similarity_score', 0):.4f}")
+    if book.get('reranker_score') is not None:
+        detail_parts.append(f"重排序分数: {book.get('reranker_score', 0):.4f}")
+    if book.get('final_score') is not None:
+        detail_parts.append(f"最终分数: {book.get('final_score', 0):.4f}")
+    
+    print(f"    {' | '.join(detail_parts)}")
+    
+    # 索书号
+    call_no = book.get('call_no', 'N/A')
+    print(f"    🏷️ 索书号: {call_no}")
+    
+    # 简介 - 显示完整内容
+    summary = book.get('summary', '')
+    if summary:
+        # 显示完整摘要内容，而不是截断
+        full_summary = summary.replace('\n', ' ').strip()
+        print(f"    📝 简介: {full_summary}")
+        if len(full_summary) > 120:
+            print(f"    📊 完整摘要长度: {len(full_summary)} 字符")
+    
+    # 匹配来源（精确匹配）
+    match_source = book.get('match_source')
+    if match_source:
+        source_name = {'title': '标题', 'author': '作者', 'custom_keywords': '关键词'}.get(match_source, match_source)
+        print(f"    🎯 匹配来源: {source_name}（精确匹配）")
+    
+    # embedding_id
+    embedding_id = book.get('embedding_id', 'N/A')
+    print(f"    🆔 embedding_id: {embedding_id}")
+    
+    # book_id（如果存在）
+    book_id = book.get('book_id')
+    if book_id:
+        print(f"    🔢 book_id: {book_id}")
+    
+    # 源查询类型（多查询检索时）
+    source_query_type = book.get('source_query_type')
+    if source_query_type:
+        print(f"    🔍 源查询类型: {source_query_type}")
+    
+    print('-' * 60)
+
+
 def test_text_search():
     """测试文本检索接口。"""
     url = f"{BASE_URL}/api/books/text-search"
     payload = {
-        "query": "人工智能伦理与社会影响",
-        "top_k": 5,
+        "query": "AI技术对现代民主选举的双刃剑作用",
+        "top_k": 10,
         "response_format": "json",
     }
 
@@ -30,11 +92,20 @@ def test_text_search():
 
     if response.status_code == 200:
         data = response.json()
-        print(f"返回结果数: {len(data.get('results', []))}")
-        for i, book in enumerate(data.get("results", [])[:3], 1):
-            print(f"\n[{i}] {book.get('title', 'N/A')}")
-            print(f"    作者: {book.get('author', 'N/A')}")
-            print(f"    评分: {book.get('rating', 'N/A')}")
+        results = data.get("results", [])
+        metadata = data.get("metadata", {})
+        
+        print(f"返回结果数: {len(results)}")
+        print(f"元数据: {metadata}")
+        print("\n📖 文本相似度检索结果")
+        print("=" * 60)
+        
+        if not results:
+            print("😔 未找到匹配书籍")
+            return
+            
+        for i, book in enumerate(results, 1):
+            print_book_details(book, i)
     else:
         print(f"错误: {response.text}")
 
@@ -99,12 +170,15 @@ def test_multi_query_search():
         print(f"元数据: {metadata}")
 
         print("\n📚 检索结果:")
+        if not results:
+            print("😔 未找到匹配书籍")
+            return
+            
         for i, book in enumerate(results[:10], 1):
-            print(f"\n[{i}] {book.get('title', 'N/A')}")
-            print(f"    作者: {book.get('author', 'N/A')}")
-            print(f"    评分: {book.get('rating', 'N/A')}")
-            if book.get("score"):
-                print(f"    相似度: {book.get('score', 'N/A'):.4f}")
+            print_book_details(book, i)
+            
+        if len(results) > 10:
+            print(f"\n... 还有 {len(results) - 10} 本书未显示")
     else:
         print(f"错误: {response.text}")
 

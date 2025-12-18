@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""FastAPI 图书检索接口。"""
+"""
+FastAPI 图书检索接口。
+uvicorn scripts.api.book_retrieval_api:app --reload
+"""
 
 from typing import Any, Dict, Optional
 

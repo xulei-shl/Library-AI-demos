@@ -99,6 +99,7 @@ class BookRetriever:
             if book_info:
                 enriched_results.append({
                     'book_id': book_id,
+                    'id': book_id,  # 保留原始ID用于去重判断
                     'title': book_info['douban_title'],
                     'author': book_info['douban_author'],
                     'rating': book_info['douban_rating'],
@@ -107,10 +108,14 @@ class BookRetriever:
                     'similarity_score': 1 - result['distance'],  # 转换为相似度
                     'embedding_id': result['embedding_id'],
                     'source_query_text': query_text,
+                    'embedding_date': book_info.get('embedding_date', ''),  # 添加时间字段
                 })
         
-        logger.info(f"文本检索完成: 返回 {len(enriched_results)} 本书")
-        return enriched_results
+        # 5. 去重处理 - 基于 book_id 和 call_no 去重，保留最新的记录
+        deduplicated_results = self._deduplicate_by_book_id(enriched_results)
+        
+        logger.info(f"文本检索完成: 返回 {len(deduplicated_results)} 本书（去重前: {len(enriched_results)} 本）")
+        return deduplicated_results
     
     def search_by_category(self, call_no_prefix: str, top_k: int = 10) -> List[Dict]:
         """
@@ -311,6 +316,106 @@ class BookRetriever:
     def _compose_candidate_text(candidate: Dict) -> str:
         parts = [candidate.get('title', ''), candidate.get('author', ''), candidate.get('summary', '')]
         return '\n'.join(part for part in parts if part)
+
+    def _deduplicate_by_book_id(self, results: List[Dict]) -> List[Dict]:
+        """
+        基于 book_id 和 call_no 双重去重，保留最新的记录
+        
+        优先级规则：
+        1. 如果有 embedding_date 时间字段，保留时间最新的记录
+        2. 如果没有时间字段，保留 book_id 最大的记录
+        
+        Args:
+            results: 检索结果列表
+            
+        Returns:
+            去重后的结果列表
+        """
+        if not results:
+            return results
+            
+        # 第一步：基于 book_id 去重
+        book_dict = {}
+        for result in results:
+            book_id = str(result.get('book_id', ''))
+            if not book_id:
+                continue
+                
+            # 判断是否应该保留当前记录
+            should_keep = False
+            if book_id not in book_dict:
+                should_keep = True
+            else:
+                existing = book_dict[book_id]
+                should_keep = self._is_record_newer(result, existing)
+            
+            if should_keep:
+                book_dict[book_id] = result
+        
+        book_id_deduplicated = list(book_dict.values())
+        
+        # 第二步：基于 call_no 去重，处理数据库中的重复脏数据
+        call_no_dict = {}
+        for result in book_id_deduplicated:
+            call_no = str(result.get('call_no', '')).strip()
+            if not call_no:
+                # 如果没有索书号，直接保留
+                call_no_dict[f"no_call_no_{result.get('book_id')}"] = result
+                continue
+                
+            # 判断是否应该保留当前记录
+            should_keep = False
+            if call_no not in call_no_dict:
+                should_keep = True
+            else:
+                existing = call_no_dict[call_no]
+                should_keep = self._is_record_newer(result, existing)
+            
+            if should_keep:
+                call_no_dict[call_no] = result
+        
+        # 按相似度排序并返回
+        deduplicated = list(call_no_dict.values())
+        deduplicated.sort(key=lambda x: x.get('similarity_score', 0), reverse=True)
+        
+        logger.info(f"双重去重完成: 原始结果 {len(results)} 条，book_id去重后 {len(book_id_deduplicated)} 条，最终去重后 {len(deduplicated)} 条")
+        return deduplicated
+    
+    def _is_record_newer(self, current: Dict, existing: Dict) -> bool:
+        """
+        判断当前记录是否比已有记录更新
+        
+        优先级规则：
+        1. 如果有 embedding_date 时间字段，比较时间
+        2. 如果没有时间字段，比较 book_id
+        
+        Args:
+            current: 当前记录
+            existing: 已有记录
+            
+        Returns:
+            True 如果当前记录更新，False 否则
+        """
+        # 尝试比较 embedding_date
+        current_date = current.get('embedding_date', '').strip()
+        existing_date = existing.get('embedding_date', '').strip()
+        
+        if current_date and existing_date:
+            # 如果两个记录都有时间字段，比较时间
+            return current_date > existing_date
+        
+        # 如果只有一个记录有时间字段，有时间字段的记录更新
+        if current_date and not existing_date:
+            return True
+        
+        if not current_date and existing_date:
+            return False
+        
+        # 如果都没有时间字段，比较 book_id
+        current_id = int(current.get('id', 0))
+        existing_id = int(existing.get('id', 0))
+        
+        return current_id > existing_id
 
     @staticmethod
     def _shorten_text(text: str, limit: int = 80) -> str:

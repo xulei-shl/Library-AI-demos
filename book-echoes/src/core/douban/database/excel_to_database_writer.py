@@ -59,6 +59,19 @@ class ExcelToDatabaseWriter:
         # 获取统计配置
         self.statistics_config = self.config.get('statistics', {})
 
+    def _normalize_barcode(self, value: Any) -> str:
+        """标准化条码，避免Excel把长数字解析成浮点后附带.0"""
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return ""
+
+        if isinstance(value, (int, float)):
+            return f"{int(value)}"
+
+        value_str = str(value).strip()
+        if value_str.endswith('.0') and value_str[:-2].isdigit():
+            return value_str[:-2]
+        return value_str
+
     def _convert_value(self, value, target_field: str) -> Any:
         """
         转换数据类型
@@ -216,7 +229,7 @@ class ExcelToDatabaseWriter:
 
         # 遍历所有Excel行
         for index, row in df.iterrows():
-            barcode = str(row.get(barcode_column, '')).strip()
+            barcode = self._normalize_barcode(row.get(barcode_column, ''))
             if not barcode or barcode in processed_barcodes:
                 continue
             processed_barcodes.add(barcode)
@@ -458,7 +471,7 @@ class ExcelToDatabaseWriter:
                 continue
 
             row = df.iloc[index]
-            barcode = str(row.get(barcode_column, '')).strip()
+            barcode = self._normalize_barcode(row.get(barcode_column, ''))
 
             book_info = self._prepare_books_data(
                 row, barcode, isbn_column, douban_fields_mapping
@@ -488,7 +501,7 @@ class ExcelToDatabaseWriter:
 
         processed_barcodes = set()
         for index, row in df.iterrows():
-            barcode = str(row.get(barcode_column, '')).strip()
+            barcode = self._normalize_barcode(row.get(barcode_column, ''))
             if not barcode or barcode in processed_barcodes:
                 continue
             processed_barcodes.add(barcode)
@@ -522,7 +535,7 @@ class ExcelToDatabaseWriter:
 
         processed_barcodes = set()
         for index, row in df.iterrows():
-            barcode = str(row.get(barcode_column, '')).strip()
+            barcode = self._normalize_barcode(row.get(barcode_column, ''))
             if not barcode or barcode in processed_barcodes:
                 continue
             processed_barcodes.add(barcode)
@@ -559,7 +572,7 @@ class ExcelToDatabaseWriter:
         Returns:
             (book, borrow_record, borrow_stat)
         """
-        barcode = str(row.get(barcode_column, "")).strip()
+        barcode = self._normalize_barcode(row.get(barcode_column, ""))
         if not barcode:
             return None
 
