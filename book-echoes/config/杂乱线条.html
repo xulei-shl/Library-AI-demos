@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Echoes - Harvard Design Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-blue: #0000FF; 
+            --text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 2px rgba(255, 255, 255, 1);
+            --bg-dark: #1a1a1a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Inter', 'Noto Serif SC', -apple-system, sans-serif;
+        }
+
+        /* ⭐ 主容器：固定尺寸，严禁溢出 */
+        .library-card {
+            width: 650px;
+            height: 850px;
+            background-color: var(--bg-dark);
+            position: relative;
+            overflow: hidden; /* 确保内部内容不撑开卡片 */
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 背景层 */
+        .bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/%E5%9B%BE%E7%89%87%E5%A4%84%E7%90%86.png');
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+
+        /* 顶部区域 */
+        .header-brand {
+            position: absolute;
+            top: 25px;
+            left: 30px;
+            color: var(--brand-blue);
+            z-index: 100;
+        }
+
+        .header-brand h1 {
+            font-size: 56px;
+            line-height: 0.82;
+            letter-spacing: -2px;
+            font-weight: 900;
+            text-shadow: var(--text-shadow);
+            text-transform: uppercase;
+        }
+
+        .rating-box {
+            display: flex;
+            align-items: baseline;
+            margin-top: 8px;
+        }
+        .rate-label { font-size: 40px; text-shadow: var(--text-shadow); }
+        .rate-value { font-size: 68px; margin-left: 10px; text-shadow: var(--text-shadow); }
+
+        .qr-area {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            z-index: 100;
+        }
+        .qr-code { width: 80px; height: 80px; background: rgb(228, 231, 250); padding: 5px; }
+
+        /* ⭐ 中间主内容区：使用 Flex 布局自动分配剩余空间 */
+        .main-content {
+            position: relative;
+            z-index: 10;
+            flex: 1; /* 自动撑满 header 和 footer 之间的空间 */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 内容靠下对齐 */
+            padding: 0 30px 80px 30px; /* 80px 为底部留白，防止被 footer 遮挡 */
+        }
+
+        /* 封面容器：缩小了尺寸以给文字留空间 */
+        .cover-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .book-cover {
+            width: 220px; /* 稍微缩小封面高度 (原280x400) */
+            height: 310px;
+            object-fit: cover;
+            box-shadow: 15px 15px 0px var(--brand-blue);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* 文字内容区 */
+        .book-details {
+            text-align: right;
+            color: var(--brand-blue);
+        }
+
+        /* 标题截断：最多2行 */
+        .book-title {
+            font-family: '汉仪中圆B5 Regular', sans-serif;
+            font-size: 34px;
+            line-height: 1.1;
+            font-weight: 900;
+            text-shadow: var(--text-shadow);
+            margin-bottom: 5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 74.8px; /* 34 * 1.1 * 2 */
+        }
+
+        /* 作者截断：最多1行 */
+        .book-author {
+            font-size: 20px;
+            font-family: '上图东观体', sans-serif;
+            font-weight: 900;
+            text-shadow: var(--text-shadow);
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 22px;
+        }
+
+        /* 推荐语截断：最多3行 */
+        .recommendation {
+            font-family: '致一黑體_傅承形', sans-serif;
+            color: #fff;
+            font-size: 15px;
+            line-height: 1.3;
+            text-align: justify;
+            max-width: 420px;
+            margin-left: auto;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px;
+            border-right: 5px solid var(--brand-blue);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 60px; /* 15 * 1.3 * 3 + padding适配 */
+            box-sizing: content-box;
+        }
+
+        /* 底部信息条：绝对定位在最底 */
+        .info-bar {
+            position: absolute;
+            font-family: '霞鹜文楷等宽Medium';
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            padding: 10px 30px;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #000;
+            z-index: 1000;
+            align-items: center;
+        }
+
+        .info-col { flex: 1; line-height: 1.2; }
+        .info-callno { flex: 0.8; border-left: 1px solid #ddd; padding-left: 15px; }
+        .info-price { flex: 0.3; text-align: right; font-size: 24px; color: var(--brand-blue); }
+
+    </style>
+</head>
+<body>
+
+    <div class="library-card">
+        <div class="bg-layer"></div>
+
+        <header class="header-brand">
+            <h1>BOOK</h1>
+            <h1>ECHOES</h1>
+            <div class="rating-box">
+                <span class="rate-label">SHANGHAI</span>
+                <span class="rate-value">LIBRARY</span>
+            </div>
+        </header>
+
+        <div class="qr-area">
+            <img src="pic/qrcode.png" alt="QR" class="qr-code" onerror="this.src='https://via.placeholder.com/80?text=QR';">
+        </div>
+
+        <!-- ⭐ 重构后的中间区域 -->
+        <main class="main-content">
+            <div class="cover-wrapper">
+                <img src="pic/cover.jpg" alt="Cover" class="book-cover" onerror="this.src='https://via.placeholder.com/280x400?text=BOOK+COVER';">
+            </div>
+
+            <section class="book-details">
+                <h2 class="book-title">{{TITLE}}</h2>
+                <div class="book-author">{{AUTHOR}}</div>
+                <p class="recommendation">
+                    {{RECOMMENDATION}}
+                </p>
+            </section>
+        </main>
+
+        <footer class="info-bar">
+            <div class="info-col">
+                PUBLISHER: {{PUBLISHER}}<br>
+                <br>
+                YEAR: {{YEAR}}
+            </div>
+            <div class="info-col info-callno">
+                CALL NUMBER:<br>
+            <br>
+                {{CALL_NUMBER}}
+            </div>
+            <div class="info-price">
+                #{{RATE}}
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>
