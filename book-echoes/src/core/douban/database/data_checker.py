@@ -17,6 +17,7 @@ import logging
 import math
 from typing import Dict, List, Any
 from .database_manager import DatabaseManager
+from .value_normalizers import normalize_call_no, normalize_barcode
 
 logger = logging.getLogger(__name__)
 
@@ -82,12 +83,15 @@ class DataChecker:
             }
 
         try:
-            # 1. 提取所有barcode
+            # 1. 提取所有barcode并进行归一化
             barcodes = []
             for row in excel_data:
                 barcode = str(row.get('barcode') or row.get('书目条码', '')).strip()
                 if barcode and barcode != 'nan':
-                    barcodes.append(barcode)
+                    # 归一化条码（去除.0后缀等）
+                    normalized_barcode = normalize_barcode(barcode)
+                    if normalized_barcode:
+                        barcodes.append(normalized_barcode)
 
             if not barcodes:
                 logger.warning("没有有效的barcode数据")
@@ -148,6 +152,9 @@ class DataChecker:
                 excel_row = self._find_excel_row_by_barcode(excel_data, barcode)
                 if excel_row:
                     result['new'].append(excel_row)
+
+            # 步骤B：索书号补查重（仅对条码未命中的记录）
+            result = self._perform_call_no_deduplication(excel_data, result)
 
             # 4. 如果启用强制更新，将所有已有数据移动到stale类别
             if self.force_update:
@@ -211,12 +218,15 @@ class DataChecker:
             }
 
         try:
-            # 1. 提取所有barcode
+            # 1. 提取所有barcode并进行归一化
             barcodes = []
             for row in excel_data:
                 barcode = str(row.get('barcode') or row.get('书目条码', '')).strip()
                 if barcode and barcode != 'nan':
-                    barcodes.append(barcode)
+                    # 归一化条码（去除.0后缀等）
+                    normalized_barcode = normalize_barcode(barcode)
+                    if normalized_barcode:
+                        barcodes.append(normalized_barcode)
 
             if not barcodes:
                 logger.warning("没有有效的barcode数据")
@@ -394,3 +404,112 @@ class DataChecker:
             self.force_update = kwargs['force_update']
 
         logger.info(f"刷新策略更新完成: {self.refresh_config}")
+
+    def _perform_call_no_deduplication(self, excel_data: List[Dict], result: Dict) -> Dict:
+        """
+        执行索书号补查重逻辑（步骤B）
+
+        Args:
+            excel_data: 原始Excel数据
+            result: 条码查重后的分类结果
+
+        Returns:
+            Dict: 更新后的分类结果
+        """
+        if not result['new']:
+            logger.debug("没有新数据，跳过索书号补查重")
+            return result
+
+        logger.info(f"开始索书号补查重，共 {len(result['new'])} 条待查记录")
+
+        # 构建归一化条码到Excel行的映射，以便后续正确移除
+        barcode_to_excel_row = {}
+        for row in result['new']:
+            # 获取并归一化条码
+            raw_barcode = row.get('barcode') or row.get('书目条码', '')
+            normalized_barcode = normalize_barcode(raw_barcode)
+            if normalized_barcode:
+                barcode_to_excel_row[normalized_barcode] = row
+
+        # 构建索书号到归一化条码的映射
+        call_no_to_normalized_barcodes = {}
+        for row in result['new']:
+            # 获取索书号列的值（假设列名为'索书号'或'call_no'）
+            call_no = row.get('索书号') or row.get('call_no', '')
+            normalized_call_no = normalize_call_no(call_no)
+
+            # 获取并归一化条码
+            raw_barcode = row.get('barcode') or row.get('书目条码', '')
+            normalized_barcode = normalize_barcode(raw_barcode)
+
+            if normalized_call_no and normalized_barcode:
+                if normalized_call_no not in call_no_to_normalized_barcodes:
+                    call_no_to_normalized_barcodes[normalized_call_no] = []
+                call_no_to_normalized_barcodes[normalized_call_no].append(normalized_barcode)
+
+        if not call_no_to_normalized_barcodes:
+            logger.debug("没有有效的索书号，结束补查重")
+            return result
+
+        # 批量查询数据库
+        call_numbers = list(call_no_to_normalized_barcodes.keys())
+        logger.debug(f"查询 {len(call_numbers)} 个不重复的索书号")
+
+        db_books_by_call_no = self.db_manager.batch_get_books_by_call_numbers(call_numbers)
+
+        # 统计信息
+        call_no_match_count = 0
+        updated_new_count = 0
+
+        # 处理索书号命中的记录
+        for normalized_call_no, normalized_barcodes in call_no_to_normalized_barcodes.items():
+            if normalized_call_no in db_books_by_call_no:
+                call_no_match_count += 1
+                book_data = db_books_by_call_no[normalized_call_no]
+
+                # 使用分类逻辑判断是valid还是stale
+                category, reason = self.db_manager._categorize_book_record(
+                    book_data, self.stale_days, self.crawl_empty_url
+                )
+
+                logger.debug(f"索书号 {normalized_call_no} 匹配: 分类={category}, 原因={reason}")
+
+                # 处理所有使用该索书号的Excel行
+                for normalized_barcode in normalized_barcodes:
+                    if normalized_barcode in barcode_to_excel_row:
+                        excel_row = barcode_to_excel_row[normalized_barcode]
+
+                        # 从result['new']中移除
+                        result['new'] = [r for r in result['new'] if r != excel_row]
+                        updated_new_count += 1
+
+                        # 合并数据库数据
+                        merge_mode = 'full' if category == 'existing_valid' else 'partial'
+                        merged_data = self._merge_database_data(excel_row, book_data, merge_mode)
+
+                        # 重要：保留Excel的原始条码，因为这是通过索书号匹配的
+                        original_barcode = excel_row.get('barcode') or excel_row.get('书目条码', '')
+                        if original_barcode:
+                            merged_data['barcode'] = original_barcode
+
+                        # 标记数据来源
+                        merged_data['_data_source'] = 'database_call_no'
+                        merged_data['_match_source'] = 'call_no'
+                        merged_data['_match_reason'] = reason
+                        merged_data['_original_db_barcode'] = book_data.get('barcode')  # 记录原始数据库条码
+
+                        # 检查必填字段
+                        if category == 'existing_valid' and not self._has_required_fields(book_data):
+                            category = 'existing_valid_incomplete'
+                            merged_data['_needs_api_patch'] = True
+
+                        result[category].append(merged_data)
+
+        logger.info(
+            f"索书号补查重完成: "
+            f"匹配 {call_no_match_count} 个索书号, "
+            f"从 new 中移除 {updated_new_count} 条记录, "
+            f"剩余 {len(result['new'])} 条新数据"
+        )
+
+        return result

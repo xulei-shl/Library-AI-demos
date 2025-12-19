@@ -199,6 +199,8 @@ class DatabaseManager:
             "CREATE INDEX IF NOT EXISTS idx_books_douban_isbn ON books(douban_isbn)",
             "CREATE INDEX IF NOT EXISTS idx_books_title ON books(book_title)",
             "CREATE INDEX IF NOT EXISTS idx_books_created_at ON books(created_at)",
+            # 索书号索引 - 支持大小写不敏感查询
+            "CREATE INDEX IF NOT EXISTS idx_books_call_no_upper ON books(UPPER(TRIM(call_no))) WHERE call_no IS NOT NULL AND call_no != ''",
 
             # borrow_records表索引
             "CREATE INDEX IF NOT EXISTS idx_borrow_records_barcode ON borrow_records(barcode)",
@@ -886,6 +888,110 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"创建数据库备份失败: {e}")
             raise
+
+    def batch_get_books_by_call_numbers(self, call_numbers: List[str]) -> Dict[str, Dict]:
+        """
+        按归一化后的索书号批量查询书籍
+
+        Args:
+            call_numbers: 索书号列表
+
+        Returns:
+            Dict[str, Dict]: normalized_call_no → 书籍信息的映射
+        """
+        if not call_numbers:
+            return {}
+
+        # 导入归一化函数
+        from .value_normalizers import normalize_call_no
+
+        # 归一化并过滤无效索书号
+        normalized_call_numbers = []
+        for cn in call_numbers:
+            normalized = normalize_call_no(cn)
+            if normalized:  # 过滤空值
+                normalized_call_numbers.append(normalized)
+
+        if not normalized_call_numbers:
+            return {}
+
+        try:
+            # 去重，避免重复查询
+            unique_call_numbers = list(set(normalized_call_numbers))
+
+            # 处理SQLite参数限制，分批查询
+            BATCH_SIZE = 999
+            result = {}
+
+            for i in range(0, len(unique_call_numbers), BATCH_SIZE):
+                batch = unique_call_numbers[i:i+BATCH_SIZE]
+                placeholders = ','.join(['?' for _ in batch])
+
+                # 使用UPPER(TRIM())进行大小写不敏感的查询
+                sql = f"""
+                    SELECT * FROM books
+                    WHERE UPPER(TRIM(call_no)) IN ({placeholders})
+                    AND call_no IS NOT NULL AND call_no != ''
+                """
+
+                cursor = self.conn.execute(sql, batch)
+                rows = cursor.fetchall()
+
+                for row in rows:
+                    book_dict = dict(row)
+                    # 对数据库中的call_no也进行归一化作为key
+                    db_call_no = book_dict.get('call_no', '')
+                    normalized_key = normalize_call_no(db_call_no)
+                    if normalized_key:
+                        result[normalized_key] = book_dict
+
+            logger.debug(f"索书号批量查询完成: {len(result)}/{len(call_numbers)} 条记录")
+            return result
+
+        except Exception as e:
+            logger.error(f"索书号批量查询失败: {e}")
+            return {}
+
+    def _categorize_book_record(self, book_data: Dict, stale_days: int, crawl_empty_url: bool) -> Tuple[str, Optional[str]]:
+        """
+        分类书籍记录为有效或过期
+
+        Args:
+            book_data: 书籍数据
+            stale_days: 过期天数
+            crawl_empty_url: 空URL是否需要重新爬取
+
+        Returns:
+            Tuple[str, Optional[str]]: (分类, 过期原因)
+            - 分类: 'existing_valid' 或 'existing_stale'
+            - 过期原因: 'url_empty', 'time_stale' 或 None
+        """
+        # 计算过期时间
+        stale_threshold = (datetime.now() - timedelta(days=stale_days)).strftime('%Y-%m-%d %H:%M:%S')
+
+        # 获取时间字段，优先使用updated_at
+        updated_at = book_data.get('updated_at', '')
+        created_at = book_data.get('created_at', '')
+        check_time = updated_at if updated_at else created_at
+
+        douban_url = book_data.get('douban_url')
+
+        # 检查豆瓣URL是否存在
+        if not douban_url or douban_url.strip() == '':
+            if crawl_empty_url:
+                logger.debug(f"索书号匹配: douban_url为空,需要重新爬取")
+                return 'existing_stale', 'url_empty'
+            else:
+                logger.debug(f"索书号匹配: douban_url为空,但配置为跳过(crawl_empty_url=False)")
+                return 'existing_valid', None
+
+        # 检查是否过期
+        if check_time and check_time > stale_threshold:
+            logger.debug(f"索书号匹配: 数据未过期 - {check_time}")
+            return 'existing_valid', None
+        else:
+            logger.info(f"索书号匹配: 数据已过期({stale_days}天) - {check_time}")
+            return 'existing_stale', 'time_stale'
 
     def close(self):
         """关闭数据库连接"""
