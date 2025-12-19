@@ -22,3 +22,7 @@ metadata-editor/jsondata/knowledge_settings.json
 .vscode/settings.json
 *.bin
 *.pickle
+*.bin
+*.bin
+*.bin
+*.bin

@@ -36,7 +36,7 @@ filters:
     - douban_catalog
   
   # 是否启用评分过滤
-  enable_rating_filter: true
+  enable_rating_filter: false
   # 评分阈值(根据索书号首字母)，为了确保候选书目角度，适当较低评分阈值。
   rating_thresholds:
   #  B: 8.2
