@@ -2,13 +2,15 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CameraController } from './cameraController';
-import { useViewportInteraction, InteractionMode } from './useViewportInteraction';
+import { useViewportInteraction, InteractionMode, DEFAULT_INTERACTION_CONFIG } from './useViewportInteraction';
 import { LayerType, DEFAULT_LAYERS, optimizeLayers } from './layers';
+import { createProjection, ProjectionType } from './projectionConfig';
+import { getPaperBackgroundStyle, generatePaperTextureFilter, generateInkFilters, DEFAULT_PAPER_TEXTURE } from '../theme/paperTexture';
 import { useAuthorStore } from '../state/authorStore';
 import { usePlaybackStore } from '../state/playbackStore';
 
-// 地图配置
-const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+// 地图配置 - 使用 Natural Earth 数据
+const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
 
 /**
  * NarrativeMap组件属性
@@ -64,6 +66,7 @@ export function NarrativeMap({
     isInteractionEnabled,
     enableInteraction
   } = useViewportInteraction(containerRef, {
+    ...DEFAULT_INTERACTION_CONFIG,
     mode: interactionMode,
     enableZoom: true,
     enablePan: true,
@@ -180,22 +183,31 @@ export function NarrativeMap({
     );
   }
 
+  // 纸张背景样式
+  const paperStyle = getPaperBackgroundStyle(DEFAULT_PAPER_TEXTURE);
+
   return (
     <div
       ref={containerRef}
       className={`narrative-map relative overflow-hidden ${className}`}
-      style={{ width, height }}
+      style={{ ...paperStyle, width, height }}
     >
       {/* SVG 地图容器 */}
       <ComposableMap
-        projection="geoMercator"
+        projection="geoNaturalEarth1"
         projectionConfig={{
           scale: cameraState.zoom * 150,
-          center: cameraState.center
+          center: cameraState.center,
+          rotate: [0, 0, 0]
         }}
         width={width}
         height={height}
       >
+        {/* SVG 滤镜定义 */}
+        <defs>
+          <g dangerouslySetInnerHTML={{ __html: generatePaperTextureFilter(DEFAULT_PAPER_TEXTURE) }} />
+          <g dangerouslySetInnerHTML={{ __html: generateInkFilters() }} />
+        </defs>
         <Geographies geography={geoUrl}>
           {({ geographies }: { geographies: any[] }) =>
             geographies.map((geo) => (
@@ -205,21 +217,22 @@ export function NarrativeMap({
                 onClick={() => handleGeographyClick(geo)}
                 style={{
                   default: {
-                    fill: '#f0f0f0',
-                    stroke: '#d0d0d0',
+                    fill: '#e8e4d9',
+                    stroke: '#c4bfb0',
                     strokeWidth: 0.5,
-                    outline: 'none'
+                    outline: 'none',
+                    filter: 'url(#paper-texture-vintage)'
                   },
                   hover: {
-                    fill: isInteractionEnabled ? '#e0e0e0' : '#f0f0f0',
-                    stroke: '#d0d0d0',
+                    fill: isInteractionEnabled ? '#ddd9cc' : '#e8e4d9',
+                    stroke: '#c4bfb0',
                     strokeWidth: 0.5,
                     outline: 'none',
                     cursor: isInteractionEnabled ? 'pointer' : 'default'
                   },
                   pressed: {
-                    fill: '#d0d0d0',
-                    stroke: '#d0d0d0',
+                    fill: '#d2cec1',
+                    stroke: '#c4bfb0',
                     strokeWidth: 0.5,
                     outline: 'none'
                   }

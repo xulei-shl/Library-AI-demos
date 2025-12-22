@@ -1,68 +1,115 @@
-import Image from "next/image";
+'use client';
 
+import { useEffect } from 'react';
+import { NarrativeMap } from '@/core/map/NarrativeMap';
+import { useAuthorStore } from '@/core/state/authorStore';
+import { usePlaybackStore } from '@/core/state/playbackStore';
+
+/**
+ * 《墨迹与边界》主页面
+ * Sprint 1 演示：数据加载与地图渲染
+ */
 export default function Home() {
+  const { loadAuthor, currentAuthor, isLoading, error } = useAuthorStore();
+  const { isPlaying, togglePlayPause } = usePlaybackStore();
+
+  // 自动加载鲁迅的数据
+  useEffect(() => {
+    loadAuthor('lu_xun').catch(err => {
+      console.error('加载作者数据失败:', err);
+    });
+  }, [loadAuthor]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main
-        data-testid="app-shell"
-        className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start"
-      >
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="flex min-h-screen flex-col bg-[#f5f1e8]">
+      {/* 顶部标题栏 */}
+      <header className="border-b border-[#c4bfb0] bg-white/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-[#3d3d3d]">
+            墨迹与边界 · Ink & Boundaries
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-sm text-[#666]">
+            现代中国作家的地理叙事可视化
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      {/* 主内容区 */}
+      <main className="flex flex-1 flex-col items-center justify-center p-8">
+        {/* 加载状态 */}
+        {isLoading && (
+          <div className="text-center">
+            <div className="mb-4 text-lg text-[#666]">加载作者数据中...</div>
+          </div>
+        )}
+
+        {/* 错误状态 */}
+        {error && (
+          <div className="rounded-lg bg-red-50 p-6 text-center">
+            <div className="mb-2 text-lg font-semibold text-red-800">
+              加载失败
+            </div>
+            <div className="text-sm text-red-600">{error}</div>
+          </div>
+        )}
+
+        {/* 地图容器 */}
+        {!isLoading && !error && (
+          <div className="w-full max-w-6xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-sm text-[#666]">
+                {currentAuthor ? (
+                  <>
+                    当前作者：
+                    <span className="font-semibold text-[#3d3d3d]">
+                      {currentAuthor.name}
+                    </span>
+                    {' · '}
+                    {currentAuthor.works.length} 部作品
+                  </>
+                ) : (
+                  '等待加载作者数据...'
+                )}
+              </div>
+
+              {/* 简单的播放控制 */}
+              <button
+                onClick={togglePlayPause}
+                className="rounded-lg bg-[#8B4513] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#A0522D]"
+              >
+                {isPlaying ? '⏸ 暂停' : '▶ 播放'}
+              </button>
+            </div>
+
+            {/* 地图组件 */}
+            <div className="overflow-hidden rounded-lg border border-[#c4bfb0] shadow-lg">
+              <NarrativeMap
+                width={1200}
+                height={800}
+                showControls={true}
+              />
+            </div>
+
+            {/* 提示信息 */}
+            <div className="mt-4 text-center text-sm text-[#999]">
+              Sprint 1 演示 · 数据加载与地图渲染基础功能
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* 底部信息 */}
+      <footer className="border-t border-[#c4bfb0] bg-white/80 py-4 text-center text-sm text-[#999]">
+        <p>
+          参考设计文档：
+          <a
+            href="/docs/墨迹与边界-0.3.md"
+            className="ml-2 text-[#8B4513] hover:underline"
+          >
+            墨迹与边界-0.3.md
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }

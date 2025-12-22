@@ -324,7 +324,8 @@ export class CameraController {
    * @param screen 屏幕坐标 [x, y]
    * @returns 地理坐标 [lng, lat]
    */
-  unproject(screen: [number, number]): [number, number] {
-    return this.projection.invert(screen) as [number, number];
+  unproject(screen: [number, number]): [number, number] | null {
+    const result = this.projection.invert?.(screen);
+    return result ? (result as [number, number]) : null;
   }
 }

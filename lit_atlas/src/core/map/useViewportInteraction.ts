@@ -83,7 +83,7 @@ export interface UseViewportInteractionReturn {
  * @returns 交互处理函数和状态
  */
 export function useViewportInteraction(
-  containerRef: React.RefObject<HTMLElement>,
+  containerRef: React.RefObject<HTMLElement | null>,
   config: ViewportInteractionConfig = DEFAULT_INTERACTION_CONFIG
 ): UseViewportInteractionReturn {
   const playbackStore = usePlaybackStore();
