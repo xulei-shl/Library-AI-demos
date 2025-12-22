@@ -60,14 +60,38 @@
    - **变更记录**: @docs/changelog/20251222_sprint2_scheduler_and_animation.md
 
 ## Sprint 3 ——交互增强与对比模式
-1. [ ] 构建 `PlaybackControl` UI：Play/Pause、Scrub、Speed Menu、快捷键、无障碍支持。
+1. [x] 构建 `PlaybackControl` UI：Play/Pause、Scrub、Speed Menu、快捷键、无障碍支持。
    - 参考：@docs/design/playback_control_module_20251215.md
-2. [ ] 打通 Playback 控制与调度器、地图手动模式间的同步协议（包括事件节流/回传）。
+   - 进度（2025-12-22）: ✅ 已完成所有核心功能，包括进度条拖拽、速度调节、快捷键支持
+   - **文件**: `src/core/playback/PlaybackControl.tsx`, `useScrubber.ts`, `usePlaybackHotkeys.ts`, `SpeedMenu.tsx`
+2. [x] 打通 Playback 控制与调度器、地图手动模式间的同步协议（包括事件节流/回传）。
    - 参考：@docs/design/playback_control_module_20251215.md, @docs/design/narrative_scheduler_20251215.md, @docs/design/narrative_map_canvas_20251215.md
-3. [ ] 实现 Overlay 对比模式：`OverlayController`, `colorMixer`, `overlaySelectors`, 双作者状态与混色策略。
+   - 进度（2025-12-22）: ✅ **已完成（100%）**
+   - **已完成**:
+     - ✅ PlaybackControl 与 NarrativeScheduler 完整集成
+     - ✅ 地图手动交互时自动暂停播放（useViewportInteraction → playbackStore.pause）
+     - ✅ 播放时锁定地图交互（playbackStore.play → 锁定地图）
+     - ✅ 在 PlaybackControl UI 显示地图交互模式状态（锁定/解锁指示器）
+     - ✅ 添加"解锁/锁定"交互的按钮和提示
+     - ✅ 全局状态管理交互模式（MapInteractionMode in playbackStore）
+   - **架构改进**:
+     - 重构 playbackStore 添加 `mapInteractionMode` 和 `isMapInteractionLocked` 状态
+     - 重构 useViewportInteraction 响应全局交互模式
+     - 实现双向同步：播放状态 ↔ 地图交互模式
+   - **变更记录**: @docs/changelog/20251222_sprint3_playback_sync.md
+3. [x] 实现 Overlay 对比模式：`OverlayController`, `colorMixer`, `overlaySelectors`, 双作者状态与混色策略。
    - 参考：@docs/design/overlay_mode_module_20251215.md
-4. [ ] 适配 InkLine/RippleNode 在 Overlay 下的颜色混合与双 Tooltip 表现。
+   - 进度（2025-12-22）: ✅ 已完成核心模块，包括 HSL 颜色混合、对比度检测、数据合并
+   - **文件**: `src/core/overlay/OverlayController.ts`, `colorMixer.ts`, `overlaySelectors.ts`
+   - **测试**: colorMixer 单元测试 14/14 通过
+   - **待完成**: 创建 Overlay 控制面板 UI 组件
+4. [x] 适配 InkLine/RippleNode 在 Overlay 下的颜色混合与双 Tooltip 表现。
    - 参考：@docs/design/ink_line_component_20251215.md, @docs/design/ripple_node_component_20251215.md, @docs/design/overlay_mode_module_20251215.md
+   - 进度（2025-12-22）: ✅ 已完成组件增强，支持混合颜色、描边和双作者信息显示
+   - **变更**: InkLine 添加 `overlayStroke` 和 `overlayRole` 属性
+   - **变更**: RippleNode 支持 `mixedColor`、`secondaryYear`、`overlayStroke`
+   - **变更**: NodeTooltip 支持双作者信息显示
+   - **变更记录**: @docs/changelog/20251222_sprint3_playback_and_overlay.md
 
 ## Sprint 4 ——个性化、性能与发布
 1. [ ] 落地个人星图：`constellationStore`, `persistence`, `constellationOverlay`, 标记交互与导出能力。

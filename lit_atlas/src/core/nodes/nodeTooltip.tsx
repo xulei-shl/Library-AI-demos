@@ -21,6 +21,10 @@ export interface NodeTooltipProps {
   };
   position?: 'top' | 'bottom' | 'left' | 'right';
   coordinates: [number, number];
+  // Overlay 模式支持
+  overlayMode?: boolean;
+  secondaryYear?: number;
+  secondaryColor?: string;
 }
 
 /**
@@ -33,7 +37,10 @@ export function NodeTooltip({
   collectionMeta,
   position = 'top',
   coordinates,
-}: NodeTooltipProps): JSX.Element {
+  overlayMode = false,
+  secondaryYear,
+  secondaryColor,
+}: NodeTooltipProps) {
   const [x, y] = coordinates;
   
   // 计算Tooltip位置偏移
@@ -56,6 +63,9 @@ export function NodeTooltip({
   const offset = getOffset();
   const tooltipX = x + offset.x;
   const tooltipY = y + offset.y;
+
+  // 计算高度（Overlay 模式下需要更高）
+  const tooltipHeight = hasCollection && collectionMeta ? 70 : (overlayMode && secondaryYear ? 55 : 40);
 
   // 计算对齐方式
   const getAlignment = (): 'start' | 'middle' | 'end' => {
@@ -81,7 +91,7 @@ export function NodeTooltip({
         x={tooltipX - 60}
         y={tooltipY - 30}
         width={120}
-        height={hasCollection && collectionMeta ? 70 : 40}
+        height={tooltipHeight}
         fill="white"
         fillOpacity={0.95}
         stroke="#333"
@@ -111,7 +121,20 @@ export function NodeTooltip({
           fontSize={12}
           fill="#666"
         >
-          {year}年
+          {overlayMode && secondaryYear ? `主: ${year}年` : `${year}年`}
+        </text>
+      )}
+      
+      {/* 副作者年份（Overlay 模式） */}
+      {overlayMode && secondaryYear && (
+        <text
+          x={tooltipX}
+          y={tooltipY + 15}
+          textAnchor={getAlignment()}
+          fontSize={12}
+          fill={secondaryColor || '#e74c3c'}
+        >
+          副: {secondaryYear}年
         </text>
       )}
       
@@ -120,7 +143,7 @@ export function NodeTooltip({
         <>
           <text
             x={tooltipX}
-            y={tooltipY + 15}
+            y={tooltipY + (overlayMode && secondaryYear ? 30 : 15)}
             textAnchor={getAlignment()}
             fontSize={11}
             fill="#2563eb"
@@ -130,7 +153,7 @@ export function NodeTooltip({
           </text>
           <text
             x={tooltipX}
-            y={tooltipY + 30}
+            y={tooltipY + (overlayMode && secondaryYear ? 45 : 30)}
             textAnchor={getAlignment()}
             fontSize={10}
             fill="#888"
@@ -145,7 +168,7 @@ export function NodeTooltip({
         x1={x}
         y1={y}
         x2={tooltipX}
-        y2={tooltipY - (hasCollection && collectionMeta ? 35 : 30)}
+        y2={tooltipY - (tooltipHeight - 10)}
         stroke="#333"
         strokeWidth={1}
         strokeDasharray="2,2"

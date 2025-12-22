@@ -27,6 +27,12 @@ export interface RippleNodeProps {
   onTrigger?: () => void;
   onClick?: (cityId: string) => void;
   className?: string;
+  // Overlay 模式支持
+  overlayMode?: boolean;
+  secondaryYear?: number;
+  secondaryColor?: string;
+  mixedColor?: string;
+  overlayStroke?: string | null;
 }
 
 /**
@@ -43,6 +49,11 @@ export const RippleNode = React.memo<RippleNodeProps>(({
   onTrigger,
   onClick,
   className = '',
+  overlayMode = false,
+  secondaryYear,
+  secondaryColor,
+  mixedColor,
+  overlayStroke,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom' | 'left' | 'right'>('top');
@@ -52,6 +63,9 @@ export const RippleNode = React.memo<RippleNodeProps>(({
     hasCollection,
     onRippleComplete: onTrigger,
   });
+
+  // 确定节点颜色（Overlay 模式下使用混合色）
+  const nodeColor = overlayMode && mixedColor ? mixedColor : color;
 
   // 处理点击
   const handleClick = useCallback(() => {
@@ -112,7 +126,7 @@ export const RippleNode = React.memo<RippleNodeProps>(({
               cy={0}
               r={0}
               fill="none"
-              stroke={color}
+              stroke={nodeColor}
               strokeWidth={2}
               initial={{ r: 0, opacity: 1 }}
               animate={{ r: 20, opacity: 0 }}
@@ -123,18 +137,30 @@ export const RippleNode = React.memo<RippleNodeProps>(({
               cy={0}
               r={0}
               fill="none"
-              stroke={color}
+              stroke={nodeColor}
               strokeWidth={1.5}
               initial={{ r: 0, opacity: 0.8 }}
               animate={{ r: 30, opacity: 0 }}
               transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
             />
+            {/* 描边（低对比度时） */}
+            {overlayStroke && (
+              <motion.circle
+                cx={0}
+                cy={0}
+                r={3}
+                fill={overlayStroke}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1.2 }}
+                transition={{ duration: 0.3, ease: 'backOut' }}
+              />
+            )}
             {/* 中心点 */}
             <motion.circle
               cx={0}
               cy={0}
               r={3}
-              fill={color}
+              fill={nodeColor}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.3, ease: 'backOut' }}
@@ -152,15 +178,25 @@ export const RippleNode = React.memo<RippleNodeProps>(({
             onKeyDown={handleKeyDown}
             role="button"
             tabIndex={0}
-            aria-label={`城市节点: ${cityName}${year ? `, ${year}年` : ''}`}
+            aria-label={`城市节点: ${cityName}${year ? `, ${year}年` : ''}${overlayMode && secondaryYear ? ` / ${secondaryYear}年` : ''}`}
             className="cursor-pointer focus:outline-none"
           >
+            {/* 描边（低对比度时） */}
+            {overlayStroke && (
+              <circle
+                cx={0}
+                cy={0}
+                r={5}
+                fill={overlayStroke}
+                opacity={0.9}
+              />
+            )}
             {/* 实心墨点 */}
             <circle
               cx={0}
               cy={0}
               r={4}
-              fill={color}
+              fill={nodeColor}
               opacity={0.9}
               style={{ filter: 'url(#ink-blur)' }}
             />
@@ -170,7 +206,7 @@ export const RippleNode = React.memo<RippleNodeProps>(({
               cy={0}
               r={6}
               fill="none"
-              stroke={color}
+              stroke={nodeColor}
               strokeWidth={1}
               opacity={0}
               whileHover={{ opacity: 0.5, r: 8 }}
@@ -189,7 +225,7 @@ export const RippleNode = React.memo<RippleNodeProps>(({
             onKeyDown={handleKeyDown}
             role="button"
             tabIndex={0}
-            aria-label={`城市节点: ${cityName}${year ? `, ${year}年` : ''}, 有馆藏`}
+            aria-label={`城市节点: ${cityName}${year ? `, ${year}年` : ''}${overlayMode && secondaryYear ? ` / ${secondaryYear}年` : ''}, 有馆藏`}
             className="cursor-pointer focus:outline-none"
           >
             {/* 呼吸发光效果 */}
@@ -197,7 +233,7 @@ export const RippleNode = React.memo<RippleNodeProps>(({
               cx={0}
               cy={0}
               r={8}
-              fill={color}
+              fill={nodeColor}
               opacity={0.2}
               animate={{
                 r: [8, 12, 8],
@@ -210,12 +246,22 @@ export const RippleNode = React.memo<RippleNodeProps>(({
               }}
               style={{ filter: 'blur(3px)' }}
             />
+            {/* 描边（低对比度时） */}
+            {overlayStroke && (
+              <circle
+                cx={0}
+                cy={0}
+                r={6}
+                fill={overlayStroke}
+                opacity={0.95}
+              />
+            )}
             {/* 实心墨点 */}
             <circle
               cx={0}
               cy={0}
               r={5}
-              fill={color}
+              fill={nodeColor}
               opacity={0.95}
               style={{ filter: 'url(#ink-blur)' }}
             />
@@ -251,6 +297,9 @@ export const RippleNode = React.memo<RippleNodeProps>(({
             collectionMeta={collectionMeta}
             position={tooltipPosition}
             coordinates={coordinates}
+            overlayMode={overlayMode}
+            secondaryYear={secondaryYear}
+            secondaryColor={secondaryColor}
           />
         )}
       </AnimatePresence>

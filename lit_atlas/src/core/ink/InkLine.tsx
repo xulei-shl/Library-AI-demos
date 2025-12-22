@@ -24,6 +24,9 @@ export interface InkLineProps {
   opacity?: number;
   onComplete?: (routeId: string) => void;
   className?: string;
+  // Overlay 模式支持
+  overlayStroke?: string | null; // 描边颜色（低对比度时使用）
+  overlayRole?: 'primary' | 'secondary'; // 作者角色
 }
 
 /**
@@ -40,6 +43,8 @@ export const InkLine = React.memo<InkLineProps>(({
   opacity = 0.8,
   onComplete,
   className = '',
+  overlayStroke = null,
+  overlayRole,
 }) => {
   const pathRef = useRef<SVGPathElement>(null);
   const [pathLength, setPathLength] = useState(0);
@@ -103,6 +108,24 @@ export const InkLine = React.memo<InkLineProps>(({
         transition={{ duration: 0.1, ease: 'linear' }}
       />
       
+      {/* 描边（Overlay 低对比度时） */}
+      {overlayStroke && (
+        <path
+          d={pathData}
+          fill="none"
+          stroke={overlayStroke}
+          strokeWidth={strokeWidth + 2}
+          strokeOpacity={opacity * 0.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={pathLength}
+          strokeDashoffset={dashOffset}
+          style={{
+            transition: 'stroke-dashoffset 0.05s linear',
+          }}
+        />
+      )}
+      
       {/* 主线条 */}
       <path
         ref={pathRef}
@@ -119,6 +142,7 @@ export const InkLine = React.memo<InkLineProps>(({
           filter: 'url(#ink-blur)',
           transition: 'stroke-dashoffset 0.05s linear',
         }}
+        data-overlay-role={overlayRole}
       />
       
       {/* 发光效果（完成时） */}
