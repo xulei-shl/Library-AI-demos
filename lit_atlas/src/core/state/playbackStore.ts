@@ -82,7 +82,7 @@ export interface NarrativeEvent {
   type: 'route_start' | 'route_progress' | 'route_end' | 'ripple_trigger' | 'ink_line_start' | 'ink_line_progress';
   timestamp: number; // 相对时间（毫秒）
   duration: number; // 事件持续时间（毫秒）
-  data: any; // 事件数据
+  data: Record<string, unknown>; // 事件数据
 }
 
 /**

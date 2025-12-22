@@ -21,7 +21,8 @@
   - `loadAuthor(authorId: string): Promise<AuthorPayload>` —— 失败时抛出带定位信息的错误对象。
   - `useAuthorStore(selector)` —— 所有 UI 使用该 selector，避免直接访问 loader 缓存。
   - `playbackBus: Subject<PlaybackEvent>` —— 来自 `PlaybackControl` 的事件进入总线，并被 `NarrativeScheduler` 消费。
-- **缓存策略**：浏览器层面使用 `Map<string, AuthorPayload>`；在作者切换且已缓存时，仅回放调度队列，不重复发起请求。
+- **缓存策略**：浏览器层面使用 `Map<string, AuthorPayload>`；在作者切换且已缓存时，仅回放调度队列，不重复发起请求（详见 `performance_budget_20251222.md` 的缓存策略）。
+- **城市坐标校验**：所有坐标需与 `geodata_specification_20251222.md` 中的 `cities.json` 对齐。
 - **容错**：
   - 坐标缺失 -> 记录 `ERROR` 日志并跳过该路线。
   - 年份缺失 -> 回退到作品出版年；若仍无值则抛错。

@@ -1,253 +1,246 @@
-import * as d3 from 'd3';
+/**
+ * 地理坐标工具函数
+ * 统一地理投影、边界盒计算与误差校验逻辑
+ * 参考：@docs/design/data_orchestrator_20251215.md
+ */
+
 import { Coordinate, Location } from '../../core/data/normalizers';
 
 /**
- * 地理坐标工具模块
- * 统一地理投影、边界盒计算与误差校验逻辑
- */
-
-// 地理投影配置
-export const DEFAULT_PROJECTION = d3.geoMercator();
-export const PROJECTION_CONFIG = {
-  // 中国为中心的投影配置
-  center: [105, 35], // 经度、纬度
-  scale: 800,
-  translate: [400, 300] // SVG中心点
-};
-
-/**
- * 地理边界盒类型
+ * 边界盒类型定义
  */
 export interface BoundingBox {
-  west: number;
-  south: number;
-  east: number;
-  north: number;
+  west: number;  // 最西经度
+  east: number;  // 最东经度
+  south: number; // 最南纬度
+  north: number; // 最北纬度
 }
 
 /**
- * 投影点类型
+ * 地球半径（千米）
  */
-export interface ProjectedPoint {
-  x: number;
-  y: number;
-}
+const EARTH_RADIUS_KM = 6371;
 
 /**
- * 计算两点间的地理距离（公里）
- * 使用Haversine公式
- * @param coord1 第一个坐标点
- * @param coord2 第二个坐标点
- * @returns 距离（公里）
+ * 坐标验证容差（度）
+ */
+const COORDINATE_TOLERANCE = 0.0001;
+
+/**
+ * 计算两点之间的距离（Haversine公式）
+ * @param coord1 起点坐标
+ * @param coord2 终点坐标
+ * @returns 距离（千米）
  */
 export function calculateDistance(coord1: Coordinate, coord2: Coordinate): number {
-  const R = 6371; // 地球半径（公里）
-  const dLat = toRadians(coord2.lat - coord1.lat);
-  const dLng = toRadians(coord2.lng - coord1.lng);
-  
-  const a = 
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(coord1.lat)) * Math.cos(toRadians(coord2.lat)) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  
+  const lat1Rad = (coord1.lat * Math.PI) / 180;
+  const lat2Rad = (coord2.lat * Math.PI) / 180;
+  const deltaLat = ((coord2.lat - coord1.lat) * Math.PI) / 180;
+  const deltaLng = ((coord2.lng - coord1.lng) * Math.PI) / 180;
+
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+
+  return EARTH_RADIUS_KM * c;
 }
 
 /**
- * 角度转弧度
- * @param degrees 角度
- * @returns 弧度
+ * 计算多个坐标点的边界盒
+ * @param coordinates 坐标数组
+ * @param padding 边界盒扩展比例（0-1）
+ * @returns 边界盒
  */
-function toRadians(degrees: number): number {
-  return degrees * (Math.PI / 180);
-}
+export function calculateBoundingBox(
+  coordinates: Coordinate[],
+  padding: number = 0.1
+): BoundingBox {
+  if (coordinates.length === 0) {
+    throw new Error('坐标数组不能为空');
+  }
 
-/**
- * 弧度转角度
- * @param radians 弧度
- * @returns 角度
- */
-function toDegrees(radians: number): number {
-  return radians * (180 / Math.PI);
-}
+  const lats = coordinates.map((c) => c.lat);
+  const lngs = coordinates.map((c) => c.lng);
 
-/**
- * 验证坐标是否在中国境内
- * @param coord 坐标点
- * @returns 是否在中国境内
- */
-export function isCoordinateInChina(coord: Coordinate): boolean {
-  // 粗略的中国边界检查
-  const chinaBounds: BoundingBox = {
-    west: 73,   // 最西端
-    east: 135,  // 最东端
-    south: 18,  // 最南端
-    north: 54   // 最北端
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+
+  // 计算扩展量
+  const latPadding = (maxLat - minLat) * padding;
+  const lngPadding = (maxLng - minLng) * padding;
+
+  return {
+    west: minLng - lngPadding,
+    east: maxLng + lngPadding,
+    south: minLat - latPadding,
+    north: maxLat + latPadding,
   };
-  
+}
+
+/**
+ * 计算边界盒的中心点
+ * @param bbox 边界盒
+ * @returns 中心点坐标
+ */
+export function getBoundingBoxCenter(bbox: BoundingBox): Coordinate {
+  return {
+    lat: (bbox.north + bbox.south) / 2,
+    lng: (bbox.east + bbox.west) / 2,
+  };
+}
+
+/**
+ * 计算边界盒的跨度（度）
+ * @param bbox 边界盒
+ * @returns 跨度 { latSpan, lngSpan }
+ */
+export function getBoundingBoxSpan(bbox: BoundingBox): { latSpan: number; lngSpan: number } {
+  return {
+    latSpan: bbox.north - bbox.south,
+    lngSpan: bbox.east - bbox.west,
+  };
+}
+
+/**
+ * 验证坐标是否有效
+ * @param coord 坐标
+ * @returns 是否有效
+ */
+export function isValidCoordinate(coord: Coordinate): boolean {
   return (
-    coord.lng >= chinaBounds.west &&
-    coord.lng <= chinaBounds.east &&
-    coord.lat >= chinaBounds.south &&
-    coord.lat <= chinaBounds.north
+    coord.lat >= -90 &&
+    coord.lat <= 90 &&
+    coord.lng >= -180 &&
+    coord.lng <= 180 &&
+    !isNaN(coord.lat) &&
+    !isNaN(coord.lng)
   );
 }
 
 /**
- * 计算位置集合的边界盒
- * @param locations 位置数组
- * @returns 边界盒
+ * 验证边界盒是否有效
+ * @param bbox 边界盒
+ * @returns 是否有效
  */
-export function calculateBoundingBox(locations: Location[]): BoundingBox {
-  if (locations.length === 0) {
-    throw new Error('位置数组不能为空');
+export function isValidBoundingBox(bbox: BoundingBox): boolean {
+  return (
+    bbox.west >= -180 &&
+    bbox.east <= 180 &&
+    bbox.south >= -90 &&
+    bbox.north <= 90 &&
+    bbox.west < bbox.east &&
+    bbox.south < bbox.north
+  );
+}
+
+/**
+ * 检查坐标是否在边界盒内
+ * @param coord 坐标
+ * @param bbox 边界盒
+ * @returns 是否在边界盒内
+ */
+export function isCoordinateInBoundingBox(coord: Coordinate, bbox: BoundingBox): boolean {
+  return (
+    coord.lng >= bbox.west &&
+    coord.lng <= bbox.east &&
+    coord.lat >= bbox.south &&
+    coord.lat <= bbox.north
+  );
+}
+
+/**
+ * 合并多个边界盒
+ * @param bboxes 边界盒数组
+ * @returns 合并后的边界盒
+ */
+export function mergeBoundingBoxes(bboxes: BoundingBox[]): BoundingBox {
+  if (bboxes.length === 0) {
+    throw new Error('边界盒数组不能为空');
   }
-  
-  let minLat = Infinity;
-  let maxLat = -Infinity;
-  let minLng = Infinity;
-  let maxLng = -Infinity;
-  
-  locations.forEach(location => {
-    const { lat, lng } = location.coordinates;
-    
-    minLat = Math.min(minLat, lat);
-    maxLat = Math.max(maxLat, lat);
-    minLng = Math.min(minLng, lng);
-    maxLng = Math.max(maxLng, lng);
-  });
-  
+
   return {
-    west: minLng,
-    south: minLat,
-    east: maxLng,
-    north: maxLat
+    west: Math.min(...bboxes.map((b) => b.west)),
+    east: Math.max(...bboxes.map((b) => b.east)),
+    south: Math.min(...bboxes.map((b) => b.south)),
+    north: Math.max(...bboxes.map((b) => b.north)),
   };
 }
 
 /**
- * 将地理坐标投影到屏幕坐标
- * @param coord 地理坐标
- * @param width 画布宽度
- * @param height 画布高度
- * @returns 屏幕坐标
+ * 计算边界盒的面积（平方度）
+ * @param bbox 边界盒
+ * @returns 面积
  */
-export function projectCoordinate(coord: Coordinate, width: number, height: number): ProjectedPoint {
-  const projection = d3.geoMercator()
-    .center(PROJECTION_CONFIG.center)
-    .scale(PROJECTION_CONFIG.scale * Math.min(width, height) / 600) // 响应式缩放
-    .translate([width / 2, height / 2]);
-  
-  const [x, y] = projection([coord.lng, coord.lat])!;
-  return { x, y };
+export function getBoundingBoxArea(bbox: BoundingBox): number {
+  const { latSpan, lngSpan } = getBoundingBoxSpan(bbox);
+  return latSpan * lngSpan;
 }
 
 /**
- * 将屏幕坐标反投影到地理坐标
- * @param point 屏幕坐标
- * @param width 画布宽度
- * @param height 画布高度
- * @returns 地理坐标
+ * 将边界盒转换为坐标数组（四个角点）
+ * @param bbox 边界盒
+ * @returns 坐标数组
  */
-export function unprojectCoordinate(point: ProjectedPoint, width: number, height: number): Coordinate {
-  const projection = d3.geoMercator()
-    .center(PROJECTION_CONFIG.center)
-    .scale(PROJECTION_CONFIG.scale * Math.min(width, height) / 600)
-    .translate([width / 2, height / 2]);
-  
-  const [lng, lat] = projection.invert([point.x, point.y])!;
-  return { lat, lng };
+export function boundingBoxToCoordinates(bbox: BoundingBox): Coordinate[] {
+  return [
+    { lat: bbox.south, lng: bbox.west }, // 西南
+    { lat: bbox.north, lng: bbox.west }, // 西北
+    { lat: bbox.north, lng: bbox.east }, // 东北
+    { lat: bbox.south, lng: bbox.east }, // 东南
+  ];
 }
 
 /**
- * 创建适合显示多个位置的投影
- * @param locations 位置数组
- * @param width 画布宽度
- * @param height 画布高度
- * @param padding 内边距
- * @returns 配置好的投影函数
+ * 格式化坐标为字符串
+ * @param coord 坐标
+ * @param precision 精度（小数位数）
+ * @returns 格式化字符串
  */
-export function createAdaptiveProjection(
-  locations: Location[],
-  width: number,
-  height: number,
-  padding: number = 50
-): d3.GeoProjection {
-  if (locations.length === 0) {
-    throw new Error('位置数组不能为空');
-  }
-  
-  // 计算边界盒
-  const bbox = calculateBoundingBox(locations);
-  
-  // 创建投影
-  const projection = d3.geoMercator()
-    .fitExtent(
-      [[padding, padding], [width - padding, height - padding]],
-      {
-        type: 'Polygon',
-        coordinates: [[
-          [bbox.west, bbox.south],
-          [bbox.east, bbox.south],
-          [bbox.east, bbox.north],
-          [bbox.west, bbox.north],
-          [bbox.west, bbox.south]
-        ]]
-      }
-    );
-  
-  return projection;
+export function formatCoordinate(coord: Coordinate, precision: number = 4): string {
+  return `${coord.lat.toFixed(precision)}, ${coord.lng.toFixed(precision)}`;
 }
 
 /**
- * 计算两点间的方位角（从北顺时针角度）
- * @param from 起始点
- * @param to 目标点
- * @returns 方位角（度）
+ * 解析坐标字符串
+ * @param coordStr 坐标字符串（格式：lat, lng）
+ * @returns 坐标对象
  */
-export function calculateBearing(from: Coordinate, to: Coordinate): number {
-  const dLng = toRadians(to.lng - from.lng);
-  const lat1 = toRadians(from.lat);
-  const lat2 = toRadians(to.lat);
+export function parseCoordinate(coordStr: string): Coordinate | null {
+  const parts = coordStr.split(',').map((s) => s.trim());
   
-  const y = Math.sin(dLng) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  
-  let bearing = toDegrees(Math.atan2(y, x));
-  return (bearing + 360) % 360; // 转换为0-360度
+  if (parts.length !== 2) {
+    return null;
+  }
+
+  const lat = parseFloat(parts[0]);
+  const lng = parseFloat(parts[1]);
+
+  if (isNaN(lat) || isNaN(lng)) {
+    return null;
+  }
+
+  const coord = { lat, lng };
+  return isValidCoordinate(coord) ? coord : null;
 }
 
 /**
- * 验证坐标数据的合理性
- * @param coord 坐标点
- * @returns 验证结果
+ * 计算两个坐标是否相等（考虑容差）
+ * @param coord1 坐标1
+ * @param coord2 坐标2
+ * @param tolerance 容差（度）
+ * @returns 是否相等
  */
-export function validateCoordinate(coord: Coordinate): { isValid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  
-  // 检查纬度范围
-  if (coord.lat < -90 || coord.lat > 90) {
-    errors.push(`纬度 ${coord.lat} 超出有效范围 (-90 到 90)`);
-  }
-  
-  // 检查经度范围
-  if (coord.lng < -180 || coord.lng > 180) {
-    errors.push(`经度 ${coord.lng} 超出有效范围 (-180 到 180)`);
-  }
-  
-  // 检查是否是有效数字
-  if (isNaN(coord.lat) || isNaN(coord.lng)) {
-    errors.push('坐标包含非数字值');
-  }
-  
-  // 检查是否在中国境内（可选）
-  if (!isCoordinateInChina(coord)) {
-    console.warn(`坐标 (${coord.lat}, ${coord.lng}) 不在中国境内`);
-  }
-  
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
+export function areCoordinatesEqual(
+  coord1: Coordinate,
+  coord2: Coordinate,
+  tolerance: number = COORDINATE_TOLERANCE
+): boolean {
+  return (
+    Math.abs(coord1.lat - coord2.lat) < tolerance &&
+    Math.abs(coord1.lng - coord2.lng) < tolerance
+  );
 }

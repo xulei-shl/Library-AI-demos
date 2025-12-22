@@ -43,8 +43,8 @@ sequenceDiagram
 ```
 
 ## 3. 测试策略
-1. **曲线生成**：对不同投影输入进行单元测试，确保大圆航线不穿越地图边界。
+1. **曲线生成**：对不同投影输入进行单元测试，确保大圆航线不穿越地图边界（参考 `geodata_specification_20251222.md` 的投影配置）。
 2. **动画同步**：使用 jest fake timers 驱动 `progress`，断言 `stroke-dashoffset` 精确匹配。
 3. **渐变重用**：渲染多个 `InkLine` 时 `<defs>` 不重复注入相同 `id`；可通过 DOM 查询断言。
 4. **回调可靠性**：`LineCompleted` 仅在 `progress >= 1` 且 `requestAnimationFrame` 完整执行后调用一次。
-5. **性能基准**：在 Storybook 里启用 50 条线同时渲染，记录帧率不低于 50fps。 
+5. **性能基准**：在 Storybook 里启用 50 条线同时渲染，记录帧率不低于 50fps（详见 `performance_budget_20251222.md`）。 

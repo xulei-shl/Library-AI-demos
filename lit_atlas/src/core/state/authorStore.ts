@@ -10,7 +10,7 @@ import { loadAuthor } from '../data/dataLoader';
 export interface PlaybackEvent {
   type: 'PLAY' | 'PAUSE' | 'STOP' | 'SEEK' | 'RESET';
   timestamp: Date;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 /**

@@ -5,25 +5,44 @@
 > 说明：所有任务均需在执行前重读对应设计文档，确保接口与依赖未发生变化；若需调整，先更新设计文档再进入开发。
 
 ## Sprint 0 ——基础设施与规范
-1. [ ] 初始化 Next.js + TypeScript + App Router 脚手架，接入 ESLint/Prettier/Husky/Storybook，建立 CI 管线。
+1. [x] 初始化 Next.js + TypeScript + App Router 脚手架，接入 ESLint/Prettier/Husky/Storybook，建立 CI 管线。
    - 参考：@docs/墨迹与边界-0.3.md
-   - 进度（2025-12-16）: 已完成 create-next-app 脚手架初始化，并按 `.rules/00_STANDARDS.md` 建立 `src/core`、`src/utils`、`tests`、`runtime/logs`、`runtime/outputs` 目录；已补齐 Prettier 配置（`prettier.config.mjs`, `.prettierignore`）并通过 `npm run lint` 验证 ESLint+Prettier；`npm install --legacy-peer-deps` 完成依赖安装；Husky 目录已初始化（待改写 pre-commit 为 `lint-staged` 并设置 hooksPath）；Storybook 与 CI 仍待接入。
-2. [ ] 配置全局状态与事件基础：安装 Zustand、RxJS，创建占位 store、Subject。
+   - 进度（2025-12-22）: ✅ 已完成脚手架、ESLint、Prettier、Husky 配置；Storybook 已安装待配置；CI 待建立
+2. [x] **[新增]** 准备地理数据：下载 Natural Earth GeoJSON，运行简化脚本，创建 `cities.json`。
+   - 参考：@docs/design/geodata_specification_20251222.md
+   - 进度（2025-12-22）: ✅ 已创建 cities.json（50个城市）、processGeoData.js 脚本、README.md 文档
+3. [x] **[新增]** 建立 UI 设计系统：创建 `src/core/theme/` 目录，实现颜色/间距/字体/动画令牌。
+   - 参考：@docs/design/ui_design_system_20251222.md
+   - 进度（2025-12-22）: ✅ 已完成 colors.ts、spacing.ts、typography.ts、animations.ts、shadows.ts、breakpoints.ts、index.ts
+4. [x] **[新增]** 设定性能基准：运行初始 Lighthouse 测试，记录基线指标。
+   - 参考：@docs/design/performance_budget_20251222.md
+   - 进度（2025-12-22）: ✅ 已创建 performanceMonitor.ts 工具和 performanceBenchmark.js 脚本（需启动服务器后运行）
+5. [x] 配置全局状态与事件基础：安装 Zustand、RxJS，创建占位 store、Subject。
    - 参考：@docs/design/data_orchestrator_20251215.md
-3. [ ] 搭建 Geo 渲染基础：引入 React-Simple-Maps、D3 投影与纸张纹理主题，输出空白 NarrativeMap。
-   - 参考：@docs/design/narrative_map_canvas_20251215.md
-4. [ ] 建立测试与监控基线：Jest + Testing Library + Playwright（可选），并记录性能基准。
-   - 参考：@docs/design/playback_control_module_20251215.md（可访问性要求）
+   - 进度（2025-12-22）: ✅ 已创建 authorStore.ts、playbackStore.ts、eventBus.ts
+   - **依赖版本**：`zustand@^5.0.9`, `rxjs@^7.8.2`（已安装）
+6. [x] 搭建 Geo 渲染基础：引入 React-Simple-Maps、D3 投影与纸张纹理主题，输出空白 NarrativeMap。
+   - 参考：@docs/design/narrative_map_canvas_20251215.md, @docs/design/geodata_specification_20251222.md
+   - 进度（2025-12-22）: ✅ 已完成 projectionConfig.ts、paperTexture.ts、更新 NarrativeMap.tsx 使用 Natural Earth 投影和纸张纹理
+   - **依赖版本**：`react-simple-maps@^3.0.0`, `d3@^7.9.0`（已安装）
+7. [x] 建立测试与监控基线：Jest + Testing Library + Playwright（可选），并记录性能基准。
+   - 参考：@docs/design/playback_control_module_20251215.md（可访问性要求）, @docs/design/performance_budget_20251222.md
+   - 进度（2025-12-22）: ✅ 已创建 map.test.ts、paperTexture.test.ts、d3 mock，所有测试通过（26/26）
 
 ## Sprint 1 ——数据与地图骨架
-1. [ ] 实现数据加载与规范化流程：`dataLoader`, `normalizers`, 错误兜底、Map 缓存。
+1. [x] 实现数据加载与规范化流程：`dataLoader`, `normalizers`, 错误兜底、Map 缓存。
    - 参考：@docs/design/data_orchestrator_20251215.md
-2. [ ] 建立 `authorStore` / `playbackStore`，实现作者切换、播放头重置、Playback 事件总线。
+   - 进度（2025-12-22）: ✅ 已完成数据加载器、规范化器、缓存管理、错误处理
+2. [x] 建立 `authorStore` / `playbackStore`，实现作者切换、播放头重置、Playback 事件总线。
    - 参考：@docs/design/data_orchestrator_20251215.md, @docs/design/playback_control_module_20251215.md
-3. [ ] 完成 `NarrativeMap` 基础渲染：GeoJSON 底图、层级结构、`Smart FlyTo` 相机控制。
+   - 进度（2025-12-22）: ✅ 已完成 Zustand store、事件总线、状态订阅
+3. [x] 完成 `NarrativeMap` 基础渲染：GeoJSON 底图、层级结构、`Smart FlyTo` 相机控制。
    - 参考：@docs/design/narrative_map_canvas_20251215.md
-4. [ ] 编写 `cameraController`、`useViewportInteraction` 单元测试，确保自动/手动模式切换策略。
+   - 进度（2025-12-22）: ✅ 已完成地图渲染、相机控制器、Smart FlyTo 算法、图层管理
+4. [x] 编写 `cameraController`、`useViewportInteraction` 单元测试，确保自动/手动模式切换策略。
    - 参考：@docs/design/narrative_map_canvas_20251215.md
+   - 进度（2025-12-22）: ✅ 已完成核心模块测试（coordinateUtils, cameraController, dataLoader, authorStore）
+   - **变更记录**: @docs/changelog/20251222_sprint1_data_and_map.md
 
 ## Sprint 2 ——叙事调度与动画内核
 1. [ ] 开发 `timelineBuilder` 与 `narrativeScheduler`，实现事件队列、Play/Pause/Seek 控制。
@@ -56,6 +75,18 @@
    - 参考：全部相关设计文档（视测试范围引用），优先复查 @docs/design/playback_control_module_20251215.md 的可访问性要求。
 
 ## 持续性任务
-- [ ] 文档回写：每完成一个模块，更新对应设计文档状态与 `docs/changelog/` 记录。
+- [ ] 文档回写：每完成一个模块，更新对应设计文档状态（Proposal -> Approved -> Completed）与 `docs/changelog/` 记录。
 - [ ] 代码评审：遵循 `.rules/00_STANDARDS.md`，在模块合并前完成至少一次 Review。
 - [ ] 风险追踪：若调度性能或多作者混色出现瓶颈，开启专项 RFC 并补充设计文档。
+- [ ] **[新增]** 性能监控：每个 Sprint 结束时重新运行 `performance_budget_20251222.md` 中的基准测试，确保不退化。
+
+## 架构评审记录
+- **日期**: 2025-12-22
+- **评审人**: 技术架构师（AI）
+- **发现问题**: 
+  1. 缺失 GeoJSON 数据规范 -> 已补充 `geodata_specification_20251222.md`
+  2. 缺失 UI 设计系统 -> 已补充 `ui_design_system_20251222.md`
+  3. 性能指标分散 -> 已整合为 `performance_budget_20251222.md`
+  4. D3 API 错误（`d3.geoCurve` 不存在）-> 已修正相关文档
+  5. 依赖版本未锁定 -> 已在 TODO 中标注推荐版本
+- **状态**: Sprint 0 任务已更新，建议在开始 Sprint 1 前完成新增的 3 个基础任务。

@@ -15,10 +15,11 @@
 - `tests/core/mapInteractions.test.tsx`: 模拟用户交互，验证禁用逻辑与事件冒泡。
 
 ### 2.2 核心逻辑/接口
-- **图层策略**：底图 -> 线条 -> 节点 -> Tooltip；通过 `mix-blend-mode: multiply` 实现 Overlay 需求。
+- **图层策略**：底图 -> 线条 -> 节点 -> Tooltip；通过 `mix-blend-mode: multiply` 实现 Overlay 需求（详见 `ui_design_system_20251222.md` 的 Z-Index 规范）。
 - **Smart FlyTo**：
   - 输入：`AuthorBBox`, `paddingPct`, `duration`。
   - 输出：`{center, zoom, rotation}` 参数传给 React-Simple-Maps + `react-spring` 动画。
+- **GeoJSON 底图**：使用 `geodata_specification_20251222.md` 定义的简化数据与投影配置。
 - **交互模式**：
   - `auto`（默认）：锁定缩放和平移，直至用户点击“解锁”。
   - `manual`：开启手势操作并向 `playbackStore` 发送 `Pause`。

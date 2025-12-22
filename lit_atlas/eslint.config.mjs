@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 忽略 Node.js 脚本
+    "scripts/**",
+    "runtime/**",
   ]),
   // 关闭可能与 Prettier 冲突的 ESLint 样式规则。
   prettier,

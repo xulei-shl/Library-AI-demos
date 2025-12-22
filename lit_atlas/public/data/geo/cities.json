@@ -1,0 +1,247 @@
+{
+  "Shanghai": {
+    "coordinates": [121.4737, 31.2304],
+    "name_zh": "上海",
+    "country": "CHN"
+  },
+  "Beijing": {
+    "coordinates": [116.4074, 39.9042],
+    "name_zh": "北京",
+    "country": "CHN"
+  },
+  "Tokyo": {
+    "coordinates": [139.6917, 35.6895],
+    "name_zh": "东京",
+    "country": "JPN"
+  },
+  "Seoul": {
+    "coordinates": [126.978, 37.5665],
+    "name_zh": "首尔",
+    "country": "KOR"
+  },
+  "Hong Kong": {
+    "coordinates": [114.1694, 22.3193],
+    "name_zh": "香港",
+    "country": "HKG"
+  },
+  "Taipei": {
+    "coordinates": [121.5654, 25.033],
+    "name_zh": "台北",
+    "country": "TWN"
+  },
+  "Singapore": {
+    "coordinates": [103.8198, 1.3521],
+    "name_zh": "新加坡",
+    "country": "SGP"
+  },
+  "Bangkok": {
+    "coordinates": [100.5018, 13.7563],
+    "name_zh": "曼谷",
+    "country": "THA"
+  },
+  "Mumbai": {
+    "coordinates": [72.8777, 19.076],
+    "name_zh": "孟买",
+    "country": "IND"
+  },
+  "Delhi": {
+    "coordinates": [77.1025, 28.7041],
+    "name_zh": "德里",
+    "country": "IND"
+  },
+  "Dubai": {
+    "coordinates": [55.2708, 25.2048],
+    "name_zh": "迪拜",
+    "country": "ARE"
+  },
+  "Istanbul": {
+    "coordinates": [28.9784, 41.0082],
+    "name_zh": "伊斯坦布尔",
+    "country": "TUR"
+  },
+  "Moscow": {
+    "coordinates": [37.6173, 55.7558],
+    "name_zh": "莫斯科",
+    "country": "RUS"
+  },
+  "London": {
+    "coordinates": [-0.1278, 51.5074],
+    "name_zh": "伦敦",
+    "country": "GBR"
+  },
+  "Paris": {
+    "coordinates": [2.3522, 48.8566],
+    "name_zh": "巴黎",
+    "country": "FRA"
+  },
+  "Berlin": {
+    "coordinates": [13.405, 52.52],
+    "name_zh": "柏林",
+    "country": "DEU"
+  },
+  "Rome": {
+    "coordinates": [12.4964, 41.9028],
+    "name_zh": "罗马",
+    "country": "ITA"
+  },
+  "Madrid": {
+    "coordinates": [-3.7038, 40.4168],
+    "name_zh": "马德里",
+    "country": "ESP"
+  },
+  "Barcelona": {
+    "coordinates": [2.1734, 41.3851],
+    "name_zh": "巴塞罗那",
+    "country": "ESP"
+  },
+  "Amsterdam": {
+    "coordinates": [4.9041, 52.3676],
+    "name_zh": "阿姆斯特丹",
+    "country": "NLD"
+  },
+  "Brussels": {
+    "coordinates": [4.3517, 50.8503],
+    "name_zh": "布鲁塞尔",
+    "country": "BEL"
+  },
+  "Vienna": {
+    "coordinates": [16.3738, 48.2082],
+    "name_zh": "维也纳",
+    "country": "AUT"
+  },
+  "Prague": {
+    "coordinates": [14.4378, 50.0755],
+    "name_zh": "布拉格",
+    "country": "CZE"
+  },
+  "Stockholm": {
+    "coordinates": [18.0686, 59.3293],
+    "name_zh": "斯德哥尔摩",
+    "country": "SWE"
+  },
+  "Copenhagen": {
+    "coordinates": [12.5683, 55.6761],
+    "name_zh": "哥本哈根",
+    "country": "DNK"
+  },
+  "New York": {
+    "coordinates": [-74.006, 40.7128],
+    "name_zh": "纽约",
+    "country": "USA"
+  },
+  "Los Angeles": {
+    "coordinates": [-118.2437, 34.0522],
+    "name_zh": "洛杉矶",
+    "country": "USA"
+  },
+  "San Francisco": {
+    "coordinates": [-122.4194, 37.7749],
+    "name_zh": "旧金山",
+    "country": "USA"
+  },
+  "Chicago": {
+    "coordinates": [-87.6298, 41.8781],
+    "name_zh": "芝加哥",
+    "country": "USA"
+  },
+  "Boston": {
+    "coordinates": [-71.0589, 42.3601],
+    "name_zh": "波士顿",
+    "country": "USA"
+  },
+  "Washington": {
+    "coordinates": [-77.0369, 38.9072],
+    "name_zh": "华盛顿",
+    "country": "USA"
+  },
+  "Seattle": {
+    "coordinates": [-122.3321, 47.6062],
+    "name_zh": "西雅图",
+    "country": "USA"
+  },
+  "Toronto": {
+    "coordinates": [-79.3832, 43.6532],
+    "name_zh": "多伦多",
+    "country": "CAN"
+  },
+  "Vancouver": {
+    "coordinates": [-123.1207, 49.2827],
+    "name_zh": "温哥华",
+    "country": "CAN"
+  },
+  "Montreal": {
+    "coordinates": [-73.5673, 45.5017],
+    "name_zh": "蒙特利尔",
+    "country": "CAN"
+  },
+  "Mexico City": {
+    "coordinates": [-99.1332, 19.4326],
+    "name_zh": "墨西哥城",
+    "country": "MEX"
+  },
+  "Buenos Aires": {
+    "coordinates": [-58.3816, -34.6037],
+    "name_zh": "布宜诺斯艾利斯",
+    "country": "ARG"
+  },
+  "São Paulo": {
+    "coordinates": [-46.6333, -23.5505],
+    "name_zh": "圣保罗",
+    "country": "BRA"
+  },
+  "Rio de Janeiro": {
+    "coordinates": [-43.1729, -22.9068],
+    "name_zh": "里约热内卢",
+    "country": "BRA"
+  },
+  "Lima": {
+    "coordinates": [-77.0428, -12.0464],
+    "name_zh": "利马",
+    "country": "PER"
+  },
+  "Bogotá": {
+    "coordinates": [-74.0721, 4.711],
+    "name_zh": "波哥大",
+    "country": "COL"
+  },
+  "Santiago": {
+    "coordinates": [-70.6693, -33.4489],
+    "name_zh": "圣地亚哥",
+    "country": "CHL"
+  },
+  "Sydney": {
+    "coordinates": [151.2093, -33.8688],
+    "name_zh": "悉尼",
+    "country": "AUS"
+  },
+  "Melbourne": {
+    "coordinates": [144.9631, -37.8136],
+    "name_zh": "墨尔本",
+    "country": "AUS"
+  },
+  "Auckland": {
+    "coordinates": [174.7633, -36.8485],
+    "name_zh": "奥克兰",
+    "country": "NZL"
+  },
+  "Cairo": {
+    "coordinates": [31.2357, 30.0444],
+    "name_zh": "开罗",
+    "country": "EGY"
+  },
+  "Cape Town": {
+    "coordinates": [18.4241, -33.9249],
+    "name_zh": "开普敦",
+    "country": "ZAF"
+  },
+  "Johannesburg": {
+    "coordinates": [28.0473, -26.2041],
+    "name_zh": "约翰内斯堡",
+    "country": "ZAF"
+  },
+  "Nairobi": {
+    "coordinates": [36.8219, -1.2921],
+    "name_zh": "内罗毕",
+    "country": "KEN"
+  }
+}

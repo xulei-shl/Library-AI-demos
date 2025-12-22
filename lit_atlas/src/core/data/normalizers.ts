@@ -70,7 +70,7 @@ export type Author = z.infer<typeof AuthorSchema>;
  * @param coords 原始坐标数据
  * @returns 规范化的坐标对象
  */
-export function normalizeCoordinate(coords: any): Coordinate {
+export function normalizeCoordinate(coords: unknown): Coordinate {
   try {
     return CoordinateSchema.parse(coords);
   } catch (error) {
@@ -84,7 +84,7 @@ export function normalizeCoordinate(coords: any): Coordinate {
  * @param location 原始地理信息
  * @returns 规范化的地理信息对象
  */
-export function normalizeLocation(location: any): Location {
+export function normalizeLocation(location: unknown): Location {
   try {
     const normalized = LocationSchema.parse(location);
     
@@ -112,17 +112,17 @@ export function normalizeLocation(location: any): Location {
  * @param route 原始路线数据
  * @returns 规范化的路线对象
  */
-export function normalizeRoute(route: any): Route {
+export function normalizeRoute(route: unknown): Route {
   try {
     const normalized = RouteSchema.parse(route);
     
     // 规范化起点和终点地理信息
-    normalized.start_location = normalizeLocation(route.start_location);
-    normalized.end_location = normalizeLocation(route.end_location);
+    normalized.start_location = normalizeLocation((route as { start_location: unknown }).start_location);
+    normalized.end_location = normalizeLocation((route as { end_location: unknown }).end_location);
     
     // 年份回退策略：如果路线年份缺失，使用作品年份
-    if (!normalized.year && route.work_year) {
-      normalized.year = route.work_year;
+    if (!normalized.year && (route as { work_year?: number }).work_year) {
+      normalized.year = (route as { work_year: number }).work_year;
     }
     
     return normalized;
@@ -137,12 +137,12 @@ export function normalizeRoute(route: any): Route {
  * @param work 原始作品数据
  * @returns 规范化的作品对象
  */
-export function normalizeWork(work: any): Work {
+export function normalizeWork(work: unknown): Work {
   try {
     const normalized = WorkSchema.parse(work);
     
     // 规范化所有路线
-    normalized.routes = work.routes.map((route: any) => normalizeRoute(route));
+    normalized.routes = (work as { routes: unknown[] }).routes.map((route: unknown) => normalizeRoute(route));
     
     return normalized;
   } catch (error) {
@@ -156,12 +156,12 @@ export function normalizeWork(work: any): Work {
  * @param author 原始作者数据
  * @returns 规范化的作者对象
  */
-export function normalizeAuthor(author: any): Author {
+export function normalizeAuthor(author: unknown): Author {
   try {
     const normalized = AuthorSchema.parse(author);
     
     // 规范化所有作品
-    normalized.works = author.works.map((work: any) => normalizeWork(work));
+    normalized.works = (author as { works: unknown[] }).works.map((work: unknown) => normalizeWork(work));
     
     return normalized;
   } catch (error) {
