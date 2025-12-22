@@ -21,7 +21,6 @@ import { defaults as defaultControls } from 'ol/control';
 import { easeOut } from 'ol/easing';
 
 import { useAuthorStore } from '../state/authorStore';
-import { usePlaybackStore } from '../state/playbackStore';
 import { convertAuthorToFeatures, isCityFeature } from './utils/featureConverter';
 import { AnimationController } from './animation/AnimationController';
 import { createInkLayer } from './layers/InkLayer';
@@ -59,7 +58,6 @@ export function OpenLayersMap({
 
   // Store hooks
   const { currentAuthor, isLoading: authorLoading } = useAuthorStore();
-  const { isPlaying, currentTime } = usePlaybackStore();
 
   /**
    * 初始化地图实例
@@ -140,7 +138,8 @@ export function OpenLayersMap({
     // 转换并添加新 Features
     if (currentAuthor) {
       const features = convertAuthorToFeatures(currentAuthor);
-      
+      animationControllerRef.current.resetTimeline();
+
       // 注册动画元数据
       features.forEach((feature, index) => {
         const startTime = index * 500; // 错开动画时间
@@ -164,46 +163,8 @@ export function OpenLayersMap({
           maxZoom: 6
         });
       }
-
-      // 重置动画时间（不自动播放，等待用户点击播放按钮）
-      animationControllerRef.current.setTime(0);
-      
-      // 如果当前正在播放，则启动动画
-      if (isPlaying) {
-        animationControllerRef.current.play();
-      }
     }
-  }, [currentAuthor, isMapReady, isPlaying]);
-
-  /**
-   * 同步播放状态到动画控制器
-   */
-  useEffect(() => {
-    const controller = animationControllerRef.current;
-    if (!controller) {
-      return;
-    }
-
-    if (isPlaying) {
-      controller.play();
-      console.info('[OpenLayersMap] 动画已启动');
-    } else {
-      controller.pause();
-      console.info('[OpenLayersMap] 动画已暂停');
-    }
-  }, [isPlaying]);
-
-  /**
-   * 同步时间轴到动画控制器
-   */
-  useEffect(() => {
-    const controller = animationControllerRef.current;
-    if (!controller) {
-      return;
-    }
-
-    controller.setTime(currentTime);
-  }, [currentTime]);
+  }, [currentAuthor, isMapReady]);
 
   /**
    * 注册动画更新回调 - 触发地图重绘
