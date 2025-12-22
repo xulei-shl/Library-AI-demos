@@ -6,6 +6,9 @@
 
 import { Coordinate, Location } from '../../core/data/normalizers';
 
+// Re-export types for convenience
+export type { Coordinate, Location } from '../../core/data/normalizers';
+
 /**
  * 边界盒类型定义
  */
