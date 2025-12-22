@@ -2,12 +2,12 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CameraController } from './cameraController';
-import { useViewportInteraction, InteractionMode, DEFAULT_INTERACTION_CONFIG } from './useViewportInteraction';
+import { useViewportInteraction, DEFAULT_INTERACTION_CONFIG } from './useViewportInteraction';
 import { LayerType, DEFAULT_LAYERS, optimizeLayers } from './layers';
 import { createProjection, ProjectionType } from './projectionConfig';
 import { getPaperBackgroundStyle, generatePaperTextureFilter, generateInkFilters, DEFAULT_PAPER_TEXTURE } from '../theme/paperTexture';
 import { useAuthorStore } from '../state/authorStore';
-import { usePlaybackStore } from '../state/playbackStore';
+import { usePlaybackStore, MapInteractionMode } from '../state/playbackStore';
 
 // 地图配置 - 使用 Natural Earth 数据
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
@@ -20,7 +20,6 @@ export interface NarrativeMapProps {
   height?: number;
   className?: string;
   showControls?: boolean;
-  interactionMode?: InteractionMode;
   onViewportChange?: (cameraState: any) => void;
   onLocationClick?: (location: any) => void;
 }
@@ -33,7 +32,6 @@ export function NarrativeMap({
   height = 600,
   className = '',
   showControls = true,
-  interactionMode = InteractionMode.AUTO,
   onViewportChange,
   onLocationClick
 }: NarrativeMapProps) {
@@ -49,7 +47,7 @@ export function NarrativeMap({
 
   // Store hooks
   const { currentAuthor, isLoading: authorLoading } = useAuthorStore();
-  const { isPlaying, currentTime } = usePlaybackStore();
+  const { isPlaying, currentTime, mapInteractionMode, isMapInteractionLocked } = usePlaybackStore();
 
   // 初始化相机控制器
   useEffect(() => {
@@ -64,14 +62,10 @@ export function NarrativeMap({
   // 视口交互
   const {
     isInteractionEnabled,
-    enableInteraction
-  } = useViewportInteraction(containerRef, {
-    ...DEFAULT_INTERACTION_CONFIG,
-    mode: interactionMode,
-    enableZoom: true,
-    enablePan: true,
-    enableRotate: false
-  });
+    currentMode,
+    enableInteraction,
+    toggleInteraction
+  } = useViewportInteraction(containerRef, DEFAULT_INTERACTION_CONFIG);
 
   // 处理作者数据变化
   useEffect(() => {
@@ -267,9 +261,21 @@ export function NarrativeMap({
       </AnimatePresence>
 
       {/* 交互控制提示 */}
-      {!isInteractionEnabled && (
-        <div className="absolute bottom-4 right-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded text-sm">
-          点击启用手动控制
+      {isMapInteractionLocked && (
+        <div 
+          className="absolute bottom-4 right-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded text-sm cursor-pointer hover:bg-opacity-90 transition-opacity"
+          onClick={toggleInteraction}
+          role="button"
+          tabIndex={0}
+          aria-label="解锁地图交互"
+        >
+          🔒 点击解锁地图交互
+        </div>
+      )}
+      
+      {isInteractionEnabled && !isPlaying && (
+        <div className="absolute bottom-4 right-4 bg-green-600 bg-opacity-75 text-white px-3 py-2 rounded text-sm">
+          ✓ 手动控制已启用
         </div>
       )}
 

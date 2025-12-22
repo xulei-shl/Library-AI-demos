@@ -4,6 +4,14 @@ import { Subject } from 'rxjs';
 import { Work, Route } from '../data/normalizers';
 
 /**
+ * 地图交互模式
+ */
+export enum MapInteractionMode {
+  AUTO = 'auto',   // 自动播放模式，锁定用户输入
+  MANUAL = 'manual' // 手动模式，允许用户交互
+}
+
+/**
  * 播放状态类型
  */
 export interface PlaybackState {
@@ -25,6 +33,10 @@ export interface PlaybackState {
   // 事件控制
   currentEventIndex: number; // 当前播放的事件索引
   totalEvents: number; // 总事件数
+  
+  // 地图交互控制
+  mapInteractionMode: MapInteractionMode; // 地图交互模式
+  isMapInteractionLocked: boolean; // 地图交互是否被锁定
   
   // UI状态
   showControls: boolean;
@@ -58,6 +70,12 @@ export interface PlaybackActions {
   setTotalEvents: (count: number) => void;
   nextEvent: () => void;
   previousEvent: () => void;
+  
+  // 地图交互控制
+  setMapInteractionMode: (mode: MapInteractionMode) => void;
+  lockMapInteraction: () => void;
+  unlockMapInteraction: () => void;
+  toggleMapInteractionLock: () => void;
   
   // UI控制
   setShowControls: (show: boolean) => void;
@@ -126,6 +144,9 @@ export const usePlaybackStore = create<PlaybackStore>()(
     currentEventIndex: 0,
     totalEvents: 0,
     
+    mapInteractionMode: MapInteractionMode.AUTO,
+    isMapInteractionLocked: false,
+    
     showControls: true,
     volume: 1,
 
@@ -136,7 +157,9 @@ export const usePlaybackStore = create<PlaybackStore>()(
       set({
         isPlaying: true,
         isPaused: false,
-        isStopped: false
+        isStopped: false,
+        mapInteractionMode: MapInteractionMode.AUTO, // 播放时自动切换到 AUTO 模式
+        isMapInteractionLocked: true // 锁定地图交互
       });
       
       // 广播播放事件
@@ -148,14 +171,15 @@ export const usePlaybackStore = create<PlaybackStore>()(
         data: { action: 'play' }
       });
       
-      console.info('开始播放');
+      console.info('开始播放，锁定地图交互');
     },
 
     pause: () => {
       set({
         isPlaying: false,
         isPaused: true,
-        isStopped: false
+        isStopped: false,
+        isMapInteractionLocked: false // 暂停时解锁地图交互
       });
       
       // 广播暂停事件
@@ -167,7 +191,7 @@ export const usePlaybackStore = create<PlaybackStore>()(
         data: { action: 'pause' }
       });
       
-      console.info('暂停播放');
+      console.info('暂停播放，解锁地图交互');
     },
 
     stop: () => {
@@ -176,7 +200,9 @@ export const usePlaybackStore = create<PlaybackStore>()(
         isPaused: false,
         isStopped: true,
         currentTime: 0,
-        currentEventIndex: 0
+        currentEventIndex: 0,
+        mapInteractionMode: MapInteractionMode.AUTO,
+        isMapInteractionLocked: false
       });
       
       // 广播停止事件
@@ -287,6 +313,37 @@ export const usePlaybackStore = create<PlaybackStore>()(
       set({ volume: clampedVolume });
     },
 
+    // 地图交互控制
+    setMapInteractionMode: (mode: MapInteractionMode) => {
+      set({ mapInteractionMode: mode });
+      console.info(`设置地图交互模式: ${mode}`);
+    },
+
+    lockMapInteraction: () => {
+      set({ 
+        isMapInteractionLocked: true,
+        mapInteractionMode: MapInteractionMode.AUTO
+      });
+      console.info('锁定地图交互');
+    },
+
+    unlockMapInteraction: () => {
+      set({ 
+        isMapInteractionLocked: false,
+        mapInteractionMode: MapInteractionMode.MANUAL
+      });
+      console.info('解锁地图交互');
+    },
+
+    toggleMapInteractionLock: () => {
+      const state = get();
+      if (state.isMapInteractionLocked) {
+        get().unlockMapInteraction();
+      } else {
+        get().lockMapInteraction();
+      }
+    },
+
     // 重置
     reset: () => {
       set({
@@ -300,7 +357,9 @@ export const usePlaybackStore = create<PlaybackStore>()(
         currentLoopCount: 0,
         currentEventIndex: 0,
         totalEvents: 0,
-        volume: 1
+        volume: 1,
+        mapInteractionMode: MapInteractionMode.AUTO,
+        isMapInteractionLocked: false
       });
       
       console.info('重置播放状态');
@@ -312,7 +371,9 @@ export const usePlaybackStore = create<PlaybackStore>()(
         currentEventIndex: 0,
         isPlaying: false,
         isPaused: false,
-        isStopped: true
+        isStopped: true,
+        mapInteractionMode: MapInteractionMode.AUTO,
+        isMapInteractionLocked: false
       });
       
       // 广播重置事件

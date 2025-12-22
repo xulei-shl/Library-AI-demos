@@ -1,12 +1,13 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { usePlaybackStore } from '../state/playbackStore';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { usePlaybackStore, MapInteractionMode } from '../state/playbackStore';
 
 /**
- * 交互模式枚举
+ * 交互模式枚举（已废弃，使用 MapInteractionMode）
+ * @deprecated 使用 MapInteractionMode 代替
  */
 export enum InteractionMode {
-  AUTO = 'auto',   // 自动播放模式，锁定用户输入
-  MANUAL = 'manual' // 手动模式，允许用户交互
+  AUTO = 'auto',
+  MANUAL = 'manual'
 }
 
 /**
@@ -27,7 +28,6 @@ export interface ViewportEvent {
  * 视口交互配置
  */
 export interface ViewportInteractionConfig {
-  mode: InteractionMode;
   enableZoom: boolean;
   enablePan: boolean;
   enableRotate: boolean;
@@ -48,7 +48,6 @@ export interface ViewportInteractionConfig {
  * 默认交互配置
  */
 export const DEFAULT_INTERACTION_CONFIG: ViewportInteractionConfig = {
-  mode: InteractionMode.AUTO,
   enableZoom: true,
   enablePan: true,
   enableRotate: false,
@@ -66,9 +65,10 @@ export interface UseViewportInteractionReturn {
   isInteractionEnabled: boolean;
   isDragging: boolean;
   lastEvent: ViewportEvent | null;
+  currentMode: MapInteractionMode;
   enableInteraction: () => void;
   disableInteraction: () => void;
-  setMode: (mode: InteractionMode) => void;
+  toggleInteraction: () => void;
   handleWheel: (event: WheelEvent) => void;
   handleMouseDown: (event: MouseEvent) => void;
   handleMouseMove: (event: MouseEvent) => void;
@@ -87,23 +87,27 @@ export function useViewportInteraction(
   config: ViewportInteractionConfig = DEFAULT_INTERACTION_CONFIG
 ): UseViewportInteractionReturn {
   const playbackStore = usePlaybackStore();
+  const mapInteractionMode = usePlaybackStore((state) => state.mapInteractionMode);
+  const isMapInteractionLocked = usePlaybackStore((state) => state.isMapInteractionLocked);
   
   // 状态管理
-  const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
   const lastMousePosRef = useRef({ x: 0, y: 0 });
   const lastEventRef = useRef<ViewportEvent | null>(null);
   
   /**
    * 检查交互是否启用
    */
-  const isInteractionEnabled = config.mode === InteractionMode.MANUAL && 
+  const isInteractionEnabled = mapInteractionMode === MapInteractionMode.MANUAL && 
+    !isMapInteractionLocked &&
     (config.enableZoom || config.enablePan || config.enableRotate);
   
   /**
    * 启用交互模式
    */
   const enableInteraction = useCallback(() => {
-    playbackStore.pause(); // 自动播放时暂停
+    playbackStore.pause(); // 暂停播放
+    playbackStore.unlockMapInteraction(); // 解锁地图交互
     console.info('启用手动交互模式');
   }, [playbackStore]);
   
@@ -111,26 +115,28 @@ export function useViewportInteraction(
    * 禁用交互模式
    */
   const disableInteraction = useCallback(() => {
+    playbackStore.lockMapInteraction(); // 锁定地图交互
     console.info('禁用手动交互模式');
-  }, []);
+  }, [playbackStore]);
   
   /**
-   * 设置交互模式
+   * 切换交互模式
    */
-  const setMode = useCallback((mode: InteractionMode) => {
-    if (mode === InteractionMode.MANUAL) {
-      enableInteraction();
-    } else {
+  const toggleInteraction = useCallback(() => {
+    if (isInteractionEnabled) {
       disableInteraction();
+    } else {
+      enableInteraction();
     }
-  }, [enableInteraction, disableInteraction]);
+  }, [isInteractionEnabled, enableInteraction, disableInteraction]);
   
   /**
    * 处理鼠标滚轮事件（缩放）
    */
   const handleWheel = useCallback((event: WheelEvent) => {
     if (!isInteractionEnabled || !config.enableZoom) {
-      return; // 在自动模式下阻止默认行为
+      event.preventDefault(); // 在锁定模式下阻止默认行为
+      return;
     }
     
     event.preventDefault();
@@ -161,7 +167,7 @@ export function useViewportInteraction(
     
     event.preventDefault();
     
-    isDraggingRef.current = true;
+    setIsDragging(true);
     lastMousePosRef.current = { x: event.clientX, y: event.clientY };
     
     const viewportEvent: ViewportEvent = {
@@ -180,7 +186,7 @@ export function useViewportInteraction(
    * 处理鼠标移动事件
    */
   const handleMouseMove = useCallback((event: MouseEvent) => {
-    if (!isInteractionEnabled || !isDraggingRef.current || !config.enablePan) {
+    if (!isInteractionEnabled || !isDragging || !config.enablePan) {
       return;
     }
     
@@ -200,28 +206,24 @@ export function useViewportInteraction(
     };
     
     lastEventRef.current = viewportEvent;
-  }, [isInteractionEnabled, config.enablePan]);
+  }, [isInteractionEnabled, isDragging, config.enablePan]);
   
   /**
    * 处理鼠标释放事件
    */
   const handleMouseUp = useCallback((event: MouseEvent) => {
-    if (!isInteractionEnabled) {
-      return;
-    }
-    
-    if (isDraggingRef.current) {
-      isDraggingRef.current = false;
+    if (isDragging) {
+      setIsDragging(false);
       console.debug('结束拖拽');
     }
-  }, [isInteractionEnabled]);
+  }, [isDragging]);
   
   /**
    * 处理点击事件
    */
   const handleClick = useCallback((event: MouseEvent) => {
     if (!isInteractionEnabled) {
-      // 在自动模式下，点击启用手动模式
+      // 在锁定模式下，点击启用手动模式
       enableInteraction();
       return;
     }
@@ -245,7 +247,7 @@ export function useViewportInteraction(
       return;
     }
     
-    // 在自动模式下阻止所有交互
+    // 在锁定模式下阻止所有交互
     if (!isInteractionEnabled) {
       const preventDefault = (event: Event) => event.preventDefault();
       container.addEventListener('wheel', preventDefault, { passive: false });
@@ -284,31 +286,14 @@ export function useViewportInteraction(
     handleClick
   ]);
   
-  // 监听播放状态变化，自动切换交互模式
-  useEffect(() => {
-    const unsubscribe = usePlaybackStore.subscribe(
-      (state) => state.isPlaying,
-      (isPlaying) => {
-        if (isPlaying && config.mode === InteractionMode.AUTO) {
-          // 自动播放时锁定交互
-          disableInteraction();
-        } else if (!isPlaying && config.mode === InteractionMode.AUTO) {
-          // 暂停时可以启用交互
-          console.debug('播放暂停，允许用户交互');
-        }
-      }
-    );
-    
-    return unsubscribe;
-  }, [config.mode, disableInteraction]);
-  
   return {
     isInteractionEnabled,
-    isDragging: isDraggingRef.current,
+    isDragging,
     lastEvent: lastEventRef.current,
+    currentMode: mapInteractionMode,
     enableInteraction,
     disableInteraction,
-    setMode,
+    toggleInteraction,
     handleWheel,
     handleMouseDown,
     handleMouseMove,
