@@ -1,6 +1,7 @@
 /**
  * 颜色系统 - 墨迹与边界
  * 参考：@docs/design/ui_design_system_20251222.md
+ * v0.4.0: 引入中国传统色系统
  */
 
 export const THEME_COLORS = {
@@ -8,6 +9,12 @@ export const THEME_COLORS = {
   paper: {
     light: '#F5F5F0',
     dark: '#1a1a1a',
+  },
+  // 中国传统色 - 核心强调色 (v0.4.0)
+  traditional: {
+    cinnabar: '#b03d46', // 朱砂 - 活跃路径
+    indigo: '#1D3557', // 黛蓝 - 历史路径
+    turquoise: '#457B9D', // 松石 - 文化涟漪
   },
   // 墨迹主色（作者默认）
   ink: {

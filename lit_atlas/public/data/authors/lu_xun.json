@@ -1,1 +1,171 @@
-{"id": "lu_xun", "name": "鲁迅", "birth_year": 1881, "death_year": 1936, "biography": "鲁迅，原名周树人，字豫才，浙江绍兴人，中国现代文学的奠基人之一。他以犀利的笔触和深刻的洞察力，揭露了旧社会的黑暗，唤醒民众的觉醒。其代表作品包括《呐喊》《彷徨》《朝花夕拾》等，对中国现代文学产生了深远影响。", "works": [{"id": "呐喊", "title": "《呐喊》", "year": 1923, "routes": [{"id": "shanghai_to_beijing_1920", "start_location": {"name": "上海", "coordinates": {"lat": 31.2304, "lng": 121.4737}, "bbox": [121.4637, 31.2204, 121.4837, 31.2404]}, "end_location": {"name": "北京", "coordinates": {"lat": 39.9042, "lng": 116.4074}, "bbox": [116.3974, 39.8942, 116.4174, 39.9142]}, "year": 1920, "description": "鲁迅从上海前往北京任教，开始了文学创作的重要时期", "collection_info": {"has_collection": true, "collection_meta": {"title": "《呐喊》初版", "date": "1923年", "location": "北京新潮社"}}}, {"id": "beijing_to_shanghai_1926", "start_location": {"name": "北京", "coordinates": {"lat": 39.9042, "lng": 116.4074}, "bbox": [116.3974, 39.8942, 116.4174, 39.9142]}, "end_location": {"name": "上海", "coordinates": {"lat": 31.2304, "lng": 121.4737}, "bbox": [121.4637, 31.2204, 121.4837, 31.2404]}, "year": 1926, "description": "离开北京来到上海，开始更加活跃的文学和社会活动", "collection_info": {"has_collection": false, "collection_meta": {}}}], "metadata": {"genre": "现代小说集", "themes": ["封建礼教", "民众觉醒", "社会批判"], "language": "现代汉语"}}], "style": {"primary_color": "#8B4513", "secondary_color": "#D2691E", "line_style": "solid"}}
+{
+  "id": "lu_xun",
+  "name": "鲁迅",
+  "birth_year": 1881,
+  "death_year": 1936,
+  "biography": "鲁迅（1881-1936），原名周树人，中国现代文学的奠基人。其文学足迹跨越东亚，作品被译为50多种文字，是世界文学版图中的重要坐标。",
+  "works": [
+    {
+      "id": "呐喊",
+      "title": "《呐喊》 (Call to Arms)",
+      "year": 1923,
+      "metadata": {
+        "genre": "现代小说集",
+        "themes": ["封建批判", "国民性", "启蒙"],
+        "language": "现代汉语"
+      },
+      "routes": [
+        {
+          "id": "lx_001",
+          "type": "physical",
+          "start_location": {
+            "name": "北京",
+            "coordinates": {"lat": 39.9042, "lng": 116.4074},
+            "bbox": [116.3, 39.8, 116.5, 40.0]
+          },
+          "end_location": {
+            "name": "上海",
+            "coordinates": {"lat": 31.2304, "lng": 121.4737},
+            "bbox": [121.3, 31.1, 121.6, 31.4]
+          },
+          "year": 1923,
+          "description": "《呐喊》在上海北新书局正式出版，标志着中国现代小说的成熟。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {"title": "初版《呐喊》", "location": "上海鲁迅纪念馆"}
+          }
+        },
+        {
+          "id": "lx_002",
+          "type": "spread",
+          "start_location": {
+            "name": "上海",
+            "coordinates": {"lat": 31.2304, "lng": 121.4737},
+            "bbox": [121.3, 31.1, 121.6, 31.4]
+          },
+          "end_location": {
+            "name": "东京",
+            "coordinates": {"lat": 35.6895, "lng": 139.6917},
+            "bbox": [139.5, 35.5, 139.8, 35.8]
+          },
+          "year": 1932,
+          "description": "日本改造社出版《鲁迅选集》，由佐藤春夫等翻译，开启了鲁迅作品在日本的广泛传播。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {"title": "1932年日译本", "location": "早稻田大学图书馆"}
+          }
+        }
+      ]
+    },
+    {
+      "id": "阿Q正传",
+      "title": "《阿Q正传》 (The True Story of Ah Q)",
+      "year": 1921,
+      "metadata": {
+        "genre": "中篇小说",
+        "themes": ["精神胜利法", "辛亥革命"],
+        "language": "现代汉语"
+      },
+      "routes": [
+        {
+          "id": "lx_003",
+          "type": "spread",
+          "start_location": {
+            "name": "北京",
+            "coordinates": {"lat": 39.9042, "lng": 116.4074},
+            "bbox": [116.3, 39.8, 116.5, 40.0]
+          },
+          "end_location": {
+            "name": "莫斯科",
+            "coordinates": {"lat": 55.7558, "lng": 37.6173},
+            "bbox": [37.4, 55.6, 37.8, 55.9]
+          },
+          "year": 1925,
+          "description": "《阿Q正传》俄译本在苏联出版，鲁迅成为首位进入苏联读者视野的现代中国作家。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {"title": "俄语首译本", "location": "俄罗斯国立图书馆"}
+          }
+        },
+        {
+          "id": "lx_004",
+          "type": "spread",
+          "start_location": {
+            "name": "上海",
+            "coordinates": {"lat": 31.2304, "lng": 121.4737},
+            "bbox": [121.3, 31.1, 121.6, 31.4]
+          },
+          "end_location": {
+            "name": "巴黎",
+            "coordinates": {"lat": 48.8566, "lng": 2.3522},
+            "bbox": [2.2, 48.7, 2.5, 49.0]
+          },
+          "year": 1926,
+          "description": "敬隐渔将《阿Q正传》译为法文并在《欧洲》杂志发表，罗曼·罗兰阅后深受震撼。",
+          "collection_info": {
+            "has_collection": false,
+            "collection_meta": {}
+          }
+        },
+        {
+          "id": "lx_005",
+          "type": "spread",
+          "start_location": {
+            "name": "上海",
+            "coordinates": {"lat": 31.2304, "lng": 121.4737},
+            "bbox": [121.3, 31.1, 121.6, 31.4]
+          },
+          "end_location": {
+            "name": "伦敦",
+            "coordinates": {"lat": 51.5074, "lng": -0.1278},
+            "bbox": [-0.2, 51.4, 0.0, 51.6]
+          },
+          "year": 1929,
+          "description": "英文版《中国简报》开始连载鲁迅作品，向英语世界介绍这位文学巨匠。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {"title": "早期英译本", "location": "大英图书馆"}
+          }
+        }
+      ]
+    },
+    {
+      "id": "藤野先生",
+      "title": "《藤野先生》 (Mr. Fujino)",
+      "year": 1926,
+      "metadata": {
+        "genre": "散文",
+        "themes": ["留学记忆", "师生情"],
+        "language": "现代汉语"
+      },
+      "routes": [
+        {
+          "id": "lx_006",
+          "type": "memory",
+          "start_location": {
+            "name": "仙台",
+            "coordinates": {"lat": 38.2682, "lng": 140.8694},
+            "bbox": [140.7, 38.1, 141.0, 38.4]
+          },
+          "end_location": {
+            "name": "北京",
+            "coordinates": {"lat": 39.9042, "lng": 116.4074},
+            "bbox": [116.3, 39.8, 116.5, 40.0]
+          },
+          "year": 1926,
+          "description": "鲁迅在北京回忆仙台留学往事，写下《藤野先生》，这条墨迹连接了跨国的情感记忆。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {"title": "手稿副本", "location": "东北大学(仙台)鲁迅纪念室"}
+          }
+        }
+      ]
+    }
+  ],
+  "style": {
+    "primary_color": "#E63946", 
+    "secondary_color": "#1D3557",
+    "line_style": "ink_spread",
+    "particle_density": 0.8
+  }
+}

@@ -1,9 +1,11 @@
 /**
  * OpenLayers 地图组件 - 全屏交互式地图
+ * v0.4.0: 集成墨迹动画系统
  * 
  * 功能：
  * - 全屏地图渲染（非局限在小窗框）
  * - 基于作品出版城市坐标的数据可视化
+ * - 墨迹生长、涟漪扩散、路径流动动画
  * - 支持缩放、平移等交互
  * - 集成播放控制和动画效果
  */
@@ -12,17 +14,17 @@ import React, { useRef, useEffect, useState } from 'react';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
-import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import StadiaMaps from 'ol/source/StadiaMaps';
 import { fromLonLat } from 'ol/proj';
 import { defaults as defaultControls } from 'ol/control';
-import { Style, Circle, Fill, Stroke } from 'ol/style';
-import type { FeatureLike } from 'ol/Feature';
+import { easeOut } from 'ol/easing';
 
 import { useAuthorStore } from '../state/authorStore';
 import { usePlaybackStore } from '../state/playbackStore';
-import { convertAuthorToFeatures, isCityFeature, isRouteFeature } from './utils/featureConverter';
+import { convertAuthorToFeatures, isCityFeature } from './utils/featureConverter';
+import { AnimationController } from './animation/AnimationController';
+import { createInkLayer } from './layers/InkLayer';
 
 import 'ol/ol.css';
 
@@ -51,6 +53,7 @@ export function OpenLayersMap({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const vectorSourceRef = useRef<VectorSource>(new VectorSource());
+  const animationControllerRef = useRef<AnimationController | null>(null);
 
   const [isMapReady, setIsMapReady] = useState(false);
 
@@ -66,9 +69,17 @@ export function OpenLayersMap({
       return;
     }
 
-    console.info('[OpenLayersMap] 初始化地图实例');
+    console.info('[OpenLayersMap] 初始化地图实例（v0.4.0 墨迹动画版）');
 
-    // 创建底图层 - 使用 Stadia Maps Toner 样式
+    // 创建动画控制器
+    const animationController = new AnimationController({
+      growthDuration: 2000,
+      rippleDuration: 1500,
+      flowSpeed: 0.5
+    });
+    animationControllerRef.current = animationController;
+
+    // 创建底图层 - 使用 Stadia Maps Toner 样式（黑白纸张感）
     const tileLayer = new TileLayer({
       source: new StadiaMaps({
         layer: 'stamen_toner',
@@ -76,16 +87,16 @@ export function OpenLayersMap({
       opacity: 0.8
     });
 
-    // 创建数据层
-    const vectorLayer = new VectorLayer({
-      source: vectorSourceRef.current,
-      style: createFeatureStyle
+    // 创建墨迹渲染层（替代标准 VectorLayer）
+    const inkLayer = createInkLayer(vectorSourceRef.current, {
+      animationController,
+      enableAnimation: true
     });
 
     // 创建地图实例
     const map = new Map({
       target: mapRef.current,
-      layers: [tileLayer, vectorLayer],
+      layers: [tileLayer, inkLayer],
       view: new View({
         center: fromLonLat([104, 35]), // 中国中心坐标
         zoom: 4,
@@ -98,13 +109,15 @@ export function OpenLayersMap({
     mapInstanceRef.current = map;
     setIsMapReady(true);
 
-    console.info('[OpenLayersMap] 地图初始化完成');
+    console.info('[OpenLayersMap] 地图初始化完成（墨迹层已激活）');
 
     // 清理函数
     return () => {
       console.info('[OpenLayersMap] 销毁地图实例');
+      animationController.destroy();
       map.setTarget(undefined);
       mapInstanceRef.current = null;
+      animationControllerRef.current = null;
     };
   }, [showControls]);
 
@@ -112,7 +125,7 @@ export function OpenLayersMap({
    * 更新数据层 - 当作者数据变化时
    */
   useEffect(() => {
-    if (!isMapReady || !vectorSourceRef.current) {
+    if (!isMapReady || !vectorSourceRef.current || !animationControllerRef.current) {
       return;
     }
 
@@ -127,23 +140,89 @@ export function OpenLayersMap({
     // 转换并添加新 Features
     if (currentAuthor) {
       const features = convertAuthorToFeatures(currentAuthor);
+      
+      // 注册动画元数据
+      features.forEach((feature, index) => {
+        const startTime = index * 500; // 错开动画时间
+        const duration = 2000;
+        animationControllerRef.current!.registerFeature(feature, startTime, duration);
+      });
+
       vectorSourceRef.current.addFeatures(features);
 
-      console.info('[OpenLayersMap] Features 已添加', {
+      console.info('[OpenLayersMap] Features 已添加（动画已注册）', {
         count: features.length
       });
 
-      // 自动缩放到数据范围
+      // 智能聚焦 - 平滑移动到数据范围
       if (features.length > 0 && mapInstanceRef.current) {
         const extent = vectorSourceRef.current.getExtent();
         mapInstanceRef.current.getView().fit(extent, {
-          padding: [50, 50, 50, 50],
-          duration: 1000,
+          padding: [80, 80, 80, 80],
+          duration: 1500,
+          easing: easeOut,
           maxZoom: 6
         });
       }
+
+      // 重置动画时间（不自动播放，等待用户点击播放按钮）
+      animationControllerRef.current.setTime(0);
+      
+      // 如果当前正在播放，则启动动画
+      if (isPlaying) {
+        animationControllerRef.current.play();
+      }
     }
-  }, [currentAuthor, isMapReady]);
+  }, [currentAuthor, isMapReady, isPlaying]);
+
+  /**
+   * 同步播放状态到动画控制器
+   */
+  useEffect(() => {
+    const controller = animationControllerRef.current;
+    if (!controller) {
+      return;
+    }
+
+    if (isPlaying) {
+      controller.play();
+      console.info('[OpenLayersMap] 动画已启动');
+    } else {
+      controller.pause();
+      console.info('[OpenLayersMap] 动画已暂停');
+    }
+  }, [isPlaying]);
+
+  /**
+   * 同步时间轴到动画控制器
+   */
+  useEffect(() => {
+    const controller = animationControllerRef.current;
+    if (!controller) {
+      return;
+    }
+
+    controller.setTime(currentTime);
+  }, [currentTime]);
+
+  /**
+   * 注册动画更新回调 - 触发地图重绘
+   */
+  useEffect(() => {
+    const controller = animationControllerRef.current;
+    const map = mapInstanceRef.current;
+    
+    if (!controller || !map) {
+      return;
+    }
+
+    // 监听动画更新，触发地图重绘
+    const unsubscribe = controller.onUpdate(() => {
+      map.render(); // 强制重绘地图
+    });
+
+    return unsubscribe;
+  }, [isMapReady]);
 
   /**
    * 处理地图点击事件
@@ -195,52 +274,7 @@ export function OpenLayersMap({
     <div
       ref={mapRef}
       className={`absolute inset-0 ${className}`}
-      style={{ backgroundColor: '#0a0e1a' }}
+      style={{ backgroundColor: '#1a1a1a' }} // 纸张暗色背景
     />
   );
-}
-
-/**
- * 创建 Feature 样式
- * 根据 Feature 类型（城市/路线）返回不同样式
- */
-function createFeatureStyle(feature: FeatureLike): Style {
-  if (!feature || !('get' in feature)) {
-    return new Style();
-  }
-
-  if (isCityFeature(feature as any)) {
-    // 城市节点样式
-    const routeCount = feature.get('routeCount') || 1;
-    const radius = Math.min(6 + routeCount * 2, 16); // 根据路线数量调整大小
-
-    return new Style({
-      image: new Circle({
-        radius,
-        fill: new Fill({ color: '#60a5fa' }),
-        stroke: new Stroke({
-          color: '#1e40af',
-          width: 2
-        })
-      })
-    });
-  }
-
-  if (isRouteFeature(feature as any)) {
-    // 路线样式
-    return new Style({
-      stroke: new Stroke({
-        color: 'rgba(96, 165, 250, 0.4)',
-        width: 2
-      })
-    });
-  }
-
-  // 默认样式
-  return new Style({
-    stroke: new Stroke({
-      color: '#ffffff',
-      width: 1
-    })
-  });
 }
