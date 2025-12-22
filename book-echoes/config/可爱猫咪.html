@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Echoes | Precision Layout v7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-orange: #FF7A5C; 
+            --text-light: #FFFFFF;
+            --text-muted: rgba(255, 255, 255, 0.5);
+            --card-width: 1050px;
+            --card-height: 720px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Inter', "PingFang SC", sans-serif;
+        }
+
+        .library-card {
+            width: var(--card-width);
+            height: var(--card-height);
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            padding: 60px 80px; 
+            background: 
+                linear-gradient(135deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.92) 100%),
+                url('https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/wmremove-transformed.png');
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 50px 100px rgba(0,0,0,0.9);
+        }
+
+        /* --- Header --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            padding-bottom: 25px;
+            flex-shrink: 0;
+        }
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 32px;
+            letter-spacing: 6px;
+            background: linear-gradient(to right, #fff, var(--primary-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }        
+        .nav-meta { display: flex; gap: 40px; }
+        .meta-item { display: flex; flex-direction: column; align-items: flex-end; }
+        .meta-label { font-size: 10px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 4px; }
+        .meta-value { font-size: 14px; font-weight: 700; color: #fff; }
+
+        /* --- Main Layout --- */
+        .main-content {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 60px;
+            align-items: center;
+            perspective: 1200px; /* 为3D旋转提供透视环境 */
+        }
+
+        /* --- 恢复：第一版 3D 立体封面设计 --- */
+        .cover-area {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            perspective: 1000px;
+        }
+        
+        .book-cover {
+            width: 280px;
+            height: 380px;
+            background: #222;
+            border-radius: 2px 8px 8px 2px;
+            box-shadow: 
+                15px 20px 40px rgba(0,0,0,0.6),
+                1px 1px 2px rgba(255,255,255,0.2) inset;
+            object-fit: cover;
+            transform: rotateY(-5deg); /* 微小旋转增加立体感 */
+            transition: var(--transition-ease) 0.5s;
+        }
+
+        /* 封面装饰光影 */
+        .cover-area::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 20px; bottom: 0; width: 2px;
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 15px rgba(255,255,255,0.05);
+        }
+
+        /* --- 文本解析区 (保留 v6 精准逻辑) --- */
+        .info-area { display: flex; flex-direction: column; overflow: hidden; }
+
+        /* 作者栏：自适应+后缀锁定 */
+        .sub-title-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .line { height: 1px; background: var(--primary-orange); width: 40px; flex-shrink: 0; opacity: 0.5; }
+        .author-wrapper {
+            display: flex;
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: var(--text-light);
+            overflow: hidden;
+            flex-grow: 1;
+        }
+        .author-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 1;
+        }
+        .author-suffix {
+            white-space: nowrap;
+            flex-shrink: 0;
+            margin-left: 8px;
+            color: var(--primary-orange);
+            font-weight: 700;
+        }
+
+        /* 题名：物理高度阻断 (2行) */
+        .main-title {
+            font-family: "致一黑體_傅承形", "Microsoft YaHei", sans-serif;
+            font-size: 76px;
+            font-weight: 900;
+            line-height: 1.1;
+            color: var(--primary-orange);
+            margin-bottom: 25px;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2; 
+            overflow: hidden;
+            max-height: 167px; /* 76 * 1.1 * 2 */
+            word-break: break-all;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .tag-row { display: flex; gap: 10px; }
+        .tag {
+            border: 1px solid rgba(255,122,92,0.4);
+            padding: 3px 10px;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--primary-orange);
+            text-transform: uppercase;
+        }
+
+        /* --- Footer (保留 v6 间距) --- */
+        .footer {
+            height: 120px; 
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 25px;
+        }
+
+        .info-block { max-width: 650px; flex-grow: 1; }
+        .publisher { font-size: 12px; font-weight: 700; color: var(--primary-orange); letter-spacing: 2px; margin-bottom: 8px; }
+
+        /* 推荐语：锁定高度 (2行) */
+        .recommendation-snippet {
+            font-size: 14px;
+            line-height: 1.8;
+            color: rgba(255,255,255,0.4);
+            text-align: justify;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            height: 50px; /* 14 * 1.8 * 2 */
+        }
+
+        .score-box { display: flex; align-items: baseline; gap: 10px; flex-shrink: 0; margin-left: 40px; }
+        .score-label { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--text-muted); }
+        .score-num { font-family: 'Bebas Neue', sans-serif; font-size: 85px; color: var(--primary-orange); line-height: 0.8; }
+    </style>
+</head>
+<body>
+
+    <div class="library-card">
+        <header class="header">
+            <div class="logo">SHANGHAI LIBRARY</div>
+            <div class="nav-meta">
+                <div class="meta-item">
+                    <span class="meta-label">CALL No.</span>
+                    <span class="meta-value">{{CALL_NUMBER}}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">EDITION</span>
+                    <span class="meta-value">{{PUB_YEAR}}</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- 封面：恢复第一版 3D 旋转立体设计 -->
+            <div class="cover-area">
+                <img src="pic/cover.jpg" alt="Cover" class="book-cover" onerror="this.src='https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=800&auto=format&fit=crop'">
+            </div>
+
+            <div class="info-area">
+                <div class="sub-title-area">
+                    <div class="line"></div>
+                    <div class="author-wrapper">
+                        <span class="author-name">{{AUTHOR}}</span>
+                        <span class="author-suffix">/ AUTHOR</span>
+                    </div>
+                    <div class="line"></div>
+                </div>
+                
+                <h1 class="main-title">{{TITLE}}</h1>
+                
+                <div class="tag-row">
+                    <div class="tag">BOOKS</div>
+                    <div class="tag">ECHOES</div>
+                    <div class="tag">Recommendation</div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="info-block">
+                <div class="publisher">PUBLISHED BY {{PUBLISHER}}</div>
+                <div class="recommendation-snippet">
+                    {{RECOMMENDATION}}
+                </div>
+            </div>
+            
+            <div class="score-box">
+                <span class="score-label">RATING</span>
+                <span class="score-num">{{DOUBAN_RATING}}</span>
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>
