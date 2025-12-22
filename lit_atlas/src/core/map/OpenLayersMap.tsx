@@ -192,36 +192,11 @@ export function OpenLayersMap({
   }
 
   return (
-    <div className={`relative w-full h-screen ${className}`}>
-      {/* 地图容器 - 全屏 */}
-      <div
-        ref={mapRef}
-        className="absolute inset-0"
-        style={{ backgroundColor: '#0a0e1a' }}
-      />
-
-      {/* 作者信息覆盖层 */}
-      {currentAuthor && (
-        <div className="absolute top-4 left-4 bg-black bg-opacity-70 text-white p-4 rounded-lg backdrop-blur-sm z-10">
-          <div className="font-semibold text-lg">{currentAuthor.name}</div>
-          <div className="text-sm text-gray-300 mt-1">
-            {currentAuthor.works?.length || 0} 部作品
-          </div>
-          {isPlaying && (
-            <div className="text-xs text-blue-400 mt-2">
-              ● 播放中 ({Math.floor(currentTime)}s)
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 播放控制区域 - 预留 */}
-      {showControls && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
-          {/* TODO: 集成播放控制组件 */}
-        </div>
-      )}
-    </div>
+    <div
+      ref={mapRef}
+      className={`absolute inset-0 ${className}`}
+      style={{ backgroundColor: '#0a0e1a' }}
+    />
   );
 }
 
