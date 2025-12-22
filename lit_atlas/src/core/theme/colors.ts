@@ -35,6 +35,12 @@ export const THEME_COLORS = {
     woolf: '#9B59B6', // 伍尔夫 - 紫色
     borges: '#E67E22', // 博尔赫斯 - 橙色
   },
+  // 个人星图颜色
+  constellation: {
+    glow: '#FFD700', // 金色光晕
+    read: '#D4AF37', // 已读标记 - 深金
+    wish: '#FFA500', // 想去标记 - 橙金
+  },
 } as const;
 
 /**
@@ -59,3 +65,6 @@ export const colorUtils = {
     return color1; // TODO: 实现真正的颜色混合
   },
 };
+
+// 导出便捷访问
+export const COLORS = THEME_COLORS;

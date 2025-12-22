@@ -27,11 +27,14 @@ export const RouteSchema = z.object({
   description: z.string().optional(),
   collection_info: z.object({
     has_collection: z.boolean(),
-    collection_meta: z.object({
-      title: z.string(),
-      date: z.string(),
-      location: z.string()
-    }).optional()
+    collection_meta: z.union([
+      z.object({
+        title: z.string(),
+        date: z.string(),
+        location: z.string()
+      }),
+      z.object({}).passthrough() // 允许空对象
+    ]).optional()
   }).default({ has_collection: false })
 });
 

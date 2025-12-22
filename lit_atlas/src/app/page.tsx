@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { NarrativeMap } from '@/core/map/NarrativeMap';
+import { OpenLayersMap } from '@/core/map/OpenLayersMap';
 import { useAuthorStore } from '@/core/state/authorStore';
 import { usePlaybackStore } from '@/core/state/playbackStore';
 
@@ -81,11 +81,9 @@ export default function Home() {
               </button>
             </div>
 
-            {/* 地图组件 */}
-            <div className="overflow-hidden rounded-lg border border-[#c4bfb0] shadow-lg">
-              <NarrativeMap
-                width={1200}
-                height={800}
+            {/* 地图组件 - 全屏 */}
+            <div className="overflow-hidden rounded-lg border border-gray-800 shadow-2xl" style={{ height: '800px' }}>
+              <OpenLayersMap
                 showControls={true}
               />
             </div>

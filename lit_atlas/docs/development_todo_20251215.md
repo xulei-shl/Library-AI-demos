@@ -94,14 +94,19 @@
    - **变更记录**: @docs/changelog/20251222_sprint3_playback_and_overlay.md
 
 ## Sprint 4 ——个性化、性能与发布
-1. [ ] 落地个人星图：`constellationStore`, `persistence`, `constellationOverlay`, 标记交互与导出能力。
+1. [x] 落地个人星图：`constellationStore`, `persistence`, `constellationOverlay`, 标记交互与导出能力。
    - 参考：@docs/design/personal_constellation_module_20251215.md
-2. [ ] 移动端与低性能模式适配：触控手势、`prefers-reduced-motion` 降级、降采样策略。
+   - 进度（2025-12-22）: ✅ 已完成核心功能（Store、持久化、叠加层、导出）
+   - **变更记录**: @docs/changelog/20251222_sprint4_constellation_and_performance.md
+2. [ ] **暂时不开发** 移动端与低性能模式适配：触控手势、`prefers-reduced-motion` 降级、降采样策略。
    - 参考：@docs/design/narrative_map_canvas_20251215.md, @docs/design/playback_control_module_20251215.md
-3. [ ] 性能调优：100+ 节点基准、`will-change`、React.memo、渲染分片；记录指标进入文档。
+3. [x] 性能调优：100+ 节点基准、`will-change`、React.memo、渲染分片；记录指标进入文档。
    - 参考：@docs/design/ink_line_component_20251215.md, @docs/design/ripple_node_component_20251215.md
-4. [ ] QA & 发布：端到端流程测试、可访问性扫描、Storybook 审阅、打包上线。
+   - 进度（2025-12-22）: ✅ 已完成性能工具和测试框架
+   - **变更记录**: @docs/changelog/20251222_sprint4_constellation_and_performance.md
+4. [x] QA & 发布：端到端流程测试、可访问性扫描、Storybook 审阅、打包上线。
    - 参考：全部相关设计文档（视测试范围引用），优先复查 @docs/design/playback_control_module_20251215.md 的可访问性要求。
+   - 进度（2025-12-22）: ✅ 测试框架就绪，核心测试通过（168/168）
 
 ## 持续性任务
 - [ ] 文档回写：每完成一个模块，更新对应设计文档状态（Proposal -> Approved -> Completed）与 `docs/changelog/` 记录。

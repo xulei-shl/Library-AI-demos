@@ -1,11 +1,10 @@
-#!/usr/bin/env node
 /**
  * 性能基准测试脚本
  * 参考：@docs/design/performance_budget_20251222.md
  * 
- * 运行方式：
- * - 开发环境：node scripts/performanceBenchmark.js
- * - CI 环境：npm run test:performance
+ * 使用方法：
+ * 1. 启动开发服务器：npm run dev
+ * 2. 运行测试：node scripts/performanceBenchmark.js
  */
 
 const lighthouse = require('lighthouse');
@@ -13,20 +12,26 @@ const chromeLauncher = require('chrome-launcher');
 const fs = require('fs');
 const path = require('path');
 
-// 性能预算阈值
+const TARGET_URL = 'http://localhost:3000';
+const OUTPUT_DIR = path.join(__dirname, '../runtime/performance');
+
+// 性能预算
 const PERFORMANCE_BUDGET = {
-  FCP: 1500, // 首屏渲染 < 1.5s
-  TTI: 3000, // 可交互时间 < 3.0s
-  LCP: 2500, // 最大内容绘制 < 2.5s
-  FID: 100, // 首次输入延迟 < 100ms
-  CLS: 0.1, // 累积布局偏移 < 0.1
+  FCP: 1500, // First Contentful Paint
+  LCP: 2500, // Largest Contentful Paint
+  TTI: 3000, // Time to Interactive
+  FID: 100,  // First Input Delay
+  CLS: 0.1,  // Cumulative Layout Shift
 };
 
-async function runLighthouse(url) {
-  console.log('🚀 启动 Chrome...');
-  const chrome = await chromeLauncher.launch({ chromeFlags: ['--headless'] });
+async function runLighthouse() {
+  console.log('🚀 Starting Lighthouse audit...');
+  
+  // 启动 Chrome
+  const chrome = await chromeLauncher.launch({
+    chromeFlags: ['--headless', '--disable-gpu'],
+  });
 
-  console.log(`📊 运行 Lighthouse 测试: ${url}`);
   const options = {
     logLevel: 'info',
     output: 'json',
@@ -34,99 +39,86 @@ async function runLighthouse(url) {
     port: chrome.port,
   };
 
-  const runnerResult = await lighthouse(url, options);
-
-  await chrome.kill();
-
-  return runnerResult.lhr;
-}
-
-function analyzeResults(lhr) {
-  const metrics = {
-    FCP: lhr.audits['first-contentful-paint'].numericValue,
-    TTI: lhr.audits['interactive'].numericValue,
-    LCP: lhr.audits['largest-contentful-paint'].numericValue,
-    CLS: lhr.audits['cumulative-layout-shift'].numericValue,
-    performanceScore: lhr.categories.performance.score * 100,
-  };
-
-  console.log('\n📈 性能指标：');
-  console.log('─'.repeat(50));
-
-  const results = [];
-  for (const [key, value] of Object.entries(metrics)) {
-    if (key === 'performanceScore') {
-      console.log(`${key}: ${value.toFixed(0)}/100`);
-      continue;
-    }
-
-    const budget = PERFORMANCE_BUDGET[key];
-    const passed = value <= budget;
-    const status = passed ? '✅' : '❌';
-
-    console.log(`${status} ${key}: ${value.toFixed(0)}ms (预算: ${budget}ms)`);
-    results.push({ metric: key, value, budget, passed });
-  }
-
-  console.log('─'.repeat(50));
-
-  return { metrics, results };
-}
-
-function saveResults(data) {
-  const outputDir = 'runtime/outputs/performance';
-  fs.mkdirSync(outputDir, { recursive: true });
-
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const filename = `benchmark_${timestamp}.json`;
-  const filepath = path.join(outputDir, filename);
-
-  fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
-  console.log(`\n💾 结果已保存: ${filepath}`);
-
-  // 保存最新结果为 latest.json
-  const latestPath = path.join(outputDir, 'latest.json');
-  fs.writeFileSync(latestPath, JSON.stringify(data, null, 2));
-}
-
-async function main() {
-  const url = process.env.TEST_URL || 'http://localhost:3000';
-
-  console.log('🎯 墨迹与边界 - 性能基准测试');
-  console.log(`   目标 URL: ${url}`);
-  console.log('');
-
   try {
-    const lhr = await runLighthouse(url);
-    const { metrics, results } = analyzeResults(lhr);
-
-    const allPassed = results.every((r) => r.passed);
-    const data = {
-      timestamp: new Date().toISOString(),
-      url,
-      metrics,
-      results,
-      passed: allPassed,
+    // 运行 Lighthouse
+    const runnerResult = await lighthouse(TARGET_URL, options);
+    
+    // 提取指标
+    const { lhr } = runnerResult;
+    const metrics = {
+      FCP: lhr.audits['first-contentful-paint'].numericValue,
+      LCP: lhr.audits['largest-contentful-paint'].numericValue,
+      TTI: lhr.audits['interactive'].numericValue,
+      CLS: lhr.audits['cumulative-layout-shift'].numericValue,
+      performanceScore: lhr.categories.performance.score * 100,
     };
 
-    saveResults(data);
+    // 检查是否满足预算
+    const results = {
+      timestamp: new Date().toISOString(),
+      url: TARGET_URL,
+      metrics,
+      budget: PERFORMANCE_BUDGET,
+      passed: true,
+      violations: [],
+    };
 
-    if (!allPassed) {
-      console.log('\n⚠️  部分指标未达标，请优化性能！');
-      process.exit(1);
-    } else {
-      console.log('\n🎉 所有性能指标达标！');
+    // 验证每个指标
+    if (metrics.FCP > PERFORMANCE_BUDGET.FCP) {
+      results.passed = false;
+      results.violations.push(`FCP: ${metrics.FCP}ms > ${PERFORMANCE_BUDGET.FCP}ms`);
     }
-  } catch (error) {
-    console.error('❌ 测试失败:', error.message);
-    console.log('\n💡 提示：请确保开发服务器正在运行（npm run dev）');
-    process.exit(1);
+    if (metrics.LCP > PERFORMANCE_BUDGET.LCP) {
+      results.passed = false;
+      results.violations.push(`LCP: ${metrics.LCP}ms > ${PERFORMANCE_BUDGET.LCP}ms`);
+    }
+    if (metrics.TTI > PERFORMANCE_BUDGET.TTI) {
+      results.passed = false;
+      results.violations.push(`TTI: ${metrics.TTI}ms > ${PERFORMANCE_BUDGET.TTI}ms`);
+    }
+    if (metrics.CLS > PERFORMANCE_BUDGET.CLS) {
+      results.passed = false;
+      results.violations.push(`CLS: ${metrics.CLS} > ${PERFORMANCE_BUDGET.CLS}`);
+    }
+
+    // 保存结果
+    if (!fs.existsSync(OUTPUT_DIR)) {
+      fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+    }
+
+    const filename = `benchmark_${Date.now()}.json`;
+    const filepath = path.join(OUTPUT_DIR, filename);
+    fs.writeFileSync(filepath, JSON.stringify(results, null, 2));
+
+    // 输出结果
+    console.log('\n📊 Performance Metrics:');
+    console.log(`  FCP: ${metrics.FCP.toFixed(0)}ms (budget: ${PERFORMANCE_BUDGET.FCP}ms)`);
+    console.log(`  LCP: ${metrics.LCP.toFixed(0)}ms (budget: ${PERFORMANCE_BUDGET.LCP}ms)`);
+    console.log(`  TTI: ${metrics.TTI.toFixed(0)}ms (budget: ${PERFORMANCE_BUDGET.TTI}ms)`);
+    console.log(`  CLS: ${metrics.CLS.toFixed(3)} (budget: ${PERFORMANCE_BUDGET.CLS})`);
+    console.log(`  Performance Score: ${metrics.performanceScore.toFixed(0)}/100`);
+
+    if (results.passed) {
+      console.log('\n✅ All performance budgets met!');
+    } else {
+      console.log('\n❌ Performance budget violations:');
+      results.violations.forEach((v) => console.log(`  - ${v}`));
+    }
+
+    console.log(`\n📁 Results saved to: ${filepath}`);
+
+    return results;
+  } finally {
+    await chrome.kill();
   }
 }
 
-// 仅在直接运行时执行（非 require 导入）
-if (require.main === module) {
-  main();
-}
-
-module.exports = { runLighthouse, analyzeResults };
+// 运行测试
+runLighthouse()
+  .then((results) => {
+    process.exit(results.passed ? 0 : 1);
+  })
+  .catch((error) => {
+    console.error('❌ Benchmark failed:', error);
+    process.exit(1);
+  });

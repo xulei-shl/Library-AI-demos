@@ -6,9 +6,9 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { PlaybackControl } from '../../../src/core/playback/PlaybackControl';
-import { NarrativeScheduler } from '../../../src/core/scheduler/narrativeScheduler';
-import { Route } from '../../../src/core/data/normalizers';
+import { PlaybackControl } from '@/core/playback/PlaybackControl';
+import { NarrativeScheduler } from '@/core/scheduler/narrativeScheduler';
+import type { Route } from '@/core/data/normalizers';
 
 describe('PlaybackControl', () => {
   let scheduler: NarrativeScheduler;
@@ -25,14 +25,26 @@ describe('PlaybackControl', () => {
       },
       year: 1920,
       collection_info: {
-        has_collection: false,
+        has_collection: true,
+        collection_meta: {
+          title: 'Test Work',
+          date: '1920',
+          location: 'city1',
+        },
       },
     },
   ];
 
-  beforeEach(async () => {
+  beforeEach(() => {
     scheduler = new NarrativeScheduler();
-    await scheduler.load(mockRoutes, '#2c3e50');
+    const mockAuthor = {
+      id: 'test',
+      name: 'Test',
+      name_zh: '测试',
+      theme_color: '#2c3e50',
+      routes: mockRoutes,
+    };
+    scheduler.load(mockAuthor, mockRoutes);
   });
 
   afterEach(() => {

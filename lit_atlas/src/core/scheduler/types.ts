@@ -5,6 +5,9 @@
 
 import { Route } from '../data/normalizers';
 
+// 重新导出 Route 类型供外部使用
+export type { Route };
+
 /**
  * 事件类型枚举
  */

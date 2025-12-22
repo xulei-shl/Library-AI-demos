@@ -1,6 +1,6 @@
 'use client';
 
-import { NarrativeMap } from '@/core/map/NarrativeMap';
+import { OpenLayersMap } from '@/core/map/OpenLayersMap';
 
 /**
  * 地图演示页面
@@ -16,10 +16,8 @@ export default function DemoPage() {
           Natural Earth 投影 + 纸张纹理主题
         </p>
         
-        <div className="bg-white rounded-lg shadow-lg p-4">
-          <NarrativeMap
-            width={1200}
-            height={700}
+        <div className="bg-gray-900 rounded-lg shadow-2xl overflow-hidden" style={{ height: '700px' }}>
+          <OpenLayersMap
             showControls={true}
           />
         </div>
