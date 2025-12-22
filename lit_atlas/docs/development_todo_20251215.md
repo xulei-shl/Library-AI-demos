@@ -45,14 +45,19 @@
    - **变更记录**: @docs/changelog/20251222_sprint1_data_and_map.md
 
 ## Sprint 2 ——叙事调度与动画内核
-1. [ ] 开发 `timelineBuilder` 与 `narrativeScheduler`，实现事件队列、Play/Pause/Seek 控制。
+1. [x] 开发 `timelineBuilder` 与 `narrativeScheduler`，实现事件队列、Play/Pause/Seek 控制。
    - 参考：@docs/design/narrative_scheduler_20251215.md
-2. [ ] 完成 `InkLine` 组件：曲线生成、渐变、`useInkAnimation`，对接调度器的 `LineStart/Progress`。
+   - 进度（2025-12-22）: ✅ 已完成核心调度器、时间轴构建器、事件类型定义
+2. [x] 完成 `InkLine` 组件：曲线生成、渐变、`useInkAnimation`，对接调度器的 `LineStart/Progress`。
    - 参考：@docs/design/ink_line_component_20251215.md
-3. [ ] 实现 `RippleNode` 状态机与 Tooltip，联动 `InkLine` 完成后的 `RippleTrigger`。
+   - 进度（2025-12-22）: ✅ 已完成SVG曲线渲染、动画Hook、渐变管理器
+3. [x] 实现 `RippleNode` 状态机与 Tooltip，联动 `InkLine` 完成后的 `RippleTrigger`。
    - 参考：@docs/design/ripple_node_component_20251215.md
-4. [ ] 集成测试：调度器 + InkLine + RippleNode 全链路回放，验证延迟与触发顺序。
+   - 进度（2025-12-22）: ✅ 已完成状态机Hook、节点组件、Tooltip组件
+4. [x] 集成测试：调度器 + InkLine + RippleNode 全链路回放，验证延迟与触发顺序。
    - 参考：@docs/design/narrative_scheduler_20251215.md, @docs/design/ink_line_component_20251215.md, @docs/design/ripple_node_component_20251215.md
+   - 进度（2025-12-22）: ✅ 已完成单元测试和集成测试，28个测试用例全部通过
+   - **变更记录**: @docs/changelog/20251222_sprint2_scheduler_and_animation.md
 
 ## Sprint 3 ——交互增强与对比模式
 1. [ ] 构建 `PlaybackControl` UI：Play/Pause、Scrub、Speed Menu、快捷键、无障碍支持。

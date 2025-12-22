@@ -28,15 +28,26 @@ const COORDINATE_TOLERANCE = 0.0001;
 
 /**
  * 计算两点之间的距离（Haversine公式）
- * @param coord1 起点坐标
- * @param coord2 终点坐标
+ * @param coord1 起点坐标 (Coordinate对象或[lng, lat]数组)
+ * @param coord2 终点坐标 (Coordinate对象或[lng, lat]数组)
  * @returns 距离（千米）
  */
-export function calculateDistance(coord1: Coordinate, coord2: Coordinate): number {
-  const lat1Rad = (coord1.lat * Math.PI) / 180;
-  const lat2Rad = (coord2.lat * Math.PI) / 180;
-  const deltaLat = ((coord2.lat - coord1.lat) * Math.PI) / 180;
-  const deltaLng = ((coord2.lng - coord1.lng) * Math.PI) / 180;
+export function calculateDistance(
+  coord1: Coordinate | [number, number],
+  coord2: Coordinate | [number, number]
+): number {
+  // 统一转换为Coordinate对象
+  const c1: Coordinate = Array.isArray(coord1) 
+    ? { lng: coord1[0], lat: coord1[1] } 
+    : coord1;
+  const c2: Coordinate = Array.isArray(coord2) 
+    ? { lng: coord2[0], lat: coord2[1] } 
+    : coord2;
+
+  const lat1Rad = (c1.lat * Math.PI) / 180;
+  const lat2Rad = (c2.lat * Math.PI) / 180;
+  const deltaLat = ((c2.lat - c1.lat) * Math.PI) / 180;
+  const deltaLng = ((c2.lng - c1.lng) * Math.PI) / 180;
 
   const a =
     Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
