@@ -171,7 +171,7 @@ export class TimelineBuilder {
       coordinates: [endLocation.coordinates.lng, endLocation.coordinates.lat],
       routeId: route.id,
       hasCollection: collectionInfo?.has_collection || false,
-      collectionMeta: collectionInfo?.collection_meta,
+      collectionMeta: collectionInfo?.collection_meta as { title: string; date: string; location: string } | undefined,
       year: route.year,
     };
   }

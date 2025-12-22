@@ -14,7 +14,7 @@ import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import { OSM } from 'ol/source';
+import StadiaMaps from 'ol/source/StadiaMaps';
 import { fromLonLat } from 'ol/proj';
 import { defaults as defaultControls } from 'ol/control';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
@@ -68,10 +68,12 @@ export function OpenLayersMap({
 
     console.info('[OpenLayersMap] 初始化地图实例');
 
-    // 创建底图层
+    // 创建底图层 - 使用 Stadia Maps Toner 样式
     const tileLayer = new TileLayer({
-      source: new OSM(),
-      opacity: 0.6 // 降低底图透明度，突出数据层
+      source: new StadiaMaps({
+        layer: 'stamen_toner',
+      }),
+      opacity: 0.8
     });
 
     // 创建数据层

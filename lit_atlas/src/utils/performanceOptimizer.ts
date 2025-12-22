@@ -102,19 +102,28 @@ export function requestIdleCallback(
   callback: () => void,
   options?: { timeout?: number }
 ): number {
-  if ('requestIdleCallback' in window) {
-    return window.requestIdleCallback(callback, options);
+  if (typeof window === 'undefined') {
+    return 0;
   }
-  // Fallback
-  return window.setTimeout(callback, 1) as unknown as number;
+  
+  if ('requestIdleCallback' in window) {
+    return (window as any).requestIdleCallback(callback, options);
+  }
+  
+  // Fallback to setTimeout
+  return setTimeout(callback, 1) as unknown as number;
 }
 
 /**
  * 取消空闲回调
  */
 export function cancelIdleCallback(id: number): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  
   if ('cancelIdleCallback' in window) {
-    window.cancelIdleCallback(id);
+    (window as any).cancelIdleCallback(id);
   } else {
     clearTimeout(id);
   }

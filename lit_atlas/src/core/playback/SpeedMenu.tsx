@@ -63,7 +63,7 @@ export function SpeedMenu({ currentSpeed, onSpeedChange, disabled = false }: Spe
           fontSize: TYPOGRAPHY.fontSize.sm,
           fontWeight: TYPOGRAPHY.fontWeight.medium,
           color: THEME_COLORS.ink.primary,
-          transition: `all ${DURATIONS.fast} ${EASING.standard}`,
+          transition: `all ${DURATIONS.fast}ms ${EASING.ui}`,
           display: 'flex',
           alignItems: 'center',
           gap: SPACING.xs,
@@ -85,7 +85,7 @@ export function SpeedMenu({ currentSpeed, onSpeedChange, disabled = false }: Spe
           fill="none"
           style={{
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: `transform ${DURATIONS.fast} ${EASING.standard}`,
+            transition: `transform ${DURATIONS.fast}ms ${EASING.ui}`,
           }}
         >
           <path
@@ -114,7 +114,7 @@ export function SpeedMenu({ currentSpeed, onSpeedChange, disabled = false }: Spe
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
             minWidth: '80px',
             zIndex: 1000,
-            animation: `fadeIn ${DURATIONS.fast} ${EASING.standard}`,
+            animation: `fadeIn ${DURATIONS.fast}ms ${EASING.ui}`,
           }}
         >
           {PLAYBACK_SPEEDS.map((speed) => (
@@ -133,7 +133,7 @@ export function SpeedMenu({ currentSpeed, onSpeedChange, disabled = false }: Spe
                 fontWeight: speed === currentSpeed ? TYPOGRAPHY.fontWeight.medium : TYPOGRAPHY.fontWeight.normal,
                 color: speed === currentSpeed ? THEME_COLORS.ink.accent : THEME_COLORS.ink.primary,
                 textAlign: 'left',
-                transition: `all ${DURATIONS.fast} ${EASING.standard}`,
+                transition: `all ${DURATIONS.fast}ms ${EASING.ui}`,
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = THEME_COLORS.interactive.hover;
