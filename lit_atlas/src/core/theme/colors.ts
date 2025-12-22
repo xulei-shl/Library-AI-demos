@@ -12,9 +12,9 @@ export const THEME_COLORS = {
   },
   // 中国传统色 - 核心强调色 (v0.4.0)
   traditional: {
-    cinnabar: '#b03d46', // 朱砂 - 活跃路径
-    indigo: '#1D3557', // 黛蓝 - 历史路径
-    turquoise: '#457B9D', // 松石 - 文化涟漪
+    cinnabar: '#00FFFF', // 霓虹蓝 - 活跃路径 (Neon Cyan for active paths)
+    indigo: '#4682B4', // 钢蓝 - 历史路径 (Steel Blue for history)
+    turquoise: '#FF1493', // 深粉 - 文化涟漪 (Deep Pink for ripples)
   },
   // 墨迹主色（作者默认）
   ink: {

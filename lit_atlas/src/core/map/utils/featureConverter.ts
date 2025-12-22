@@ -11,7 +11,7 @@ import type { Author, Work, Route } from '../../data/normalizers';
 /**
  * Feature 类型
  */
-export type FeatureType = 'city' | 'route';
+export type FeatureType = 'city' | 'route' | 'ripple';
 
 /**
  * 城市 Feature 属性
@@ -25,6 +25,17 @@ export interface CityFeatureProperties {
 }
 
 /**
+ * 涟漪 Feature 属性
+ */
+export interface RippleFeatureProperties {
+  type: 'ripple';
+  name: string;
+  coordinates: { lat: number; lng: number };
+  year: number;
+  workTitle: string;
+}
+
+/**
  * 路线 Feature 属性
  */
 export interface RouteFeatureProperties {
@@ -33,6 +44,8 @@ export interface RouteFeatureProperties {
   workId: string;
   workTitle: string;
   year?: number;
+  startYear?: number;
+  endYear?: number;
   startCity: string;
   endCity: string;
 }
@@ -50,10 +63,17 @@ export function convertAuthorToFeatures(author: Author | null): Feature[] {
 
   // 遍历所有作品和路线
   author.works.forEach((work: Work) => {
+    // 作品出版地涟漪 (如果有起点信息)
+    // 注意：目前数据结构中 Work 没有直接的 location，通常隐含在 Route 的 start_location
+    // 我们假设 Route 的 start_location 就是作品的出版地/起点
+
+    const workYear = work.year || author.birth_year || 1900;
+
     work.routes.forEach((route: Route) => {
       // 收集城市信息
       const startCity = route.start_location.name;
       const endCity = route.end_location.name;
+      const routeYear = route.year || workYear;
 
       // 起点城市
       if (!citiesMap.has(startCity)) {
@@ -106,16 +126,54 @@ export function convertAuthorToFeatures(author: Author | null): Feature[] {
         id: route.id,
         workId: work.id,
         workTitle: work.title,
-        year: route.year,
+        year: routeYear,
+        startYear: workYear,
+        endYear: routeYear,
         startCity,
         endCity
       } as RouteFeatureProperties);
 
       features.push(routeFeature);
+
+      // 创建起点涟漪 Feature
+      const startRippleFeature = new Feature({
+        geometry: new Point(
+          fromLonLat([
+            route.start_location.coordinates.lng,
+            route.start_location.coordinates.lat
+          ])
+        )
+      });
+      startRippleFeature.setProperties({
+        type: 'ripple',
+        name: startCity,
+        coordinates: route.start_location.coordinates,
+        year: workYear,
+        workTitle: work.title
+      } as RippleFeatureProperties);
+      features.push(startRippleFeature);
+
+      // 创建终点涟漪 Feature
+      const endRippleFeature = new Feature({
+        geometry: new Point(
+          fromLonLat([
+            route.end_location.coordinates.lng,
+            route.end_location.coordinates.lat
+          ])
+        )
+      });
+      endRippleFeature.setProperties({
+        type: 'ripple',
+        name: endCity,
+        coordinates: route.end_location.coordinates,
+        year: routeYear,
+        workTitle: work.title
+      } as RippleFeatureProperties);
+      features.push(endRippleFeature);
     });
   });
 
-  // 创建城市 Features
+  // 创建城市 Features (静态)
   citiesMap.forEach((cityData) => {
     const cityFeature = new Feature({
       geometry: new Point(
@@ -130,7 +188,8 @@ export function convertAuthorToFeatures(author: Author | null): Feature[] {
   console.info('[FeatureConverter] 转换完成:', {
     totalFeatures: features.length,
     cities: citiesMap.size,
-    routes: features.filter(f => f.get('type') === 'route').length
+    routes: features.filter(f => f.get('type') === 'route').length,
+    ripples: features.filter(f => f.get('type') === 'ripple').length
   });
 
   return features;

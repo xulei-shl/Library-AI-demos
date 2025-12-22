@@ -1,15 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Ink & Boundaries Palette */
+  --color-paper: #F5F5F0;
+  --color-ink: #1a1a1a;
+  --color-cinnabar: #b03d46;
+  --color-indigo: #FFD700;
+  --color-turquoise: #FFA500;
+
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Traditional Colors */
+  --color-paper: var(--color-paper);
+  --color-ink: var(--color-ink);
+  --color-cinnabar: var(--color-cinnabar);
+  --color-indigo: var(--color-indigo);
+  --color-turquoise: var(--color-turquoise);
+
+  /* Fonts */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-mono: "JetBrains Mono", monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +40,30 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Utility for text stroke */
+.text-stroke {
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
 }

@@ -11,7 +11,11 @@
       "year": 1923,
       "metadata": {
         "genre": "现代小说集",
-        "themes": ["封建批判", "国民性", "启蒙"],
+        "themes": [
+          "封建批判",
+          "国民性",
+          "启蒙"
+        ],
         "language": "现代汉语"
       },
       "routes": [
@@ -20,19 +24,38 @@
           "type": "physical",
           "start_location": {
             "name": "北京",
-            "coordinates": {"lat": 39.9042, "lng": 116.4074},
-            "bbox": [116.3, 39.8, 116.5, 40.0]
+            "coordinates": {
+              "lat": 39.9042,
+              "lng": 116.4074
+            },
+            "bbox": [
+              116.3,
+              39.8,
+              116.5,
+              40.0
+            ]
           },
           "end_location": {
             "name": "上海",
-            "coordinates": {"lat": 31.2304, "lng": 121.4737},
-            "bbox": [121.3, 31.1, 121.6, 31.4]
+            "coordinates": {
+              "lat": 31.2304,
+              "lng": 121.4737
+            },
+            "bbox": [
+              121.3,
+              31.1,
+              121.6,
+              31.4
+            ]
           },
           "year": 1923,
           "description": "《呐喊》在上海北新书局正式出版，标志着中国现代小说的成熟。",
           "collection_info": {
             "has_collection": true,
-            "collection_meta": {"title": "初版《呐喊》", "location": "上海鲁迅纪念馆"}
+            "collection_meta": {
+              "title": "初版《呐喊》",
+              "location": "上海鲁迅纪念馆"
+            }
           }
         },
         {
@@ -40,19 +63,38 @@
           "type": "spread",
           "start_location": {
             "name": "上海",
-            "coordinates": {"lat": 31.2304, "lng": 121.4737},
-            "bbox": [121.3, 31.1, 121.6, 31.4]
+            "coordinates": {
+              "lat": 31.2304,
+              "lng": 121.4737
+            },
+            "bbox": [
+              121.3,
+              31.1,
+              121.6,
+              31.4
+            ]
           },
           "end_location": {
             "name": "东京",
-            "coordinates": {"lat": 35.6895, "lng": 139.6917},
-            "bbox": [139.5, 35.5, 139.8, 35.8]
+            "coordinates": {
+              "lat": 35.6895,
+              "lng": 139.6917
+            },
+            "bbox": [
+              139.5,
+              35.5,
+              139.8,
+              35.8
+            ]
           },
           "year": 1932,
           "description": "日本改造社出版《鲁迅选集》，由佐藤春夫等翻译，开启了鲁迅作品在日本的广泛传播。",
           "collection_info": {
             "has_collection": true,
-            "collection_meta": {"title": "1932年日译本", "location": "早稻田大学图书馆"}
+            "collection_meta": {
+              "title": "1932年日译本",
+              "location": "早稻田大学图书馆"
+            }
           }
         }
       ]
@@ -63,7 +105,10 @@
       "year": 1921,
       "metadata": {
         "genre": "中篇小说",
-        "themes": ["精神胜利法", "辛亥革命"],
+        "themes": [
+          "精神胜利法",
+          "辛亥革命"
+        ],
         "language": "现代汉语"
       },
       "routes": [
@@ -72,19 +117,38 @@
           "type": "spread",
           "start_location": {
             "name": "北京",
-            "coordinates": {"lat": 39.9042, "lng": 116.4074},
-            "bbox": [116.3, 39.8, 116.5, 40.0]
+            "coordinates": {
+              "lat": 39.9042,
+              "lng": 116.4074
+            },
+            "bbox": [
+              116.3,
+              39.8,
+              116.5,
+              40.0
+            ]
           },
           "end_location": {
             "name": "莫斯科",
-            "coordinates": {"lat": 55.7558, "lng": 37.6173},
-            "bbox": [37.4, 55.6, 37.8, 55.9]
+            "coordinates": {
+              "lat": 55.7558,
+              "lng": 37.6173
+            },
+            "bbox": [
+              37.4,
+              55.6,
+              37.8,
+              55.9
+            ]
           },
           "year": 1925,
           "description": "《阿Q正传》俄译本在苏联出版，鲁迅成为首位进入苏联读者视野的现代中国作家。",
           "collection_info": {
             "has_collection": true,
-            "collection_meta": {"title": "俄语首译本", "location": "俄罗斯国立图书馆"}
+            "collection_meta": {
+              "title": "俄语首译本",
+              "location": "俄罗斯国立图书馆"
+            }
           }
         },
         {
@@ -92,13 +156,29 @@
           "type": "spread",
           "start_location": {
             "name": "上海",
-            "coordinates": {"lat": 31.2304, "lng": 121.4737},
-            "bbox": [121.3, 31.1, 121.6, 31.4]
+            "coordinates": {
+              "lat": 31.2304,
+              "lng": 121.4737
+            },
+            "bbox": [
+              121.3,
+              31.1,
+              121.6,
+              31.4
+            ]
           },
           "end_location": {
             "name": "巴黎",
-            "coordinates": {"lat": 48.8566, "lng": 2.3522},
-            "bbox": [2.2, 48.7, 2.5, 49.0]
+            "coordinates": {
+              "lat": 48.8566,
+              "lng": 2.3522
+            },
+            "bbox": [
+              2.2,
+              48.7,
+              2.5,
+              49.0
+            ]
           },
           "year": 1926,
           "description": "敬隐渔将《阿Q正传》译为法文并在《欧洲》杂志发表，罗曼·罗兰阅后深受震撼。",
@@ -112,19 +192,38 @@
           "type": "spread",
           "start_location": {
             "name": "上海",
-            "coordinates": {"lat": 31.2304, "lng": 121.4737},
-            "bbox": [121.3, 31.1, 121.6, 31.4]
+            "coordinates": {
+              "lat": 31.2304,
+              "lng": 121.4737
+            },
+            "bbox": [
+              121.3,
+              31.1,
+              121.6,
+              31.4
+            ]
           },
           "end_location": {
             "name": "伦敦",
-            "coordinates": {"lat": 51.5074, "lng": -0.1278},
-            "bbox": [-0.2, 51.4, 0.0, 51.6]
+            "coordinates": {
+              "lat": 51.5074,
+              "lng": -0.1278
+            },
+            "bbox": [
+              -0.2,
+              51.4,
+              0.0,
+              51.6
+            ]
           },
           "year": 1929,
           "description": "英文版《中国简报》开始连载鲁迅作品，向英语世界介绍这位文学巨匠。",
           "collection_info": {
             "has_collection": true,
-            "collection_meta": {"title": "早期英译本", "location": "大英图书馆"}
+            "collection_meta": {
+              "title": "早期英译本",
+              "location": "大英图书馆"
+            }
           }
         }
       ]
@@ -135,7 +234,10 @@
       "year": 1926,
       "metadata": {
         "genre": "散文",
-        "themes": ["留学记忆", "师生情"],
+        "themes": [
+          "留学记忆",
+          "师生情"
+        ],
         "language": "现代汉语"
       },
       "routes": [
@@ -144,26 +246,414 @@
           "type": "memory",
           "start_location": {
             "name": "仙台",
-            "coordinates": {"lat": 38.2682, "lng": 140.8694},
-            "bbox": [140.7, 38.1, 141.0, 38.4]
+            "coordinates": {
+              "lat": 38.2682,
+              "lng": 140.8694
+            },
+            "bbox": [
+              140.7,
+              38.1,
+              141.0,
+              38.4
+            ]
           },
           "end_location": {
             "name": "北京",
-            "coordinates": {"lat": 39.9042, "lng": 116.4074},
-            "bbox": [116.3, 39.8, 116.5, 40.0]
+            "coordinates": {
+              "lat": 39.9042,
+              "lng": 116.4074
+            },
+            "bbox": [
+              116.3,
+              39.8,
+              116.5,
+              40.0
+            ]
           },
           "year": 1926,
           "description": "鲁迅在北京回忆仙台留学往事，写下《藤野先生》，这条墨迹连接了跨国的情感记忆。",
           "collection_info": {
             "has_collection": true,
-            "collection_meta": {"title": "手稿副本", "location": "东北大学(仙台)鲁迅纪念室"}
+            "collection_meta": {
+              "title": "手稿副本",
+              "location": "东北大学(仙台)鲁迅纪念室"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "kuangren_riji",
+      "title": "《狂人日记》 (A Madman's Diary)",
+      "year": 1918,
+      "metadata": {
+        "genre": "短篇小说",
+        "themes": [
+          "礼教吃人",
+          "思想启蒙"
+        ],
+        "language": "现代汉语"
+      },
+      "routes": [
+        {
+          "id": "lx_007",
+          "type": "physical",
+          "start_location": {
+            "name": "北京",
+            "coordinates": {
+              "lat": 39.9042,
+              "lng": 116.4074
+            },
+            "bbox": [
+              116.3,
+              39.8,
+              116.5,
+              40.0
+            ]
+          },
+          "end_location": {
+            "name": "天津",
+            "coordinates": {
+              "lat": 39.0842,
+              "lng": 117.2009
+            },
+            "bbox": [
+              117.0,
+              38.9,
+              117.4,
+              39.2
+            ]
+          },
+          "year": 1918,
+          "description": "《狂人日记》首次发表于《新青年》杂志，该期杂志从北京印刷后发往天津等地流通。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {
+              "title": "《新青年》原刊",
+              "location": "天津博物馆"
+            }
+          }
+        },
+        {
+          "id": "lx_008",
+          "type": "spread",
+          "start_location": {
+            "name": "上海",
+            "coordinates": {
+              "lat": 31.2304,
+              "lng": 121.4737
+            },
+            "bbox": [
+              121.3,
+              31.1,
+              121.6,
+              31.4
+            ]
+          },
+          "end_location": {
+            "name": "纽约",
+            "coordinates": {
+              "lat": 40.7128,
+              "lng": -74.0060
+            },
+            "bbox": [
+              -74.2,
+              40.5,
+              -73.8,
+              40.9
+            ]
+          },
+          "year": 1935,
+          "description": "埃德加·斯诺将《狂人日记》译为英文，发表于《亚洲》杂志，首次完整引入美国文坛。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {
+              "title": "1935年英译本",
+              "location": "纽约公共图书馆"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "zhaohua_xishi",
+      "title": "《朝花夕拾》 (Dawn Blossoms Plucked at Dusk)",
+      "year": 1928,
+      "metadata": {
+        "genre": "回忆性散文集",
+        "themes": [
+          "童年记忆",
+          "乡土情怀",
+          "社会批判"
+        ],
+        "language": "现代汉语"
+      },
+      "routes": [
+        {
+          "id": "lx_009",
+          "type": "physical",
+          "start_location": {
+            "name": "上海",
+            "coordinates": {
+              "lat": 31.2304,
+              "lng": 121.4737
+            },
+            "bbox": [
+              121.3,
+              31.1,
+              121.6,
+              31.4
+            ]
+          },
+          "end_location": {
+            "name": "杭州",
+            "coordinates": {
+              "lat": 30.2797,
+              "lng": 120.1543
+            },
+            "bbox": [
+              120.0,
+              30.1,
+              120.3,
+              30.5
+            ]
+          },
+          "year": 1928,
+          "description": "《朝花夕拾》由未名社出版后，首批样书运抵杭州，鲁迅曾赴杭参与相关文学交流。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {
+              "title": "初版精装本",
+              "location": "杭州图书馆特藏部"
+            }
+          }
+        },
+        {
+          "id": "lx_010",
+          "type": "spread",
+          "start_location": {
+            "name": "东京",
+            "coordinates": {
+              "lat": 35.6895,
+              "lng": 139.6917
+            },
+            "bbox": [
+              139.5,
+              35.5,
+              139.8,
+              35.8
+            ]
+          },
+          "end_location": {
+            "name": "首尔",
+            "coordinates": {
+              "lat": 37.5665,
+              "lng": 126.9780
+            },
+            "bbox": [
+              126.7,
+              37.3,
+              127.1,
+              37.8
+            ]
+          },
+          "year": 1940,
+          "description": "韩国流亡文人金芝河将《朝花夕拾》译为韩文，在上海的朝鲜侨民刊物上连载。",
+          "collection_info": {
+            "has_collection": false,
+            "collection_meta": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "yecao",
+      "title": "《野草》 (Wild Grass)",
+      "year": 1927,
+      "metadata": {
+        "genre": "散文诗",
+        "themes": [
+          "生命哲思",
+          "孤独与抗争",
+          "希望与绝望"
+        ],
+        "language": "现代汉语"
+      },
+      "routes": [
+        {
+          "id": "lx_011",
+          "type": "memory",
+          "start_location": {
+            "name": "广州",
+            "coordinates": {
+              "lat": 23.1291,
+              "lng": 113.2644
+            },
+            "bbox": [
+              113.0,
+              22.9,
+              113.5,
+              23.4
+            ]
+          },
+          "end_location": {
+            "name": "上海",
+            "coordinates": {
+              "lat": 31.2304,
+              "lng": 121.4737
+            },
+            "bbox": [
+              121.3,
+              31.1,
+              121.6,
+              31.4
+            ]
+          },
+          "year": 1927,
+          "description": "鲁迅离开广州赴上海定居，在沪整理广州时期创作的散文诗，结集为《野草》。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {
+              "title": "《野草》手稿",
+              "location": "上海鲁迅纪念馆"
+            }
+          }
+        },
+        {
+          "id": "lx_012",
+          "type": "spread",
+          "start_location": {
+            "name": "柏林",
+            "coordinates": {
+              "lat": 52.5200,
+              "lng": 13.4050
+            },
+            "bbox": [
+              13.2,
+              52.3,
+              13.6,
+              52.7
+            ]
+          },
+          "end_location": {
+            "name": "布拉格",
+            "coordinates": {
+              "lat": 50.0755,
+              "lng": 14.4378
+            },
+            "bbox": [
+              14.2,
+              49.9,
+              14.6,
+              50.2
+            ]
+          },
+          "year": 1934,
+          "description": "德国汉学家弗兰茨·库恩译《野草》选段，在布拉格举办的中欧汉学会议上首次公开。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {
+              "title": "德文手稿译本",
+              "location": "查理大学图书馆"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "panghuang",
+      "title": "《彷徨》 (Wandering)",
+      "year": 1926,
+      "metadata": {
+        "genre": "现代小说集",
+        "themes": [
+          "知识分子困境",
+          "社会变革中的迷茫",
+          "人性剖析"
+        ],
+        "language": "现代汉语"
+      },
+      "routes": [
+        {
+          "id": "lx_013",
+          "type": "physical",
+          "start_location": {
+            "name": "厦门",
+            "coordinates": {
+              "lat": 24.4798,
+              "lng": 118.0894
+            },
+            "bbox": [
+              117.8,
+              24.2,
+              118.3,
+              24.7
+            ]
+          },
+          "end_location": {
+            "name": "福州",
+            "coordinates": {
+              "lat": 26.0742,
+              "lng": 119.3064
+            },
+            "bbox": [
+              119.0,
+              25.8,
+              119.6,
+              26.3
+            ]
+          },
+          "year": 1926,
+          "description": "鲁迅在厦门大学任教期间创作《彷徨》多篇篇目，手稿由厦门带往福州友人处保存。",
+          "collection_info": {
+            "has_collection": true,
+            "collection_meta": {
+              "title": "《彷徨》部分手稿",
+              "location": "福建省图书馆"
+            }
+          }
+        },
+        {
+          "id": "lx_014",
+          "type": "spread",
+          "start_location": {
+            "name": "莫斯科",
+            "coordinates": {
+              "lat": 55.7558,
+              "lng": 37.6173
+            },
+            "bbox": [
+              37.4,
+              55.6,
+              37.8,
+              55.9
+            ]
+          },
+          "end_location": {
+            "name": "华沙",
+            "coordinates": {
+              "lat": 52.2297,
+              "lng": 21.0122
+            },
+            "bbox": [
+              20.8,
+              52.0,
+              21.2,
+              52.5
+            ]
+          },
+          "year": 1937,
+          "description": "《彷徨》波兰语译本在华沙出版，成为东欧国家了解鲁迅文学的重要窗口。",
+          "collection_info": {
+            "has_collection": false,
+            "collection_meta": {}
           }
         }
       ]
     }
   ],
   "style": {
-    "primary_color": "#E63946", 
+    "primary_color": "#E63946",
     "secondary_color": "#1D3557",
     "line_style": "ink_spread",
     "particle_density": 0.8

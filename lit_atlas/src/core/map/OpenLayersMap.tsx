@@ -15,7 +15,7 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import VectorSource from 'ol/source/Vector';
-import StadiaMaps from 'ol/source/StadiaMaps';
+import OSM from 'ol/source/OSM';
 import { fromLonLat } from 'ol/proj';
 import { defaults as defaultControls } from 'ol/control';
 import { easeOut } from 'ol/easing';
@@ -79,10 +79,10 @@ export function OpenLayersMap({
     });
     animationControllerRef.current = animationController;
 
-    // 创建底图层 - 使用 Stadia Maps Toner 样式（黑白纸张感）
+    // 创建底图层 - 使用 OSM 底图（无需授权）
     const tileLayer = new TileLayer({
-      source: new StadiaMaps({
-        layer: 'stamen_toner',
+      source: new OSM({
+        crossOrigin: 'anonymous'
       }),
       opacity: 0.8
     });

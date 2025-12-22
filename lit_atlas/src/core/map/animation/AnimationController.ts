@@ -54,7 +54,8 @@ export class AnimationController {
   private isPlaying: boolean = false;
   private animationFrameId: number | null = null;
   private lastFrameTime: number = 0;
-  
+  private timelineOrigin: number | null = null;
+
   private config: AnimationConfig = {
     growthDuration: 2000,
     rippleDuration: 1500,
@@ -104,11 +105,14 @@ export class AnimationController {
       return AnimationState.HIDDEN;
     }
 
-    if (elapsed < this.config.growthDuration) {
+    // 使用 meta.duration 作为生长阶段的持续时间
+    const growthDuration = meta.duration > 0 ? meta.duration : this.config.growthDuration;
+
+    if (elapsed < growthDuration) {
       return AnimationState.GROWING;
     }
 
-    if (elapsed < this.config.growthDuration + this.config.rippleDuration) {
+    if (elapsed < growthDuration + this.config.rippleDuration) {
       return AnimationState.RIPPLING;
     }
 
@@ -126,18 +130,19 @@ export class AnimationController {
 
     const state = this.calculateFeatureState(feature);
     const elapsed = this.currentTime - meta.startTime;
+    const growthDuration = meta.duration > 0 ? meta.duration : this.config.growthDuration;
 
     switch (state) {
       case AnimationState.GROWING:
-        return Math.min(elapsed / this.config.growthDuration, 1);
-      
+        return Math.min(elapsed / growthDuration, 1);
+
       case AnimationState.RIPPLING:
-        const rippleElapsed = elapsed - this.config.growthDuration;
+        const rippleElapsed = elapsed - growthDuration;
         return Math.min(rippleElapsed / this.config.rippleDuration, 1);
-      
+
       case AnimationState.ACTIVE:
         return 1;
-      
+
       default:
         return 0;
     }
@@ -173,6 +178,24 @@ export class AnimationController {
   setTime(time: number): void {
     this.currentTime = time;
     this.notifyUpdate();
+  }
+
+  /**
+   * 同步渲染帧的时间戳（不触发重绘）
+   */
+  syncWithFrameTime(frameTime: number): void {
+    if (this.timelineOrigin === null) {
+      this.timelineOrigin = frameTime;
+    }
+    this.currentTime = frameTime - this.timelineOrigin;
+  }
+
+  /**
+   * 重置时间轴
+   */
+  resetTimeline(): void {
+    this.timelineOrigin = null;
+    this.currentTime = 0;
   }
 
   /**
@@ -226,5 +249,7 @@ export class AnimationController {
     this.pause();
     this.updateCallbacks.clear();
     this.featureMetaMap = new WeakMap();
+    this.timelineOrigin = null;
+    this.currentTime = 0;
   }
 }
