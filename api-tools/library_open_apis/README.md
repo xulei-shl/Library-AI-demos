@@ -95,6 +95,8 @@ enriched = enrich_with_cbd(instance_uri)
 
 ### 3. OCLC WorldCat
 
+> 另一个工具：[BookOps-CAT/bookops-worldcat: BookOps WorldCat Metadata API wrapper](https://github.com/BookOps-CAT/bookops-worldcat)
+
 **文件**: `03_oclc_worldcat.py`
 
 **API 端点**: `https://americas.discovery.api.oclc.org/worldcat/search/v2/bibs`
