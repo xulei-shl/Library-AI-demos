@@ -52,6 +52,18 @@
 - **描述**：通过ISBN搜索并提取图书详细信息，保存为Excel格式。
 - **路径**：./douban
 
+### library_open_apis
+
+| #    | API                                  | 类型     | 认证  | 主要功能               |
+| ---- | ------------------------------------ | -------- | ----- | ---------------------- |
+| 1    | [Google Books](#1-google-books)      | 公共     | 无    | 书籍元数据、ISBN、描述 |
+| 2    | [id.loc.gov](#2-library-of-congress) | 公共     | 无    | 作品搜索、主题词、LCCN |
+| 3    | [OCLC WorldCat](#3-oclc-worldcat)    | 需要密钥 | OAuth | 书目搜索、Work ID 聚类 |
+| 4    | [VIAF](#4-viaf)                      | 公共     | 无    | 权威名称、跨库整合     |
+| 5    | [Wikidata](#5-wikidata)              | 公共     | 无    | SPARQL 查询、实体链接  |
+| 6    | [HathiTrust](#6-hathitrust)          | 本地 DB  | 无    | 本地搜索、HDL 标识符   |
+| 7    | [Open Library](#7-open-library)      | 公共     | 无    | 作品搜索、版本信息     |
+
 ## 未来规划
 
 我们计划在未来整合更多有价值的数据源，包括但不限于：
