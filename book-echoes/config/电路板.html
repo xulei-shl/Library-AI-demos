@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书海回响</title>
+    <style>
+        /* =========================================
+           1. 全局变量定义
+           ========================================= */
+        :root {
+            --bg-deep: #05101F;
+            --bg-card: #0A192F;
+            --header-match-color: #0B2344; 
+            --text-primary: #FFFFFF;
+            --text-body: #E0E6ED;
+            --accent-gold: #CBBF86;
+            --accent-green: #6B8C68;
+            --line-color: rgba(255, 255, 255, 0.15);
+            --font-title: "汇文明朝体", "HuiWen MingChao", "Source Han Serif CN", serif;
+            --font-body: "又又意宋", "YouYi Song", "Source Han Serif CN", serif;
+            --font-tech: "Courier New", "Consolas", monospace;
+            --font-sys: 'Inter', system-ui, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #f0f0f0;
+            font-family: var(--font-body);
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            justify-content: center;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+
+        /* =========================================
+           2. 主容器
+           ========================================= */
+        .library-card {
+            width: 850px;
+            /* 设定固定高度或最小高度，防止内容撑破布局 */
+            /* min-height: 600px; */ 
+            background-color: var(--bg-deep);
+            color: var(--text-body);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* =========================================
+           3. 顶部视觉区
+           ========================================= */
+        .visual-header {
+            width: 100%;
+            height: 320px;
+            background-color: var(--header-match-color);
+            border-bottom: 2px solid var(--accent-gold);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 超大字母背景 - 顶天立地效果 */
+        .visual-header .bg-letter {
+            position: absolute;
+            top: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--font-title);
+            font-size: 380px;
+            font-weight: bold;
+            color: rgba(203, 191, 134, 0.08); /* 低透明度金色 */
+            line-height: 1;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .visual-header img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            opacity: 1;
+            display: block;
+            position: relative;
+            z-index: 1;
+        }
+
+        .visual-overlay {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%; height: 80px;
+            background: linear-gradient(to top, var(--bg-deep), transparent);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .circuit-deco {
+            position: absolute; bottom: 15px; right: 20px;
+            font-family: var(--font-tech); font-size: 10px;
+            color: var(--accent-gold); opacity: 0.8; letter-spacing: 2px;
+            z-index: 2;
+        }
+
+        /* =========================================
+           4. 双栏布局容器
+           ========================================= */
+        .split-layout {
+            display: flex;
+            flex-direction: row;
+            position: relative;
+            align-items: stretch; 
+            /* 确保布局不会因为内容过宽而被撑开 */
+            max-width: 100%;
+        }
+
+        /* =========================================
+           5. 左侧：封面区域
+           ========================================= */
+        .cover-section {
+            width: 320px; /* 固定宽度 */
+            padding: 40px 0 40px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0; /* 禁止左侧压缩 */
+        }
+
+        .cover-wrapper {
+            position: relative;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .cover-wrapper::before, .cover-wrapper::after {
+            content: ''; position: absolute;
+            width: 10px; height: 10px;
+            border-color: var(--accent-gold); border-style: solid;
+            transition: all 0.3s ease;
+        }
+        .cover-wrapper::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+        .cover-wrapper::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+        .book-cover-img {
+            width: 200px;
+            height: auto;
+            display: block;
+            box-shadow: 5px 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .cover-tag {
+            margin-top: 15px;
+            font-family: var(--font-tech);
+            font-size: 10px;
+            color: var(--accent-green);
+            letter-spacing: 1px;
+            border: 1px solid var(--accent-green);
+            padding: 2px 8px;
+            border-radius: 2px;
+            opacity: 0.8;
+        }
+
+        /* =========================================
+           6. 右侧：内容区域 (⭐ 修复核心)
+           ========================================= */
+        .content-section {
+            padding: 35px 40px 45px 40px;
+            position: relative;
+            flex: 1;
+            /* ⭐ 关键：设置 min-width: 0 允许 flex 子元素内部的文本截断生效 */
+            min-width: 0; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-section::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 40px;
+            bottom: 40px;
+            width: 1px;
+            background: linear-gradient(to bottom, transparent, var(--line-color), transparent);
+        }
+
+        .book-header { 
+            margin-bottom: 30px; 
+            position: relative;
+            /* 确保头部宽度也被限制 */
+            width: 100%; 
+        }
+
+        /* --- 标题单行截断 --- */
+        .book-title {
+            font-family: var(--font-title); 
+            font-size: 36px; 
+            line-height: 1.3;
+            color: var(--text-primary); 
+            margin-bottom: 12px; 
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            
+            /* ⭐ 截断三件套 */
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            display: block; /* 确保是块级元素 */
+        }
+
+        /* --- 作者单行截断 --- */
+        .book-author {
+            font-family: var(--font-sys); 
+            font-size: 16px; 
+            color: var(--accent-gold);
+            letter-spacing: 1px; 
+            text-transform: uppercase; 
+            display: flex; 
+            align-items: center;
+            
+            /* ⭐ 截断逻辑 */
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            max-width: 100%;
+        }
+        .book-author::before {
+            content: '//'; margin-right: 8px; color: var(--accent-green); font-family: var(--font-tech);
+            flex-shrink: 0; /* 防止前缀被压缩 */
+        }
+
+        /* --- 元数据网格 --- */
+        .meta-grid {
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* 两列平分 */
+            gap: 15px 30px;
+            margin-bottom: 35px; 
+            padding-bottom: 25px;
+            border-bottom: 1px dashed var(--line-color);
+        }
+
+        .meta-item { 
+            display: flex; 
+            flex-direction: column; 
+            min-width: 0; /* ⭐ 确保 Grid 子项也能截断 */
+            overflow: hidden;
+        }
+
+        .meta-label {
+            font-family: var(--font-tech); font-size: 10px; color: var(--accent-green);
+            margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        /* --- 出版社/年份等值的单行截断 --- */
+        .meta-value {
+            font-family: var(--font-sys); font-size: 15px; color: var(--text-body); font-weight: 500;
+            
+            /* ⭐ 截断三件套 */
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+            display: block;
+        }
+        .rate-value { color: var(--accent-gold); font-weight: bold; font-size: 18px; }
+
+        /* --- 推荐语多行截断 --- */
+
+        /* 1. 修改容器样式：允许子元素溢出 */
+        .rec-container {
+            position: relative; 
+            background: rgba(255, 255, 255, 0.03);
+            padding: 25px; 
+            border-left: 3px solid var(--accent-green); 
+            border-radius: 0 8px 8px 0;
+            
+            /* ⭐ 关键修改：移除 overflow: hidden，改为 visible (默认值) */
+            overflow: visible; 
+            
+            /* 增加一点顶部间距，给向上突出的标签留出安全距离，防止遮挡上面的虚线 */
+            margin-top: 10px; 
+        }
+
+        /* 2. 标签样式保持不变，但为了层级安全可以加 z-index */
+        .rec-label {
+            position: absolute; 
+            top: -10px; /* 向上偏移，使其骑在边框上 */
+            left: 20px; 
+            background-color: var(--bg-deep); /* 背景色遮挡住边框线 */
+            padding: 0 8px; 
+            font-family: var(--font-tech); 
+            font-size: 11px;
+            color: var(--accent-gold); 
+            border: 1px solid var(--line-color); 
+            border-radius: 4px;
+            
+            /* ⭐ 确保标签在视觉最上层 */
+            z-index: 5; 
+            /* 防止标签文字换行 */
+            white-space: nowrap; 
+        }
+        
+        /* 3. 内部文本的截断逻辑保持不变，它自己有 overflow: hidden */
+        .recommendation-text {
+            font-family: var(--font-body); 
+            font-size: 17px; 
+            line-height: 1.6; 
+            color: #d1d5db;
+            text-align: justify;
+            
+            /* 文本自身的截断逻辑 */
+            display: -webkit-box; 
+            -webkit-box-orient: vertical; 
+            -webkit-line-clamp: 4; 
+            overflow: hidden; /* 这里保留，用于截断文本 */
+            text-overflow: ellipsis;
+            max-height: calc(1.6em * 4); 
+        }
+        
+        .rec-quote-mark {
+            position: absolute; right: 15px; bottom: 5px; font-size: 40px; line-height: 1;
+            color: rgba(255, 255, 255, 0.05); font-family: serif; pointer-events: none;
+        }
+
+        /* =========================================
+           7. 底部装饰
+           ========================================= */
+        .card-footer {
+            height: 12px; width: 100%; margin-top: auto;
+            background: repeating-linear-gradient(
+                45deg, var(--bg-deep), var(--bg-deep) 10px,
+                var(--accent-green) 10px, var(--accent-green) 12px
+            );
+            opacity: 0.3;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="library-card">
+        
+        <!-- 顶部视觉区 -->
+        <div class="visual-header">
+            <span class="bg-letter">BOOK</span>
+            <img src="pic/bg-circuit.png" alt="Header" onerror="this.src='https://placehold.co/900x380/0B2344/CBBF86?text=ARCHITECTURAL+HEADER'">
+            <div class="visual-overlay"></div>
+            <div class="circuit-deco">SYS.2025.READ_ONLY // MODE</div>
+        </div>
+
+        <!-- 双栏布局区 -->
+        <div class="split-layout">
+            
+            <!-- 左侧：封面 -->
+            <div class="cover-section">
+                <div class="cover-wrapper">
+                    <img src="pic/cover.jpg" alt="Cover" class="book-cover-img" onerror="this.src='https://placehold.co/200x280/222/FFF?text=COVER'">
+                </div>
+                <div class="cover-tag">ASSET_ID: 2512</div>
+            </div>
+
+            <!-- 右侧：内容 -->
+            <div class="content-section">
+                
+                <div class="book-header">
+                    <!-- 测试超长标题 -->
+                    <div class="book-title">{{TITLE}}</div>
+                    <!-- 测试超长作者 -->
+                    <div class="book-author">{{AUTHOR}}</div>
+                </div>
+
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <span class="meta-label">Publisher</span>
+                        <!-- 测试超长出版社 -->
+                        <div class="meta-value">{{PUBLISHER}}</div>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Year</span>
+                        <div class="meta-value">{{PUB_YEAR}}</div>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Call Number</span>
+                        <div class="meta-value">{{CALL_NUMBER}}</div>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Rate</span>
+                        <div class="meta-value rate-value">{{DOUBAN_RATING}} / 10</div>
+                    </div>
+                </div>
+
+                <div class="rec-container">
+                    <div class="rec-label">SYSTEM_ANALYSIS</div>
+                    <!-- 测试超长推荐语 -->
+                    <div class="recommendation-text">
+                        {{RECOMMENDATION}}
+                    </div>
+                    <div class="rec-quote-mark">”</div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="card-footer"></div>
+
+    </div>
+
+</body>
+</html>
