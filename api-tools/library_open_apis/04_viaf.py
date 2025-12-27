@@ -5,7 +5,7 @@ VIAF (Virtual International Authority File) API 示例代码
 
 参考来源: lib/strategies_viaf.py
 
-API 文档: https://www.viaf.org/viaf/api/
+API 文档: https://developer.api.oclc.org/viaf-api
 
 功能描述:
     - 搜索权威名称记录（人名、地名、作品名等）
@@ -91,18 +91,21 @@ def search_names(name: str, name_type: str = "VIAF_Personal", limit: int = 50) -
         }
 
 
-def search_works(author: str, title: str, limit: int = 50) -> Dict[str, Any]:
+def search_works(title: str, author: str = "", limit: int = 50) -> Dict[str, Any]:
     """
     搜索 VIAF 作品记录
 
     参数:
-        author: 作者名称
         title: 作品标题
+        author: 作者名称（可选）
         limit: 最大返回结果数（默认 50）
 
     返回:
         VIAF API 响应
     """
+    # 组合搜索词
+    search_terms = f"{title} {author}".strip() if author else title.strip()
+    
     query = {
         "meta": {
             "env": "prod",
@@ -112,7 +115,7 @@ def search_works(author: str, title: str, limit: int = 50) -> Dict[str, Any]:
         "reqValues": {
             "field": "local.uniformTitleWorks",
             "index": "VIAF",
-            "searchTerms": f"{author} {title}".strip()
+            "searchTerms": search_terms
         }
     }
 
@@ -438,9 +441,23 @@ if __name__ == "__main__":
     print("示例 2: 搜索 'Hamlet'")
     print("=" * 60)
 
-    work_results = search_works("Shakespeare, William", "Hamlet")
+    work_results = search_works("Hamlet", author="Shakespeare, William")
     if work_results.get('queryResult', {}).get('records', {}).get('record'):
         parsed_works = parse_work_results(work_results, "Hamlet", "Shakespeare, William")
+        for p in parsed_works[:3]:
+            print(f"  - {p['heading']}")
+            print(f"    标题分数: {p['title_score']}, 作者分数: {p['author_score']}")
+    # 示例 2: 搜索作品
+    print("\n" + "=" * 60)
+    print("示例 2: 搜索 '许三观卖血记'")
+    print("=" * 60)
+
+    work_results = search_works("xue san guan mai xue ji")
+    if work_results.get('queryResult', {}).get('records', {}).get('record'):
+        parsed_works = parse_work_results(work_results, "xue san guan mai xue ji")
+        viaf_id = parsed_works[0]['viaf_id']
+        print(f" VIAF ID: {viaf_id}")
+            
         for p in parsed_works[:3]:
             print(f"  - {p['heading']}")
             print(f"    标题分数: {p['title_score']}, 作者分数: {p['author_score']}")
