@@ -79,7 +79,7 @@ llm_tagging:
 
   # 限制处理的书目数量（用于测试，节省大模型调用费用）
   # 设为 0 或不配置则处理所有数据
-  max_items: 1
+  max_items: 600
 
   # 标签词表配置文件路径（必须配置）
   vocabulary_file: "config/literary_tags_vocabulary.yaml"
