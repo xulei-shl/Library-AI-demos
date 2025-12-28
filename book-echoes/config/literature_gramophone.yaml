@@ -1,0 +1,69 @@
+# 文学数据过滤配置
+
+# 输入配置
+input:
+  # Excel 文件路径列表（支持绝对路径和相对路径）
+  excel_files:
+    - "data/new/2023"  # 目录路径，将扫描该目录下的所有Excel文件
+    # - "data/gramophone/文学数据.xlsx"  # 单个文件路径示例
+
+  # 是否扫描目录中的Excel文件
+  scan_directories: true
+
+  # 必需的列名（用于验证输入文件）
+  required_columns:
+    - "索书号"  # 数据中索书号列名
+    - "题名"   # 题名列名
+
+# 过滤规则配置
+filters:
+  # 索书号规则文件路径（使用 literature_clc.txt 提取文学类CLC号）
+  call_number_rules: "config/filters/literature_clc.txt"
+
+  # 题名关键词规则文件路径（留空则不启用题名过滤）
+  title_keywords_rules: ""
+
+  # 字段映射（支持不同 Excel 的列名差异）
+  field_mapping:
+    call_number: "索书号"       # Excel 中的索书号列名
+    title: "题名"              # Excel 中的题名列名
+
+  # 空值处理策略
+  null_handling:
+    call_number: "filter"      # 索书号为空时：filter=过滤, keep=保留
+    title: "filter"            # 题名为空时：filter=过滤, keep=保留
+
+  # 过滤逻辑（OR=满足任一规则即过滤，AND=需同时满足）
+  logic: "OR"
+
+# 输出配置
+output:
+  # 输出目录（文学类数据筛选结果）
+  output_dir: "runtime/outputs/literature_gramophone_filtered"
+
+  # 文件名模板
+  filename_template:
+    passed: "数据筛选结果_{timestamp}.xlsx"      # 符合条件的数据
+    filtered: "被过滤数据_{timestamp}.xlsx"      # 被过滤的数据
+    merged: "数据筛选结果_{timestamp}.xlsx"          # 合并后的总表
+  
+  # 是否添加过滤原因列
+  add_filter_reason: true
+
+  # 过滤原因列名
+  filter_reason_column: "过滤原因"
+
+  # 是否合并所有符合条件的数据
+  merge_passed_data: true
+
+  # 合并时是否添加来源文件列
+  add_source_file_column: true
+  source_file_column: "来源文件"
+
+# 日志配置
+logging:
+  # 日志级别（DEBUG, INFO, WARNING, ERROR）
+  level: "INFO"
+
+  # 是否输出详细统计信息
+  verbose_stats: true

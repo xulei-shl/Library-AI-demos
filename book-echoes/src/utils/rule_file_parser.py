@@ -70,19 +70,27 @@ class RuleFileParser:
 
         Args:
             file_path: 规则文件路径，默认为 config/filters/call_number_clc.txt
+                       为空字符串或 None 时返回空规则（不过滤）
 
         Returns:
             CallNumberRules 规则集合
         """
-        # 兼容字符串和 Path 对象
-        if file_path:
-            file_path = Path(file_path) if not isinstance(file_path, Path) else file_path
-        else:
-            file_path = DEFAULT_CALL_NUMBER_RULES_FILE
         rules = CallNumberRules()
 
-        if not file_path.exists():
-            logger.warning(f"索书号规则文件不存在: {file_path}")
+        # 空字符串或 None 时返回空规则
+        if file_path is None or (isinstance(file_path, str) and not file_path.strip()):
+            return rules
+
+        # 兼容字符串和 Path 对象
+        if not isinstance(file_path, Path):
+            file_path = Path(file_path)
+
+        # 空路径或目录不加载
+        if not file_path or not file_path.exists() or file_path.is_dir():
+            if file_path and file_path.exists() and file_path.is_dir():
+                logger.warning(f"索书号规则路径是目录而非文件: {file_path}")
+            elif file_path:
+                logger.warning(f"索书号规则文件不存在: {file_path}")
             return rules
 
         try:
@@ -139,19 +147,27 @@ class RuleFileParser:
 
         Args:
             file_path: 关键词文件路径，默认为 config/filters/title_keywords.txt
+                       为空字符串或 None 时返回空列表（不启用题名过滤）
 
         Returns:
             关键词列表
         """
-        # 兼容字符串和 Path 对象
-        if file_path:
-            file_path = Path(file_path) if not isinstance(file_path, Path) else file_path
-        else:
-            file_path = DEFAULT_TITLE_KEYWORDS_FILE
         keywords = []
 
-        if not file_path.exists():
-            logger.warning(f"题名关键词文件不存在: {file_path}")
+        # 空字符串或 None 时返回空列表（不启用题名过滤）
+        if file_path is None or (isinstance(file_path, str) and not file_path.strip()):
+            return keywords
+
+        # 兼容字符串和 Path 对象
+        if not isinstance(file_path, Path):
+            file_path = Path(file_path)
+
+        # 空路径或目录不加载
+        if not file_path or not file_path.exists() or file_path.is_dir():
+            if file_path and file_path.exists() and file_path.is_dir():
+                logger.warning(f"题名关键词路径是目录而非文件: {file_path}")
+            elif file_path:
+                logger.warning(f"题名关键词文件不存在: {file_path}")
             return keywords
 
         try:
@@ -209,9 +225,10 @@ class CallNumberMatcher:
         normal_exclude_mask = self._build_mask(call_nos, self.rules.exclude, "排除")
 
         # 组合逻辑：
-        # - 高优先级排除：直接排除
-        # - 普通排除：仅当未命中保留规则时才排除
-        return high_priority_mask | ((~include_mask) & normal_exclude_mask)
+        # - 高优先级排除（DROP!）：直接排除
+        # - 保留规则（KEEP）：未匹配则排除
+        # - 普通排除（DROP）：直接排除
+        return high_priority_mask | (~include_mask) | normal_exclude_mask
 
     def _build_mask(
         self, series: pd.Series, patterns: List[str], rule_type: str
