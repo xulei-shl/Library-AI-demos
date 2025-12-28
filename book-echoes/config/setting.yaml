@@ -584,7 +584,7 @@ rating_filter:
 # =============================================================================
 card_generator:
   # HTML模板文件路径
-  template_path: "config/点阵.html"
+  template_path: "config/temples/点阵.html"
 
   # 字段转换器配置
   # 功能: 为不同模板提供灵活的字段处理规则
@@ -793,7 +793,7 @@ library_card_generator:
   enabled: true
   
   # HTML模板文件路径
-  template_path: "config/library_card_template.html"
+  template_path: "config/temples/library_card_template.html"
   
   # 借阅记录生成配置
   borrower_records_count: 4  # 每张卡片随机生成1到此数值条借阅记录（例如：3表示随机生成1-3条）
