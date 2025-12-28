@@ -5,7 +5,9 @@
       "Bash(python -c:*)",
       "Bash(cat:*)",
       "Bash(python -m pytest:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

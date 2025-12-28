@@ -1,0 +1,123 @@
+# =============================================================================
+# 文学情境标签词表 (Literary Tags Vocabulary)
+# =============================================================================
+# 版本: v2.0 (Optimized with Reading Load)
+# 适用模块: Module 8 - LiteratureFM (文学FM)
+
+# -----------------------------------------------------------------------------
+# 标签维度定义
+# -----------------------------------------------------------------------------
+tag_dimensions:
+  
+  # 维度1: 阅读情境 (When/State) - 此时此刻适合读什么？
+  reading_context:
+    description: "适合阅读的时间场景或读者的心理状态"
+    candidates:
+      - label: "暮色四合时"
+        description: "黄昏或夜晚，光线暧昧，适合感性、沉思或怀旧的氛围"
+      - label: "深夜独处"
+        description: "夜深人静，适合深度内省、孤独感强或需要高度沉浸的作品"
+      - label: "午后慵懒"
+        description: "阳光充足，轻松惬意，无需过度用脑，适合消遣"
+      - label: "碎片隙间"
+        description: "通勤、等待或如厕时，篇幅短小、结构松散或随时可停"
+      - label: "精力充沛"
+        description: "精神集中时，适合挑战复杂结构、大部头或高密度文本"
+      - label: "雨天窗前"
+        description: "封闭的阴雨空间，适合忧郁、细腻或情绪化的文字"
+      - label: "旅途之中"
+        description: "在路上，适合异域风情、公路小说或冒险叙事"
+      - label: "枕边安神"
+        description: "睡前阅读，节奏舒缓，无强烈刺激，有助于平复心境"
+
+  # 维度2: 阅读体感 (Reading Load/Density) - 读起来累不累？
+  reading_load:
+    description: "阅读的难度、信息密度和流畅度"
+    candidates:
+      - label: "酣畅易读"
+        description: "Page-turner，叙事流畅，情节驱动，吸引力强，阅读阻力极小"
+      - label: "需正襟危坐"
+        description: "信息密度大，哲学性强，结构复杂或语言晦涩，需要高度专注和耐心"
+      - label: "细水长流"
+        description: "Slow burn，节奏缓慢，生活流，适合每天读一点，不需要急于知道结局"
+      - label: "随时可停"
+        description: "单元剧、短篇集、随笔或语录，结构独立，没有连贯的叙事压力"
+
+  # 维度3: 文本质感 (Text Texture/Style) - 文字风格是什么样的？
+  text_texture:
+    description: "文本的语言风格、修辞特征和叙事手法"
+    candidates:
+      - label: "诗意流动"
+        description: "语言优美，注重修辞，富有韵律感，散文诗般的体验"
+      - label: "冷峻克制"
+        description: "零度写作，情感内敛，旁观者视角，文字洗练"
+      - label: "絮语呢喃"
+        description: "意识流，内心独白，非线性叙事，梦幻或碎片化"
+      - label: "戏谑反讽"
+        description: "黑色幽默，荒诞，解构严肃，语言机智或尖刻"
+      - label: "史诗宏大"
+        description: "多线索，跨度大，结构如建筑般复杂，气势恢弘"
+      - label: "细腻工笔"
+        description: "细节堆叠，感官描写丰富，情感绵密，对生活细节的极致描摹"
+      - label: "极简白描"
+        description: "海明威式风格，对话驱动，留白多，依靠潜台词"
+      - label: "先锋实验"
+        description: "形式独特，打破常规叙事逻辑，挑战阅读习惯"
+
+  # 维度4: 时空氛围 (Spatial Atmosphere/Where) - 故事发生在哪里？
+  spatial_atmosphere:
+    description: "故事发生的空间场景和整体氛围感"
+    candidates:
+      - label: "都市孤独"
+        description: "现代都市背景，水泥森林，个体的疏离与原子化"
+      - label: "乡土温情"
+        description: "乡村田园，泥土气息，传统伦理，人情温暖或愚昧"
+      - label: "异域漂泊"
+        description: "异国他乡，流亡，移民体验，文化碰撞与无根感"
+      - label: "历史回响"
+        description: "古代或近代背景，时代变迁，厚重的历史尘埃感"
+      - label: "虚构奇境"
+        description: "架空世界，幻想，超现实空间，与现实物理法则不同"
+      - label: "庭院深深"
+        description: "封闭的家庭内部，室内剧，家族纠葛，人际关系的微观政治"
+      - label: "荒野自然"
+        description: "大自然，无人区，生存挑战，强调自然的野性与人的渺小"
+      - label: "边缘地带"
+        description: "贫民窟、精神病院、犯罪现场等社会边缘角落，非主流视角"
+
+  # 维度5: 情绪基调 (Emotional Tone/Feeling) - 读完什么感觉？
+  emotional_tone:
+    description: "作品的主导情绪色彩"
+    candidates:
+      - label: "忧郁沉思"
+        description: "悲伤、惆怅、孤独、对逝去的追忆"
+      - label: "温暖治愈"
+        description: "温馨、感动、充满希望、抚慰心灵"
+      - label: "激昂振奋"
+        description: "热血、抗争、理想主义、鼓舞人心"
+      - label: "荒诞讽刺"
+        description: "滑稽中带着悲凉，对现实的嘲弄"
+      - label: "平静淡然"
+        description: "平和、禅意、超脱、无悲无喜"
+      - label: "暗流涌动"
+        description: "表面平静但内心紧张，心理层面的悬疑与压抑"
+      - label: "浪漫柔情"
+        description: "唯美、爱情、感性、柔和"
+      - label: "冷酷残酷"
+        description: "直面人性之恶，社会现实的冰冷，令人窒息或战栗"
+
+# -----------------------------------------------------------------------------
+# Prompt构建策略
+# -----------------------------------------------------------------------------
+prompt_config:
+  # 是否在Prompt中包含候选词描述 (建议开启，帮助LLM理解)
+  include_descriptions: true
+  
+  # 标签选择策略
+  selection_strategy:
+    mode: "multi_select"        # 多选模式
+    max_tags_per_dimension: 2   # 每个维度最多选2个 (Less is More)
+    require_all_dimensions: true # 尽量覆盖所有维度
+  
+  # 置信度阈值 (低于此分数的标签将被丢弃)
+  confidence_threshold: 0.65

@@ -5,7 +5,7 @@ input:
   # Excel 文件路径列表（支持绝对路径和相对路径）
   excel_files:
     - "data/new/2023"  # 目录路径，将扫描该目录下的所有Excel文件
-    # - "data/gramophone/文学数据.xlsx"  # 单个文件路径示例
+    # - "data/LiteratureFM/文学数据.xlsx"  # 单个文件路径示例
 
   # 是否扫描目录中的Excel文件
   scan_directories: true
@@ -39,7 +39,7 @@ filters:
 # 输出配置
 output:
   # 输出目录（文学类数据筛选结果）
-  output_dir: "runtime/outputs/literature_gramophone_filtered"
+  output_dir: "runtime/outputs/literature_LiteratureFM_filtered"
 
   # 文件名模板
   filename_template:
@@ -67,3 +67,64 @@ logging:
 
   # 是否输出详细统计信息
   verbose_stats: true
+
+  database:
+    # 数据库文件路径
+    db_path: "runtime/database/books_history.db"
+    table: "books"
+
+# LLM 打标配置（Phase 2）
+llm_tagging:
+  enabled: true  # 是否启用 LLM 打标功能
+
+  # 限制处理的书目数量（用于测试，节省大模型调用费用）
+  # 设为 0 或不配置则处理所有数据
+  max_items: 1
+
+  # 标签词表配置文件路径（必须配置）
+  vocabulary_file: "config/literary_tags_vocabulary.yaml"
+
+  # 过滤条件：筛选待打标的书目（所有条件为AND关系）
+  filter_conditions:
+    # 索书号前缀（留空或null则不过滤）
+    call_no_prefix: "I"
+    # 最低豆瓣评分（留空或null则不过滤）
+    min_douban_rating: 7.3
+    # 必填字段列表（留空或null则不过滤）
+    required_fields:
+      - douban_summary  # 必须有内容简介
+      - douban_cover_image  # 必须有封面图片
+
+  # 批处理配置
+  batch_processing:
+    # 每批处理数量
+    batch_size: 10
+    # 批次间延迟（秒）
+    delay_between_batches: 2
+    # 是否显示进度条
+    show_progress: true
+
+  # 重试策略
+  retry_strategy:
+    # 是否启用兜底重试（主流程结束后，对失败记录再次重试）
+    fallback_retry_enabled: true
+    # 兜底重试次数
+    fallback_max_retries: 2
+    # 兜底重试延迟（秒）
+    fallback_delay: 5
+
+  # Prompt配置
+  prompt:
+    # Langfuse提示词名称（优先使用）
+    langfuse_name: "文学情境标签生成"
+    # 本地兜底文件（Langfuse不可用时使用）
+    fallback_file: "prompts/literary_tagging.md"
+
+  # 输出配置
+  output:
+    # 是否导出打标结果到Excel
+    export_to_excel: true
+    # 输出目录
+    output_dir: "runtime/outputs/literary_tagging"
+    # 文件名模板
+    filename_template: "文学标签结果_{timestamp}.xlsx"

@@ -32,6 +32,20 @@ api_providers:
       model: "gpt-4.1"
       timeout_seconds: 120     
 
+  text-small:
+    primary:
+      name: "oneapi-qwen3"
+      api_key: env:ONEAPI_API_KEY
+      base_url: "http://47.103.50.106:3000/v1"
+      model: "gpt-4.1-mini"
+      timeout_seconds: 120  
+    secondary:
+      name: "oneapi-4.1"
+      api_key: env:ONEAPI_API_KEY
+      base_url: "http://47.103.50.106:3000/v1"
+      model: "ggemini-flash-latest"
+      timeout_seconds: 120        
+
 tasks:
   # ----------------------------------------------------------------------------
   # 任务: 书目初评 (theme_initial)
@@ -236,6 +250,39 @@ tasks:
       metadata:
         project: "book-echoes"
         module: "模块6"
+
+  # ----------------------------------------------------------------------------
+  # 任务: 文学情境标签生成 (literary_tagging)
+  # 逻辑位置: src/core/literature_fm/llm_tagger.py
+  # ----------------------------------------------------------------------------
+  literary_tagging:
+    provider_type: text-small
+    temperature: 0.4
+    top_p: 0.9
+    prompt:
+      type: langfuse
+      langfuse_name: "literary_tagging"
+      fallback_file: "prompts/literary_tagging.md"
+
+    retry:
+      max_retries: 3
+      base_delay: 1.2
+      max_delay: 12
+      enable_provider_switch: true
+      jitter: true
+
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+
+    langfuse:
+      enabled: true
+      name: "文学情境标签生成"
+      tags: ["book-echoes", "模块8", "文学标签"]
+      metadata:
+        project: "book-echoes"
+        module: "模块8"
 
 defaults:
   temperature: 0.45
