@@ -96,7 +96,8 @@ class LLMTagger:
             
             for idx, book in enumerate(batch, 1):
                 if show_progress:
-                    logger.info(f"[{batch_num}-{idx}/{len(batch)}] 正在处理: {book.get('title', 'Unknown')}")
+                    title = book.get('douban_title') or book.get('book_title', 'Unknown')
+                    logger.info(f"[{batch_num}-{idx}/{len(batch)}] 正在处理: {title}")
                 
                 success = self._tag_single_book(book)
                 
