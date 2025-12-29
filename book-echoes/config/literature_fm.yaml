@@ -140,6 +140,6 @@ theme_generation:
   # 输出配置
   output:
     # 输出目录
-    output_dir: "runtime/outputs/literary_theme_generation"
+    output_dir: "runtime/outputs/theme_shelf"
     # 文件名模板
     filename_template: "themes_{timestamp}_{direction}.json"

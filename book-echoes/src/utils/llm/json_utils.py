@@ -59,17 +59,20 @@ class JSONHandler:
     def _candidate_texts(self, text: str) -> List[str]:
         candidates: List[str] = []
 
+        # 1. 优先提取 fence 中的内容
         fence = FENCE_PATTERN.search(text)
         if fence:
             candidates.append(fence.group(1).strip())
 
-        obj = self._balanced_extract(text, "{", "}")
-        if obj:
-            candidates.append(obj)
-
+        # 2. 其次尝试提取数组（数组优先于对象，因为某些任务需要数组）
         arr = self._balanced_extract(text, "[", "]")
         if arr:
             candidates.append(arr)
+
+        # 3. 最后尝试提取对象
+        obj = self._balanced_extract(text, "{", "}")
+        if obj:
+            candidates.append(obj)
 
         if not candidates:
             candidates.append(text)
