@@ -123,9 +123,9 @@ llm_tagging:
   # 输出配置
   output:
     # 是否导出打标结果到Excel
-    export_to_excel: true
+    export_to_excel: false
     # 输出目录
-    output_dir: "runtime/outputs/literary_tagging"
+    output_dir: "runtime/outputs/literary_shelf"
     # 文件名模板
     filename_template: "文学标签结果_{timestamp}.xlsx"
 
