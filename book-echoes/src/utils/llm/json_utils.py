@@ -64,18 +64,50 @@ class JSONHandler:
         if fence:
             candidates.append(fence.group(1).strip())
 
-        # 2. 其次尝试提取数组（数组优先于对象，因为某些任务需要数组）
-        arr = self._balanced_extract(text, "[", "]")
-        if arr:
-            candidates.append(arr)
+        # 2. 智能判断根元素类型：优先匹配最外层的 { 或 [
+        # 去除所有空白字符后检查第一个非空白字符
+        stripped = text.strip()
+        if stripped:
+            # 找到第一个 { 或 [ 的位置
+            first_brace = stripped.find('{')
+            first_bracket = stripped.find('[')
 
-        # 3. 最后尝试提取对象
-        obj = self._balanced_extract(text, "{", "}")
-        if obj:
-            candidates.append(obj)
+            # 如果两者都存在，优先处理最早出现的（这通常是根元素）
+            if first_brace != -1 and first_bracket != -1:
+                if first_brace < first_bracket:
+                    # 根元素是对象
+                    obj = self._balanced_extract(text, "{", "}")
+                    if obj:
+                        candidates.append(obj)
+                else:
+                    # 根元素是数组
+                    arr = self._balanced_extract(text, "[", "]")
+                    if arr:
+                        candidates.append(arr)
+            elif first_brace != -1:
+                # 只有对象
+                obj = self._balanced_extract(text, "{", "}")
+                if obj:
+                    candidates.append(obj)
+            elif first_bracket != -1:
+                # 只有数组
+                arr = self._balanced_extract(text, "[", "]")
+                if arr:
+                    candidates.append(arr)
 
+        # 3. 兜底：如果上面都没匹配，尝试两者（向后兼容）
+        if not candidates:
+            arr = self._balanced_extract(text, "[", "]")
+            if arr:
+                candidates.append(arr)
+            obj = self._balanced_extract(text, "{", "}")
+            if obj:
+                candidates.append(obj)
+
+        # 4. 最后使用原始文本
         if not candidates:
             candidates.append(text)
+
         return candidates
 
     def _balanced_extract(self, text: str, left: str, right: str) -> Optional[str]:
