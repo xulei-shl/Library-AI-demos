@@ -9,7 +9,8 @@
       "Bash(pip:*)",
       "Bash(findstr:*)",
       "Bash(ls:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(sqlite3:*)"
     ],
     "deny": [],
     "ask": []

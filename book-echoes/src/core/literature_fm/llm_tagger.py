@@ -164,19 +164,20 @@ class LLMTagger:
             
         except Exception as e:
             logger.error(f"  ✗ 打标失败: {str(e)}")
-            
-            # 记录失败状态
+
+            # 记录失败状态 - 优先使用 book_title,其次用 douban_title
+            title = book.get('book_title') or book.get('douban_title', '')
             self.tag_manager.save_tags(
                 book_id=book['id'],
                 call_no=book.get('call_no', ''),
-                title=book.get('title', ''),
+                title=title,
                 tags_json='',
                 llm_model='',
                 llm_provider='',
                 llm_status='failed',
                 error_message=str(e)[:500]
             )
-            
+
             return False
     
     def _get_model_info(self) -> tuple:
@@ -276,40 +277,62 @@ class LLMTagger:
         dimensions = self.vocabulary.get('tag_dimensions', {})
         prompt_config = self.vocabulary.get('prompt_config', {})
         include_desc = prompt_config.get('include_descriptions', True)
-        
+
+        # 维度名称映射（用于生成标题）
+        dimension_names = {
+            'reading_context': '阅读情境 (Reading Context) - 此时此刻适合读什么？',
+            'reading_load': '阅读体感 (Reading Load) - 读起来累不累？',
+            'text_texture': '文本质感 (Text Texture) - 文字风格如何？',
+            'spatial_atmosphere': '时空氛围 (Spatial Atmosphere) - 场景与空间感',
+            'emotional_tone': '情绪基调 (Emotional Tone) - 情感色彩与氛围'
+        }
+
         sections = []
-        
+
         for dim_key, dim_data in dimensions.items():
-            section_lines = [f"### {dim_data['description']}"]
+            # 使用映射表或默认值生成标题
+            dim_title = dimension_names.get(dim_key, dim_key)
+            section_lines = [f"### {dim_title}"]
             section_lines.append("")
-            
+
             for candidate in dim_data.get('candidates', []):
                 label = candidate.get('label', '')
                 desc = candidate.get('description', '')
-                
+
                 if include_desc and desc:
                     section_lines.append(f"- **{label}**: {desc}")
                 else:
                     section_lines.append(f"- {label}")
-            
+
             sections.append("\n".join(section_lines))
-        
+
         return "\n\n".join(sections)
     
     def _parse_response(self, response: str) -> dict:
         """
         解析LLM响应
-        
+
         Args:
             response: LLM返回的JSON字符串或字典
-            
+
         Returns:
             dict: 解析后的标签数据
         """
-        # UnifiedLLMClient 已启用 json_repair，这里直接解析
+        # UnifiedLLMClient 已启用 json_repair，output_format: json
+        # 所以 response 通常是 JSON 字符串
         if isinstance(response, str):
-            return json.loads(response)
-        return response
+            try:
+                return json.loads(response)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON解析失败: {e}")
+                logger.debug(f"响应内容: {response[:500]}")
+                raise
+
+        # 兼容已解析的字典（某些配置下可能直接返回 dict）
+        if isinstance(response, dict):
+            return response
+
+        raise TypeError(f"不支持的响应类型: {type(response)}")
     
     def _validate_tags(self, tags_data: dict) -> bool:
         """

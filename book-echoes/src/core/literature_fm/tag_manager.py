@@ -176,7 +176,7 @@ class TagManager:
             cursor = conn.cursor()
             
             cursor.execute("""
-                SELECT b.id, b.title, b.author, b.call_no,
+                SELECT b.id, b.book_title, b.douban_author, b.call_no,
                        b.douban_summary, b.douban_rating, b.douban_pub_year
                 FROM books b
                 INNER JOIN literary_tags lt ON b.id = lt.book_id
