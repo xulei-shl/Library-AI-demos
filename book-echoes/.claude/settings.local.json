@@ -8,7 +8,8 @@
       "Bash(python:*)",
       "Bash(pip:*)",
       "Bash(findstr:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

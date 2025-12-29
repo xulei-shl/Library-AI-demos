@@ -40,7 +40,7 @@ src/core/LiteratureFM/              # 模块8核心目录
 └── db_init.py                    # 【新增】数据库表初始化脚本
 
 config/
-├── literature_LiteratureFM.yaml    # 【更新】新增llm_tagging配置节点
+├── literature_fm.yaml    # 【更新】新增llm_tagging配置节点
 ├── literary_tags_vocabulary.yaml # 【新增】标签词表配置
 └── llm.yaml                      # 【更新】新增literary_tagging任务
 

@@ -1,0 +1,165 @@
+# ============================================================================
+# 图书向量化配置文件
+# ============================================================================
+
+# 数据库配置
+database:
+  path: "F:\\Github\\Library-AI-demos\\book-echoes\\runtime\\database\\books_history.db"
+  table: "books"
+
+# 向量数据库配置
+vector_db:
+  type: "chromadb"
+  persist_directory: "runtime/vector_db/books"
+  collection_name: "books_collection"
+  distance_metric: "cosine"  # cosine / l2 / ip
+
+# Embedding 模型配置
+embedding:
+  provider: "SiliconFlow"
+  model: "Qwen/Qwen3-Embedding-8B"
+  api_key: "env:SiliconFlow_API_KEY"
+  base_url: "https://api.siliconflow.cn/v1"
+  dimensions: 4096  # text-embedding-3-large 的维度
+  batch_size: 50    # 每批处理数量
+  max_retries: 3    # 单次调用重试次数
+  timeout: 30       # 超时时间(秒)
+  retry_delay: 2    # 重试间隔(秒)
+
+# 数据过滤规则
+filters:
+  # 必填字段检查
+  required_fields:
+    - douban_summary
+    - douban_title
+    - douban_author
+    - douban_catalog
+  
+  # 是否启用评分过滤
+  enable_rating_filter: false
+  # 评分阈值(根据索书号首字母)，为了确保候选书目角度，适当较低评分阈值。
+  rating_thresholds:
+  #  B: 8.2
+  #  C: 7.5
+    D: 7.1
+    E: 7.4
+    F: 7.1
+    G: 7.3
+    H: 7.2
+    I: 7.3
+  #  J: 7.7
+  #  K: 8.0
+  #  N: 7.6
+    S: 7.4
+  #  T: 7.6
+    default: 7.5  # 其他分类默认阈值
+
+# 向量化文本构建
+text_construction:
+  # 文本模板
+  template: |
+    书名: {douban_title}
+    作者: {douban_author}
+    简介: {douban_summary}
+    {douban_summary}
+    目录: {douban_catalog}
+  
+  # 字段处理规则
+  max_catalog_length: 3000  # 目录最大长度,避免超过模型限制
+  summary_weight: 2         # 简介重复次数(加权)
+  empty_placeholder: "[无]" # 空字段占位符
+
+# 运行模式
+mode:
+  incremental: true         # 增量处理(处理 pending/failed/failed_final 状态)
+  skip_on_error: true       # 单本书失败是否跳过
+  final_retry: true         # 全部处理完后,对失败数据进行兜底重试
+  final_retry_count: 1      # 兜底重试次数
+  max_retry_count: 5        # 单本书最大重试次数(超过后不再自动重试)
+
+# Metadata 存储策略
+metadata:
+  # 存储到 ChromaDB 的元数据字段
+  fields:
+    - id
+    - douban_title
+    - douban_author
+    - call_no
+    - douban_rating
+    - douban_pub_year
+
+# 多子查询检索配置
+multi_query:
+  enabled: false               # 默认保持单查询模式
+  top_k_per_query: 15          # 每个子查询的候选数量
+  priorities:                  # 执行顺序
+    - primary
+    - tags
+    - insight
+    - books
+  min_results:                 # 关键查询至少返回结果数
+    primary: 5
+    tags: 5
+  max_queries_per_type:        # 控制成本，限定每类子查询数量
+    tags: 8
+    insight: 4
+    books: 5
+
+# 结果融合规则
+fusion:
+  weights:
+    max_similarity: 0.6
+    avg_similarity: 0.2
+    match_count: 0.2
+  final_top_k: 15
+
+# Reranker 配置
+reranker:
+  enabled: true
+  provider: "siliconflow"
+  model: "Qwen/Qwen3-Reranker-8B"
+  api_key: "env:SiliconFlow_API_KEY"
+  base_url: "https://api.siliconflow.cn/v1"
+  top_n: 20
+  timeout: 15
+
+# 精确匹配配置
+exact_match:
+  enabled: true
+  top_k: 10
+  match_fields:
+    - douban_title
+    - douban_summary
+  title_weight: 1.0
+  keyword_weight: 0.8
+  final_weight: 1.1
+
+# 日志配置
+logging:
+  level: "INFO"
+  progress_interval: 10     # 每处理N本书输出一次进度
+  save_failed_report: true  # 是否生成失败报告
+  failed_report_path: "runtime/logs/vectorization_failed_{timestamp}.json"
+
+# 结果输出配置
+output:
+  enabled: true                    # 是否启用文件输出
+  formats: ["markdown", "json"]    # 输出格式列表
+  base_directory: "runtime/outputs/retrieval"  # 输出基础目录
+  filename_template: "books_{mode}_{timestamp}"  # 文件名模板
+  include_timestamp: true          # 是否包含时间戳
+  timestamp_format: "%Y%m%d_%H%M%S"  # 时间戳格式
+  auto_create_directory: true     # 自动创建目录
+
+# Excel导出配置
+excel_export:
+  enabled: true
+  default_directory: "F:/Github/Library-AI-demos/book-echoes/runtime/outputs"
+  filename_template: "数据筛选结果_ISBN_API结果_{timestamp}"
+  timestamp_format: "%Y%m%d_%H%M%S"
+  auto_create_directory: true
+
+# 性能优化
+performance:
+  batch_commit_size: 100    # 每处理N本书提交一次 ChromaDB
+  enable_progress_bar: true # 是否显示进度条
