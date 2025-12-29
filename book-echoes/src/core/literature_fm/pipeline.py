@@ -259,10 +259,202 @@ class LiteratureFMPipeline:
             df = df.drop(columns=['tags_json'])
             
             return df
-            
+
         except Exception as e:
             logger.error(f"展开 tags_json 失败: {str(e)}")
             return df
+
+    def generate_theme_shelf(
+        self,
+        theme_text: str,
+        use_vector: bool = True,
+        vector_weight: float = 0.5,
+        randomness: float = 0.2,
+        min_confidence: float = 0.65,
+        final_top_k: int = 30,
+        output_dir: str = "runtime/outputs/theme_shelf",
+        config_path: str = "config/literature_fm_vector.yaml"
+    ) -> Dict:
+        """
+        生成情境主题书架
+
+        Args:
+            theme_text: 用户输入的情境主题（如 "冬日暖阳，窝在沙发里阅读"）
+            use_vector: 是否使用向量检索
+            vector_weight: 向量检索权重
+            randomness: 随机性因子（0-1）
+            min_confidence: 最小置信度
+            final_top_k: 最终输出数量
+            output_dir: 输出目录
+            config_path: 配置文件路径
+
+        Returns:
+            {
+                "success": True,
+                "theme": "冬日暖阳，窝在沙发里阅读",
+                "conditions": {...},
+                "books": [...],
+                "output_file": "output/主题书架_xxx.xlsx",
+                "stats": {...}
+            }
+        """
+        try:
+            logger.info("\n" + "="*80)
+            logger.info("模块8 - Phase 3: 情境主题书架生成")
+            logger.info("="*80 + "\n")
+
+            # 1. 初始化组件
+            from .theme_parser import ThemeParser
+            from .theme_searcher import TagSearcher
+            from .theme_merger import ThemeMerger
+            from .theme_deduplicator import ThemeDeduplicator
+            from .theme_exporter import ThemeExporter
+            from .db_init import init_recommendation_history_table
+
+            # 初始化历史表
+            init_recommendation_history_table()
+
+            theme_parser = ThemeParser()
+            tag_searcher = TagSearcher()
+            deduplicator = ThemeDeduplicator()
+            exporter = ThemeExporter(output_dir)
+
+            # 向量检索器（可选）
+            vector_searcher = None
+            if use_vector:
+                try:
+                    from .vector_searcher import VectorSearcher
+                    vector_searcher = VectorSearcher(config_path)
+                    logger.info("✓ 向量检索器初始化成功\n")
+                except Exception as e:
+                    logger.warning(f"✗ 向量检索器初始化失败: {str(e)}，将使用纯标签检索")
+                    use_vector = False
+
+            # 2. 主题解析
+            logger.info("【步骤1】主题解析...")
+            parsed = theme_parser.parse(theme_text)
+            conditions = parsed.get('conditions', {})
+            reason_text = parsed.get('reason', '')
+            logger.info(f"  解析结果: {conditions}")
+            logger.info(f"  解析理由: {reason_text[:100]}...\n")
+
+            # 3. 去重检查
+            logger.info("【步骤2】去重检查...")
+            excluded_ids = deduplicator.get_excluded_book_ids(theme_text, conditions)
+            logger.info(f"  需排除 {len(excluded_ids)} 本已推荐书目\n")
+
+            # 4. 双路召回
+            logger.info("【步骤3】双路召回...")
+            vector_results = []
+            tag_results = []
+
+            if use_vector and vector_searcher:
+                logger.info("  - 向量检索中...")
+                # 使用解析理由作为向量检索查询（理由包含更丰富的语义描述）
+                vector_query = reason_text if reason_text else theme_text
+                vector_results = vector_searcher.search(
+                    query_text=vector_query,
+                    top_k=50,
+                    min_confidence=min_confidence
+                )
+                vector_results = [r for r in vector_results if r['book_id'] not in excluded_ids]
+                logger.info(f"    -> {len(vector_results)} 本")
+
+            logger.info("  - 标签检索中...")
+            tag_results = tag_searcher.search(
+                conditions=conditions,
+                min_confidence=min_confidence,
+                randomness=randomness,
+                limit=50
+            )
+            tag_results = [r for r in tag_results if r.book_id not in excluded_ids]
+            logger.info(f"    -> {len(tag_results)} 本\n")
+
+            # 5. 结果融合
+            logger.info("【步骤4】结果融合...")
+            merger = ThemeMerger(vector_weight=vector_weight)
+            merged = merger.merge(vector_results, [
+                {'book_id': r.book_id, 'title': r.title, 'author': r.author,
+                 'call_no': r.call_no, 'tags_json': r.tags_json,
+                 'vector_score': 0, 'tag_score': r.tag_score, 'sources': ['tag']}
+                for r in tag_results
+            ] if tag_results else [])
+
+            # 合并向量结果
+            merged_dicts = merger.to_dict_list(merged)
+            for vr in vector_results:
+                if vr['book_id'] not in [m['book_id'] for m in merged_dicts]:
+                    merged_dicts.append({
+                        'book_id': vr['book_id'],
+                        'title': vr['title'],
+                        'author': vr['author'],
+                        'call_no': vr['call_no'],
+                        'tags_json': vr.get('tags_json', ''),
+                        'vector_score': vr['vector_score'],
+                        'tag_score': 0,
+                        'final_score': vr['vector_score'] * vector_weight,
+                        'sources': ['vector']
+                    })
+
+            # 再次排序
+            merged_dicts.sort(key=lambda x: x['final_score'], reverse=True)
+            final_books = merged_dicts[:final_top_k]
+
+            logger.info(f"  融合后共 {len(final_books)} 本\n")
+
+            # 6. 保存推荐记录
+            logger.info("【步骤5】保存推荐记录...")
+            book_ids = [b['book_id'] for b in final_books]
+            deduplicator.save_recommendation(
+                user_input=theme_text,
+                conditions=conditions,
+                book_ids=book_ids,
+                vector_weight=vector_weight,
+                randomness=randomness
+            )
+            logger.info(f"  已保存 {len(book_ids)} 本推荐记录\n")
+
+            # 7. 导出结果
+            logger.info("【步骤6】导出结果...")
+            output_file = exporter.export_excel(
+                results=final_books,
+                theme_text=theme_text,
+                conditions=conditions
+            )
+            logger.info(f"  -> {output_file}\n")
+
+            # 8. 输出统计
+            logger.info("\n" + "="*80)
+            logger.info("情境主题书架生成完成！")
+            logger.info(f"  - 主题: {theme_text}")
+            logger.info(f"  - 推荐数量: {len(final_books)}")
+            logger.info(f"  - 向量检索: {len(vector_results)} 本")
+            logger.info(f"  - 标签检索: {len(tag_results)} 本")
+            logger.info(f"  - 排除数量: {len(excluded_ids)} 本")
+            logger.info(f"  - 输出文件: {output_file}")
+            logger.info("="*80 + "\n")
+
+            return {
+                "success": True,
+                "theme": theme_text,
+                "conditions": conditions,
+                "reason": parsed.get('reason', ''),
+                "books": final_books,
+                "output_file": output_file,
+                "stats": {
+                    "vector_results": len(vector_results),
+                    "tag_results": len(tag_results),
+                    "excluded_count": len(excluded_ids),
+                    "final_count": len(final_books)
+                }
+            }
+
+        except Exception as e:
+            logger.error(f"主题书架生成失败: {str(e)}", exc_info=True)
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
 
 def main():

@@ -1,0 +1,42 @@
+# =============================================================================
+# 文学情境推荐向量检索配置
+# Module 8 - Phase 3: 情境主题书架生成
+# =============================================================================
+
+# 数据库配置（SQLite - 读取 literary_tags 表）
+database:
+  path: "runtime/database/books_history.db"
+  table: "literary_tags"
+
+# 向量数据库配置
+vector_db:
+  type: "chromadb"
+  persist_directory: "runtime/vector_db/literature_fm"
+  collection_name: "literature_fm_contexts"
+  distance_metric: "cosine"  # cosine / l2 / ip
+
+# Embedding 模型配置
+embedding:
+  provider: "SiliconFlow"
+  model: "Qwen/Qwen3-Embedding-8B"
+  api_key: "env:SiliconFlow_API_KEY"
+  base_url: "https://api.siliconflow.cn/v1"
+  dimensions: 4096
+  batch_size: 50
+  max_retries: 3
+  timeout: 30
+  retry_delay: 2
+
+# 检索策略默认值
+default:
+  use_vector: true
+  vector_weight: 0.5
+  randomness: 0.2
+  min_confidence: 0.80
+  top_k: 50
+  final_top_k: 30
+  similarity_threshold: 0.8
+
+# 输出配置
+output:
+  output_dir: "runtime/outputs/theme_shelf"

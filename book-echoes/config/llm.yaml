@@ -228,7 +228,7 @@ tasks:
     temperature: 0.4
     top_p: 0.9
     prompt:
-      type: file
+      type: md
       source: "prompts/无评分书籍筛选.md"
     
     retry:
@@ -280,6 +280,39 @@ tasks:
       enabled: true
       name: "文学情境标签生成"
       tags: ["book-echoes", "模块8", "文学标签"]
+      metadata:
+        project: "book-echoes"
+        module: "模块8"
+
+  # ----------------------------------------------------------------------------
+  # 任务: 文学情境主题解析 (literary_theme_parse)
+  # 逻辑位置: src/core/literature_fm/theme_parser.py
+  # ----------------------------------------------------------------------------
+  literary_theme_parse:
+    provider_type: text-small
+    temperature: 0.3
+    top_p: 0.9
+    prompt:
+      type: langfuse
+      langfuse_name: "literary_theme_parse"
+      fallback_file: "prompts/literary_theme_parse.md"
+
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+      jitter: true
+
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+
+    langfuse:
+      enabled: true
+      name: "文学情境主题解析"
+      tags: ["book-echoes", "模块8", "主题解析"]
       metadata:
         project: "book-echoes"
         module: "模块8"
