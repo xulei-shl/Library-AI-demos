@@ -58,7 +58,7 @@ fields_mapping:
 
 ```bash
 # 导入Excel文件（使用默认数据库配置）
-python src/tools/excel_import_with_version.py runtime/outputs/数据筛选结果_2023_20251214_092129_ISBN_API结果_20251215_091734.xlsx
+python src/tools/excel_import_with_version.py runtime/outputs/数据筛选结果_20251228_130710_ISBN_API结果_20251228_203237.xlsx
 
 # 指定数据库路径
 python src/tools/excel_import_with_version.py path/to/your/excel.xlsx --db-path runtime/outputs/custom.db

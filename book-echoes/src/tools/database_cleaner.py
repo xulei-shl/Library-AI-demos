@@ -126,7 +126,7 @@ class DatabaseCleaner:
             self.logger.error(f"数据库连接失败: {e}")
             return False
 
-    def get_table_schema(self, table_name: str) -> Dict[str, str]:
+    def get_table_schema(self, table_name: str) -> Tuple[Dict[str, str], str]:
         """
         获取表结构
 
@@ -134,13 +134,15 @@ class DatabaseCleaner:
             table_name: 表名
 
         Returns:
-            dict: 字段名到字段类型的映射
+            tuple: (字段名到字段类型的映射, 主键列名)
         """
         cursor = self.conn.cursor()
         cursor.execute(f"PRAGMA table_info({table_name})")
         columns = cursor.fetchall()
         schema = {col[1]: col[2] for col in columns}
-        return schema
+        # col[5] 是 pk 字段（1 表示是主键）
+        primary_key = next((col[1] for col in columns if col[5] == 1), '')
+        return schema, primary_key
 
     def get_all_books(self) -> List[sqlite3.Row]:
         """
@@ -215,10 +217,10 @@ class DatabaseCleaner:
     def clean_books_data(self):
         """清洗books表数据"""
         self.logger.info("开始清洗books表数据...")
-        
+
         # 获取表结构
-        schema = self.get_table_schema('books')
-        self.logger.info(f"books表结构: {len(schema)} 个字段")
+        schema, primary_key = self.get_table_schema('books')
+        self.logger.info(f"books表结构: {len(schema)} 个字段, 主键: {primary_key}")
         
         # 获取所有记录
         all_records = self.get_all_books()
@@ -260,13 +262,21 @@ class DatabaseCleaner:
             record_dict['barcode'] = cleaned_barcode
             
             cleaned_records.append(record_dict)
-        
+
         # 创建临时表
         cursor = self.conn.cursor()
         cursor.execute("DROP TABLE IF EXISTS books_temp")
-        
-        # 创建临时表结构
-        columns_sql = ", ".join([f"{col} {schema[col]}" for col in schema.keys()])
+
+        # 创建临时表结构（正确处理主键和AUTOINCREMENT）
+        column_defs = []
+        for col_name, col_type in schema.items():
+            if col_name == primary_key and col_type.upper() == 'INTEGER':
+                # 主键INTEGER列需要添加AUTOINCREMENT
+                column_defs.append(f"{col_name} {col_type} PRIMARY KEY AUTOINCREMENT")
+            else:
+                column_defs.append(f"{col_name} {col_type}")
+
+        columns_sql = ", ".join(column_defs)
         cursor.execute(f"CREATE TABLE books_temp ({columns_sql})")
         
         # 插入清洗后的数据
