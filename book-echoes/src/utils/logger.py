@@ -131,25 +131,33 @@ class LoggerManager:
         root_logger.addHandler(normal_log)
 
         # 错误日志文件处理器（按大小轮转）
+        # Windows 平台特殊处理：避免轮转时的文件占用冲突
         error_log = RotatingFileHandler(
             filename=os.path.join(logs_dir, "error.log"),
             maxBytes=max_file_size,
             backupCount=backup_count,
             encoding="utf-8",
+            delay=True,  # 延迟打开文件，避免启动时冲突
         )
         error_log.setLevel(logging.ERROR)
         error_log.setFormatter(ChineseFormatter())
+        # Windows 下轮转失败时静默处理，避免刷屏
+        error_log.handleError = lambda record: None
         root_logger.addHandler(error_log)
 
         # 调试日志文件处理器（仅调试级别）
+        # Windows 平台特殊处理：避免轮转时的文件占用冲突
         debug_log = RotatingFileHandler(
             filename=os.path.join(logs_dir, "debug.log"),
             maxBytes=max_file_size,
             backupCount=backup_count,
             encoding="utf-8",
+            delay=True,  # 延迟打开文件，避免启动时冲突
         )
         debug_log.setLevel(logging.DEBUG)
         debug_log.setFormatter(ChineseFormatter())
+        # Windows 下轮转失败时静默处理，避免刷屏
+        debug_log.handleError = lambda record: None
         root_logger.addHandler(debug_log)
 
         # 避免日志向上传播

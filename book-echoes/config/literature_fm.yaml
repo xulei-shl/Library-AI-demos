@@ -128,3 +128,18 @@ llm_tagging:
     output_dir: "runtime/outputs/literary_tagging"
     # 文件名模板
     filename_template: "文学标签结果_{timestamp}.xlsx"
+
+# 文学策划主题生成配置（Phase 2.5）
+theme_generation:
+  # 是否启用主题生成功能
+  enabled: true
+
+  # 默认生成数量
+  default_count: 5
+
+  # 输出配置
+  output:
+    # 输出目录
+    output_dir: "runtime/outputs/literary_theme_generation"
+    # 文件名模板
+    filename_template: "themes_{timestamp}_{direction}.json"

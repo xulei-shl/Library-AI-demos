@@ -38,7 +38,9 @@ class VectorSearcher:
         self,
         query_text: str,
         top_k: int = 50,
-        min_confidence: float = 0.65
+        min_confidence: float = 0.65,
+        query_expansion: bool = True,
+        dynamic_threshold: bool = True
     ) -> List[Dict]:
         """
         向量语义检索
@@ -46,35 +48,80 @@ class VectorSearcher:
         Args:
             query_text: 查询文本（情境主题）
             top_k: 返回结果数量
-            min_confidence: 最小置信度
+            min_confidence: 最小置信度（当 dynamic_threshold=False 时使用）
+            query_expansion: 是否启用查询扩展（多路查询）
+            dynamic_threshold: 是否启用动态阈值（根据 Top5 平均值自动调整）
 
         Returns:
             检索结果列表
         """
         try:
-            # 1. 查询文本向量化
-            query_vector = self.embedding_client.get_embedding(query_text)
+            # 1. 预处理查询文本
+            processed_query = self._preprocess_query(query_text)
 
-            # 2. ChromaDB 检索
-            results = self.vector_store.search(
-                query_embedding=query_vector,
-                top_k=top_k
-            )
+            # 2. 查询扩展（生成多个查询变体）
+            queries = [processed_query]
+            if query_expansion:
+                queries = self._expand_query(processed_query)
 
-            # 3. 补充书籍完整信息
+            # 3. 多路查询与结果融合
+            all_results = {}
+            for i, query in enumerate(queries):
+                query_vector = self.embedding_client.get_embedding(query)
+
+                # ChromaDB 检索
+                results = self.vector_store.search(
+                    query_embedding=query_vector,
+                    top_k=top_k
+                )
+
+                # 融合结果（取最高相似度）
+                for result in results:
+                    book_id = result['metadata'].get('id')
+                    if not book_id:
+                        continue
+
+                    similarity = 1 - result['distance']
+                    # 保留该书的最高相似度
+                    if book_id not in all_results or similarity > all_results[book_id]['distance']:
+                        all_results[book_id] = {
+                            'metadata': result['metadata'],
+                            'distance': result['distance'],
+                            'embedding_id': result['embedding_id']
+                        }
+
+            # 4. 补充书籍完整信息
             enriched = []
-            for result in results:
-                book_id = result['metadata'].get('id')
-                if not book_id:
-                    continue
 
-                book_info = self.db_reader.get_book_by_id(book_id)
-                if not book_info:
-                    continue
+            # 计算相似度并确定阈值
+            raw_similarities = [(book_id, 1 - result['distance']) for book_id, result in all_results.items()]
 
-                # 计算相似度（distance 转相似度）
+            # 动态阈值计算
+            if dynamic_threshold and raw_similarities:
+                raw_similarities.sort(key=lambda x: x[1], reverse=True)
+                top_similarities = raw_similarities[:5]
+
+                # 取 Top5 平均值作为基准
+                avg_similarity = sum(s for _, s in top_similarities) / len(top_similarities)
+                # 阈值 = Top5 平均值 * 0.85（适当放宽）
+                actual_threshold = max(avg_similarity * 0.85, min_confidence * 0.7)
+
+                logger.info(f"原始相似度 Top5: {[(f'book_{bid}', f'{s:.4f}') for bid, s in top_similarities]}")
+                logger.info(f"动态阈值: {actual_threshold:.4f} (Top5平均: {avg_similarity:.4f}, 固定阈值: {min_confidence})")
+            else:
+                actual_threshold = min_confidence
+                if raw_similarities:
+                    raw_similarities.sort(key=lambda x: x[1], reverse=True)
+                    logger.info(f"原始相似度 Top5: {[(f'book_{bid}', f'{s:.4f}') for bid, s in raw_similarities[:5]]}")
+                    logger.info(f"使用固定阈值: {actual_threshold:.4f}")
+
+            for book_id, result in all_results.items():
                 similarity = 1 - result['distance']
-                if similarity >= min_confidence:
+                if similarity >= actual_threshold:
+                    book_info = self.db_reader.get_book_by_id(book_id)
+                    if not book_info:
+                        continue
+
                     enriched.append({
                         'book_id': book_id,
                         'title': book_info.get('title', ''),
@@ -87,12 +134,84 @@ class VectorSearcher:
                         'source': 'vector'
                     })
 
+            # 按相似度排序
+            enriched.sort(key=lambda x: x['vector_score'], reverse=True)
+            enriched = enriched[:top_k]
+
             logger.info(f"向量检索完成: 查询={query_text[:30]}..., 结果数={len(enriched)}")
             return enriched
 
         except Exception as e:
             logger.error(f"向量检索失败: {str(e)}")
             return []
+
+    def _preprocess_query(self, query_text: str) -> str:
+        """
+        预处理查询文本
+
+        Args:
+            query_text: 原始查询文本
+
+        Returns:
+            处理后的查询文本
+        """
+        # 去除 '解析理由：' 等前缀
+        prefixes_to_remove = [
+            '解析理由：',
+            '解析理由:',
+            '理由：',
+            '理由:',
+        ]
+        for prefix in prefixes_to_remove:
+            if query_text.startswith(prefix):
+                query_text = query_text[len(prefix):].strip()
+
+        # 去除开头和结尾的引号
+        query_text = query_text.strip('"\'""''')
+
+        return query_text.strip()
+
+    def _expand_query(self, query: str) -> List[str]:
+        """
+        查询扩展：生成多个查询变体
+
+        Args:
+            query: 预处理后的查询文本
+
+        Returns:
+            查询变体列表
+        """
+        queries = [query]
+
+        # 尝试提取核心描述（去除"暗示"、"体现"等连接词后的内容）
+        import re
+
+        # 匹配 "暗示了...，适合..." 模式
+        pattern1 = r'暗示了(.{2,50}?)[,，。]?适合(.{2,50})'
+        match1 = re.search(pattern1, query)
+        if match1:
+            context = match1.group(1).strip()
+            feeling = match1.group(2).strip()
+            queries.append(f"{context}，{feeling}")
+            queries.append(context)
+            queries.append(feeling)
+
+        # 匹配 "用户描述的'...'" 模式
+        pattern2 = r"用户描述的['\"](.+?)['\"]"
+        match2 = re.search(pattern2, query)
+        if match2:
+            user_desc = match2.group(1).strip()
+            queries.append(user_desc)
+
+        # 去重
+        seen = set()
+        unique_queries = []
+        for q in queries:
+            if q and q not in seen:
+                seen.add(q)
+                unique_queries.append(q)
+
+        return unique_queries
 
     def build_index(
         self,

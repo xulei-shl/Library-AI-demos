@@ -18,7 +18,21 @@
 api_providers:
   # 文本生成模型服务商配置
   # RetryManager 会根据 primary -> secondary 的顺序进行故障转移
-  text:
+  text-gemini-qwen:
+    primary:
+      name: "oneapi-gemini"
+      api_key: env:ONEAPI_API_KEY
+      base_url: "http://47.103.50.106:3000/v1"
+      model: "gemini-2.5-pro"
+      timeout_seconds: 120  
+    secondary:
+      name: "oneapi-qwen3"
+      api_key: env:ONEAPI_API_KEY
+      base_url: "http://47.103.50.106:3000/v1"
+      model: "qwen3-max"
+      timeout_seconds: 120     
+
+  text-qwen-gpt:
     primary:
       name: "oneapi-qwen3"
       api_key: env:ONEAPI_API_KEY
@@ -52,7 +66,7 @@ tasks:
   # 逻辑位置: src/core/recommendation/executor.py -> initial_review
   # ----------------------------------------------------------------------------
   theme_initial:
-    provider_type: text
+    provider_type: text-gemini-qwen
     temperature: 0.45
     top_p: 0.9
     prompt:
@@ -96,7 +110,7 @@ tasks:
   # 逻辑位置: src/core/recommendation/executor.py -> final_review
   # ----------------------------------------------------------------------------
   theme_final:
-    provider_type: text
+    provider_type: text-gemini-qwen
     temperature: 0.35
     top_p: 0.85
     prompt:
@@ -133,7 +147,7 @@ tasks:
   # 逻辑位置: src/core/recommendation/executor.py -> theme_runoff
   # ----------------------------------------------------------------------------
   theme_runoff:
-    provider_type: text
+    provider_type: text-gemini-qwen
     temperature: 0.40
     top_p: 0.9
     prompt:
@@ -168,7 +182,7 @@ tasks:
   # 逻辑位置: src/core/recommendation/executor.py -> 锦标赛模式相关逻辑
   # ----------------------------------------------------------------------------
   theme_semifinal:
-    provider_type: text
+    provider_type: text-gemini-qwen
     temperature: 0.35
     top_p: 0.85
     prompt:
@@ -197,7 +211,7 @@ tasks:
   # 逻辑位置: src/core/subject_bibliography/processor.py
   # ----------------------------------------------------------------------------
   network_article_initial_review:
-    provider_type: text
+    provider_type: text-gemini-qwen
     temperature: 0.3
     top_p: 0.8
     prompt:
@@ -224,7 +238,7 @@ tasks:
   # 逻辑位置: src/core/new_sleeping/rating_filter.py
   # ----------------------------------------------------------------------------
   no_rating_book_filter:
-    provider_type: text
+    provider_type: text-gemini-qwen
     temperature: 0.4
     top_p: 0.9
     prompt:
@@ -280,6 +294,39 @@ tasks:
       enabled: true
       name: "文学情境标签生成"
       tags: ["book-echoes", "模块8", "文学标签"]
+      metadata:
+        project: "book-echoes"
+        module: "模块8"
+
+  # ----------------------------------------------------------------------------
+  # 任务: 文学策划主题生成 (literary_theme_generation)
+  # 逻辑位置: src/core/literature_fm/theme_generator.py
+  # ----------------------------------------------------------------------------
+  literary_theme_generation:
+    provider_type: text-gemini-qwen
+    temperature: 0.7          # 较高温度增加创意性
+    top_p: 0.95
+    prompt:
+      type: langfuse
+      langfuse_name: "literary_theme_generation"
+      fallback_file: "prompts/literary_theme_generation.md"
+
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+      jitter: true
+
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+
+    langfuse:
+      enabled: true
+      name: "literary_theme_generation"
+      tags: ["book-echoes", "模块8", "文学主题生成"]
       metadata:
         project: "book-echoes"
         module: "模块8"

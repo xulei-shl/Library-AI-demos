@@ -9,9 +9,14 @@
 # -----------------------------------------------------------------------------
 tag_dimensions:
   
-  # 维度1: 阅读情境 (When/State) - 此时此刻适合读什么？
+# =============================================================================
+# 文学情境标签词表 (Literary Tags Vocabulary v3.0 - Lifestyle Optimized)
+# =============================================================================
+
+tag_dimensions:
+  # 维度1: 阅读情境 (Reading Context) - 此时此刻适合读什么？
+  # 包含物理时间与心理状态
   reading_context:
-    description: "适合阅读的时间场景或读者的心理状态"
     candidates:
       - label: "暮色四合时"
         description: "黄昏或夜晚，光线暧昧，适合感性、沉思或怀旧的氛围"
@@ -20,32 +25,34 @@ tag_dimensions:
       - label: "午后慵懒"
         description: "阳光充足，轻松惬意，无需过度用脑，适合消遣"
       - label: "碎片隙间"
-        description: "通勤、等待或如厕时，篇幅短小、结构松散或随时可停"
-      - label: "精力充沛"
-        description: "精神集中时，适合挑战复杂结构、大部头或高密度文本"
+        description: "通勤、地铁、等待时，篇幅短小、结构松散，随时可停"
+      - label: "正念深读"
+        description: "精神高度集中，渴望与伟大的灵魂对话，进行深度智力挑战"
       - label: "雨天窗前"
         description: "封闭的阴雨空间，适合忧郁、细腻或情绪化的文字"
       - label: "旅途之中"
-        description: "在路上，适合异域风情、公路小说或冒险叙事"
+        description: "在路上，适合阅读异域风情、公路小说或与移动感契合的叙事"
       - label: "枕边安神"
-        description: "睡前阅读，节奏舒缓，无强烈刺激，有助于平复心境"
+        description: "助眠读物，节奏舒缓，无强烈刺激，有助于平复心境"
+      - label: "精神出走"
+        description: "现实压力大，渴望通过阅读逃离当下，进入异域或他人的生活（对应“精神离职”）"
+      - label: "情绪急救"
+        description: "处于失恋、焦虑或崩溃边缘，急需通过阅读宣泄情绪或获得抚慰"
 
-  # 维度2: 阅读体感 (Reading Load/Density) - 读起来累不累？
+  # 维度2: 阅读体感 (Reading Load) - 读起来累不累？
   reading_load:
-    description: "阅读的难度、信息密度和流畅度"
     candidates:
       - label: "酣畅易读"
-        description: "Page-turner，叙事流畅，情节驱动，吸引力强，阅读阻力极小"
+        description: "叙事流畅，情节抓人，阅读阻力极小，像看电影一样"
       - label: "需正襟危坐"
-        description: "信息密度大，哲学性强，结构复杂或语言晦涩，需要高度专注和耐心"
+        description: "信息密度大，语言晦涩或结构复杂，需要调动全部脑力"
       - label: "细水长流"
-        description: "Slow burn，节奏缓慢，生活流，适合每天读一点，不需要急于知道结局"
+        description: "节奏缓慢，生活流，适合慢慢品味，不需要急于知道结局"
       - label: "随时可停"
-        description: "单元剧、短篇集、随笔或语录，结构独立，没有连贯的叙事压力"
+        description: "单元剧、短篇集、随笔，没有连贯的叙事压力"
 
-  # 维度3: 文本质感 (Text Texture/Style) - 文字风格是什么样的？
+  # 维度3: 文本质感 (Text Texture) - 文字风格与感官体验
   text_texture:
-    description: "文本的语言风格、修辞特征和叙事手法"
     candidates:
       - label: "诗意流动"
         description: "语言优美，注重修辞，富有韵律感，散文诗般的体验"
@@ -58,15 +65,14 @@ tag_dimensions:
       - label: "史诗宏大"
         description: "多线索，跨度大，结构如建筑般复杂，气势恢弘"
       - label: "细腻工笔"
-        description: "细节堆叠，感官描写丰富，情感绵密，对生活细节的极致描摹"
+        description: "高饱和度描写，强调视觉、嗅觉、触觉的沉浸感（对应“碳水文学”的质感）"
       - label: "极简白描"
-        description: "海明威式风格，对话驱动，留白多，依靠潜台词"
+        description: "对话驱动，留白多，依靠潜台词，干脆利落"
       - label: "先锋实验"
         description: "形式独特，打破常规叙事逻辑，挑战阅读习惯"
 
-  # 维度4: 时空氛围 (Spatial Atmosphere/Where) - 故事发生在哪里？
+  # 维度4: 时空氛围 (Spatial Atmosphere) - 物理空间与心理空间
   spatial_atmosphere:
-    description: "故事发生的空间场景和整体氛围感"
     candidates:
       - label: "都市孤独"
         description: "现代都市背景，水泥森林，个体的疏离与原子化"
@@ -79,20 +85,21 @@ tag_dimensions:
       - label: "虚构奇境"
         description: "架空世界，幻想，超现实空间，与现实物理法则不同"
       - label: "庭院深深"
-        description: "封闭的家庭内部，室内剧，家族纠葛，人际关系的微观政治"
+        description: "封闭的家庭内部，家族纠葛，人际关系的微观政治"
       - label: "荒野自然"
-        description: "大自然，无人区，生存挑战，强调自然的野性与人的渺小"
+        description: "大自然，无人区，生存挑战，强调自然的野性"
       - label: "边缘地带"
-        description: "贫民窟、精神病院、犯罪现场等社会边缘角落，非主流视角"
+        description: "贫民窟、精神病院、犯罪现场等社会角落"
+      - label: "私密避难所"
+        description: "封闭、安全、温暖的小空间（如书房、被窝），给人以强烈的包裹感（对应“安全感”）"
 
-  # 维度5: 情绪基调 (Emotional Tone/Feeling) - 读完什么感觉？
+  # 维度5: 情绪基调 (Emotional Tone) - 读完后的心理药效
   emotional_tone:
-    description: "作品的主导情绪色彩"
     candidates:
       - label: "忧郁沉思"
         description: "悲伤、惆怅、孤独、对逝去的追忆"
       - label: "温暖治愈"
-        description: "温馨、感动、充满希望、抚慰心灵"
+        description: "温馨、松弛、充满希望、像拥抱一样的抚慰感"
       - label: "激昂振奋"
         description: "热血、抗争、理想主义、鼓舞人心"
       - label: "荒诞讽刺"
@@ -104,8 +111,9 @@ tag_dimensions:
       - label: "浪漫柔情"
         description: "唯美、爱情、感性、柔和"
       - label: "冷酷残酷"
-        description: "直面人性之恶，社会现实的冰冷，令人窒息或战栗"
-
+        description: "直面人性之恶，社会现实的冰冷，令人窒息"
+      - label: "自由反叛"
+        description: "挑战世俗规则，追求自由，特立独行，带有一种宣泄的爽感"
 # -----------------------------------------------------------------------------
 # Prompt构建策略
 # -----------------------------------------------------------------------------
