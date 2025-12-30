@@ -6,7 +6,8 @@
 import json
 import os
 import time
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 from pathlib import Path
 
 import httpx
@@ -234,20 +235,25 @@ class VectorSearcher:
             documents = []
 
             for book in books:
-                # 1. 构建情境描述文本
-                doc = self._build_context_text(book.get('tags_json', ''))
+                # 1. 构建情境描述文本和 Metadata
+                doc, metadata = self._build_context_text(
+                    book_id=book.get('book_id') or book.get('id'),
+                    call_no=book.get('call_no', ''),
+                    tags_json=book.get('tags_json', ''),
+                    douban_title=book.get('douban_title', ''),
+                    douban_subtitle=book.get('douban_subtitle', ''),
+                    douban_author=book.get('douban_author', ''),
+                    douban_summary=book.get('douban_summary', ''),
+                    douban_author_intro=book.get('douban_author_intro', ''),
+                    douban_catalog=book.get('douban_catalog', '')
+                )
 
                 # 2. 生成向量
                 embedding = self.embedding_client.get_embedding(doc)
 
                 # 3. 收集数据
                 embeddings.append(embedding)
-                metadatas.append({
-                    'id': book['id'],
-                    'title': book.get('title', ''),
-                    'author': book.get('author', ''),
-                    'call_no': book.get('call_no', '')
-                })
+                metadatas.append(metadata)
                 documents.append(doc)
 
                 # 批次处理
@@ -279,60 +285,109 @@ class VectorSearcher:
 
     def _build_context_text(
         self,
-        tags_json: str = '',
+        book_id: int,
+        call_no: str,
+        tags_json: str,
         douban_title: str = '',
+        douban_subtitle: str = '',
+        douban_author: str = '',
         douban_summary: str = '',
+        douban_author_intro: str = '',
         douban_catalog: str = ''
-    ) -> str:
+    ) -> Tuple[str, dict]:
         """
-        基于标签和豆瓣信息构建情境描述文本
+        构建语义索引文本和 Metadata
+
+        字段加权策略:
+        - 高权重 (1.5): tags_json.reasoning (重复2次)、各维度标签
+        - 中权重 (1.0): douban_summary (截断500)、书名+副标题+作者
+        - 低权重 (0.5): douban_author_intro (截断200)、douban_catalog (截断300)
 
         Args:
+            book_id: 书籍ID
+            call_no: 索书号
             tags_json: 标签 JSON 字符串
             douban_title: 豆瓣书名
+            douban_subtitle: 豆瓣副标题
+            douban_author: 豆瓣作者
             douban_summary: 豆瓣内容简介
+            douban_author_intro: 豆瓣作者简介
             douban_catalog: 豆瓣目录
 
         Returns:
-            情境描述文本
+            (context_text: str, metadata: dict)
         """
         parts = []
 
-        # 1. 添加豆瓣书名（如果有）
-        if douban_title:
-            parts.append(f"书名：{douban_title.strip()}")
+        # 解析 tags_json
+        try:
+            tags = json.loads(tags_json) if tags_json else {}
+        except json.JSONDecodeError:
+            tags = {}
 
-        # 2. 添加标签信息
-        if tags_json:
-            try:
-                tags = json.loads(tags_json)
-                tag_parts = []
-                for dim, label_list in tags.items():
-                    if label_list:
-                        if isinstance(label_list, list):
-                            tag_parts.append(f"{dim}：{'、'.join(label_list)}")
-                        else:
-                            tag_parts.append(f"{dim}：{label_list}")
-                if tag_parts:
-                    parts.append("阅读情境标签：" + "；".join(tag_parts))
-            except (json.JSONDecodeError, TypeError):
-                pass
+        reasoning = tags.get('reasoning', '')
 
-        # 3. 添加豆瓣简介
+        # 高权重 (1.5) - reasoning 重复 2 次
+        if reasoning:
+            parts.extend([reasoning, reasoning])
+
+        # 高权重 (1.5) - 标签（所有维度）
+        tag_parts = []
+        for dim in ['reading_context', 'reading_load', 'text_texture',
+                    'spatial_atmosphere', 'emotional_tone']:
+            values = tags.get(dim, [])
+            if values:
+                tag_parts.append(f"{dim}:{'、'.join(values)}")
+        if tag_parts:
+            parts.append("；".join(tag_parts))
+
+        # 中权重 (1.0) - 摘要（截断500）
         if douban_summary:
-            summary = douban_summary.strip()
-            parts.append(f"内容简介：{summary}")
+            summary = douban_summary[:500]
+            if len(douban_summary) > 500:
+                summary += "..."
+            parts.append(f"简介:{summary}")
 
-        # 4. 添加豆瓣目录（限制长度）
+        # 中权重 (1.0) - 书名+副标题+作者
+        title_info = " ".join(filter(None, [douban_title, douban_subtitle, douban_author]))
+        if title_info:
+            parts.append(f"书作:{title_info}")
+
+        # 低权重 (0.5) - 作者简介（截断200）
+        if douban_author_intro:
+            author_intro = douban_author_intro[:200]
+            if len(douban_author_intro) > 200:
+                author_intro += "..."
+            parts.append(f"作者:{author_intro}")
+
+        # 低权重 (0.5) - 目录（截断300）
         if douban_catalog:
-            catalog = douban_catalog.strip()
-            if len(catalog) > 300:
-                catalog = catalog[:300] + "..."
-            parts.append(f"目录：{catalog}")
+            catalog = douban_catalog[:300]
+            if len(douban_catalog) > 300:
+                catalog += "..."
+            parts.append(f"目录:{catalog}")
 
-        if parts:
-            return "；".join(parts)
-        return "这是一本文学作品，适合一般阅读。"
+        # 组合文本
+        context_text = "\n\n".join(parts) if parts else "这是一本文学作品，适合一般阅读。"
+
+        # 构建 Metadata
+        metadata = {
+            'id': book_id,
+            'title': (douban_title or '')[:100],
+            'author': (douban_author or '')[:100],
+            'call_no': call_no or '',
+            'reading_context': ','.join(tags.get('reading_context', [])),
+            'reading_load': ','.join(tags.get('reading_load', [])),
+            'text_texture': ','.join(tags.get('text_texture', [])),
+            'spatial_atmosphere': ','.join(tags.get('spatial_atmosphere', [])),
+            'emotional_tone': ','.join(tags.get('emotional_tone', [])),
+            'vector_model': self.config['embedding']['model'],
+            'vector_dim': self.config['embedding'].get('dimensions', 4096),
+            'embedding_date': datetime.now().isoformat(),
+            'data_version': 'v2.0'
+        }
+
+        return context_text, metadata
 
     def _load_config(self, config_path: str) -> Dict:
         """加载配置"""

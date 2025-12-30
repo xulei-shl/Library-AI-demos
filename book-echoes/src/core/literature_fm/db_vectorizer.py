@@ -144,7 +144,10 @@ def vectorize_database(
                 lt.title,
                 lt.tags_json,
                 b.douban_title,
+                b.douban_subtitle,
+                b.douban_author,
                 b.douban_summary,
+                b.douban_author_intro,
                 b.douban_catalog,
                 lt.embedding_status
             FROM literary_tags lt
@@ -174,22 +177,22 @@ def vectorize_database(
                     continue
 
                 # 生成向量并添加到 ChromaDB
-                doc = vector_searcher._build_context_text(
+                doc, metadata = vector_searcher._build_context_text(
+                    book_id=book['book_id'],
+                    call_no=book.get('call_no', ''),
                     tags_json=book.get('tags_json', ''),
                     douban_title=book.get('douban_title', ''),
+                    douban_subtitle=book.get('douban_subtitle', ''),
+                    douban_author=book.get('douban_author', ''),
                     douban_summary=book.get('douban_summary', ''),
+                    douban_author_intro=book.get('douban_author_intro', ''),
                     douban_catalog=book.get('douban_catalog', '')
                 )
                 embedding = vector_searcher.embedding_client.get_embedding(doc)
 
                 embedding_id = vector_searcher.vector_store.add(
                     embedding=embedding,
-                    metadata={
-                        'id': book['book_id'],
-                        'title': book.get('title', ''),
-                        'author': '',
-                        'call_no': book.get('call_no', '')
-                    },
+                    metadata=metadata,
                     document=doc
                 )
 
@@ -218,6 +221,57 @@ def vectorize_database(
     logger.info("="*80 + "\n")
 
     return stats
+
+
+def clear_vector_collection(
+    db_path: str = "runtime/database/books_history.db",
+    config_path: str = "config/literature_fm_vector.yaml"
+) -> bool:
+    """
+    清空向量集合（破坏性操作）
+    用于数据结构重大变更时的重建
+
+    Args:
+        db_path: 数据库路径
+        config_path: 向量配置文件路径
+
+    Returns:
+        bool: 是否成功
+    """
+    import shutil
+    from pathlib import Path
+    import yaml
+
+    try:
+        # 加载配置
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+
+        persist_dir = Path(config['vector_db']['persist_directory'])
+
+        # 删除向量数据库目录
+        if persist_dir.exists():
+            shutil.rmtree(persist_dir)
+            logger.info(f"已删除向量数据库目录: {persist_dir}")
+
+        # 重置数据库状态
+        conn = sqlite3.connect(db_path)
+        conn.execute("""
+            UPDATE literary_tags
+            SET embedding_status = NULL,
+                embedding_id = NULL,
+                embedding_date = NULL
+            WHERE embedding_status = 'completed'
+        """)
+        conn.commit()
+        conn.close()
+
+        logger.info("已重置向量化状态")
+        return True
+
+    except Exception as e:
+        logger.error(f"清空向量集合失败: {e}")
+        return False
 
 
 def get_vectorize_status(
@@ -267,10 +321,18 @@ def main():
     parser.add_argument('--batch-size', type=int, default=50, help='每批处理数量')
     parser.add_argument('--max', type=int, default=0, help='最大处理数量（0表示全部）')
     parser.add_argument('--status', action='store_true', help='查看向量化状态')
+    parser.add_argument('--clear', action='store_true', help='清空向量数据库（破坏性操作）')
+    parser.add_argument('--confirm-clear', type=str, default='',
+                       help='确认清空操作（需输入 "YES_I_CONFIRM"）')
 
     args = parser.parse_args()
 
-    if args.status:
+    if args.clear:
+        if args.confirm_clear == "YES_I_CONFIRM":
+            clear_vector_collection()
+        else:
+            logger.error("清空操作需要确认: --confirm-clear YES_I_CONFIRM")
+    elif args.status:
         status = get_vectorize_status()
         logger.info("="*60)
         logger.info("向量化状态")

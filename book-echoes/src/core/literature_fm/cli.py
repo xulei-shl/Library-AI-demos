@@ -260,18 +260,61 @@ class LiteratureFMCLI:
 
     def _cmd_vectorize(self):
         """数据库向量化命令"""
-        from .db_vectorizer import vectorize_database
+        from src.core.literature_fm.db_vectorizer import (
+            vectorize_database, get_vectorize_status, clear_vector_collection
+        )
 
         print("\n【数据库向量化】")
-        confirm = input("确认开始向量化? [y/N]: ").strip().lower()
+        print("1. 查看向量化状态")
+        print("2. 清空旧数据（破坏性操作）")
+        print("3. 重新向量化")
 
-        if confirm == 'y':
-            stats = vectorize_database()
-            print(f"\n✓ 向量化完成")
-            print(f"  - 成功: {stats['success']}")
-            print(f"  - 失败: {stats['failed']}")
+        choice = input("\n请选择 [1-3]: ").strip()
+
+        if choice == '1':
+            status = get_vectorize_status()
+            print("\n" + "="*50)
+            print("向量化状态")
+            print("="*50)
+            print(f"  已打标总数: {status['total_tagged']}")
+            print(f"  已向量化: {status['vectorized']}")
+            print(f"  待向量化: {status['pending']}")
+            print(f"  失败: {status['failed']}")
+            print(f"  进度: {status['progress']}%")
+            print("="*50)
+
+        elif choice == '2':
+            print("\n【清空向量数据库】")
+            print("⚠️  警告：此操作将删除所有向量数据，不可恢复！")
+            confirm = input("\n确认清空? 请输入 'YES_I_CONFIRM': ").strip()
+
+            if confirm == "YES_I_CONFIRM":
+                if clear_vector_collection():
+                    print("\n✓ 向量数据库已清空")
+                else:
+                    print("\n✗ 清空失败，请查看日志")
+            else:
+                print("已取消")
+
+        elif choice == '3':
+            print("\n【重新向量化】")
+            batch_input = input("批次大小 (默认50): ").strip()
+            batch_size = int(batch_input) if batch_input.isdigit() else 50
+
+            confirm = input(f"\n确认开始向量化 (批次={batch_size})? [y/N]: ").strip().lower()
+
+            if confirm == 'y':
+                stats = vectorize_database(batch_size=batch_size)
+                print(f"\n✓ 向量化完成")
+                print(f"  - 总处理: {stats['total']} 本")
+                print(f"  - 成功: {stats['success']}")
+                print(f"  - 失败: {stats['failed']}")
+                print(f"  - 跳过: {stats['skipped']}")
+            else:
+                print("已取消")
+
         else:
-            print("已取消")
+            print("✗ 无效选择")
 
 
 def main():
