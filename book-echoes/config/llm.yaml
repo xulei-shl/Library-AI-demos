@@ -275,8 +275,8 @@ tasks:
     top_p: 0.9
     prompt:
       type: langfuse
-      langfuse_name: "literary_tagging"
-      fallback_file: "prompts/literary_tagging.md"
+      langfuse_name: "literary_tagging"  # Langfuse 平台上的 prompt 名称
+      fallback: "prompts/literary_tagging.md"  # 回退到本地 md
 
     retry:
       max_retries: 3
@@ -292,7 +292,7 @@ tasks:
 
     langfuse:
       enabled: true
-      name: "文学情境标签生成"
+      name: "literary_tagging"
       tags: ["book-echoes", "模块8", "文学标签"]
       metadata:
         project: "book-echoes"
@@ -309,7 +309,7 @@ tasks:
     prompt:
       type: langfuse
       langfuse_name: "literary_theme_generation"
-      fallback_file: "prompts/literary_theme_generation.md"
+      fallback: "prompts/literary_theme_generation.md"
 
     retry:
       max_retries: 3
@@ -342,7 +342,7 @@ tasks:
     prompt:
       type: langfuse
       langfuse_name: "literary_theme_parse"
-      fallback_file: "prompts/literary_theme_parse.md"
+      fallback: "prompts/literary_theme_parse.md"
 
     retry:
       max_retries: 3

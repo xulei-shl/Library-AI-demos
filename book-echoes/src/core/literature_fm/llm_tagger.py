@@ -28,39 +28,23 @@ class LLMTagger:
         self.llm_client = UnifiedLLMClient()
         self.tag_manager = TagManager()
         self.vocabulary = self._load_vocabulary()
-        self.prompt_template = self._load_prompt_template()
     
     def _load_vocabulary(self) -> dict:
         """加载标签词表"""
         vocab_path = self.config.get('vocabulary_file')
         if not vocab_path:
             raise ValueError("vocabulary_file 未配置")
-        
+
         vocab_file = Path(vocab_path)
         if not vocab_file.exists():
             raise FileNotFoundError(f"标签词表文件不存在: {vocab_path}")
-        
+
         with open(vocab_file, 'r', encoding='utf-8') as f:
             vocabulary = yaml.safe_load(f)
-        
+
         logger.info(f"✓ 标签词表加载成功: {vocab_path}")
         return vocabulary
-    
-    def _load_prompt_template(self) -> str:
-        """加载Prompt模板"""
-        prompt_config = self.config.get('prompt', {})
-        fallback_file = prompt_config.get('fallback_file', 'prompts/literary_tagging.md')
-        
-        prompt_file = Path(fallback_file)
-        if not prompt_file.exists():
-            raise FileNotFoundError(f"Prompt模板文件不存在: {fallback_file}")
-        
-        with open(prompt_file, 'r', encoding='utf-8') as f:
-            template = f.read()
-        
-        logger.info(f"✓ Prompt模板加载成功: {fallback_file}")
-        return template
-    
+
     def tag_books(self, books: List[Dict]) -> Dict[str, int]:
         """
         批量打标
@@ -120,17 +104,17 @@ class LLMTagger:
     def _tag_single_book(self, book: Dict) -> bool:
         """
         为单本书打标
-        
+
         Args:
             book: 书目信息字典
-            
+
         Returns:
             bool: 是否成功
         """
         try:
             # 1. 构建Prompt
             user_prompt = self._build_user_prompt(book)
-            
+
             # 2. 调用LLM
             response = self.llm_client.call(
                 task_name='literary_tagging',
@@ -230,26 +214,6 @@ class LLMTagger:
         user_prompt = f"""# Vocabulary (候选标签词表)
 
 {tags_section}
-
-# Output Format
-
-请严格遵守以下 JSON 格式，不要包含任何 Markdown 代码块标记（如 ```json），直接输出纯文本 JSON：
-
-{{
-  "reasoning": "这里填写你的推理过程。例如：本书是马尔克斯的代表作，属于魔幻现实主义。虽然故事精彩，但人物关系复杂，叙事跨度大，需要读者保持专注（需正襟危坐）。文字风格华丽且充满隐喻（浓墨重彩/诗意流动），氛围带有浓重的历史宿命感（历史回响）。",
-  "reading_context": ["标签1", "标签2"],
-  "reading_load": ["标签1"],
-  "text_texture": ["标签1", "标签2"],
-  "spatial_atmosphere": ["标签1"],
-  "emotional_tone": ["标签1", "标签2"],
-  "confidence_scores": {{
-    "reading_context": 0.85,
-    "reading_load": 0.90,
-    "text_texture": 0.88,
-    "spatial_atmosphere": 0.92,
-    "emotional_tone": 0.80
-  }}
-}}
 
 {book_info}"""
 

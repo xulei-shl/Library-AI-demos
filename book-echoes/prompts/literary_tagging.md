@@ -18,17 +18,6 @@
     *   首先用一段话简述你的**推理过程**（Reasoning），重点解释这本书的**“体感”**（Reading Vibe）。
     *   输出严格的 JSON 格式结果。
 
-# Vocabulary (候选标签词表)
-
-{TAGS_VOCABULARY}
-
-# Guidelines for "Reading Load" (阅读体感判断指南)
-
-*   **酣畅易读 (Page-Turner)**：情节驱动，通俗小说，悬疑/言情，语言平实，适合疲惫时消遣。
-*   **需正襟危坐 (Heavy Lifting)**：信息密度大，哲学性强，结构复杂，需要大脑高度清晰时阅读（如大部头史诗、复杂理论）。
-*   **细水长流 (Slow Burn)**：生活流，散文，日记。节奏慢，无强情节，适合每天睡前读几页，不追求结局。
-*   **随时可停 (Snackable)**：短篇集、语录、随笔。结构独立，碎片时间阅读无压力。
-
 # Output Format
 
 请严格遵守以下 JSON 格式，不要包含任何 Markdown 代码块标记，直接输出纯文本 JSON：
