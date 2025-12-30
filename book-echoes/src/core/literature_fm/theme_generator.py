@@ -239,8 +239,11 @@ class ThemeGenerator:
         # 转换为 DataFrame
         df = pd.DataFrame(themes)
 
+        # 新增候选状态列（空值）
+        df['候选状态'] = ''
+
         # 设置列名（中文）
-        df.columns = ['主题名称', '副标题/推荐语', '情境描述', '预期氛围']
+        df.columns = ['主题名称', '副标题/推荐语', '情境描述', '预期氛围', '候选状态']
 
         # 保存 Excel（禁用索引）
         with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
@@ -252,6 +255,7 @@ class ThemeGenerator:
             worksheet.column_dimensions['B'].width = 30  # 副标题
             worksheet.column_dimensions['C'].width = 50  # 情境描述
             worksheet.column_dimensions['D'].width = 15  # 预期氛围
+            worksheet.column_dimensions['E'].width = 12  # 候选状态
 
         logger.info(f"✓ Excel 已保存: {excel_path}")
 

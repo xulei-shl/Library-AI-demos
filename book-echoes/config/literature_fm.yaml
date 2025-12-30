@@ -4,7 +4,7 @@
 input:
   # Excel 文件路径列表（支持绝对路径和相对路径）
   excel_files:
-    - "data/new/2024"  # 目录路径，将扫描该目录下的所有Excel文件
+    - "data/new/2025/shang"  # 目录路径，将扫描该目录下的所有Excel文件
     # - "data/LiteratureFM/文学数据.xlsx"  # 单个文件路径示例
 
   # 是否扫描目录中的Excel文件

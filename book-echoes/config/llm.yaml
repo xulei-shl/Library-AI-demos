@@ -332,6 +332,39 @@ tasks:
         module: "模块8"
 
   # ----------------------------------------------------------------------------
+  # 任务: 文学情境查询意图转换 (literary_query_translation)
+  # 逻辑位置: src/core/literature_fm/query_translator.py
+  # ----------------------------------------------------------------------------
+  literary_query_translation:
+    provider_type: text-gemini-qwen
+    temperature: 0.4
+    top_p: 0.9
+    prompt:
+      type: langfuse
+      langfuse_name: "literary_query_translation"
+      fallback: "prompts/literary_query_translation.md"
+
+    retry:
+      max_retries: 3
+      base_delay: 1.2
+      max_delay: 12
+      enable_provider_switch: true
+      jitter: true
+
+    json_repair:
+      enabled: true
+      strict_mode: false
+      output_format: json
+
+    langfuse:
+      enabled: true
+      name: "文学情境查询转换"
+      tags: ["book-echoes", "模块8", "查询转换"]
+      metadata:
+        project: "book-echoes"
+        module: "模块8"
+
+  # ----------------------------------------------------------------------------
   # 任务: 文学情境主题解析 (literary_theme_parse)
   # 逻辑位置: src/core/literature_fm/theme_parser.py
   # ----------------------------------------------------------------------------
@@ -363,6 +396,7 @@ tasks:
       metadata:
         project: "book-echoes"
         module: "模块8"
+
 
 defaults:
   temperature: 0.45

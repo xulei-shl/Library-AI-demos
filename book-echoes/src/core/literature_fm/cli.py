@@ -15,6 +15,7 @@ if str(root_dir) not in sys.path:
 from src.utils.logger import get_logger
 from src.core.literature_fm.pipeline import LiteratureFMPipeline
 from src.core.literature_fm.theme_generator import ThemeGenerator
+from src.core.literature_fm.query_translator import QueryTranslator
 
 logger = get_logger(__name__)
 
@@ -34,20 +35,23 @@ class LiteratureFMCLI:
             print("=" * 60)
             print("1. LLM 打标 (Phase 2)")
             print("2. 生成策划主题 (Phase 2.5)")
-            print("3. 情境主题书架 (Phase 3)")
-            print("4. 数据库向量化")
+            print("3. 查询意图转换 (Phase 2.6)")
+            print("4. 情境主题书架 (Phase 3)")
+            print("5. 数据库向量化")
             print("0. 退出")
             print("=" * 60)
 
-            choice = input("\n请选择功能 [0-4]: ").strip()
+            choice = input("\n请选择功能 [0-5]: ").strip()
 
             if choice == '1':
                 self._cmd_llm_tagging()
             elif choice == '2':
                 self._cmd_theme_generation()
             elif choice == '3':
-                self._cmd_theme_shelf()
+                self._cmd_query_translation()
             elif choice == '4':
+                self._cmd_theme_shelf()
+            elif choice == '5':
                 self._cmd_vectorize()
             elif choice == '0':
                 print("再见！")
@@ -112,6 +116,126 @@ class LiteratureFMCLI:
         else:
             print("\n✗ LLM 打标失败")
 
+    def _cmd_query_translation(self):
+        """查询意图转换命令（交互式）"""
+        print("\n【查询意图转换】")
+        print("1. 从 Excel 文件转换（筛选候选状态为'通过'的主题）")
+        print("2. 从 JSON 文件转换")
+        print("3. 手动输入单个主题")
+
+        mode = input("\n请选择模式 [1-3]: ").strip()
+
+        if mode == '1':
+            file_path = input("请输入 Excel 文件路径: ").strip()
+            if not file_path:
+                print("✗ 文件路径不能为空")
+                return
+            self._translate_from_excel(file_path)
+        elif mode == '2':
+            file_path = input("请输入 JSON 文件路径: ").strip()
+            if not file_path:
+                print("✗ 文件路径不能为空")
+                return
+            self._translate_from_json(file_path)
+        elif mode == '3':
+            self._translate_single_theme()
+        else:
+            print("✗ 无效选择")
+
+    def _translate_from_excel(self, file_path: str):
+        """从 Excel 文件转换"""
+        try:
+            translator = QueryTranslator(self.config)
+            print(f"\n正在读取 Excel: {file_path}")
+
+            result = translator.translate_from_excel(
+                excel_path=file_path,
+                status_column="候选状态",
+                status_value="通过"
+            )
+
+            if result['success']:
+                print(f"\n✓ 转换成功！")
+                print(f"  - 处理数量: {result['processed']}")
+                print(f"  - 输出文件: {result['output_file']}")
+
+                # 预览第一个结果
+                if result['results']:
+                    first = result['results'][0]
+                    print(f"\n预览第一个结果:")
+                    print(f"  主题: {first['original_theme']['theme_name']}")
+                    print(f"  关键词: {first.get('search_keywords', [])}")
+                    print(f"  过滤条件: {len(first.get('filter_conditions', []))} 条")
+            else:
+                print(f"\n✗ 转换失败: {result.get('error', '未知错误')}")
+
+        except Exception as e:
+            logger.error(f"Excel 转换异常: {e}", exc_info=True)
+            print(f"\n✗ 异常: {str(e)}")
+
+    def _translate_from_json(self, file_path: str):
+        """从 JSON 文件转换"""
+        try:
+            translator = QueryTranslator(self.config)
+            print(f"\n正在读取 JSON: {file_path}")
+
+            result = translator.translate_from_json(file_path)
+
+            if result['success']:
+                print(f"\n✓ 转换成功！")
+                print(f"  - 处理数量: {result['processed']}")
+                print(f"  - 输出文件: {result['output_file']}")
+
+                # 预览第一个结果
+                if result['results']:
+                    first = result['results'][0]
+                    print(f"\n预览第一个结果:")
+                    print(f"  主题: {first['original_theme']['theme_name']}")
+                    print(f"  关键词: {first.get('search_keywords', [])}")
+                    print(f"  过滤条件: {len(first.get('filter_conditions', []))} 条")
+            else:
+                print(f"\n✗ 转换失败: {result.get('error', '未知错误')}")
+
+        except Exception as e:
+            logger.error(f"JSON 转换异常: {e}", exc_info=True)
+            print(f"\n✗ 异常: {str(e)}")
+
+    def _translate_single_theme(self):
+        """手动输入单个主题转换"""
+        print("\n【单个主题转换】")
+        theme_name = input("主题名称: ").strip()
+        slogan = input("副标题/推荐语: ").strip()
+        description = input("情境描述: ").strip()
+        target_vibe = input("预期氛围: ").strip()
+
+        if not theme_name or not description:
+            print("✗ 主题名称和情境描述不能为空")
+            return
+
+        try:
+            translator = QueryTranslator(self.config)
+            print(f"\n正在转换主题: {theme_name}")
+
+            result = translator.translate_theme(
+                theme_name=theme_name,
+                slogan=slogan,
+                description=description,
+                target_vibe=target_vibe
+            )
+
+            if not result.get('is_fallback'):
+                print(f"\n✓ 转换成功！")
+                print(f"  关键词: {result.get('search_keywords', [])}")
+                print(f"  过滤条件: {len(result.get('filter_conditions', []))} 条")
+                print(f"  合成查询: {result.get('synthetic_query', '')[:100]}...")
+            else:
+                print(f"\n⚠ 转换使用兜底结果")
+                print(f"  错误: {result.get('error', '')}")
+
+        except Exception as e:
+            logger.error(f"单主题转换异常: {e}", exc_info=True)
+            print(f"\n✗ 异常: {str(e)}")
+
     def _cmd_theme_shelf(self):
         """情境主题书架命令"""
         theme_text = input("\n请输入情境主题描述: ").strip()
@@ -166,6 +290,12 @@ def main():
     # 生成主题（关键词）
     python cli.py theme-gen --direction "冬日治愈" --count 3
 
+    # 查询意图转换（Excel）
+    python cli.py query-trans --excel themes.xlsx
+
+    # 查询意图转换（JSON）
+    python cli.py query-trans --json themes.json
+
     # LLM 打标
     python cli.py tag
 
@@ -177,7 +307,7 @@ def main():
     parser.add_argument(
         'command',
         nargs='?',
-        choices=['interactive', 'theme-gen', 'tag', 'shelf', 'vectorize'],
+        choices=['interactive', 'theme-gen', 'query-trans', 'tag', 'shelf', 'vectorize'],
         help='子命令（不指定则进入交互式菜单）'
     )
 
@@ -185,6 +315,12 @@ def main():
     parser.add_argument('--random', action='store_true', help='随机生成主题')
     parser.add_argument('--direction', type=str, help='策划方向/关键词')
     parser.add_argument('--count', type=int, default=5, help='生成数量')
+
+    # 查询转换参数
+    parser.add_argument('--excel', type=str, help='Excel 文件路径（查询转换）')
+    parser.add_argument('--json', type=str, help='JSON 文件路径（查询转换）')
+    parser.add_argument('--status-col', type=str, default='候选状态', help='状态列名（Excel）')
+    parser.add_argument('--status-val', type=str, default='通过', help='状态值（Excel）')
 
     # 书架生成参数
     parser.add_argument('--theme', type=str, help='情境主题描述')
@@ -196,6 +332,14 @@ def main():
     if args.command == 'theme-gen':
         direction = "" if args.random else (args.direction or "")
         cli._generate_themes(direction=direction, count=args.count)
+    elif args.command == 'query-trans':
+        if args.excel:
+            cli._translate_from_excel(args.excel)
+        elif args.json:
+            cli._translate_from_json(args.json)
+        else:
+            print("✗ 请使用 --excel 或 --json 参数指定输入文件")
+            sys.exit(1)
     elif args.command == 'tag':
         cli._cmd_llm_tagging()
     elif args.command == 'shelf':
