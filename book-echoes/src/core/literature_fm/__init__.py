@@ -2,7 +2,7 @@
 模块8: 文学情境推荐 (LiteratureFM - 文学FM)
 Phase 2: LLM打标功能
 Phase 2.5: 文学策划主题生成
-Phase 3: 情境主题书架生成功能
+Phase 3: 情境主题检索功能
 """
 
 from .pipeline import LiteratureFMPipeline

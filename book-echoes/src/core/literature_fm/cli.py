@@ -36,7 +36,7 @@ class LiteratureFMCLI:
             print("1. LLM 打标 (Phase 2)")
             print("2. 生成策划主题 (Phase 2.5)")
             print("3. 查询意图转换 (Phase 2.6)")
-            print("4. 情境主题书架 (Phase 3)")
+            print("4. 情境主题检索 (Phase 3)")
             print("5. 数据库向量化")
             print("0. 退出")
             print("=" * 60)
@@ -237,7 +237,7 @@ class LiteratureFMCLI:
             print(f"\n✗ 异常: {str(e)}")
 
     def _cmd_theme_shelf(self):
-        """情境主题书架命令"""
+        """情境主题检索命令"""
         theme_text = input("\n请输入情境主题描述: ").strip()
 
         if not theme_text:
@@ -252,11 +252,11 @@ class LiteratureFMCLI:
         )
 
         if result['success']:
-            print(f"\n✓ 书架生成成功！")
+            print(f"\n✓ 情境主题检索成功！")
             print(f"  - 推荐数量: {result['stats']['final_count']}")
             print(f"  - 输出文件: {result['output_file']}")
         else:
-            print(f"\n✗ 生成失败: {result.get('error', '未知错误')}")
+            print(f"\n✗ 检索失败: {result.get('error', '未知错误')}")
 
     def _cmd_vectorize(self):
         """数据库向量化命令"""
@@ -342,7 +342,7 @@ def main():
     # LLM 打标
     python cli.py tag
 
-    # 情境主题书架
+    # 情境主题检索
     python cli.py shelf --theme "冬日暖阳，窝在沙发里阅读"
         """
     )

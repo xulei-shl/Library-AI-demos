@@ -1156,7 +1156,7 @@ def generate_theme_shelf(
     config_path: str = "config/literature_fm_vector.yaml"
 ) -> Dict:
     """
-    生成情境主题书架
+    情境主题检索
 
     Args:
         theme_text: 用户输入的情境主题（如 "冬日暖阳，窝在沙发里阅读"）

@@ -276,7 +276,7 @@ class LiteratureFMPipeline:
         config_path: str = "config/literature_fm_vector.yaml"
     ) -> Dict:
         """
-        生成情境主题书架
+        情境主题检索
 
         Args:
             theme_text: 用户输入的情境主题（如 "冬日暖阳，窝在沙发里阅读"）
@@ -300,7 +300,7 @@ class LiteratureFMPipeline:
         """
         try:
             logger.info("\n" + "="*80)
-            logger.info("模块8 - Phase 3: 情境主题书架生成")
+            logger.info("模块8 - Phase 3: 情境主题检索")
             logger.info("="*80 + "\n")
 
             # 1. 初始化组件
@@ -425,7 +425,7 @@ class LiteratureFMPipeline:
 
             # 8. 输出统计
             logger.info("\n" + "="*80)
-            logger.info("情境主题书架生成完成！")
+            logger.info("情境主题检索完成！")
             logger.info(f"  - 主题: {theme_text}")
             logger.info(f"  - 推荐数量: {len(final_books)}")
             logger.info(f"  - 向量检索: {len(vector_results)} 本")
