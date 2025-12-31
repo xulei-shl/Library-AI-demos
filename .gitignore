@@ -26,3 +26,4 @@ metadata-editor/jsondata/knowledge_settings.json
 *.bin
 *.bin
 *.bin
+*.sqlite3
