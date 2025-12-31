@@ -388,7 +388,7 @@ class CandidateFilter:
             # 加载现有工作簿
             book = load_workbook(excel_path)
 
-            new_cols = ['初评结果', '初评分数', '初评理由']
+            new_cols = ['初评结果', '初评分数', '初评理由', '人工评选', '人工推荐语']
 
             for sheet_result in sheet_results:
                 sheet_name = sheet_result['sheet_name']
