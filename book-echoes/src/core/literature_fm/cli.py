@@ -39,10 +39,11 @@ class LiteratureFMCLI:
             print("4. 情境主题检索 (Phase 3)")
             print("5. 数据库向量化")
             print("6. 候选图书 LLM 筛选 (Phase 3.5)")
+            print("7. 生成卷首导读 (Phase 3.6)")
             print("0. 退出")
             print("=" * 60)
 
-            choice = input("\n请选择功能 [0-6]: ").strip()
+            choice = input("\n请选择功能 [0-7]: ").strip()
 
             if choice == '1':
                 self._cmd_llm_tagging()
@@ -56,6 +57,8 @@ class LiteratureFMCLI:
                 self._cmd_vectorize()
             elif choice == '6':
                 self._cmd_candidate_filter()
+            elif choice == '7':
+                self._cmd_prologue_generator()
             elif choice == '0':
                 print("再见！")
                 break
@@ -494,6 +497,43 @@ class LiteratureFMCLI:
 
         except Exception as e:
             logger.error(f"候选筛选异常: {e}", exc_info=True)
+            print(f"\n✗ 异常: {str(e)}")
+
+    def _cmd_prologue_generator(self):
+        """卷首导读生成命令"""
+        print("\n【生成卷首导读（Phase 3.6）】")
+        file_path = input("请输入候选图书 Excel 文件路径: ").strip()
+
+        if not file_path:
+            print("✗ 文件路径不能为空")
+            return
+
+        self._generate_prologue_from_excel(file_path)
+
+    def _generate_prologue_from_excel(self, file_path: str):
+        """从 Excel 生成卷首导读"""
+        try:
+            from src.core.literature_fm.prologue_generator import PrologueGenerator
+
+            prologue_config = self.config.get('prologue_generator', {})
+            if not prologue_config.get('enabled', False):
+                print("\n✗ 卷首导读生成功能未启用，请在配置文件中设置 prologue_generator.enabled = true")
+                return
+
+            generator = PrologueGenerator(prologue_config)
+            print(f"\n正在读取 Excel: {file_path}")
+
+            result = generator.generate_from_excel(file_path)
+
+            if result['success']:
+                print(f"\n✓ 卷首导读生成成功！")
+                print(f"  - 参考图书: {result['book_count']} 本")
+                print(f"  - 输出文件: {result['output_file']}")
+            else:
+                print(f"\n✗ 生成失败: {result.get('error', '未知错误')}")
+
+        except Exception as e:
+            logger.error(f"卷首导读生成异常: {e}", exc_info=True)
             print(f"\n✗ 异常: {str(e)}")
 
 

@@ -186,3 +186,39 @@ candidate_filter:
     task_name: "literary_reranking"
     # 并发调用数（同时处理多少组）
     concurrent_groups: 1
+
+# 卷首导读生成配置（Phase 3.6）
+prologue_generator:
+  # 是否启用卷首导读生成功能
+  enabled: true
+
+  # 排除的 sheet 名称（不处理的sheet）
+  excluded_sheets:
+    - "主题汇总"
+    - "元信息"
+
+  # 人工评选列配置
+  approval_column: "人工评选"  # 评选列名
+  approval_value: "通过"        # 通过的值
+
+  # Excel 字段映射
+  excel_fields:
+    # 主题汇总 sheet 的字段映射
+    theme_summary:
+      theme_name: "主题名称"
+      slogan: "副标题"
+      description: "情境描述"
+      target_vibe: "预期氛围"
+    # 参考图书 sheet 的字段列表（提取这些字段给 LLM）
+    book_fields:
+      - "douban_title"
+      - "douban_subtitle"
+      - "douban_author"
+      - "douban_summary"
+      - "douban_author_intro"
+      - "douban_catalog"
+
+  # LLM 调用配置
+  llm:
+    # 任务名称（对应 llm.yaml 中的任务名）
+    task_name: "literary_writer"

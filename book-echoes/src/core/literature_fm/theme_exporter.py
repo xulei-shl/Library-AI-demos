@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import pandas as pd
+import yaml
 
 from src.utils.logger import get_logger
 
@@ -29,20 +30,87 @@ DOUBAN_FIELDS = [
 ]
 
 
+def load_db_to_excel_mapping(config_path: str = "config/setting.yaml") -> Dict[str, str]:
+    """
+    从配置文件加载数据库字段到Excel列名的映射
+
+    Args:
+        config_path: 配置文件路径
+
+    Returns:
+        Dict[str, str]: 数据库字段名 -> Excel列名的映射
+    """
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+
+        mapping = config.get('fields_mapping', {}).get('database_to_excel', {}).get('books', {})
+        if not mapping:
+            logger.warning("未找到 database_to_excel.books 配置，使用默认映射")
+            return _get_default_mapping()
+
+        return mapping
+
+    except Exception as e:
+        logger.warning(f"加载数据库字段映射配置失败: {e}，使用默认映射")
+        return _get_default_mapping()
+
+
+def _get_default_mapping() -> Dict[str, str]:
+    """
+    获取默认的数据库字段到Excel列名映射
+
+    Returns:
+        Dict[str, str]: 默认映射字典
+    """
+    return {
+        "barcode": "书目条码",
+        "call_no": "索书号",
+        "cleaned_call_no": "清理后索书号",
+        "book_title": "书名",
+        "additional_info": "附加信息",
+        "isbn": "ISBN",
+        "douban_url": "豆瓣链接",
+        "douban_rating": "豆瓣评分",
+        "douban_title": "豆瓣书名",
+        "douban_subtitle": "豆瓣副标题",
+        "douban_original_title": "豆瓣原作名",
+        "douban_author": "豆瓣作者",
+        "douban_translator": "豆瓣译者",
+        "douban_publisher": "豆瓣出版社",
+        "douban_producer": "豆瓣出品方",
+        "douban_series": "豆瓣丛书",
+        "douban_series_link": "豆瓣丛书链接",
+        "douban_price": "豆瓣定价",
+        "douban_isbn": "豆瓣ISBN",
+        "douban_pages": "豆瓣页数",
+        "douban_binding": "豆瓣装帧",
+        "douban_pub_year": "豆瓣出版年",
+        "douban_rating_count": "豆瓣评价人数",
+        "douban_cover_image": "豆瓣封面图片链接",
+        "douban_summary": "豆瓣内容简介",
+        "douban_author_intro": "豆瓣作者简介",
+        "douban_catalog": "豆瓣目录",
+    }
+
+
 class ThemeExporter:
     """导出主题书架结果"""
 
-    def __init__(self, output_dir: str = "runtime/outputs/theme_shelf", db_path: str = "runtime/database/books_history.db"):
+    def __init__(self, output_dir: str = "runtime/outputs/theme_shelf", db_path: str = "runtime/database/books_history.db", config_path: str = "config/setting.yaml"):
         """
         初始化导出器
 
         Args:
             output_dir: 输出目录
             db_path: 数据库路径
+            config_path: 配置文件路径
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = db_path
+        # 加载数据库字段到Excel列名的映射
+        self.field_mapping = load_db_to_excel_mapping(config_path)
 
     def _fetch_books_details(self, book_ids: List[int]) -> Dict[int, Dict]:
         """
@@ -125,11 +193,9 @@ class ThemeExporter:
             if book_id and book_id in books_details:
                 detail = books_details[book_id]
                 for field in DOUBAN_FIELDS:
-                    # 字段名映射：douban_xxx -> 豆瓣_xxx，barcode -> 条码
-                    if field == 'barcode':
-                        row_data['条码'] = detail.get(field, '')
-                    else:
-                        row_data[field] = detail.get(field, '')
+                    # 使用配置的映射：数据库字段名 -> Excel列名（中文）
+                    excel_column = self.field_mapping.get(field, field)
+                    row_data[excel_column] = detail.get(field, '')
 
             data.append(row_data)
 
@@ -155,39 +221,40 @@ class ThemeExporter:
                 worksheet = writer.sheets['推荐结果']
 
                 # 基础列宽度
-                base_widths = [5, 35, 15, 12, 10, 10, 10, 30, 8, 15]  # 前基础列+条码列
+                base_widths = [5, 35, 15, 12, 10, 10, 10, 30, 8, 15]  # 前基础列+书目条码列
 
-                # douban字段列宽度
+                # douban字段列宽度（使用中文列名）
                 douban_widths = {
-                    'douban_url': 40,
-                    'douban_title': 30,
-                    'douban_subtitle': 25,
-                    'douban_original_title': 30,
-                    'douban_author': 20,
-                    'douban_translator': 20,
-                    'douban_publisher': 20,
-                    'douban_producer': 20,
-                    'douban_series': 25,
-                    'douban_series_link': 40,
-                    'douban_price': 10,
-                    'douban_isbn': 15,
-                    'douban_pages': 10,
-                    'douban_binding': 12,
-                    'douban_pub_year': 12,
-                    'douban_rating': 10,
-                    'douban_rating_count': 12,
-                    'douban_summary': 50,
-                    'douban_author_intro': 40,
-                    'douban_catalog': 40,
-                    'douban_cover_image': 40
+                    '豆瓣链接': 40,
+                    '豆瓣书名': 30,
+                    '豆瓣副标题': 25,
+                    '豆瓣原作名': 30,
+                    '豆瓣作者': 20,
+                    '豆瓣译者': 20,
+                    '豆瓣出版社': 20,
+                    '豆瓣出品方': 20,
+                    '豆瓣丛书': 25,
+                    '豆瓣丛书链接': 40,
+                    '豆瓣定价': 10,
+                    '豆瓣ISBN': 15,
+                    '豆瓣页数': 10,
+                    '豆瓣装帧': 12,
+                    '豆瓣出版年': 12,
+                    '豆瓣评分': 10,
+                    '豆瓣评价人数': 12,
+                    '豆瓣内容简介': 50,
+                    '豆瓣作者简介': 40,
+                    '豆瓣目录': 40,
+                    '豆瓣封面图片链接': 40
                 }
 
-                # 按DOUBAN_FIELDS顺序构建完整列宽列表
+                # 按DOUBAN_FIELDS顺序构建完整列宽列表（使用中文列名）
                 all_widths = base_widths[:]
                 for field in DOUBAN_FIELDS:
                     if field == 'barcode':
                         continue  # 已经在base_widths中
-                    all_widths.append(douban_widths.get(field, 15))
+                    excel_column = self.field_mapping.get(field, field)
+                    all_widths.append(douban_widths.get(excel_column, 15))
 
                 # 应用列宽
                 for i, width in enumerate(all_widths, 1):
@@ -354,10 +421,9 @@ class ThemeExporter:
                         if book_id and book_id in books_details:
                             detail = books_details[book_id]
                             for field in DOUBAN_FIELDS:
-                                if field == 'barcode':
-                                    row_data['条码'] = detail.get(field, '')
-                                else:
-                                    row_data[field] = detail.get(field, '')
+                                # 使用配置的映射：数据库字段名 -> Excel列名（中文）
+                                excel_column = self.field_mapping.get(field, field)
+                                row_data[excel_column] = detail.get(field, '')
 
                         data.append(row_data)
 
@@ -375,37 +441,38 @@ class ThemeExporter:
                     if any('rerank_score' in b for b in books):
                         base_widths.append(10)  # 重排序得分列
 
-                    # douban字段列宽度
+                    # douban字段列宽度（使用中文列名）
                     douban_widths = {
-                        'douban_url': 40,
-                        'douban_title': 30,
-                        'douban_subtitle': 25,
-                        'douban_original_title': 30,
-                        'douban_author': 20,
-                        'douban_translator': 20,
-                        'douban_publisher': 20,
-                        'douban_producer': 20,
-                        'douban_series': 25,
-                        'douban_series_link': 40,
-                        'douban_price': 10,
-                        'douban_isbn': 15,
-                        'douban_pages': 10,
-                        'douban_binding': 12,
-                        'douban_pub_year': 12,
-                        'douban_rating': 10,
-                        'douban_rating_count': 12,
-                        'douban_summary': 50,
-                        'douban_author_intro': 40,
-                        'douban_catalog': 40,
-                        'douban_cover_image': 40
+                        '豆瓣链接': 40,
+                        '豆瓣书名': 30,
+                        '豆瓣副标题': 25,
+                        '豆瓣原作名': 30,
+                        '豆瓣作者': 20,
+                        '豆瓣译者': 20,
+                        '豆瓣出版社': 20,
+                        '豆瓣出品方': 20,
+                        '豆瓣丛书': 25,
+                        '豆瓣丛书链接': 40,
+                        '豆瓣定价': 10,
+                        '豆瓣ISBN': 15,
+                        '豆瓣页数': 10,
+                        '豆瓣装帧': 12,
+                        '豆瓣出版年': 12,
+                        '豆瓣评分': 10,
+                        '豆瓣评价人数': 12,
+                        '豆瓣内容简介': 50,
+                        '豆瓣作者简介': 40,
+                        '豆瓣目录': 40,
+                        '豆瓣封面图片链接': 40
                     }
 
-                    # 按DOUBAN_FIELDS顺序构建完整列宽列表
+                    # 按DOUBAN_FIELDS顺序构建完整列宽列表（使用中文列名）
                     all_widths = base_widths[:]
                     for field in DOUBAN_FIELDS:
                         if field == 'barcode':
                             continue
-                        all_widths.append(douban_widths.get(field, 15))
+                        excel_column = self.field_mapping.get(field, field)
+                        all_widths.append(douban_widths.get(excel_column, 15))
 
                     # 应用列宽
                     for i, width in enumerate(all_widths, 1):

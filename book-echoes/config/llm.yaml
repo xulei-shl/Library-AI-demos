@@ -403,6 +403,34 @@ tasks:
         project: "book-echoes"
         module: "模块8"
 
+  # ----------------------------------------------------------------------------
+  # 任务: 卷首导读生成 (literary_writer)
+  # 逻辑位置: src/core/literature_fm/prologue_generator.py
+  # ----------------------------------------------------------------------------
+  literary_writer:
+    provider_type: text-gemini-qwen
+    temperature: 0.7          # 较高温度增加创意性
+    top_p: 0.95
+    prompt:
+      type: langfuse
+      langfuse_name: "literary_writer"
+      fallback: "prompts/literary_writer.md"
+
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+      jitter: true
+
+    langfuse:
+      enabled: true
+      name: "卷首导读生成"
+      tags: ["book-echoes", "模块8", "导读生成"]
+      metadata:
+        project: "book-echoes"
+        module: "模块8"
+
 
 defaults:
   temperature: 0.45
