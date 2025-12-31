@@ -4,6 +4,7 @@
 **/backup/
 
 **/refs/
+**/vector_db/
 
 data/backup
 tests/
