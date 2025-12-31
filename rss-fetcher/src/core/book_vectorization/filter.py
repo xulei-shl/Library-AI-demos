@@ -3,9 +3,10 @@
 """
 图书过滤器
 
-根据配置规则过滤符合条件的书籍（必填字段 + 评分阈值）
+根据配置规则过滤符合条件的书籍（必填字段 + 评分阈值 + I开头索书号正则过滤）
 """
 
+import re
 from typing import Dict, List
 from src.utils.logger import get_logger
 
@@ -29,33 +30,39 @@ class BookFilter:
     def apply(self, books: List[Dict]) -> List[Dict]:
         """
         应用过滤规则
-        
+
         Args:
             books: 待过滤的书籍列表
-            
+
         Returns:
             符合条件的书籍列表
         """
         filtered = []
         filtered_count = 0
-        
+
         for book in books:
             # 检查必填字段
             if not self._check_required_fields(book):
                 self._mark_filtered(book, "缺少必填字段")
                 filtered_count += 1
                 continue
-            
+
             # 检查评分阈值（如果启用）
             if self.config.get('enable_rating_filter', True) and not self._check_rating_threshold(book):
                 self._mark_filtered(book, "评分未达标")
                 filtered_count += 1
                 continue
-            
+
+            # 检查I开头索书号正则过滤（如果启用）
+            if self.config.get('enable_i_call_no_filter', False) and not self._check_i_call_no_pattern(book):
+                self._mark_filtered(book, "I开头索书号不匹配允许的正则模式")
+                filtered_count += 1
+                continue
+
             filtered.append(book)
-        
+
         logger.info(f"过滤完成: 总数={len(books)}, 符合条件={len(filtered)}, 过滤={filtered_count}")
-        
+
         return filtered
     
     def _check_required_fields(self, book: Dict) -> bool:
@@ -106,7 +113,35 @@ class BookFilter:
             logger.debug(f"书籍 {book.get('id')} 评分未达标: {rating} < {threshold}")
         
         return passed
-    
+
+    def _check_i_call_no_pattern(self, book: Dict) -> bool:
+        """
+        检查I开头索书号是否匹配允许的正则模式
+
+        Args:
+            book: 书籍信息字典
+
+        Returns:
+            是否通过检查
+        """
+        call_no = book.get('call_no', '')
+
+        # 只处理I开头的索书号
+        if not call_no or not call_no.upper().startswith('I'):
+            return True
+
+        # 获取配置的正则模式列表
+        patterns = self.config.get('i_call_no_patterns', [])
+
+        # 逐一匹配正则表达式
+        for pattern in patterns:
+            if re.match(pattern, call_no, re.IGNORECASE):
+                logger.debug(f"书籍 {book.get('id')} I开头索书号匹配模式: {pattern}")
+                return True
+
+        logger.debug(f"书籍 {book.get('id')} I开头索书号不匹配任何允许的模式: {call_no}")
+        return False
+
     def _mark_filtered(self, book: Dict, reason: str):
         """
         标记为已过滤
