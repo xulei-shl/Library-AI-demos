@@ -10,10 +10,6 @@ from .llm_tagger import LLMTagger
 from .tag_manager import TagManager
 from .theme_generator import ThemeGenerator
 from .cli import LiteratureFMCLI
-from .theme_parser import ThemeParser
-from .vector_searcher import VectorSearcher
-from .theme_searcher import TagSearcher, TagSearchResult
-from .theme_merger import ThemeMerger, MergedResult
 from .theme_deduplicator import ThemeDeduplicator
 from .theme_exporter import ThemeExporter
 
@@ -25,12 +21,7 @@ __all__ = [
     'ThemeGenerator',
     'LiteratureFMCLI',
     # Phase 3
-    'ThemeParser',
     'VectorSearcher',
-    'TagSearcher',
-    'TagSearchResult',
-    'ThemeMerger',
-    'MergedResult',
     'ThemeDeduplicator',
     'ThemeExporter',
 ]
