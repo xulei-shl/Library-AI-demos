@@ -539,9 +539,34 @@ def run_module5():
     print("同时生成复古风格的图书馆借书卡（如配置启用）")
     print("=" * 60)
 
-    latest_excel = find_latest_module4_excel()
+    # 询问是否手动指定Excel文件
+    print("\n请选择Excel文件来源：")
+    manual_path = input("请输入Excel文件路径（直接回车使用默认自动查找）: ").strip()
+
+    latest_excel = None
+    custom_sheet = None
+
+    if manual_path:
+        # 使用用户手动输入的路径
+        from pathlib import Path
+        manual_path_obj = Path(manual_path)
+        if manual_path_obj.exists() and manual_path_obj.suffix.lower() in ['.xlsx', '.xls']:
+            latest_excel = manual_path_obj
+            print(f"使用指定的文件: {latest_excel}")
+
+            # 询问sheet名
+            custom_sheet = input("请输入sheet名称（直接回车默认使用Sheet1或唯一工作表）: ").strip() or None
+        else:
+            print(f"警告: 指定的文件不存在或格式不正确: {manual_path}")
+            print("将尝试使用默认自动查找...")
+            latest_excel = find_latest_module4_excel()
+
     if not latest_excel:
-        print("错误: 未找到模块4生成的终评结果 Excel 文件。")
+        # 使用默认的自动查找逻辑
+        latest_excel = find_latest_module4_excel()
+
+    if not latest_excel:
+        print("错误: 未找到有效的终评结果 Excel 文件。")
         print("请先运行模块4完成评选，或将结果文件放到 runtime/outputs 目录。")
         return 1
 
@@ -555,7 +580,12 @@ def run_module5():
 
         cmd = [sys.executable, str(card_script), "--excel-file", str(latest_excel)]
 
-        print(f"使用终评结果文件: {latest_excel}")
+        # 如果指定了sheet名，添加到命令参数
+        if custom_sheet:
+            cmd.extend(["--sheet", custom_sheet])
+            print(f"使用终评结果文件: {latest_excel} (工作表: {custom_sheet})")
+        else:
+            print(f"使用终评结果文件: {latest_excel}")
 
         # 执行模块5
         result = subprocess.run(cmd, capture_output=False, text=True)
@@ -918,13 +948,17 @@ def main():
         print("\n请选择要运行的功能模块:")
         print("1️⃣. 📊 模块1/2-借阅模块: 月归还数据分析 + 智能筛选")
         print("2️⃣. 💤📚 模块6-新书模块: 零借阅（睡美人）筛选")
+        print("=" * 60)
         print("3. ❌ 模块3-废弃保留: 豆瓣模块（FOLIO ISBN + 豆瓣链接 + 评分过滤 + 豆瓣 API）")
+        print("=" * 60)
         print("4️⃣. 🔗 模块3-B-公共模块: 豆瓣模块（FOLIO ISBN（新书需配置） + 豆瓣 ISBN API + 配置是否启用动态评分过滤）")
         print("5️⃣. ⭐ 模块6-B-新书模块: 新书评分过滤（写入候选状态）")
         print("6️⃣. 🎯 模块4-公共模块: 初评（海选阶段）")
         print("7️⃣. 🏆 模块4-公共模块: 完整评选（初评→决选→终评）")
         print("8️⃣. 🎨 模块5-公共模块: 图书卡片生成（含借书卡）")
-        print("9️⃣. 📰 模块7-主题模块: 主题书目每日追踪")
+        print("=" * 60)
+        print("9️. ❌ 模块7-主题模块: 主题书目每日追踪")
+        print("=" * 60)
         print("1️⃣0️⃣. 🚫 退出程序")
 
         choice = input("\n请输入选择 (1-10): ").strip()

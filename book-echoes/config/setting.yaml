@@ -584,7 +584,7 @@ rating_filter:
 # =============================================================================
 card_generator:
   # HTML模板文件路径
-  template_path: "config/temples/点阵.html"
+  template_path: "config/temples/可爱猫咪.html"
 
   # 字段转换器配置
   # 功能: 为不同模板提供灵活的字段处理规则

@@ -89,12 +89,13 @@ class CardGeneratorModule:
             'success_barcodes': []  # 成功生成卡片的条码列表
         }
 
-    def run(self, excel_path: str) -> int:
+    def run(self, excel_path: str, sheet_name: str = None) -> int:
         """
         主函数流程
 
         Args:
             excel_path: Excel文件路径
+            sheet_name: 工作表名称，默认为None（使用第一个或唯一工作表）
 
         Returns:
             int: 成功返回0，失败返回1
@@ -112,7 +113,24 @@ class CardGeneratorModule:
 
             # 2. 加载Excel数据
             logger.info(f"加载Excel文件：{excel_path}")
-            df = pd.read_excel(excel_path)
+            if sheet_name:
+                df = pd.read_excel(excel_path, sheet_name=sheet_name)
+                logger.info(f"使用工作表: {sheet_name}")
+            else:
+                # 默认逻辑：尝试Sheet1，如果不存在则使用第一个sheet
+                try:
+                    df = pd.read_excel(excel_path, sheet_name='Sheet1')
+                except ValueError:
+                    # Sheet1不存在，读取Excel获取所有sheet名称
+                    excel_file = pd.ExcelFile(excel_path)
+                    if len(excel_file.sheet_names) == 1:
+                        # 只有一个sheet，直接使用
+                        df = pd.read_excel(excel_path, sheet_name=excel_file.sheet_names[0])
+                        logger.info(f"使用唯一工作表: {excel_file.sheet_names[0]}")
+                    else:
+                        # 多个sheet，使用第一个
+                        df = pd.read_excel(excel_path, sheet_name=0)
+                        logger.info(f"Sheet1不存在，使用第一个工作表: {excel_file.sheet_names[0]}")
             self.stats['total_count'] = len(df)
 
             # 3. 验证必填列
@@ -1142,6 +1160,12 @@ def main():
         required=True,
         help='模块4生成的终评结果Excel文件路径'
     )
+    parser.add_argument(
+        '--sheet',
+        type=str,
+        default=None,
+        help='工作表名称（默认使用Sheet1或唯一工作表）'
+    )
 
     args = parser.parse_args()
 
@@ -1149,13 +1173,13 @@ def main():
     config_manager = get_config_manager()
     config = config_manager.get_config()
     card_config = config.get('card_generator', {})
-    
+
     # 将 library_card_generator 配置合并到 card_config 中
     card_config['library_card_generator'] = config.get('library_card_generator', {})
 
     # 创建并运行模块
     module = CardGeneratorModule(card_config)
-    exit_code = module.run(args.excel_file)
+    exit_code = module.run(args.excel_file, sheet_name=args.sheet)
 
     sys.exit(exit_code)
 
