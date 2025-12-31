@@ -140,6 +140,10 @@ class BM25Searcher:
             logger.info(f"BM25检索完成: 关键词={keywords}, 结果数={len(results)}")
             return results
 
+        except Exception as e:
+            logger.error(f"BM25检索失败: {str(e)}")
+            return []
+
     def search_with_randomness(
         self,
         keywords: List[str],

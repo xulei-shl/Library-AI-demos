@@ -342,7 +342,7 @@ tasks:
   # 逻辑位置: src/core/literature_fm/query_translator.py
   # ----------------------------------------------------------------------------
   literary_query_translation:
-    provider_type: texc
+    provider_type: text-gemini-qwen
     temperature: 0.4
     top_p: 0.9
     prompt:

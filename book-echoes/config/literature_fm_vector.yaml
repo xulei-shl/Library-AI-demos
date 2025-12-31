@@ -19,8 +19,8 @@ vector_db:
 embedding:
   provider: "SiliconFlow"
   model: "Qwen/Qwen3-Embedding-8B"
-  api_key: "env:ONEAPI_API_KEY"
-  base_url: "http://47.103.50.106:3000/v1"
+  api_key: "env:SiliconFlow_API_KEY"
+  base_url: "https://api.siliconflow.cn/v1"
   dimensions: 4096
   batch_size: 50
   max_retries: 3
@@ -47,8 +47,8 @@ rrf:
 reranker:
   enabled: false     # 默认关闭
   model: "Qwen/Qwen3-Reranker-8B"
-  api_key: "env:ONEAPI_API_KEY"
-  base_url: "http://47.103.50.106:3000/v1"
+  api_key: "env:SiliconFlow_API_KEY"
+  base_url: "https://api.siliconflow.cn/v1"
   top_k: 50          # 对前50个结果重排序
   batch_size: 32     # 批处理大小
   max_retries: 3

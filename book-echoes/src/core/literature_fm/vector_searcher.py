@@ -17,6 +17,13 @@ import sqlite3
 
 from src.utils.logger import get_logger
 
+# 加载环境变量
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent.parent.parent.parent / "config" / ".env")
+except Exception:
+    pass  # dotenv 不是必需的
+
 logger = get_logger(__name__)
 
 
@@ -417,12 +424,14 @@ class _EmbeddingClient:
         api_key = self._resolve_env(self.config['api_key'])
         http_client = httpx.Client(
             timeout=self.config['timeout'],
+            limits=httpx.Limits(max_connections=10, max_keepalive_connections=5),
             trust_env=False
         )
         return OpenAI(
             api_key=api_key,
             base_url=self.config['base_url'],
-            http_client=http_client
+            http_client=http_client,
+            max_retries=self.config.get('max_retries', 3)
         )
 
     def get_embedding(self, text: str) -> List[float]:

@@ -188,13 +188,15 @@ class HybridVectorSearcher:
 
         logger.info(f"SHOULD条件展开为 {len(should_queries)} 个查询")
 
+        # 在循环外部获取一次 embedding，避免重复调用 API
+        query_vector = self.base_searcher.embedding_client.get_embedding(query_text)
+
         # 对每个SHOULD查询组合执行检索
         for idx, should_filter in enumerate(should_queries):
             # 合并MUST和SHOULD过滤器
             combined_filter = self._merge_filters(must_conditions, should_filter)
 
-            # 检索
-            query_vector = self.base_searcher.embedding_client.get_embedding(query_text)
+            # 检索（复用 query_vector）
             results = self.base_searcher.vector_store.search(
                 query_embedding=query_vector,
                 top_k=top_k,
@@ -363,6 +365,7 @@ class HybridVectorSearcher:
         补充书籍信息并过滤结果
         """
         enriched = []
+        candidates = []
 
         for result in results:
             metadata = result.get("metadata", {})
@@ -376,9 +379,22 @@ class HybridVectorSearcher:
                 continue
 
             similarity = 1 - result.get("distance", 1.0)
+            candidates.append((book_id, similarity, result))
 
+        # 动态阈值：借鉴基础 VectorSearcher，避免高阈值导致结果为零
+        if candidates:
+            similarities = [item[1] for item in candidates]
+            actual_threshold = self._calculate_dynamic_threshold(
+                candidates,
+                similarities,
+                min_confidence
+            )
+        else:
+            actual_threshold = min_confidence
+
+        for book_id, similarity, result in candidates:
             # 置信度过滤
-            if similarity < min_confidence:
+            if similarity < actual_threshold:
                 continue
 
             # 获取书籍完整信息
@@ -401,3 +417,30 @@ class HybridVectorSearcher:
                 break
 
         return enriched
+
+    def _calculate_dynamic_threshold(
+        self,
+        candidates: List[tuple],
+        similarities: List[float],
+        min_confidence: float
+    ) -> float:
+        """
+        计算动态阈值，保证在结果稀疏场景下也能返回一定数量的书籍
+        """
+        pairs = list(zip(candidates, similarities))
+        pairs.sort(key=lambda x: x[1], reverse=True)
+        top_pairs = pairs[:5]
+
+        avg_similarity = sum(score for _, score in top_pairs) / len(top_pairs)
+        dynamic_threshold = max(avg_similarity * 0.85, min_confidence * 0.7)
+
+        top_log = [
+            (f"book_{candidate[0]}", f"{score:.4f}")
+            for candidate, score in top_pairs
+        ]
+        logger.info(
+            f"动态阈值: {dynamic_threshold:.4f} (Top{len(top_pairs)}平均: {avg_similarity:.4f}, 固定阈值: {min_confidence}), "
+            f"Top样本: {top_log}"
+        )
+
+        return dynamic_threshold
