@@ -146,9 +146,9 @@ class BookVectorizer:
             # 但排除超过最大重试次数的书籍
             max_retry = self.config['mode']['max_retry_count']
             books = [
-                b for b in all_books 
+                b for b in all_books
                 if b.get('embedding_status') in ['pending', 'failed', 'failed_final', None]
-                and b.get('retry_count', 0) < max_retry
+                and (b.get('retry_count') or 0) < max_retry
             ]
             logger.info(f"增量模式: 加载 {len(books)} 本书 (pending/failed/failed_final, retry_count < {max_retry})")
         elif mode == "retry":

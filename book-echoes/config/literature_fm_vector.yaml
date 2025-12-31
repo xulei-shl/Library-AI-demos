@@ -1,5 +1,5 @@
 # =============================================================================
-# 文学情境推荐向量检索配置
+# 文学情境推荐向量检索配置（增强版）
 # Module 8 - Phase 3: 情境主题检索
 # =============================================================================
 
@@ -27,15 +27,37 @@ embedding:
   timeout: 30
   retry_delay: 2
 
+# BM25 检索配置
+bm25:
+  enabled: true
+  k1: 1.5            # 词频饱和参数 (1.2-2.0)
+  b: 0.75            # 长度归一化参数 (0.5-0.75)
+  field_weights:     # 字段权重
+    title: 2.0
+    author: 1.0
+    summary: 1.5
+
+# RRF 融合配置
+rrf:
+  k: 60              # RRF平滑常数 (通常取60)
+
+# 重排序配置（可选）
+reranker:
+  enabled: false     # 默认关闭
+  model: "BAAI/bge-reranker-v2-m3"
+  top_k: 50          # 对前50个结果重排序
+  device: "cpu"      # cpu / cuda
+  batch_size: 32     # 批处理大小
+
 # 检索策略默认值
 default:
   use_vector: true
-  vector_weight: 0.5
-  randomness: 0.2
+  use_bm25: true
+  use_rrf: true
   min_confidence: 0.80
-  top_k: 50
+  vector_top_k: 50
+  bm25_top_k: 50
   final_top_k: 30
-  similarity_threshold: 0.8
 
 # 输出配置
 output:

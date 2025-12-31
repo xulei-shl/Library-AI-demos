@@ -42,3 +42,9 @@ numpy>=1.24.0          # 数值计算，版本要求较高以兼容现代pandas
 # 随机姓名与日期
 radar
 faker
+
+# 混合检索依赖 (模块8 - 文学情境推荐)
+rank-bm25>=0.2.2       # BM25全文检索算法
+jieba>=0.42.1          # 中文分词
+sentence-transformers>=2.2.0  # CrossEncoder重排序模型
+chromadb>=0.4.0        # 向量数据库

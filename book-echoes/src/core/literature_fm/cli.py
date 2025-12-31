@@ -13,7 +13,7 @@ if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 
 from src.utils.logger import get_logger
-from src.core.literature_fm.pipeline import LiteratureFMPipeline
+from src.core.literature_fm.literature_fm_orchestrator import LiteratureFMPipeline
 from src.core.literature_fm.theme_generator import ThemeGenerator
 from src.core.literature_fm.query_translator import QueryTranslator
 
@@ -237,26 +237,164 @@ class LiteratureFMCLI:
             print(f"\n✗ 异常: {str(e)}")
 
     def _cmd_theme_shelf(self):
-        """情境主题检索命令"""
+        """情境主题检索命令（混合检索 + RRF融合）"""
+        print("\n【情境主题检索（混合检索）】")
+        print("请选择输入方式:")
+        print("1. 自然语言主题（将自动调用QueryTranslator转换）")
+        print("2. 已转换的JSON文件（QueryTranslator的输出）")
+
+        choice = input("\n请选择 [1-2]: ").strip()
+
+        if choice == '1':
+            self._theme_shelf_from_text()
+        elif choice == '2':
+            self._theme_shelf_from_json()
+        else:
+            print("✗ 无效选择")
+
+    def _theme_shelf_from_text(self):
+        """从自然语言主题进行检索"""
         theme_text = input("\n请输入情境主题描述: ").strip()
 
         if not theme_text:
             print("✗ 主题描述不能为空")
             return
 
-        result = self.pipeline.generate_theme_shelf(
-            theme_text=theme_text,
-            use_vector=True,
-            vector_weight=0.5,
-            randomness=0.2
-        )
+        try:
+            # 先调用QueryTranslator转换
+            translator = QueryTranslator(self.config)
+            print(f"\n正在转换查询意图...")
 
-        if result['success']:
-            print(f"\n✓ 情境主题检索成功！")
-            print(f"  - 推荐数量: {result['stats']['final_count']}")
-            print(f"  - 输出文件: {result['output_file']}")
-        else:
-            print(f"\n✗ 检索失败: {result.get('error', '未知错误')}")
+            result = translator.translate_theme(
+                theme_name=theme_text[:30],  # 使用前30字符作为主题名
+                slogan="",
+                description=theme_text,
+                target_vibe=""
+            )
+
+            if result.get('is_fallback'):
+                print(f"\n⚠ 查询转换使用兜底结果: {result.get('error', '')}")
+
+            # 使用转换后的查询进行检索
+            translated_queries = [result]
+            self._run_hybrid_search(translated_queries)
+
+        except Exception as e:
+            logger.error(f"主题检索异常: {e}", exc_info=True)
+            print(f"\n✗ 异常: {str(e)}")
+
+    def _theme_shelf_from_json(self):
+        """从JSON文件进行检索"""
+        import json
+
+        file_path = input("\n请输入JSON文件路径: ").strip()
+
+        if not file_path:
+            print("✗ 文件路径不能为空")
+            return
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            # 支持两种格式
+            if 'queries' in data:
+                # QueryTranslator的输出格式
+                translated_queries = data['queries']
+            else:
+                # 直接是查询列表
+                translated_queries = data if isinstance(data, list) else [data]
+
+            print(f"\n加载了 {len(translated_queries)} 个查询")
+            self._run_hybrid_search(translated_queries)
+
+        except FileNotFoundError:
+            print(f"✗ 文件不存在: {file_path}")
+        except json.JSONDecodeError as e:
+            print(f"✗ JSON格式错误: {str(e)}")
+        except Exception as e:
+            logger.error(f"JSON加载异常: {e}", exc_info=True)
+            print(f"\n✗ 异常: {str(e)}")
+
+    def _run_hybrid_search(self, translated_queries: list):
+        """执行混合检索"""
+        try:
+            result = self.pipeline.generate_theme_shelf(
+                translated_queries=translated_queries
+            )
+
+            if result['success']:
+                print(f"\n✓ 混合检索成功！")
+                print(f"  - 主题数量: {len(result['themes'])}")
+                print(f"  - 总推荐书籍: {result['total_books']}")
+                print(f"  - 输出文件: {result['output_file']}")
+
+                # 打印每个主题的统计
+                for theme_result in result['themes']:
+                    theme = theme_result['theme']
+                    stats = theme_result['stats']
+                    print(f"\n  主题: {theme.get('theme_name', '')}")
+                    print(f"    向量召回: {stats['vector_count']} 本")
+                    print(f"    BM25召回: {stats['bm25_count']} 本")
+                    print(f"    最终推荐: {stats['final_count']} 本")
+            else:
+                print(f"\n✗ 检索失败: {result.get('error', '未知错误')}")
+
+        except Exception as e:
+            logger.error(f"混合检索异常: {e}", exc_info=True)
+            print(f"\n✗ 异常: {str(e)}")
+
+    def _theme_shelf_from_json_file(self, file_path: str):
+        """从JSON文件进行检索（命令行参数调用）"""
+        import json
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            # 支持两种格式
+            if 'queries' in data:
+                translated_queries = data['queries']
+            else:
+                translated_queries = data if isinstance(data, list) else [data]
+
+            print(f"加载了 {len(translated_queries)} 个查询")
+            self._run_hybrid_search(translated_queries)
+
+        except FileNotFoundError:
+            print(f"✗ 文件不存在: {file_path}")
+            sys.exit(1)
+        except json.JSONDecodeError as e:
+            print(f"✗ JSON格式错误: {str(e)}")
+            sys.exit(1)
+        except Exception as e:
+            logger.error(f"JSON加载异常: {e}", exc_info=True)
+            print(f"✗ 异常: {str(e)}")
+            sys.exit(1)
+
+    def _theme_shelf_from_text_direct(self, theme_text: str):
+        """从自然语言主题进行检索（命令行参数调用）"""
+        try:
+            translator = QueryTranslator(self.config)
+            print(f"正在转换查询意图...")
+
+            result = translator.translate_theme(
+                theme_name=theme_text[:30],
+                slogan="",
+                description=theme_text,
+                target_vibe=""
+            )
+
+            if result.get('is_fallback'):
+                print(f"⚠ 查询转换使用兜底结果: {result.get('error', '')}")
+
+            translated_queries = [result]
+            self._run_hybrid_search(translated_queries)
+
+        except Exception as e:
+            logger.error(f"主题检索异常: {e}", exc_info=True)
+            print(f"✗ 异常: {str(e)}")
+            sys.exit(1)
 
     def _cmd_vectorize(self):
         """数据库向量化命令"""
@@ -367,6 +505,7 @@ def main():
 
     # 书架生成参数
     parser.add_argument('--theme', type=str, help='情境主题描述')
+    parser.add_argument('--query-json', type=str, help='已转换的JSON文件路径')
 
     args = parser.parse_args()
     cli = LiteratureFMCLI()
@@ -386,10 +525,16 @@ def main():
     elif args.command == 'tag':
         cli._cmd_llm_tagging()
     elif args.command == 'shelf':
-        if not args.theme:
-            print("✗ 请使用 --theme 参数指定主题描述")
+        # 支持两种输入方式
+        if args.query_json:
+            # 从JSON文件加载已转换的查询
+            cli._theme_shelf_from_json_file(args.query_json)
+        elif args.theme:
+            # 从自然语言主题转换并检索
+            cli._theme_shelf_from_text_direct(args.theme)
+        else:
+            print("✗ 请使用 --theme 或 --query-json 参数指定输入")
             sys.exit(1)
-        cli.pipeline.generate_theme_shelf(theme_text=args.theme)
     elif args.command == 'vectorize':
         cli._cmd_vectorize()
     else:

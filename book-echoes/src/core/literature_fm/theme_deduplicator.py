@@ -110,7 +110,8 @@ class ThemeDeduplicator:
         book_ids: List[int],
         final_theme: Optional[str] = None,
         vector_weight: float = 0.5,
-        randomness: float = 0.2
+        randomness: float = 0.2,
+        method: Optional[str] = None
     ) -> bool:
         """
         保存推荐记录
@@ -122,6 +123,7 @@ class ThemeDeduplicator:
             final_theme: 最终主题名称
             vector_weight: 向量检索权重
             randomness: 随机性因子
+            method: 检索方法（如 hybrid_rrf）
 
         Returns:
             是否成功
@@ -145,7 +147,8 @@ class ThemeDeduplicator:
             conn.commit()
             conn.close()
 
-            logger.info(f"推荐记录已保存: {user_input[:30]}... -> {len(book_ids)} 本")
+            method_str = f" [{method}]" if method else ""
+            logger.info(f"推荐记录已保存{method_str}: {user_input[:30]}... -> {len(book_ids)} 本")
             return True
 
         except Exception as e:
@@ -208,19 +211,84 @@ class ThemeDeduplicator:
             return []
 
     def _calculate_condition_similarity(self, c1: Dict, c2: Dict) -> float:
-        """计算两个条件的相似度"""
+        """
+        计算两个条件的相似度
+
+        支持两种格式:
+        1. 旧格式: {"field1": ["value1", "value2"], ...}
+        2. 新格式 (QueryTranslator): {"filter_conditions": [...], "search_keywords": [...]}
+        """
+        # 处理新格式：提取 filter_conditions
+        conditions1 = c1.get("filter_conditions", []) if isinstance(c1.get("filter_conditions"), list) else []
+        conditions2 = c2.get("filter_conditions", []) if isinstance(c2.get("filter_conditions"), list) else []
+
+        # 如果是新格式，比较 filter_conditions
+        if conditions1 or conditions2:
+            return self._compare_filter_conditions(conditions1, conditions2)
+
+        # 兼容旧格式
         all_keys = set(c1.keys()) | set(c2.keys())
         if not all_keys:
             return 0.0
 
         matches = 0
         for key in all_keys:
-            tags1 = set(c1.get(key, []))
-            tags2 = set(c2.get(key, []))
-            if tags1 & tags2:
+            vals1 = c1.get(key, [])
+            vals2 = c2.get(key, [])
+            # 确保值是列表且元素可哈希
+            if isinstance(vals1, list) and isinstance(vals2, list):
+                try:
+                    tags1 = set(vals1)
+                    tags2 = set(vals2)
+                    if tags1 & tags2:
+                        matches += 1
+                except TypeError:
+                    # 包含不可哈希元素，跳过
+                    continue
+
+        return matches / len(all_keys) if all_keys else 0.0
+
+    def _compare_filter_conditions(self, c1: List[Dict], c2: List[Dict]) -> float:
+        """
+        比较两个 filter_conditions 列表的相似度
+
+        格式: [{"field": "xxx", "values": [...], "operator": "MUST/SHOULD/MUST_NOT"}, ...]
+        """
+        if not c1 and not c2:
+            return 1.0
+        if not c1 or not c2:
+            return 0.0
+
+        # 按字段分组
+        def group_by_field(conditions):
+            grouped = {}
+            for cond in conditions:
+                field = cond.get("field")
+                values = cond.get("values", [])
+                if field and isinstance(values, list):
+                    # 只处理可哈希的值
+                    try:
+                        grouped[field] = set(values)
+                    except TypeError:
+                        # 有不可哈希值，转换为可哈希的表示
+                        grouped[field] = set(str(v) for v in values)
+            return grouped
+
+        g1 = group_by_field(c1)
+        g2 = group_by_field(c2)
+
+        all_fields = set(g1.keys()) | set(g2.keys())
+        if not all_fields:
+            return 0.0
+
+        matches = 0
+        for field in all_fields:
+            vals1 = g1.get(field, set())
+            vals2 = g2.get(field, set())
+            if vals1 & vals2:
                 matches += 1
 
-        return matches / len(all_keys)
+        return matches / len(all_fields)
 
     def _parse_book_ids(self, book_ids_json: Optional[str]) -> Set[int]:
         """解析 JSON 格式的书目ID列表"""

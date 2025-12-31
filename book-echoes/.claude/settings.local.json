@@ -10,7 +10,8 @@
       "Bash(findstr:*)",
       "Bash(ls:*)",
       "Bash(dir:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []

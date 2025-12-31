@@ -18,8 +18,8 @@ vector_db:
 embedding:
   provider: "SiliconFlow"
   model: "Qwen/Qwen3-Embedding-8B"
-  api_key: "env:SiliconFlow_API_KEY"
-  base_url: "https://api.siliconflow.cn/v1"
+  api_key: "env:ONEAPI_API_KEY"
+  base_url: "http://47.103.50.106:3000/v1"
   dimensions: 4096  # text-embedding-3-large 的维度
   batch_size: 50    # 每批处理数量
   max_retries: 3    # 单次调用重试次数
