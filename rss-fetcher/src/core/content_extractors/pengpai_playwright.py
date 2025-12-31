@@ -101,14 +101,33 @@ class PengpaiPlaywrightExtractor(BaseContentExtractor):
     def _extract_content(self, soup: BeautifulSoup) -> str:
         """根据澎湃手机端HTML结构提取文章正文内容"""
         try:
-            # 查找文章内容容器
-            # 根据用户提供的HTML结构：.index_cententWrapBox__bh0OY > .index_cententWrap__Jv8jK
-            content_container = soup.select_one(".index_cententWrapBox__bh0OY .index_cententWrap__Jv8jK")
-            
-            if not content_container:
-                # 备用选择器
-                content_container = soup.select_one(".index_cententWrapBox__bh0OY")
-            
+            # 查找文章内容容器 - 使用模糊匹配以适应CSS Modules哈希变化
+            # 优先级：具体选择器 -> 模糊匹配选择器
+            content_selectors = [
+                # 旧的哈希类名（可能已失效）
+                ".index_cententWrapBox__bh0OY .index_cententWrap__Jv8jK",
+                ".index_cententWrapBox__bh0OY",
+                # 新的模糊匹配选择器（适应哈希变化）
+                "[class*='cententWrapBox'] [class*='cententWrap']",  # 外层>内层
+                "[class*='cententWrapBox']",  # 外层容器
+                "[class*='contentWrapBox'] [class*='contentWrap']",  # 备用拼写
+                "[class*='cententWrap']",  # 内层容器
+                "article",  # HTML5语义化标签
+            ]
+
+            content_container = None
+            for selector in content_selectors:
+                content_container = soup.select_one(selector)
+                if content_container:
+                    logger.info(f"使用选择器找到内容容器: {selector}")
+                    # 验证内容长度
+                    text_len = len(content_container.get_text(strip=True))
+                    if text_len > 100:  # 确保有足够的内容
+                        break
+                    else:
+                        logger.debug(f"选择器 {selector} 找到的内容过短({text_len}字符)，继续尝试")
+                        content_container = None
+
             if not content_container:
                 logger.warning("未找到文章内容容器")
                 return "无法提取内容：未找到文章内容容器"

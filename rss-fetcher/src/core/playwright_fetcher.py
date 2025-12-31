@@ -70,8 +70,8 @@ class PlaywrightSiteFetcher:
         return articles
     
     def _fetch_site_articles(
-        self, 
-        site_config: Dict[str, Any], 
+        self,
+        site_config: Dict[str, Any],
         hours_lookback: int,
         start_time: Optional[datetime],
         end_time: Optional[datetime]
@@ -81,17 +81,26 @@ class PlaywrightSiteFetcher:
         if not url:
             logger.error(f"网站配置缺少URL: {site_config}")
             return []
-        
+
         # 获取网站特定的选择器配置
         selectors = site_config.get("selectors", {})
-        
+
+        # 获取网站特定的浏览器配置
+        browser_config = site_config.get("browser_config", {})
+        site_headless = browser_config.get("headless", self.headless)
+        site_user_agent = browser_config.get("user_agent", self.user_agent)
+        viewport_width = browser_config.get("viewport_width", 375)
+        viewport_height = browser_config.get("viewport_height", 667)
+
+        logger.info(f"浏览器配置: headless={site_headless}, viewport={viewport_width}x{viewport_height}")
+
         articles = []
-        
+
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=self.headless)
+            browser = p.chromium.launch(headless=site_headless)
             context = browser.new_context(
-                user_agent=self.user_agent,
-                viewport={"width": 375, "height": 667}  # 模拟手机屏幕
+                user_agent=site_user_agent,
+                viewport={"width": viewport_width, "height": viewport_height}
             )
             page = context.new_page()
             
@@ -177,11 +186,28 @@ class PlaywrightSiteFetcher:
         
         # 获取文章容器选择器
         article_container_selector = selectors.get("article_container", ".index_wrapper__9rz3z")
-        
+
         # 查找所有文章容器
         article_elements = page.locator(article_container_selector)
         count = article_elements.count()
-        
+
+        # 如果主选择器找不到，尝试备用选择器
+        if count == 0:
+            logger.warning(f"主选择器 '{article_container_selector}' 未找到元素，尝试备用选择器")
+            fallback_selectors = [
+                "[class*='index_wrapper']",  # 澎湃手机的通用容器
+                "[class*='wrapper']",  # 通用wrapper
+                "article",  # HTML5 article标签
+                "[class*='item']",  # 通用item
+                "li",  # 列表项
+            ]
+            for fallback in fallback_selectors:
+                article_elements = page.locator(fallback)
+                count = article_elements.count()
+                if count > 0:
+                    logger.info(f"备用选择器 '{fallback}' 找到 {count} 个元素")
+                    break
+
         logger.info(f"找到 {count} 个文章容器")
         
         # 获取当前时间作为fetch_date

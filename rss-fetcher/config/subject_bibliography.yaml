@@ -4,8 +4,8 @@ fetch_settings:
   hours_lookback: 24  # 抓取过去多少小时内的文章
   # time_range 为可选配置，若填写则优先使用起止时间过滤文章
   time_range:
-    start: "2025-12-15 00:00:00"  # 例: "2025-12-01 00:00:00"
-    end: "2025-12-16 00:00:00"    # 例: "2025-12-02 00:00:00"，若需覆盖整月，把 end 写成"下月1号00:00:00"形成闭开区间
+    start: "2025-12-16 00:00:00"  # 例: "2025-12-01 00:00:00"
+    end: "2025-12-31 00:00:00"    # 例: "2025-12-02 00:00:00"，若需覆盖整月，把 end 写成"下月1号00:00:00"形成闭开区间
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 
 # 输出设置 - 按月聚合版本
@@ -117,21 +117,21 @@ playwright_sites:
       timeout: 60
     # 网站特定的CSS选择器配置
     selectors:
-      article_container: ".index_wrapper__9rz3z"  # 文章容器
-      title: "h3.index_title__aGAqD"  # 标题选择器
+      article_container: "[class*='li__'] [class*='wrapper__']"  # 文章容器（使用模糊匹配适应CSS Modules哈希变化）
+      title: "[class*='title__']"  # 标题选择器（模糊匹配）
       link: "a"  # 链接选择器
-      time: ".adm-space-item span"  # 时间选择器（相对时间如"19小时前"）
+      time: "[class*='adm-space-item'] span"  # 时间选择器（相对时间如"19小时前"）
       loading: ".loading, .spinner"  # 加载指示器
     # 滚动加载配置
     scroll_config:
-      max_scrolls: 10  # 最大滚动次数
+      max_scrolls: 5  # 最大滚动次数
       scroll_delay: 3000  # 滚动间隔（毫秒）
     # 浏览器设置
     browser_config:
       user_agent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1"
       viewport_width: 375  # 手机屏幕宽度
       viewport_height: 667  # 手机屏幕高度
-      headless: true  # 是否无头模式
+      headless: false  # 是否无头模式
     # 全文提取器配置 - 可选
     extractor: "pengpai_playwright"  # 对应的提取器名称，如不需要全文提取可留空
 
