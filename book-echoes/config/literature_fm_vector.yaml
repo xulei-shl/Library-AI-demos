@@ -60,7 +60,7 @@ default:
   use_vector: true
   use_bm25: true
   use_rrf: true
-  min_confidence: 0.80
+  min_confidence: 0.50
   vector_top_k: 50
   bm25_top_k: 50
   final_top_k: 30

@@ -143,3 +143,46 @@ theme_generation:
     output_dir: "runtime/outputs/theme_shelf"
     # 文件名模板
     filename_template: "themes_{timestamp}_{direction}.json"
+
+# 候选图书 LLM 筛选配置（Phase 3.5）
+candidate_filter:
+  # 是否启用候选筛选功能
+  enabled: true
+
+  # 排除的 sheet 名称（不处理的sheet）
+  excluded_sheets:
+    - "主题汇总"
+    - "元信息"
+
+  # 分组配置
+  grouping:
+    # 每组图书数量（约30条数据分5组）
+    group_size: 6
+    # 是否随机打乱后分组
+    shuffle: true
+    # 随机种子（留空则随机）
+    random_seed: null
+
+  # Excel 字段映射
+  excel_fields:
+    # 主题汇总 sheet 的字段映射
+    theme_summary:
+      theme_name: "主题名称"
+      slogan: "副标题"
+      description: "情境描述"
+      target_vibe: "预期氛围"
+    # 候选图书 sheet 的字段列表（提取这些字段给 LLM）
+    book_fields:
+      - "douban_title"
+      - "douban_subtitle"
+      - "douban_author"
+      - "douban_summary"
+      - "douban_author_intro"
+      - "douban_catalog"
+
+  # LLM 调用配置
+  llm:
+    # 任务名称（对应 llm.yaml 中的任务名）
+    task_name: "literary_reranking"
+    # 并发调用数（同时处理多少组）
+    concurrent_groups: 1

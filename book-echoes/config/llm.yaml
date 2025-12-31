@@ -371,22 +371,22 @@ tasks:
         module: "模块8"
 
   # ----------------------------------------------------------------------------
-  # 任务: 文学情境主题解析 (literary_theme_parse)
-  # 逻辑位置: src/core/literature_fm/theme_parser.py
+  # 任务: 文学候选图书筛选 (literary_reranking)
+  # 逻辑位置: src/core/literature_fm/candidate_filter.py
   # ----------------------------------------------------------------------------
-  literary_theme_parse:
-    provider_type: text-small
-    temperature: 0.3
+  literary_reranking:
+    provider_type: text-gemini-qwen
+    temperature: 0.4
     top_p: 0.9
     prompt:
       type: langfuse
-      langfuse_name: "literary_theme_parse"
-      fallback: "prompts/literary_theme_parse.md"
+      langfuse_name: "literary_reranking"
+      fallback: "prompts/literary_reranking.md"
 
     retry:
       max_retries: 3
-      base_delay: 1.0
-      max_delay: 10
+      base_delay: 1.2
+      max_delay: 12
       enable_provider_switch: true
       jitter: true
 
@@ -397,8 +397,8 @@ tasks:
 
     langfuse:
       enabled: true
-      name: "文学情境主题解析"
-      tags: ["book-echoes", "模块8", "主题解析"]
+      name: "候选图书筛选"
+      tags: ["book-echoes", "模块8", "候选筛选"]
       metadata:
         project: "book-echoes"
         module: "模块8"

@@ -518,15 +518,29 @@ class _DatabaseReader:
     def __init__(self, config: Dict):
         self.conn = sqlite3.connect(config['path'])
         self.table = config.get('table', 'literary_tags')
+        self.table_columns = self._get_table_columns()
 
     def get_book_by_id(self, book_id: int) -> Optional[Dict]:
-        cursor = self.conn.execute(
-            f"SELECT * FROM {self.table} WHERE id = ?",
-            (book_id,)
-        )
-        row = cursor.fetchone()
-        if row:
-            return dict(zip([c[0] for c in cursor.description], row))
+        """
+        兼容 book_id 与 id 字段，避免因字段混用导致查不到书籍
+        """
+        query_fields = []
+        if 'book_id' in self.table_columns:
+            query_fields.append('book_id')
+        query_fields.append('id')
+
+        for field in query_fields:
+            try:
+                cursor = self.conn.execute(
+                    f"SELECT * FROM {self.table} WHERE {field} = ?",
+                    (book_id,)
+                )
+                row = cursor.fetchone()
+                if row:
+                    return dict(zip([c[0] for c in cursor.description], row))
+            except sqlite3.OperationalError:
+                # 目标表不存在该字段时直接尝试下一个字段
+                continue
         return None
 
     def update_embedding_status(self, book_id: int, status: str):
@@ -539,3 +553,11 @@ class _DatabaseReader:
 
     def close(self):
         self.conn.close()
+
+    def _get_table_columns(self) -> set:
+        """缓存表字段，便于动态判断使用 book_id 还是 id"""
+        try:
+            cursor = self.conn.execute(f"PRAGMA table_info({self.table})")
+            return {row[1] for row in cursor.fetchall()}
+        except sqlite3.OperationalError:
+            return set()

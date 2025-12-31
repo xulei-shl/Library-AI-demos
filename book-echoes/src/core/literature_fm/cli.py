@@ -38,10 +38,11 @@ class LiteratureFMCLI:
             print("3. 查询意图转换 (Phase 2.6)")
             print("4. 情境主题检索 (Phase 3)")
             print("5. 数据库向量化")
+            print("6. 候选图书 LLM 筛选 (Phase 3.5)")
             print("0. 退出")
             print("=" * 60)
 
-            choice = input("\n请选择功能 [0-5]: ").strip()
+            choice = input("\n请选择功能 [0-6]: ").strip()
 
             if choice == '1':
                 self._cmd_llm_tagging()
@@ -53,6 +54,8 @@ class LiteratureFMCLI:
                 self._cmd_theme_shelf()
             elif choice == '5':
                 self._cmd_vectorize()
+            elif choice == '6':
+                self._cmd_candidate_filter()
             elif choice == '0':
                 print("再见！")
                 break
@@ -453,6 +456,45 @@ class LiteratureFMCLI:
 
         else:
             print("✗ 无效选择")
+
+    def _cmd_candidate_filter(self):
+        """候选图书 LLM 筛选命令"""
+        print("\n【候选图书 LLM 筛选（Phase 3.5）】")
+        file_path = input("请输入候选图书 Excel 文件路径: ").strip()
+
+        if not file_path:
+            print("✗ 文件路径不能为空")
+            return
+
+        self._filter_candidates_from_excel(file_path)
+
+    def _filter_candidates_from_excel(self, file_path: str):
+        """从 Excel 筛选候选图书"""
+        try:
+            from src.core.literature_fm.candidate_filter import CandidateFilter
+
+            filter_config = self.config.get('candidate_filter', {})
+            if not filter_config.get('enabled', False):
+                print("\n✗ 候选筛选功能未启用，请在配置文件中设置 candidate_filter.enabled = true")
+                return
+
+            filter_instance = CandidateFilter(filter_config)
+            print(f"\n正在读取 Excel: {file_path}")
+
+            result = filter_instance.filter_from_excel(file_path)
+
+            if result['success']:
+                print(f"\n✓ 筛选完成！")
+                print(f"  - 处理数量: {result['processed']}")
+                print(f"  - 通过筛选: {result['passed']}")
+                print(f"  - 分组数量: {result['groups']}")
+                print(f"  - 输出文件: {result['output_file']}")
+            else:
+                print(f"\n✗ 筛选失败: {result.get('error', '未知错误')}")
+
+        except Exception as e:
+            logger.error(f"候选筛选异常: {e}", exc_info=True)
+            print(f"\n✗ 异常: {str(e)}")
 
 
 def main():
