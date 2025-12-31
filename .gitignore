@@ -28,3 +28,4 @@ metadata-editor/jsondata/knowledge_settings.json
 *.bin
 *.sqlite3
 /book-echoes/runtime/vector_db
+*.sqlite3
