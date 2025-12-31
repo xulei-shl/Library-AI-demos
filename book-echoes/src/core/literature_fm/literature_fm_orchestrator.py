@@ -354,9 +354,17 @@ class LiteratureFMPipeline:
                     b=bm25_config.get('b', 0.75),
                     field_weights=bm25_config.get('field_weights', {})
                 )
-                logger.info("✓ BM25检索器初始化成功（懒加载模式）")
+                # 读取随机性配置
+                bm25_randomness = bm25_config.get('randomness', 0)
+                bm25_score_threshold = bm25_config.get('score_threshold')
+                if bm25_randomness > 0:
+                    logger.info(f"✓ BM25检索器初始化成功（懒加载模式，随机性={bm25_randomness}）")
+                else:
+                    logger.info("✓ BM25检索器初始化成功（懒加载模式）")
             else:
                 bm25_searcher = None
+                bm25_randomness = 0
+                bm25_score_threshold = None
                 logger.info("BM25检索未启用")
 
             # RRF融合器
@@ -367,11 +375,8 @@ class LiteratureFMPipeline:
             reranker = None
             if reranker_config.get('enabled', False):
                 from .cross_encoder_reranker import CrossEncoderReranker
-                reranker = CrossEncoderReranker(
-                    model_name=reranker_config.get('model', 'BAAI/bge-reranker-v2-m3'),
-                    device=reranker_config.get('device', 'cpu')
-                )
-                logger.info(f"✓ CrossEncoder重排序器初始化成功")
+                reranker = CrossEncoderReranker(config=reranker_config)
+                logger.info(f"✓ Reranker初始化成功 (model={reranker_config.get('model')})")
 
             logger.info("")
 
@@ -419,15 +424,25 @@ class LiteratureFMPipeline:
                     except Exception as e:
                         logger.warning(f"    向量检索失败: {str(e)}")
 
-                # 路B: BM25检索（关键词匹配）
+                # 路B: BM25检索（关键词匹配，带随机性）
                 if bm25_searcher and search_keywords:
                     logger.info("  - BM25检索中...")
                     try:
-                        bm25_results = bm25_searcher.search(
-                            keywords=search_keywords,
-                            top_k=default_config.get('bm25_top_k', 50),
-                            excluded_ids=excluded_ids
-                        )
+                        # 根据配置决定是否使用随机检索
+                        if bm25_randomness > 0:
+                            bm25_results = bm25_searcher.search_with_randomness(
+                                keywords=search_keywords,
+                                top_k=default_config.get('bm25_top_k', 50),
+                                excluded_ids=excluded_ids,
+                                randomness=bm25_randomness,
+                                score_threshold=bm25_score_threshold
+                            )
+                        else:
+                            bm25_results = bm25_searcher.search(
+                                keywords=search_keywords,
+                                top_k=default_config.get('bm25_top_k', 50),
+                                excluded_ids=excluded_ids
+                            )
                         logger.info(f"    -> 召回 {len(bm25_results)} 本")
                     except Exception as e:
                         logger.warning(f"    BM25检索失败: {str(e)}")

@@ -36,18 +36,24 @@ bm25:
     title: 2.0
     author: 1.0
     summary: 1.5
+  randomness: 0.15   # 随机性因子 (0-1)，0.15 表示 15% 结果来自低分随机采样
+  score_threshold: null  # 随机采样的分数阈值，null 表示自动推断
 
 # RRF 融合配置
 rrf:
   k: 60              # RRF平滑常数 (通常取60)
 
-# 重排序配置（可选）
+# 重排序配置（API 模式）
 reranker:
   enabled: false     # 默认关闭
-  model: "BAAI/bge-reranker-v2-m3"
+  model: "Qwen/Qwen3-Reranker-8B"
+  api_key: "env:ONEAPI_API_KEY"
+  base_url: "http://47.103.50.106:3000/v1"
   top_k: 50          # 对前50个结果重排序
-  device: "cpu"      # cpu / cuda
   batch_size: 32     # 批处理大小
+  max_retries: 3
+  timeout: 30
+  retry_delay: 2
 
 # 检索策略默认值
 default:

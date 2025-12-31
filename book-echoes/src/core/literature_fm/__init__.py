@@ -5,7 +5,7 @@ Phase 2.5: 文学策划主题生成
 Phase 3: 情境主题检索功能
 """
 
-from .pipeline import LiteratureFMPipeline
+from .literature_fm_orchestrator import LiteratureFMPipeline
 from .llm_tagger import LLMTagger
 from .tag_manager import TagManager
 from .theme_generator import ThemeGenerator
