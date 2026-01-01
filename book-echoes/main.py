@@ -548,7 +548,6 @@ def run_module5():
 
     if manual_path:
         # 使用用户手动输入的路径
-        from pathlib import Path
         manual_path_obj = Path(manual_path)
         if manual_path_obj.exists() and manual_path_obj.suffix.lower() in ['.xlsx', '.xls']:
             latest_excel = manual_path_obj

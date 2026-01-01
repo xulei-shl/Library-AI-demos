@@ -169,7 +169,7 @@ class ExcelExporter:
             'douban_isbn': '豆瓣ISBN',
             'douban_pages': '豆瓣页数',
             'douban_binding': '豆瓣装帧',
-            'douban_pub_year': '豆瓣出版年份',
+            'douban_pub_year': '豆瓣出版年',
             'douban_rating_count': '豆瓣评价人数',
             'douban_summary': '豆瓣内容简介',
             'douban_author_intro': '豆瓣作者简介',
