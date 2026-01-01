@@ -110,8 +110,8 @@ def _prefer_higher_similarity(current: Dict, candidate: Dict) -> Dict:
     """在相同 book_id 下保留时间更新的记录。"""
 
     # 尝试比较 embedding_date
-    current_date = current.get('embedding_date', '').strip()
-    candidate_date = candidate.get('embedding_date', '').strip()
+    current_date = (current.get('embedding_date') or '').strip()
+    candidate_date = (candidate.get('embedding_date') or '').strip()
     
     if current_date and candidate_date:
         # 如果两个记录都有时间字段，比较时间
@@ -185,7 +185,7 @@ def merge_exact_matches(
     # 第二步：基于 call_no 去重，处理数据库中的重复脏数据
     call_no_merged: Dict[str, Dict] = {}
     for item in book_merged.values():
-        call_no = str(item.get('call_no', '')).strip()
+        call_no = str(item.get('call_no') or '').strip()
         if not call_no:
             # 如果没有索书号，直接保留
             call_no_merged[f"no_call_no_{item.get('book_id')}"] = item
@@ -233,8 +233,8 @@ def _is_record_newer(current: Dict, existing: Dict) -> bool:
         True 如果当前记录更新，False 否则
     """
     # 尝试比较 embedding_date
-    current_date = current.get('embedding_date', '').strip()
-    existing_date = existing.get('embedding_date', '').strip()
+    current_date = (current.get('embedding_date') or '').strip()
+    existing_date = (existing.get('embedding_date') or '').strip()
     
     if current_date and existing_date:
         # 如果两个记录都有时间字段，比较时间

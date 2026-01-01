@@ -160,7 +160,7 @@ class MarkdownAssetParser:
         section = self._extract_section(content, "深度洞察")
         if not section:
             return []
-        insights = [match.group(1).strip() for match in BULLET_LINE_PATTERN.finditer(section)]
+        insights = [match.group(1).strip() for match in BULLET_LINE_PATTERN.finditer(section) if match.group(1)]
         return self._deduplicate(insights)
 
     def _augment_with_llm(self, package: QueryPackage, llm_client: "UnifiedLLMClient", task_name: str) -> None:

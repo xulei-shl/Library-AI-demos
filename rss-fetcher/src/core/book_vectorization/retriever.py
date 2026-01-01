@@ -357,7 +357,7 @@ class BookRetriever:
         # 第二步：基于 call_no 去重，处理数据库中的重复脏数据
         call_no_dict = {}
         for result in book_id_deduplicated:
-            call_no = str(result.get('call_no', '')).strip()
+            call_no = str(result.get('call_no') or '').strip()
             if not call_no:
                 # 如果没有索书号，直接保留
                 call_no_dict[f"no_call_no_{result.get('book_id')}"] = result
@@ -397,8 +397,8 @@ class BookRetriever:
             True 如果当前记录更新，False 否则
         """
         # 尝试比较 embedding_date
-        current_date = current.get('embedding_date', '').strip()
-        existing_date = existing.get('embedding_date', '').strip()
+        current_date = (current.get('embedding_date') or '').strip()
+        existing_date = (existing.get('embedding_date') or '').strip()
         
         if current_date and existing_date:
             # 如果两个记录都有时间字段，比较时间
