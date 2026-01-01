@@ -1,4 +1,4 @@
-﻿# ----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
 # LLM 统一配置文件
 # ----------------------------------------------------------------------------------
 # 本文件集中管理所有对大语言模型 (LLM) 的调用配置。
@@ -33,12 +33,18 @@ api_providers:
   #     timeout_seconds: 120
 
   text:
+    # primary:
+    #   name: "oneapi-4.1"
+    #   api_key: env:ONEAPI_API_KEY
+    #   base_url: "http://47.103.50.106:3000/v1"
+    #   model: "gpt-4.1"
+    #   timeout_seconds: 120
     primary:
-      name: "oneapi-4.1"
+      name: "oneapi-gemini"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
-      model: "gpt-4.1"
-      timeout_seconds: 120        
+      model: "gemini-2.5-pro"
+      timeout_seconds: 120               
     secondary:
       name: "oneapi-qwen3"
       api_key: env:ONEAPI_API_KEY
@@ -284,6 +290,28 @@ tasks:
       metadata:
         module: "图书向量化"
 
+  # ----------------------------------------------------------------------------
+  # 任务: 人工推荐语生成（单本书籍）
+  # 逻辑位置: src/core/book_vectorization/book_recommendation_writer.py
+  # ----------------------------------------------------------------------------
+  book_recommendation_writer:
+    provider_type: text
+    temperature: 0.4
+    prompt:
+      type: langfuse
+      langfuse_name: "人工推荐语"
+    retry:
+      max_retries: 3
+      base_delay: 1.0
+      max_delay: 10
+      enable_provider_switch: true
+    langfuse:
+      enabled: true
+      name: "人工推荐语生成"
+      tags: ["book-echoes", "人工推荐语"]
+      metadata:
+        module: "图书向量化"
+
 defaults:
   temperature: 0.45
   top_p: 0.9
@@ -294,3 +322,4 @@ langfuse:
   public_key: env:LANGFUSE_PUBLIC_KEY
   secret_key: env:LANGFUSE_SECRET_KEY
   debug: false
+

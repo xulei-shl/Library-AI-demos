@@ -74,32 +74,65 @@ class ExcelReader:
     def filter_selected_books(self, books_data: List[Dict]) -> List[Dict]:
         """
         过滤通过主题筛选的书籍
-        
+
+        优先使用"人工评选"列筛选值为"通过"的书籍，如果该列不存在或所有值都为空，
+        则回退使用"初评结果"列筛选值为TRUE的书籍。
+
         Args:
             books_data: 完整的书籍数据列表
-            
+
         Returns:
             通过筛选的书籍数据列表
         """
         logger.info(f"开始过滤通过主题筛选的书籍，总书籍数: {len(books_data)}")
-        
-        selected_books = []
-        
+
+        # 检测使用哪种筛选方式
+        use_manual_review = False
+        use_initial_review = False
+
+        # 检查"人工评选"列是否存在且有非空值
+        manual_review_values = []
         for book in books_data:
-            # 检查是否有"初评结果"列且值为TRUE
-            # 注意：Excel中的TRUE值在pandas读取后可能是布尔值True或字符串"TRUE"
+            if "人工评选" in book:
+                value = book["人工评选"]
+                if value is not None and value != "" and not (isinstance(value, float) and value != value):  # 排除NaN
+                    manual_review_values.append(value)
+
+        if manual_review_values:
+            use_manual_review = True
+            logger.info(f"检测到'人工评选'列且包含{len(manual_review_values)}个非空值，使用该列进行筛选")
+        else:
+            # 检查"初评结果"列是否存在
+            initial_review_exists = any("初评结果" in book for book in books_data)
+            if initial_review_exists:
+                use_initial_review = True
+                logger.info("'人工评选'列不存在或全部为空，回退使用'初评结果'列进行筛选")
+            else:
+                logger.warning("'人工评选'和'初评结果'列都不存在，将返回空列表")
+
+        selected_books = []
+
+        for book in books_data:
             is_selected = False
-            
-            # 检查中文列名（主题筛选增强后的Excel）
-            if "初评结果" in book:
-                value = book["初评结果"]
-                # 处理可能的TRUE值形式：布尔值True、字符串"TRUE"、字符串"True"
-                if value is True or (isinstance(value, str) and value.upper() == "TRUE"):
-                    is_selected = True
-            
+
+            if use_manual_review:
+                # 使用"人工评选"列，筛选值为"通过"的书籍
+                if "人工评选" in book:
+                    value = book["人工评选"]
+                    if isinstance(value, str) and value.strip() == "通过":
+                        is_selected = True
+
+            elif use_initial_review:
+                # 回退使用"初评结果"列，筛选值为TRUE的书籍
+                if "初评结果" in book:
+                    value = book["初评结果"]
+                    # 处理可能的TRUE值形式：布尔值True、字符串"TRUE"、字符串"True"
+                    if value is True or (isinstance(value, str) and value.upper() == "TRUE"):
+                        is_selected = True
+
             if is_selected:
                 selected_books.append(book)
-        
+
         logger.info(f"筛选完成，通过筛选的书籍数: {len(selected_books)}")
-        
+
         return selected_books

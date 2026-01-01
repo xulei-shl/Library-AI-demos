@@ -181,7 +181,7 @@ class RecommendationWriter:
             books_text += f"内容简介: {book.get('豆瓣内容简介', '')}\n"
             books_text += f"作者简介: {book.get('豆瓣作者简介', '')}\n"
             books_text += f"目录: {book.get('豆瓣目录', '')}\n"
-            books_text += f"初评理由: {book.get('初评理由', '')}\n"
+            books_text += f"初评理由: {book.get('人工推荐语') or book.get('初评理由', '')}\n"
             books_text += "---\n"
         
         # 构建完整提示词

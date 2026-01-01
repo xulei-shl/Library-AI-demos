@@ -50,6 +50,7 @@ from src.core.book_vectorization.excel_exporter import ExcelExporter
 from src.core.book_vectorization.theme_screener import ThemeScreener
 from src.core.book_vectorization.excel_enhancer import ExcelEnhancer
 from src.core.book_vectorization.recommendation_writer import RecommendationWriter
+from src.core.book_vectorization.book_recommendation_writer import BookRecommendationWriter
 from src.utils.config_manager import ConfigManager
 from src.utils.logger import get_logger
 from src.utils.llm.client import UnifiedLLMClient
@@ -130,6 +131,7 @@ def interactive_mode():
         "多查询检索 - 从Markdown文件生成多个子查询",
         "Excel导出 - 从JSON结果导出完整书籍信息到Excel",
         "大模型主题筛选 - 基于文章主题分析报告筛选书籍",
+        "大模型人工推荐语 - 为人工评选通过的书籍生成推荐语",
         "大模型推荐导语 - 根据文章分析报告和筛选书籍生成推荐导语"
     ]
     
@@ -373,41 +375,69 @@ def interactive_mode():
             logger.error(f"主题筛选失败: {e}")
             return None
             
-    elif mode_choice == 5:  # 大模型推荐导语
-        print("\n✍️ 大模型推荐导语模式")
-        
-        article_report_path = get_user_input("请输入文章分析报告文件路径", required=True)
-        if not Path(article_report_path).exists():
-            print(f"❌ 文件不存在: {article_report_path}")
-            return None
-            
+    elif mode_choice == 5:  # 大模型人工推荐语
+        print("\n📖 大模型人工推荐语模式")
+
         excel_path = get_user_input("请输入图书元数据Excel文件路径", required=True)
         if not Path(excel_path).exists():
             print(f"❌ 文件不存在: {excel_path}")
             return None
-        
+
+        # 执行人工推荐语生成
+        try:
+            print("\n🔄 开始为书籍生成人工推荐语...")
+
+            # 初始化人工推荐语生成器
+            llm_client = UnifiedLLMClient()
+            book_recommendation_writer = BookRecommendationWriter(llm_client, {})
+
+            # 生成人工推荐语
+            updated_excel_path = book_recommendation_writer.generate_recommendations_for_books(excel_path)
+
+            print(f"✅ 人工推荐语生成完成: {updated_excel_path}")
+
+            return None
+
+        except Exception as e:
+            print(f"❌ 人工推荐语生成失败: {e}")
+            logger.error(f"人工推荐语生成失败: {e}")
+            return None
+
+    elif mode_choice == 6:  # 大模型推荐导语
+        print("\n✍️ 大模型推荐导语模式")
+
+        article_report_path = get_user_input("请输入文章分析报告文件路径", required=True)
+        if not Path(article_report_path).exists():
+            print(f"❌ 文件不存在: {article_report_path}")
+            return None
+
+        excel_path = get_user_input("请输入图书元数据Excel文件路径", required=True)
+        if not Path(excel_path).exists():
+            print(f"❌ 文件不存在: {excel_path}")
+            return None
+
         # 执行推荐导语生成
         try:
             print("\n🔄 开始生成推荐导语...")
-            
+
             # 初始化推荐导语生成器
             llm_client = UnifiedLLMClient()
             recommendation_writer = RecommendationWriter(llm_client, {})
-            
+
             # 生成推荐导语
             recommendation_path = recommendation_writer.generate_recommendation(
                 article_report_path, excel_path
             )
-            
+
             print(f"✅ 推荐导语生成完成: {recommendation_path}")
-            
+
             return None
-            
+
         except Exception as e:
             print(f"❌ 推荐导语生成失败: {e}")
             logger.error(f"推荐导语生成失败: {e}")
             return None
-    
+
     # 确认参数
     print("\n📋 参数确认")
     print("=" * 40)
