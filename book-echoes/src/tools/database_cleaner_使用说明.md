@@ -1,6 +1,7 @@
 # 数据库清洗工具使用说明
 
 ## 概述
+> python -m src.tools.repair_books_database --db-path runtime/database/books_history.db
 
 `database_cleaner.py` 是一个专门用于清洗 books 表数据的工具，主要功能包括：
 

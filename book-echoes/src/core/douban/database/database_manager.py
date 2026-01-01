@@ -191,32 +191,109 @@ class DatabaseManager:
         logger.debug("borrow_statistics表创建成功")
 
     def _create_indexes(self):
-        """创建所有索引"""
-        indexes = [
+        """创建所有索引并校验绑定表"""
+        index_configs = [
             # books表索引
-            "CREATE UNIQUE INDEX IF NOT EXISTS idx_books_barcode ON books(barcode)",
-            "CREATE INDEX IF NOT EXISTS idx_books_isbn ON books(isbn)",
-            "CREATE INDEX IF NOT EXISTS idx_books_douban_isbn ON books(douban_isbn)",
-            "CREATE INDEX IF NOT EXISTS idx_books_title ON books(book_title)",
-            "CREATE INDEX IF NOT EXISTS idx_books_created_at ON books(created_at)",
+            ("idx_books_barcode", "books", "CREATE UNIQUE INDEX IF NOT EXISTS idx_books_barcode ON books(barcode)"),
+            ("idx_books_isbn", "books", "CREATE INDEX IF NOT EXISTS idx_books_isbn ON books(isbn)"),
+            ("idx_books_douban_isbn", "books", "CREATE INDEX IF NOT EXISTS idx_books_douban_isbn ON books(douban_isbn)"),
+            ("idx_books_title", "books", "CREATE INDEX IF NOT EXISTS idx_books_title ON books(book_title)"),
+            ("idx_books_created_at", "books", "CREATE INDEX IF NOT EXISTS idx_books_created_at ON books(created_at)"),
             # 索书号索引 - 支持大小写不敏感查询
-            "CREATE INDEX IF NOT EXISTS idx_books_call_no_upper ON books(UPPER(TRIM(call_no))) WHERE call_no IS NOT NULL AND call_no != ''",
+            ("idx_books_call_no_upper", "books", "CREATE INDEX IF NOT EXISTS idx_books_call_no_upper ON books(UPPER(TRIM(call_no))) WHERE call_no IS NOT NULL AND call_no != ''"),
 
             # borrow_records表索引
-            "CREATE INDEX IF NOT EXISTS idx_borrow_records_barcode ON borrow_records(barcode)",
-            "CREATE INDEX IF NOT EXISTS idx_borrow_records_reader ON borrow_records(reader_card_no)",
-            "CREATE INDEX IF NOT EXISTS idx_borrow_records_return_time ON borrow_records(return_time)",
+            ("idx_borrow_records_barcode", "borrow_records", "CREATE INDEX IF NOT EXISTS idx_borrow_records_barcode ON borrow_records(barcode)"),
+            ("idx_borrow_records_reader", "borrow_records", "CREATE INDEX IF NOT EXISTS idx_borrow_records_reader ON borrow_records(reader_card_no)"),
+            ("idx_borrow_records_return_time", "borrow_records", "CREATE INDEX IF NOT EXISTS idx_borrow_records_return_time ON borrow_records(return_time)"),
 
             # borrow_statistics表索引
-            "CREATE INDEX IF NOT EXISTS idx_borrow_statistics_barcode ON borrow_statistics(barcode)",
-            "CREATE INDEX IF NOT EXISTS idx_borrow_statistics_period ON borrow_statistics(stat_year, stat_month)",
-            "CREATE INDEX IF NOT EXISTS idx_borrow_statistics_barcode_period ON borrow_statistics(barcode, stat_year, stat_month)"
+            ("idx_borrow_statistics_barcode", "borrow_statistics", "CREATE INDEX IF NOT EXISTS idx_borrow_statistics_barcode ON borrow_statistics(barcode)"),
+            ("idx_borrow_statistics_period", "borrow_statistics", "CREATE INDEX IF NOT EXISTS idx_borrow_statistics_period ON borrow_statistics(stat_year, stat_month)"),
+            ("idx_borrow_statistics_barcode_period", "borrow_statistics", "CREATE INDEX IF NOT EXISTS idx_borrow_statistics_barcode_period ON borrow_statistics(barcode, stat_year, stat_month)")
         ]
 
-        for index_sql in indexes:
-            self.conn.execute(index_sql)
+        ensured = 0
+        for index_name, table_name, index_sql in index_configs:
+            if self._ensure_index(index_name, table_name, index_sql):
+                ensured += 1
 
-        logger.debug(f"创建了 {len(indexes)} 个索引")
+        logger.debug(f"索引检查完成: {ensured}/{len(index_configs)}")
+
+    def _ensure_index(self, index_name: str, target_table: str, create_sql: str) -> bool:
+        """
+        确保指定索引存在且绑定正确
+
+        Args:
+            index_name: 索引名
+            target_table: 目标表
+            create_sql: 创建SQL
+        """
+        desired_unique = create_sql.strip().upper().startswith("CREATE UNIQUE INDEX")
+        row = self.conn.execute(
+            "SELECT name, tbl_name FROM sqlite_master WHERE type='index' AND name = ?",
+            (index_name,)
+        ).fetchone()
+
+        needs_create = False
+        if row:
+            existing_table = row['tbl_name']
+            if existing_table != target_table:
+                logger.warning(
+                    f"检测到索引 {index_name} 绑定到 {existing_table}, 期望表为 {target_table}, 即将重建"
+                )
+                self._drop_index(index_name)
+                needs_create = True
+            elif desired_unique and not self._is_index_unique(target_table, index_name):
+                logger.warning(f"索引 {index_name} 非唯一, 需要重建以支持UPSERT")
+                self._drop_index(index_name)
+                needs_create = True
+            else:
+                return True
+        else:
+            needs_create = True
+
+        if needs_create:
+            try:
+                self.conn.execute(create_sql)
+                logger.info(f"索引 {index_name} 已创建/修复")
+            except sqlite3.IntegrityError as exc:
+                if desired_unique:
+                    duplicates = self.conn.execute(
+                        """
+                        SELECT barcode, COUNT(*) as cnt
+                        FROM books
+                        GROUP BY barcode
+                        HAVING cnt > 1
+                        LIMIT 5
+                        """
+                    ).fetchall()
+                    if duplicates:
+                        duplicate_samples = ', '.join(
+                            f"{row['barcode']}({row['cnt']})" for row in duplicates if row['barcode']
+                        )
+                        logger.error(
+                            f"创建唯一索引 {index_name} 失败, 存在重复条码: {duplicate_samples}"
+                        )
+                        raise ValueError(
+                            f"创建唯一索引 {index_name} 失败, 请先清理重复条码: {duplicate_samples}"
+                        ) from exc
+                raise
+
+        return True
+
+    def _drop_index(self, index_name: str):
+        """删除索引"""
+        self.conn.execute(f'DROP INDEX IF EXISTS "{index_name}"')
+
+    def _is_index_unique(self, table: str, index_name: str) -> bool:
+        """检查指定索引是否唯一"""
+        cursor = self.conn.execute(f"PRAGMA index_list('{table}')")
+        for row in cursor.fetchall():
+            # row格式: (seq, name, unique, origin, partial)
+            if row[1] == index_name:
+                return bool(row[2])
+        return False
 
     def batch_check_duplicates(self, barcodes: List[str], stale_days: int = 30, crawl_empty_url: bool = True) -> Dict:
         """
