@@ -6,8 +6,8 @@
   excel_files:
     # 月归还数据文件路径
     monthly_return_file: "data/月归还.xlsx"
-    # 近三月借阅数据文件路径
-    recent_three_months_borrowing_file: "data/近三月借阅.xlsx"
+    # 近四月借阅数据文件路径
+    recent_three_months_borrowing_file: "data/近四月借阅.xlsx"
     # 新书验收数据文件路径（模块6）
     new_books_file: "data/new/验收.xlsx"
     # 近四月借阅数据文件路径（模块6）
@@ -16,13 +16,13 @@
 
 # 借阅统计配置
 statistics:
-  # 基于哪个月份计算近三个月（用于近三月借阅数据统计）
+  # 基于哪个月份计算近三个月（用于近四月借阅数据统计）
   # 格式：YYYY-MM，例如2025-09表示基于9月归还数据计算7-8-9月的借阅统计
-  target_month: "2025-11"
+  target_month: "2025-12"
   
   # 月份计算方式
   month_calculation:
-    # true表示基于target_month的上个月计算近三月，false表示基于当前时间
+    # true表示基于target_month的上个月计算近四月，false表示基于当前时间
     use_target_month_previous: false
 
 # 第二模块筛选配置
@@ -401,11 +401,12 @@ fields_mapping:
     # borrow_statistics表字段映射
     borrow_statistics:
       "书目条码": "barcode"
-      "近三个月总次数": "borrow_count_3m"
+      "近四个月总次数": "borrow_count_4m"
       "第一个月借阅次数": "borrow_count_m1"
       "第二个月借阅次数": "borrow_count_m2"
       "第三个月借阅次数": "borrow_count_m3"
-      "借阅人数": "unique_reader_count_3m"
+      "第四个月借阅次数": "borrow_count_m4"
+      "借阅人数": "unique_reader_count_4m"
 
     # recommendation_results表字段映射
     recommendation_results:
@@ -472,11 +473,12 @@ fields_mapping:
     # borrow_statistics表字段映射
     borrow_statistics:
       "barcode": "书目条码"
-      "borrow_count_3m": "近三个月总次数"
+      "borrow_count_4m": "近四个月总次数"
       "borrow_count_m1": "第一个月借阅次数"
       "borrow_count_m2": "第二个月借阅次数"
       "borrow_count_m3": "第三个月借阅次数"
-      "unique_reader_count_3m": "借阅人数"
+      "borrow_count_m4": "第四个月借阅次数"
+      "unique_reader_count_4m": "借阅人数"
 
     # recommendation_results表字段映射
     recommendation_results:

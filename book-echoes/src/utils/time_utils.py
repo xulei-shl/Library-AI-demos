@@ -117,22 +117,36 @@ class TimeUtils:
     def get_recent_three_months_from_config() -> Tuple[datetime, datetime, List[datetime]]:
         """
         基于配置文件中的月份设置获取近三个月的时间范围
-        
+
         Returns:
             Tuple[datetime, datetime, List[datetime]]:
                 (三个月开始时间, 三个月结束时间, 三个月列表)
         """
+        return TimeUtils.get_recent_four_months_from_config(months_count=3)
+
+    @staticmethod
+    def get_recent_four_months_from_config(months_count: int = 4) -> Tuple[datetime, datetime, List[datetime]]:
+        """
+        基于配置文件中的月份设置获取近N个月的时间范围
+
+        Args:
+            months_count: 月份数量，默认4个月
+
+        Returns:
+            Tuple[datetime, datetime, List[datetime]]:
+                (N个月开始时间, N个月结束时间, N个月列表)
+        """
         config = get_statistics_config()
         target_month_str = config.get('target_month', '2025-09')
         use_target_month_previous = config.get('use_target_month_previous', True)
-        
+
         try:
             # 解析目标月份
             target_month = datetime.strptime(target_month_str, '%Y-%m')
         except ValueError:
             logger.warning(f"无法解析配置的目标月份 '{target_month_str}', 使用默认的2025-09")
             target_month = datetime(2025, 9, 1)
-        
+
         # 如果配置为基于上个月，则目标月份实际上是配置月份的下个月
         if use_target_month_previous:
             # 目标月份表示"借阅统计数据基于X月份"，那么实际计算应该是X+1月份的数据
@@ -142,37 +156,37 @@ class TimeUtils:
                 reference_month = target_month.replace(month=target_month.month + 1)
         else:
             reference_month = target_month
-        
-        logger.info(f"基于配置计算三个月范围: 目标月份={target_month_str}, 参考月份={reference_month.strftime('%Y-%m')}")
-        
-        # 基于参考月份计算近三个月
+
+        logger.info(f"基于配置计算{months_count}个月范围: 目标月份={target_month_str}, 参考月份={reference_month.strftime('%Y-%m')}")
+
+        # 基于参考月份计算近N个月
         months_list = []
-        
-        # 计算参考月份向前推3个月的月份列表
-        for i in range(3):
+
+        # 计算参考月份向前推N个月的月份列表
+        for i in range(months_count):
             if reference_month.month - i <= 0:
                 month_year = reference_month.year - 1
                 month_month = 12 + (reference_month.month - i)
             else:
                 month_year = reference_month.year
                 month_month = reference_month.month - i
-            
+
             month_date = datetime(month_year, month_month, 1)
             months_list.append(month_date)
-        
+
         months_list.reverse()  # 早到晚排序
-        
-        # 确定三个月范围的开始和结束
+
+        # 确定N个月范围的开始和结束
         start_date = months_list[0]  # 最早月份的第一天
         end_date = months_list[-1]   # 最新月份的最后一天
         end_date = end_date.replace(
             day=calendar.monthrange(end_date.year, end_date.month)[1],
             hour=23, minute=59, second=59
         )
-        
-        logger.info(f"基于配置的近三个月时间范围: {start_date.strftime('%Y-%m-%d')} 到 {end_date.strftime('%Y-%m-%d')}")
+
+        logger.info(f"基于配置的近{months_count}个月时间范围: {start_date.strftime('%Y-%m-%d')} 到 {end_date.strftime('%Y-%m-%d')}")
         logger.info(f"月份列表: {[month.strftime('%Y-%m') for month in months_list]}")
-        
+
         return start_date, end_date, months_list
     
     @staticmethod

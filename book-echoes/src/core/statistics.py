@@ -1,7 +1,7 @@
 """
 借阅统计核心算法
 
-修复了使用月归还数据而非近三月借阅数据进行统计的问题。
+使用月归还数据而非近三月借阅数据进行统计的问题。
 使用近三月借阅.xlsx数据作为统计基准，计算每个索书号在近三个月内的借阅次数，
 然后将这些统计数据映射回月归还数据的每条记录。
 """
@@ -24,10 +24,11 @@ class BorrowingStatisticsCorrected:
     def __init__(self):
         """初始化统计器"""
         self.new_columns = [
-            '近三个月总次数',
+            '近四个月总次数',
             '第一个月借阅次数',
             '第二个月借阅次数',
             '第三个月借阅次数',
+            '第四个月借阅次数',
             '借阅人数'
         ]
     
@@ -75,8 +76,8 @@ class BorrowingStatisticsCorrected:
         borrowing_data = borrowing_data.copy()
         borrowing_data[datetime_column] = pd.to_datetime(borrowing_data[datetime_column], errors='coerce')
         
-        # 获取三个月时间范围（优先使用基于配置的版本）
-        start_date, end_date, months_list = TimeUtils.get_recent_three_months_from_config()
+        # 获取四个月时间范围（优先使用基于配置的版本）
+        start_date, end_date, months_list = TimeUtils.get_recent_four_months_from_config(months_count=4)
         
         logger.info(f"计算时间范围: {start_date.strftime('%Y-%m-%d')} 到 {end_date.strftime('%Y-%m-%d')}")
         
@@ -110,22 +111,23 @@ class BorrowingStatisticsCorrected:
                                        user_id_column: str = '读者卡号') -> Dict[str, Dict[str, int]]:
         """
         从借阅数据计算每个索书号的统计数据（包括借阅人数）
-        
+
         Args:
             borrowing_data: 借阅数据
             months_list: 月份列表
             call_column: 索书号列名
             datetime_column: 时间列名
             user_id_column: 用户标识列名
-            
+
         Returns:
-            Dict: 统计数据字典 {索书号: {total: 总次数, month1: 月1次数, month2: 月2次数, month3: 月3次数, unique_borrowers: 借阅人数}}
+            Dict: 统计数据字典 {索书号: {total: 总次数, month1: 月1次数, month2: 月2次数, month3: 月3次数, month4: 月4次数, unique_borrowers: 借阅人数}}
         """
         statistics = defaultdict(lambda: {
             'total': 0,
             'month1': 0,
             'month2': 0,
             'month3': 0,
+            'month4': 0,
             'unique_borrowers': 0
         })
         
@@ -275,13 +277,14 @@ class BorrowingStatisticsCorrected:
         for idx, row in result_data.iterrows():
             # 使用清理后的索书号进行匹配
             call_number = row[cleaned_call_column] if cleaned_call_column in result_data.columns else row[monthly_call_column]
-            
+
             if call_number in statistics_dict:
                 stats = statistics_dict[call_number]
-                result_data.loc[idx, '近三个月总次数'] = stats['total']
+                result_data.loc[idx, '近四个月总次数'] = stats['total']
                 result_data.loc[idx, '第一个月借阅次数'] = stats['month1']
                 result_data.loc[idx, '第二个月借阅次数'] = stats['month2']
                 result_data.loc[idx, '第三个月借阅次数'] = stats['month3']
+                result_data.loc[idx, '第四个月借阅次数'] = stats['month4']
                 result_data.loc[idx, '借阅人数'] = stats['unique_borrowers']
                 assigned_count += 1
             else:
@@ -297,21 +300,21 @@ class BorrowingStatisticsCorrected:
     def get_statistics_summary(self, data: pd.DataFrame) -> Dict[str, Any]:
         """
         获取统计数据摘要
-        
+
         Args:
             data: 包含统计数据的数据框
-            
+
         Returns:
             Dict: 统计数据摘要
         """
-        if '近三个月总次数' not in data.columns:
+        if '近四个月总次数' not in data.columns:
             return {"错误": "数据中没有统计数据列"}
-        
+
         summary = {
             "数据总量": len(data),
             "统计数据": {}
         }
-        
+
         # 统计每个新列的基本信息
         for col in self.new_columns:
             if col in data.columns:
@@ -323,7 +326,7 @@ class BorrowingStatisticsCorrected:
                     "非零记录数": (data[col] > 0).sum()
                 }
                 summary["统计数据"][col] = col_stats
-        
+
         # 索书号统计
         if '索书号' in data.columns:
             unique_call_numbers = data['索书号'].nunique()
@@ -331,12 +334,12 @@ class BorrowingStatisticsCorrected:
                 "唯一索书号数量": unique_call_numbers,
                 "平均每索书号记录数": round(len(data) / unique_call_numbers, 2)
             }
-        
+
         # 借阅次数分布
-        if '近三个月总次数' in data.columns:
-            borrowing_dist = data['近三个月总次数'].value_counts().sort_index()
+        if '近四个月总次数' in data.columns:
+            borrowing_dist = data['近四个月总次数'].value_counts().sort_index()
             summary["借阅次数分布"] = borrowing_dist.head(10).to_dict()
-        
+
         return summary
 
 
@@ -409,7 +412,7 @@ if __name__ == "__main__":
             print(f"  {key}: {value}")
         
         # 特别显示有统计数据的索书号
-        has_stats = corrected_stats_data[corrected_stats_data['近三个月总次数'] > 0]
+        has_stats = corrected_stats_data[corrected_stats_data['近四个月总次数'] > 0]
         if len(has_stats) > 0:
             print(f"\n有统计数据的索书号示例 (前5个):")
             sample_cols = ['索书号', '清理后索书号'] + calculator.new_columns

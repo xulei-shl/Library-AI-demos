@@ -209,11 +209,12 @@ class DatabaseInitializer:
             period_end TEXT,               -- 周期结束时间
 
             -- ============ 借阅次数统计 ============
-            borrow_count_3m INTEGER,       -- 近三个月总次数
+            borrow_count_4m INTEGER,       -- 近四个月总次数
             borrow_count_m1 INTEGER,       -- 第一月借阅次数
             borrow_count_m2 INTEGER,       -- 第二月借阅次数
             borrow_count_m3 INTEGER,       -- 第三月借阅次数
-            unique_reader_count_3m INTEGER,        -- 借阅人数（去重后的读者数）
+            borrow_count_m4 INTEGER,       -- 第四月借阅次数
+            unique_reader_count_4m INTEGER,        -- 借阅人数（去重后的读者数）
 
             -- ============ 元数据 ============
             created_at TEXT NOT NULL,      -- 记录创建时间

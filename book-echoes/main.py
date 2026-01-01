@@ -248,10 +248,10 @@ def process_monthly_return_data_corrected():
         monthly_return_data = load_monthly_return_data()
         logger.info(f"月归还数据加载完成: {len(monthly_return_data)} 条记录")
         
-        # 步骤2: 加载近三月借阅数据
-        logger.info("步骤2: 加载近三月借阅数据")
+        # 步骤2: 加载近四月借阅数据
+        logger.info("步骤2: 加载近四月借阅数据")
         borrowing_data = load_recent_three_months_borrowing_data()
-        logger.info(f"近三月借阅数据加载完成: {len(borrowing_data)} 条记录")
+        logger.info(f"近四月借阅数据加载完成: {len(borrowing_data)} 条记录")
         
         # 步骤3: 清洗月归还数据
         logger.info("步骤3: 清洗月归还数据")
@@ -264,7 +264,7 @@ def process_monthly_return_data_corrected():
         logger.info(f"借阅数据清洗完成: {len(cleaned_borrowing_data)} 条记录")
         
         # 步骤5: 使用借阅数据计算月归还数据的统计信息
-        logger.info("步骤5: 计算借阅统计数据（基于近三月借阅数据）")
+        logger.info("步骤5: 计算借阅统计数据（基于近四月借阅数据）")
         final_data = calculate_corrected_borrowing_stats(
             cleaned_monthly_data, 
             cleaned_borrowing_data
@@ -296,7 +296,7 @@ def process_monthly_return_data_corrected():
         logger.info("=" * 50)
         logger.info(f"处理时间: {processing_time:.2f} 秒")
         logger.info(f"月归还数据量: {len(monthly_return_data)} 条")
-        logger.info(f"近三月借阅数据量: {len(borrowing_data)} 条")
+        logger.info(f"近四月借阅数据量: {len(borrowing_data)} 条")
         logger.info(f"清洗后月归还数据量: {len(cleaned_monthly_data)} 条")
         logger.info(f"清洗后借阅数据量: {len(cleaned_borrowing_data)} 条")
         logger.info(f"最终结果数据量: {len(final_data)} 条")
@@ -306,8 +306,8 @@ def process_monthly_return_data_corrected():
             logger.info(f"  {file_type}: {file_path}")
         
         # 特别输出统计信息
-        has_statistics = (final_data['近三个月总次数'] > 0).sum()
-        total_borrowing_count = final_data['近三个月总次数'].sum()
+        has_statistics = (final_data['近四个月总次数'] > 0).sum()
+        total_borrowing_count = final_data['近四个月总次数'].sum()
         logger.info(f"修正后的借阅统计摘要:")
         logger.info(f"  有统计数据的记录: {has_statistics}/{len(final_data)} 条")
         logger.info(f"  总借阅次数: {total_borrowing_count} 次")
@@ -371,7 +371,7 @@ def run_module1():
     """运行模块1：月归还数据分析"""
     print("=" * 60)
     print("模块1: 月归还数据分析模块")
-    print("使用近三月借阅数据作为统计基准")
+    print("使用近四月借阅数据作为统计基准")
     print("=" * 60)
     
     # 检查配置指定的输入文件是否存在
@@ -400,7 +400,7 @@ def run_module1():
         print("[成功] 模块1数据处理完成!")
         print("请查看 runtime/outputs/ 目录下的结果文件")
         print("请查看 runtime/logs/ 目录下的详细日志")
-        print("使用近三月借阅数据进行统计计算")
+        print("使用近四月借阅数据进行统计计算")
         print("使用降噪筛选功能")
         print("=" * 60)
         return 0

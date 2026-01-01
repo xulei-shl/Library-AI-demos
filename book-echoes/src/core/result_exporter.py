@@ -289,28 +289,29 @@ class ResultExporter:
     def _write_statistics_sheet(self, data: pd.DataFrame, writer):
         """写入详细统计工作表"""
         # 按索书号分组的详细统计
-        if '清理后索书号' in data.columns and '近三个月总次数' in data.columns:
+        if '清理后索书号' in data.columns and '近四个月总次数' in data.columns:
             # 索书号级别统计
             call_number_stats = data.groupby('清理后索书号').agg({
-                '近三个月总次数': 'first',
+                '近四个月总次数': 'first',
                 '第一个月借阅次数': 'first',
                 '第二个月借阅次数': 'first',
                 '第三个月借阅次数': 'first',
+                '第四个月借阅次数': 'first',
                 '借阅人数': 'first',  # 借阅人数
                 '索书号': 'count'  # 原始记录数
             }).rename(columns={'索书号': '原始记录数'}).reset_index()
-            
+
             # 按总借阅次数降序排序
-            call_number_stats = call_number_stats.sort_values('近三个月总次数', ascending=False)
-            
+            call_number_stats = call_number_stats.sort_values('近四个月总次数', ascending=False)
+
             call_number_stats.to_excel(writer, sheet_name='索书号统计', index=False)
-            
+
             # 借阅次数分布统计
-            if '近三个月总次数' in data.columns:
-                distribution_stats = data['近三个月总次数'].value_counts().sort_index().reset_index()
+            if '近四个月总次数' in data.columns:
+                distribution_stats = data['近四个月总次数'].value_counts().sort_index().reset_index()
                 distribution_stats.columns = ['借阅次数', '索书号数量']
                 distribution_stats.to_excel(writer, sheet_name='次数分布', index=False)
-            
+
             logger.info("详细统计工作表写入完成")
     
     def _write_process_info_sheet(self, writer):
