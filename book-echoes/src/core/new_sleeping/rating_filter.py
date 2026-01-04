@@ -63,6 +63,7 @@ class NewSleepingRatingFilter:
         "pub_year_filter": {
             "enabled": True,
             "mode": "current_year",
+            "target_year": None,  # None表示使用当前年份
         },
         "reuse_filters": {
             "title_keywords": True,
@@ -164,16 +165,20 @@ class NewSleepingRatingFilter:
         # 规则2: 出版年过滤
         pub_year_config = self.config.get("pub_year_filter", {})
         if pub_year_config.get("enabled", False) and pub_year_column in df.columns:
-            current_year = datetime.now().year
+            # 优先使用配置的目标年份，否则回退到当前年份
+            target_year = pub_year_config.get("target_year")
+            if target_year is None:
+                target_year = datetime.now().year
+
             mode = pub_year_config.get("mode", "current_year")
 
             if mode == "current_year":
                 # 解析出版年（支持多种格式：2025, 2025-5-1, 2025-5 等）
-                pub_year_mask = self._check_pub_year(df[pub_year_column], current_year)
+                pub_year_mask = self._check_pub_year(df[pub_year_column], target_year)
                 excluded_count = (candidate_mask & ~pub_year_mask).sum()
                 candidate_mask &= pub_year_mask
                 excluded_by_pub_year = excluded_count
-                logger.info(f"出版年过滤 [当年={current_year}]: 排除 {excluded_count} 条")
+                logger.info(f"出版年过滤 [目标年份={target_year}]: 排除 {excluded_count} 条")
 
         # 规则3: 题名关键词过滤
         reuse_filters = self.config.get("reuse_filters", {})

@@ -575,6 +575,7 @@ rating_filter:
     pub_year_filter:
       enabled: true
       mode: "current_year"  # current_year: 仅保留当年出版的图书
+      target_year: 2025     # 可选: 指定目标年份(如2025),留空则使用当前年份
 
     # 复用现有过滤规则（config/filters 目录下的 txt 文件）
     reuse_filters:
