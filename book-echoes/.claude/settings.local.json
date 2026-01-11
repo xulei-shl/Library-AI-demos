@@ -11,7 +11,11 @@
       "Bash(ls:*)",
       "Bash(dir:*)",
       "Bash(sqlite3:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "WebFetch(domain:agor.live)",
+      "mcp__playwright__playwright_navigate",
+      "mcp__playwright__playwright_get_visible_text",
+      "mcp__playwright__playwright_close"
     ],
     "deny": [],
     "ask": []

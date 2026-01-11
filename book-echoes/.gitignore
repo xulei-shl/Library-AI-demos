@@ -27,3 +27,6 @@ tmp/
 runtime/database/
 runtime/cache/
 runtime/outputs/
+
+# Auto Claude data directory
+.auto-claude/
