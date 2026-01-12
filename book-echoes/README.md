@@ -252,15 +252,23 @@ python main.py
 - **设计风格**：现代简约、专业美观
 
 **📱 输出格式**：
+
 - **HTML卡片**：交互式网页版本
 - **PNG图片**：适合社交媒体分享
 - **批量生成**：支持一次生成多本图书
 
 **🖼️ 视觉资源说明**：
+
 - **Logo资源路径**：`data/logo/` 目录
 - **包含文件**：30个编号Logo（b-1.png 到 b-30.png）、主Logo文件
 - **用途**：图书卡片中显示图书馆品牌标识
 - **自定义**：可在 `config/card_template.html` 中自定义配置
+
+**🪜 模板制作Skills**：
+
+- `book-echoes\scripts\claude-code\skills\book-card-design`
+- 将图书元数据（题名、作者、出版社、推荐语等）制作成可批量生成的 HTML 卡片模板。
+- 支持图片复刻设计参考、迭代调整（subagents）、模板化改造和验证测试
 
 ---
 

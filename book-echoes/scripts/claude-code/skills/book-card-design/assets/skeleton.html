@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书推荐卡片</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== CSS 变量定义 ===== */
+        :root {
+            /* 字体 */
+            --title-font: "汇文明朝体", "HuiWen MingChao", serif;
+            --body-font: "又又意宋", "YouYi Song", serif;
+            --mono-font: "Cutive Mono", monospace;
+
+            /* 颜色 */
+            --bg-color: #fdfbf6;
+            --text-color: #423832;
+            --accent-color: #d9480f;
+            --border-color: #ddd;
+        }
+
+        /* ===== 重置样式 ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px;
+            font-family: var(--body-font);
+        }
+
+        /* ===== 主容器（必需） ===== */
+        .library-card {
+            width: 600px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ===== 顶部区域 ===== */
+        .top-section {
+            padding: 30px;
+        }
+
+        /* ===== 书名 ===== */
+        .book-title {
+            font-family: var(--title-font);
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            /* 单行截断 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ===== 作者 ===== */
+        .book-author {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 16px;
+            /* 单行截断 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ===== 元信息行 ===== */
+        .meta-row {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 8px;
+        }
+
+        .meta-label {
+            font-family: var(--mono-font);
+            font-size: 0.75rem;
+            color: #999;
+            min-width: 80px;
+            margin-right: 12px;
+        }
+
+        .meta-value {
+            flex: 1;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            /* 单行截断 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ===== 推荐语 ===== */
+        .recommendation {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text-color);
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+            /* 多行截断（4行） */
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ===== 封面图片 ===== */
+        .cover-section {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .cover-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ===== 二维码 ===== */
+        .qrcode-container {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            padding: 8px;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .qrcode-image {
+            width: 60px;
+            height: 60px;
+        }
+
+        /* ===== 底部区域 ===== */
+        .bottom-section {
+            height: 100px;
+            background-color: var(--text-color);
+            position: relative;
+        }
+
+        .bottom-section img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <!-- 主容器（必需） -->
+    <div class="library-card">
+        <!-- 顶部内容区 -->
+        <div class="top-section">
+            <!-- 书名 -->
+            <h1 class="book-title">{{TITLE}}</h1>
+
+            <!-- 作者 -->
+            <p class="book-author">{{AUTHOR}}</p>
+
+            <!-- 元信息 -->
+            <div class="meta-row">
+                <span class="meta-label">PUBLISHER</span>
+                <span class="meta-value">{{PUBLISHER}}</span>
+            </div>
+
+            <div class="meta-row">
+                <span class="meta-label">YEAR</span>
+                <span class="meta-value">{{PUB_YEAR}}</span>
+            </div>
+
+            <div class="meta-row">
+                <span class="meta-label">CALL NO.</span>
+                <span class="meta-value">{{CALL_NUMBER}}</span>
+            </div>
+
+            <div class="meta-row">
+                <span class="meta-label">RATING</span>
+                <span class="meta-value">{{DOUBAN_RATING}}</span>
+            </div>
+
+            <!-- 推荐语 -->
+            <div class="recommendation">
+                {{RECOMMENDATION}}
+            </div>
+        </div>
+
+        <!-- 封面图片（可选） -->
+        <div class="cover-section">
+            <img src="pic/cover.jpg"
+                 alt="Book Cover"
+                 class="cover-image"
+                 onerror="this.style.display='none';">
+
+            <!-- 二维码（可选） -->
+            <div class="qrcode-container">
+                <img src="pic/qrcode.png"
+                     alt="QR Code"
+                     class="qrcode-image"
+                     onerror="this.parentElement.style.display='none';">
+            </div>
+        </div>
+
+        <!-- 底部装饰区（可选） -->
+        <div class="bottom-section">
+            <img src="pic/b.png" alt="Background">
+        </div>
+    </div>
+</body>
+</html>
