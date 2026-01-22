@@ -8,6 +8,25 @@ from typing import Dict, Any, List, Optional
 from src.utils import llm_api
 
 
+def _write_empty_report(row_id: str, theme: str, summary: str, md_path: str) -> None:
+    """
+    当没有任何有效检索结果时，直接写入基础信息到 MD 文件
+
+    Args:
+        row_id: 编号
+        theme: 报告主题
+        summary: 摘要
+        md_path: 输出 MD 文件路径
+    """
+    with open(md_path, "w", encoding="utf-8") as f:
+        f.write(f"# 深度分析报告\n\n")
+        f.write(f"**编号**: {row_id}\n\n")
+        f.write(f"**主题**: {theme}\n\n")
+        f.write(f"**概要**: {summary}\n\n")
+        f.write(f"---\n\n")
+        f.write(f"**说明**: 未能检索到相关深度分析信息，请稍后重试或更换检索关键词。")
+
+
 def _safe_str(val: Any) -> str:
     """将任意对象安全转换为字符串，避免 None/对象拼接异常。"""
     try:
@@ -34,6 +53,35 @@ def _find_child_for_question(children: List[dict], question: str, idx: int) -> O
     return None
 
 
+def _has_valid_content(subtopic: Dict[str, Any]) -> bool:
+    """
+    检查子主题是否有任何有效内容
+
+    有效内容定义：
+    - Dify: content 非空
+    - GLM: status == "success" 且 content 非空
+
+    Args:
+        subtopic: 子主题字典
+
+    Returns:
+        bool: 是否有有效内容
+    """
+    children = subtopic.get("children", []) or []
+    for ch in children:
+        # 检查 Dify
+        dify_node = ch.get("dify", {})
+        if isinstance(dify_node, dict) and dify_node.get("content"):
+            return True
+        # 检查 GLM
+        glm_node = ch.get("glm", {})
+        if isinstance(glm_node, dict):
+            glm_meta = glm_node.get("meta", {}) or {}
+            if glm_meta.get("status") == "success" and glm_node.get("content"):
+                return True
+    return False
+
+
 def write_report(row_id: str, deep_json_path: str, settings: Dict[str, Any], md_path: str) -> None:
     """
     根据 deep.json 的有效节点撰写报告并保存 Markdown
@@ -57,11 +105,19 @@ def write_report(row_id: str, deep_json_path: str, settings: Dict[str, Any], md_
     theme = _safe_str(deep_data.get("report_theme"))
     subs = deep_data.get("subtopics", []) or []
 
+    # 子主题级别过滤：只保留有有效内容的子主题
+    valid_subs = [s for s in subs if _has_valid_content(s)]
+
+    # 整体级别处理：如果没有有效子主题，直接写入基础信息并跳过 LLM
+    if not valid_subs:
+        _write_empty_report(row_id, theme, summary, md_path)
+        return
+
     lines: List[str] = []
     lines.append(f"主题：{theme}")
     lines.append(f"概要：{summary}\n")
 
-    for s in subs:
+    for s in valid_subs:
         name = _safe_str(s.get("name"))
         lines.append(f"## 子主题：{name}")
 
@@ -106,8 +162,18 @@ def write_report(row_id: str, deep_json_path: str, settings: Dict[str, Any], md_
                 glm_text = ""
                 if ch and isinstance(ch.get("glm"), dict):
                     glm_node = ch["glm"]
-                    # 同样直接尝试内容；为空则回退到子主题级 GLM；仍为空则标注缺失
-                    glm_text = _safe_str(glm_node.get("content"))
+                    # 检查 status 是否为 success（过滤 not_relevant）
+                    glm_meta = glm_node.get("meta", {}) or {}
+                    glm_status = glm_meta.get("status", "")
+                    if glm_status == "success":
+                        # 同样直接尝试内容；为空则回退到子主题级 GLM；仍为空则标注缺失
+                        glm_text = _safe_str(glm_node.get("content"))
+                    elif glm_status == "not_relevant":
+                        # 标注为不相关
+                        assessment = glm_meta.get("assessment", {})
+                        score = assessment.get("score", 0)
+                        reason = assessment.get("reason", "相关性评分过低")
+                        glm_text = f"（检索结果被评估为不相关，评分：{score}/10，原因：{reason}）"
 
                 if not glm_text.strip() and subtopic_glm_content:
                     glm_text = subtopic_glm_content

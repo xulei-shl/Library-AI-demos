@@ -5,7 +5,10 @@ from typing import Dict, List, Optional
 from ...utils.logger import get_logger
 from ...utils.llm_api import load_settings, invoke_model
 from ...utils.excel_io import ExcelIO, ExcelConfig
-from ...utils.metadata_context import build_metadata_context
+from ...utils.metadata_context import (
+    build_metadata_context,
+    build_unified_context_with_outputs
+)
 
 logger = get_logger(__name__)
 
@@ -129,14 +132,34 @@ def run(excel_path: Optional[str] = None, images_dir: Optional[str] = None, limi
 
 
 
-        # 元数据上下文
-        meta_ctx = build_metadata_context(row_cells, cols_cfg, xio, settings)
+        # 元数据上下文（可选长描述或OCR文本）
+        l1_cfg = settings.get("tasks", {}).get("l1_extraction", {})
+        use_long_desc = l1_cfg.get("use_long_description", False)
+        use_ocr_text = l1_cfg.get("use_ocr_text", False)
+        meta_ctx = build_unified_context_with_outputs(
+            row_cells, cols_cfg, xio, settings,
+            include_long_desc=use_long_desc,
+            include_ocr_text=use_ocr_text
+        )
         user_text_parts: List[str] = []
         if meta_ctx:
             user_text_parts.append(meta_ctx)
-        # 明确要求输出 JSON
-        user_text_parts.append("请仅基于上述元数据抽取结构化信息，并仅输出JSON（无多余说明/无Markdown围栏）。")
+        # 明确要求输出 JSON（更新措辞以支持长描述）
+        instruction = "请仅基于上述信息抽取结构化信息，并仅输出JSON（无多余说明/无Markdown围栏）。"
+        user_text_parts.append(instruction)
         user_text = "\n\n".join(user_text_parts)
+
+        # 日志记录使用的数据源
+        if use_ocr_text:
+            outputs = cols_cfg.get("outputs", {}) or {}
+            ocr_text_header = outputs.get("ocr_text", "OCR文本")
+            has_ocr_text = bool(xio.get_value(row_cells, ocr_text_header))
+            logger.info(f"L1数据源 id={rid_norm} source=ocr_text has_ocr={has_ocr_text}")
+        elif use_long_desc:
+            outputs = cols_cfg.get("outputs", {}) or {}
+            long_desc_header = outputs.get("long_desc", "长描述")
+            has_long_desc = bool(xio.get_value(row_cells, long_desc_header))
+            logger.info(f"L1数据源 id={rid_norm} source=long_desc has_long_desc={has_long_desc}")
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -148,7 +171,9 @@ def run(excel_path: Optional[str] = None, images_dir: Optional[str] = None, limi
         safe_preview = cleaned.replace("\r", " ").replace("\n", " ").strip()
         if len(safe_preview) > 2000:
             safe_preview = safe_preview[:2000] + "...(truncated)"
-        model_name = settings["tasks"][task_name]["model"]
+        # 从 api_providers 配置获取实际使用的 model 名称
+        provider_type = settings["tasks"][task_name]["provider_type"]
+        model_name = settings["api_providers"][provider_type]["primary"]["model"]
         logger.info(f'LLM原始输出 task={task_name} model={model_name} id={rid_norm} output="{safe_preview}"')
 
         # 简单校验 JSON，失败则原样写入

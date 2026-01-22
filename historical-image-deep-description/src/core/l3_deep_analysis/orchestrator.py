@@ -17,6 +17,7 @@ from src.core.l3_deep_analysis.json_schema import is_planning_complete, subtask_
 from src.core.l3_deep_analysis.executors.glm_executor import call_glm
 from src.core.l3_deep_analysis.executors.dify_executor import call_dify
 from src.core.l3_deep_analysis.report_writer import write_report
+from src.core.l3_deep_analysis.result_relevance_analyzer import ResultRelevanceAnalyzer
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -51,6 +52,10 @@ def run_row(row_id: str, settings: Dict[str, Any]) -> None:
     # 阶段2：检索
     subs: List[Dict[str, Any]] = deep_data.get("subtopics", []) or []
     changed = False
+
+    # 初始化相关性分析器
+    relevance_analyzer = ResultRelevanceAnalyzer(settings)
+
     for i, s in enumerate(subs):
         # GLM（逐题执行 + 题目级幂等 + 聚合写回）
         # 初始化存储结构：仅用于聚合 meta，避免与 children 冲突
@@ -97,6 +102,29 @@ def run_row(row_id: str, settings: Dict[str, Any]) -> None:
                 meta = (result.get("meta", {}) or {})
                 status = meta.get("status")
                 content = result.get("content", "")
+
+                # 相关性评估（GLM）
+                if status == "success" and content and relevance_analyzer.is_enabled("glm"):
+                    # 检查是否已评估
+                    existing_meta = ((ch.get("glm") or {}).get("meta") or {})
+                    if not relevance_analyzer.should_skip_assessment(existing_meta, "glm"):
+                        assessment = relevance_analyzer.assess_result(
+                            question=q,
+                            content=content,
+                            subtopic_name=subtopic_name,
+                            executor_type="glm"
+                        )
+                        if assessment:
+                            threshold = relevance_analyzer.get_threshold("glm")
+                            result = relevance_analyzer.update_result_meta(
+                                result=result,
+                                assessment=assessment,
+                                threshold=threshold
+                            )
+                            # 更新 meta 和 status
+                            meta = result.get("meta", {})
+                            status = meta.get("status")
+
                 ch["glm"] = {
                     "content": content if status in ("success", "timeout_recovered") else None,
                     "meta": meta

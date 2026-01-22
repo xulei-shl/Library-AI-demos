@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/patch_rag_retry.py:*)",
+      "Bash(python -c:*)"
+    ]
+  }
+}

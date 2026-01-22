@@ -78,3 +78,52 @@ def build_metadata_context(row_cells, cols: Dict[str, str], xio: ExcelIO, settin
         logger.info("metadata_context_fields count=0")
 
     return "\n".join(lines) if len(lines) > 1 else ""
+
+
+def build_unified_context_with_outputs(
+    row_cells,
+    cols: Dict[str, str],
+    xio: ExcelIO,
+    settings: Dict,
+    include_long_desc: bool = False,
+    include_ocr_text: bool = False,
+    long_desc_label: str = "[图像长描述]"
+) -> str:
+    """
+    构建包含元数据和可选长描述/OCR文本的统一上下文。
+
+    参数:
+        row_cells: Excel 行数据
+        cols: 列配置字典（包含 metadata 和 outputs）
+        xio: ExcelIO 实例
+        settings: 配置字典
+        include_long_desc: 是否包含长描述
+        include_ocr_text: 是否包含 OCR 文本
+        long_desc_label: 长描述块的标签文本
+
+    返回:
+        格式化的上下文字符串，各块用双换行分隔
+    """
+    blocks: List[str] = []
+
+    # 1. 元数据块（复用现有逻辑）
+    metadata_block = build_metadata_context(row_cells, cols, xio, settings)
+    if metadata_block:
+        blocks.append(metadata_block)
+
+    # 2. OCR文本块（优先级高于长描述）
+    if include_ocr_text:
+        outputs = cols.get("outputs", {}) or {}
+        ocr_text_header = outputs.get("ocr_text", "OCR文本")
+        ocr_text = xio.get_value(row_cells, ocr_text_header)
+        if ocr_text:
+            blocks.append(f"[OCR文本]\n{ocr_text}")
+    # 3. 长描述块（可选，作为回退）
+    elif include_long_desc:
+        outputs = cols.get("outputs", {}) or {}
+        long_desc_header = outputs.get("long_desc", "长描述")
+        long_desc = xio.get_value(row_cells, long_desc_header)
+        if long_desc:
+            blocks.append(f"{long_desc_label}\n{long_desc}")
+
+    return "\n\n".join(blocks)

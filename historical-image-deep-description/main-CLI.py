@@ -442,146 +442,98 @@ def _task_deep_report(row_id: str, settings: Dict[str, Any], logger) -> None:
     write_report(row_id, dpath, settings, md_path)
     logger.info(f"[OK] 报告生成：{md_path}")
 
-def _print_menu() -> None:
-    """显示交互式菜单"""
-    print("\n" + "=" * 60)
-    print("           历史图像处理流水线 - 交互式菜单")
-    print("=" * 60)
-    print()
-
-    # L0 菜单
-    print("【L0 - 图像描述】")
-    print("  1. 长描述 (long_description)")
-    print("  2. 替换文本 (alt_text)")
-    print("  3. 关键词 (keywords)")
-    print("  4. L0 全部任务")
-    print()
-
-    # L1 菜单
-    print("【L1 - 结构化信息抽取】")
-    print("  5. 结构化抽取 (structured)")
-    print()
-
-    # L2 菜单
-    print("【L2 - 知识关联】")
-    print("  6. 知识关联 (knowledge_linking)")
-    print()
-
-    # L3 菜单
-    print("【L3 - 语境阐释】")
-    print("  7. RAG 检索 (rag)")
-    print("  8. 增强 RAG 检索 (rag+)")
-    print("  9. Web 搜索 (web_search)")
-    print(" 10. L3 全部任务")
-    print()
-
-    # Deep Analysis 菜单
-    print("【L3 - 深度分析 (Deep Analysis)】")
-    print(" 11. 规划阶段 (deep_planning)")
-    print(" 12. GLM 检索 (deep_glm)")
-    print(" 13. Dify 检索 (deep_dify)")
-    print(" 14. 生成报告 (deep_report)")
-    print(" 15. Deep 全部流程 (deep_all)")
-    print()
-
-    # 组合流程
-    print("【组合流程】")
-    print(" 16. 完整流水线 (L0→L1→L2→L3)")
-    print(" 17. 完整流水线 + Deep 分析")
-    print()
-
-    print("  0. 退出")
-    print("=" * 60)
-
-
-def _get_limit_input() -> Optional[int]:
-    """获取处理条数上限"""
-    while True:
-        limit_input = input("处理条数上限（留空表示全部）: ").strip()
-        if not limit_input:
-            return None
-        try:
-            limit = int(limit_input)
-            if limit > 0:
-                return limit
-            print("请输入正整数！")
-        except ValueError:
-            print("请输入有效的数字！")
-
-
-def _get_row_id_input() -> Optional[str]:
-    """获取编号输入（用于 Deep 分析）"""
-    row_id = input("请输入编号（例如 2202_001，留空表示处理 Excel 中全部编号）: ").strip()
-    return row_id if row_id else None
-
-
-def _run_pipeline(l0_tasks: List[str], l1_enabled: bool, l2_enabled: bool,
-                  l3_enabled: bool, l3_phases: List[str], deep_enabled: bool,
-                  deep_phases: List[str], limit: Optional[int], row_id: Optional[str],
-                  settings: Dict[str, Any]) -> None:
-    """执行指定的流水线任务"""
+def main():
     logger = get_logger(__name__)
+    init_logging()
+    load_dotenv(dotenv_path=".env", override=False)
+    args = parse_args()
 
-    # 执行 L0
+
+
+    # 默认行为：无 --tasks 时，依次执行 L0 全部任务 -> L1 -> L2 -> L3（保留原有逻辑）
+    if not args.tasks:
+        logger.info("pipeline_default start=L0_all_then_L1_then_L2_then_L3")
+        run_l0(excel_path=None, images_dir=None, tasks=None, limit=args.limit)
+        from src.core.l1_structured_extraction.main import run as run_l1
+        run_l1(excel_path=None, images_dir=None, limit=args.limit)
+        from src.core.l2_knowledge_linking.main import run_l2
+        run_l2(excel_path=None, images_dir=None, limit=args.limit, tasks=None)
+        from src.core.l3_context_interpretation.main import run_l3
+        run_l3(excel_path=None, images_dir=None, limit=args.limit, tasks=None)
+        return
+
+    # 指定任务：解析跨模块任务
+    l0_tasks, l1_enabled, unknown, l2_enabled, l2_phases, l3_enabled, l3_phases, deep_enabled, deep_phases = _parse_tasks(args.tasks)
+    if unknown:
+        logger.warning(f"tasks_unknown items={unknown}")
+
     if l0_tasks:
         logger.info(f"pipeline_l0_selected tasks={l0_tasks}")
-        run_l0(excel_path=None, images_dir=None, tasks=l0_tasks, limit=limit)
+        run_l0(excel_path=None, images_dir=None, tasks=l0_tasks, limit=args.limit)
     else:
         logger.info("pipeline_l0_skipped reason=no_tasks_selected")
 
-    # 执行 L1
     if l1_enabled:
         logger.info("pipeline_l1_enabled true")
         from src.core.l1_structured_extraction.main import run as run_l1
-        run_l1(excel_path=None, images_dir=None, limit=limit)
+        run_l1(excel_path=None, images_dir=None, limit=args.limit)
     else:
         logger.info("pipeline_l1_skipped reason=not_selected")
 
-    # 执行 L2
     if l2_enabled:
-        logger.info("pipeline_l2_enabled true")
+        if l2_phases:
+            logger.info(f"pipeline_l2_enabled true phases={l2_phases}")
+        else:
+            logger.info("pipeline_l2_enabled true")
         from src.core.l2_knowledge_linking.main import run_l2
-        run_l2(excel_path=None, images_dir=None, limit=limit, tasks=None)
+        run_l2(excel_path=None, images_dir=None, limit=args.limit, tasks=(l2_phases if l2_phases else None))
     else:
         logger.info("pipeline_l2_skipped reason=not_selected")
 
-    # 执行 L3
     if l3_enabled:
         if l3_phases:
             logger.info(f"pipeline_l3_enabled true phases={l3_phases}")
         else:
             logger.info("pipeline_l3_enabled true")
         from src.core.l3_context_interpretation.main import run_l3
-        run_l3(excel_path=None, images_dir=None, limit=limit, tasks=(l3_phases if l3_phases else None))
+        run_l3(excel_path=None, images_dir=None, limit=args.limit, tasks=(l3_phases if l3_phases else None))
     else:
         logger.info("pipeline_l3_skipped reason=not_selected")
 
-    # 执行 Deep Analysis
+    # L3 deep_analysis：当在 --tasks 中选择了 deep_* 时执行
     if deep_enabled:
+        # 读取配置
+        settings = _deep_load_settings(args.settings)
+        # 去重保持顺序
+        phases: List[str] = []
+        for p in deep_phases:
+            if p not in phases:
+                phases.append(p)
+        # 深度分析执行：不再推断 row-id；按 Excel 编号驱动，严格文件名匹配
         output_dir = settings.get("deep_analysis", {}).get("output_dir", "runtime/outputs")
-        explicit_single = bool(row_id)
-
+        explicit_single = bool(args.row_id)
         if explicit_single:
-            ids: List[str] = [row_id]
-            logger.info(f"pipeline_l3_deep_mode=single id={row_id} phases={deep_phases}")
+            ids: List[str] = [args.row_id]
+            logger.info(f"pipeline_l3_deep_mode=single id={args.row_id} phases={phases}")
         else:
             data_paths = (settings.get("data", {}) or {}).get("paths", {}) or {}
             excel_cfg = (settings.get("data", {}) or {}).get("excel", {}) or {}
             excel_path = data_paths.get("metadata_excel") or "metadata.xlsx"
             id_column = ((excel_cfg.get("columns", {}) or {}).get("id")) or "编号"
             ids: List[str] = load_row_ids(excel_path, id_column)
-            if limit is not None and limit > 0:
-                ids = ids[: limit]
-            logger.info(f"pipeline_l3_deep_mode=excel ids_count={len(ids)} phases={deep_phases}")
+            if args.limit is not None and args.limit > 0:
+                ids = ids[: args.limit]
+            logger.info(f"pipeline_l3_deep_mode=excel ids_count={len(ids)} phases={phases} excel={excel_path} id_col={id_column}")
             if not ids:
                 logger.warning("deep_no_ids_from_excel: Excel 中未找到有效编号，跳过 deep_* 执行。")
                 return
 
-        # 逐个编号执行
+        # 逐个编号执行；严格匹配输入文件，不做任何变体/模糊匹配
         for rid in ids:
             logger.info(f"deep_process_started row_id={rid}")
             try:
-                if "deep_all" in deep_phases:
+                if "deep_all" in phases:
+                    # deep_all 依赖实体 JSON 完全匹配：{rid}.json
                     epath = _entity_json_path(output_dir, rid)
                     if not os.path.exists(epath):
                         msg = f"缺少输入文件（严格匹配要求）：{epath}"
@@ -593,7 +545,7 @@ def _run_pipeline(l0_tasks: List[str], l1_enabled: bool, l2_enabled: bool,
                     run_deep_all(rid, settings)
                     logger.info(f"[OK] deep_all 完成：{rid}")
                 else:
-                    for phase in deep_phases:
+                    for phase in phases:
                         if phase == "deep_planning":
                             epath = _entity_json_path(output_dir, rid)
                             if not os.path.exists(epath):
@@ -637,124 +589,12 @@ def _run_pipeline(l0_tasks: List[str], l1_enabled: bool, l2_enabled: bool,
                 logger.info(f"deep_process_finished row_id={rid}")
             except Exception as e:
                 if explicit_single:
+                    # 单编号模式：直接抛出，以便用户修正
                     raise
                 else:
                     logger.error(f"deep_process_error row_id={rid} error={e}")
+                    # 批量模式：不影响其他编号
                     continue
-
-
-def _interactive_mode(settings: Dict[str, Any]) -> None:
-    """交互式模式主循环"""
-    while True:
-        _print_menu()
-        choice = input("请输入选项（0-17）: ").strip()
-
-        # 退出
-        if choice == "0":
-            print("再见！")
-            break
-
-        # 获取处理条数
-        limit = None
-        if choice not in ["11", "12", "13", "14", "15"]:
-            limit = _get_limit_input()
-
-        # 获取 row_id（仅 Deep 分析需要）
-        row_id = None
-        if choice in ["11", "12", "13", "14", "15"]:
-            row_id = _get_row_id_input()
-
-        # 解析选择并执行
-        l0_tasks: List[str] = []
-        l1_enabled = False
-        l2_enabled = False
-        l3_enabled = False
-        l3_phases: List[str] = []
-        deep_enabled = False
-        deep_phases: List[str] = []
-
-        if choice == "1":
-            l0_tasks = ["long_description"]
-        elif choice == "2":
-            l0_tasks = ["alt_text"]
-        elif choice == "3":
-            l0_tasks = ["keywords"]
-        elif choice == "4":
-            l0_tasks = ["long_description", "alt_text", "keywords"]
-        elif choice == "5":
-            l1_enabled = True
-        elif choice == "6":
-            l2_enabled = True
-        elif choice == "7":
-            l3_enabled = True
-            l3_phases = ["rag"]
-        elif choice == "8":
-            l3_enabled = True
-            l3_phases = ["rag+"]
-        elif choice == "9":
-            l3_enabled = True
-            l3_phases = ["web_search"]
-        elif choice == "10":
-            l3_enabled = True
-        elif choice == "11":
-            deep_enabled = True
-            deep_phases = ["deep_planning"]
-        elif choice == "12":
-            deep_enabled = True
-            deep_phases = ["deep_glm"]
-        elif choice == "13":
-            deep_enabled = True
-            deep_phases = ["deep_dify"]
-        elif choice == "14":
-            deep_enabled = True
-            deep_phases = ["deep_report"]
-        elif choice == "15":
-            deep_enabled = True
-            deep_phases = ["deep_all"]
-        elif choice == "16":
-            l0_tasks = ["long_description", "alt_text", "keywords"]
-            l1_enabled = True
-            l2_enabled = True
-            l3_enabled = True
-        elif choice == "17":
-            l0_tasks = ["long_description", "alt_text", "keywords"]
-            l1_enabled = True
-            l2_enabled = True
-            l3_enabled = True
-            deep_enabled = True
-            deep_phases = ["deep_all"]
-        else:
-            print("无效选项，请重新输入！")
-            continue
-
-        # 执行流水线
-        print("\n开始执行...")
-        _run_pipeline(
-            l0_tasks=l0_tasks,
-            l1_enabled=l1_enabled,
-            l2_enabled=l2_enabled,
-            l3_enabled=l3_enabled,
-            l3_phases=l3_phases,
-            deep_enabled=deep_enabled,
-            deep_phases=deep_phases,
-            limit=limit,
-            row_id=row_id,
-            settings=settings
-        )
-        print("\n执行完成！\n")
-
-
-def main():
-    """主函数：启动交互式模式"""
-    init_logging()
-    load_dotenv(dotenv_path=".env", override=False)
-    args = parse_args()
-
-    # 加载配置
-    settings = _deep_load_settings(args.settings)
-
-    # 交互式模式（默认行为）
-    _interactive_mode(settings)
 
 if __name__ == "__main__":
     main()

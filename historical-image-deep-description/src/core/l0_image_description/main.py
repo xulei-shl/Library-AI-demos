@@ -228,7 +228,7 @@ def run(excel_path: Optional[str] = None, images_dir: Optional[str] = None, task
     def _run_alt_text(row_cells, rid_norm, image_b64):
         # 统一上下文：元数据 + [参考描述]（优先长描述）
         context_block = build_unified_context(row_cells, cols, xio, settings, include_reference=True, reference_priority=["long_desc_col"])
-        parts = ["请基于下方图像与上下文，生成高质量的替代文本（Alt Text），适合无障碍与SEO。"]
+        parts = ["请基于下方图像与上下文，生成高质量的替代文本（Alt Text），适合无障碍与SEO，同时提取图像中的可见文本（OCR）。"]
         if context_block:
             parts.append(context_block)
         user_text = "\n\n".join(parts)
@@ -249,7 +249,24 @@ def run(excel_path: Optional[str] = None, images_dir: Optional[str] = None, task
         if len(safe_out) > 2000:
             safe_out = safe_out[:2000] + "...(truncated)"
         logger.info(f'LLM原始输出 task={task_name} model={model_name} id={rid_norm} output="{safe_out}"')
-        xio.set_value(row_cells, cols["alt_text_col"], out or "")
+
+        # 解析 JSON 输出
+        alt_text_to_write = ""
+        ocr_text_to_write = ""
+        try:
+            cleaned = _strip_json_code_fence(out)
+            data = json.loads(cleaned)
+            alt_text_to_write = data.get("alt_text", "")
+            ocr_text_to_write = data.get("ocr_text", "")
+        except Exception:
+            logger.warning(f"Alt Text JSON解析失败 id={rid_norm}，使用原始输出")
+            alt_text_to_write = out or ""
+
+        xio.set_value(row_cells, cols["alt_text_col"], alt_text_to_write)
+        # 写入 OCR 文本（如列存在）
+        ocr_col = cols.get("outputs", {}).get("ocr_text")
+        if ocr_col:
+            xio.set_value(row_cells, ocr_col, ocr_text_to_write)
 
     def _run_keywords(row_cells, rid_norm):
         # 关键词使用文本模型：输入为统一上下文（元数据 + 参考文本）
@@ -300,6 +317,8 @@ def run(excel_path: Optional[str] = None, images_dir: Optional[str] = None, task
         # 读取已有值，提前检查是否需要处理
         cur_long = xio.get_value(row_cells, cols["long_desc_col"])
         cur_alt = xio.get_value(row_cells, cols["alt_text_col"])
+        ocr_col = cols.get("outputs", {}).get("ocr_text")
+        cur_ocr = xio.get_value(row_cells, ocr_col) if ocr_col else None
         cur_kw = xio.get_value(row_cells, cols["keywords_col"])
 
         # 判断是否需要图像处理任务
@@ -325,7 +344,12 @@ def run(excel_path: Optional[str] = None, images_dir: Optional[str] = None, task
             logger.info(f"跳过长描述生成 id={rid_norm} 原因=值已存在")
 
         # 任务：Alt Text（仅在需要时调用）
-        if "alt_text" in tasks and (not cur_alt or not settings["write_policy"]["skip_if_present"]):
+        # 如果 OCR 列存在但为空，也视为需要重新生成
+        need_alt = "alt_text" in tasks and (not cur_alt or not settings["write_policy"]["skip_if_present"])
+        if not need_alt and cur_ocr is not None and not cur_ocr:
+            need_alt = True
+
+        if need_alt:
             logger.info(f"开始生成替代文本 id={rid_norm}")
             _run_alt_text(row_cells, rid_norm, image_b64)
         elif "alt_text" in tasks:
