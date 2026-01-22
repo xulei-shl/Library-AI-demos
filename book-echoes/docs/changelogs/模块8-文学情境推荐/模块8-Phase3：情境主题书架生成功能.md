@@ -165,7 +165,7 @@ class LiteratureEmbeddingClient:
         for attempt in range(self.config['max_retries']):
             try:
                 response = self.client.embeddings.create(
-                    model=self.config['model'],  # Qwen/Qwen3-Embedding-8B
+                    model=self.config['model'],  # BAAI/bge-m3
                     input=text,
                     dimensions=self.config.get('dimensions', 4096)
                 )
@@ -793,7 +793,7 @@ vector_db:
 
 # Embedding API 配置
 embedding:
-  model: "Qwen/Qwen3-Embedding-8B"
+  model: "BAAI/bge-m3"
   dimensions: 4096
   api_key: "env:OPENAI_API_KEY"
   base_url: "https://api.openai.com/v1"

@@ -400,10 +400,18 @@ class VectorSearcher:
         """加载配置"""
         import yaml
         config_file = Path(config_path)
-        if not config_file.exists():
-            # 尝试从项目根目录查找
+
+        # 如果是绝对路径，直接使用
+        if config_file.is_absolute():
+            if not config_file.exists():
+                raise FileNotFoundError(f"配置文件不存在: {config_file}")
+        else:
+            # 相对路径：从项目根目录查找
+            # vector_searcher.py -> literature_fm -> core -> src -> book-echoes
             root_dir = Path(__file__).parent.parent.parent.parent
             config_file = root_dir / config_path
+            if not config_file.exists():
+                raise FileNotFoundError(f"配置文件不存在: {config_file}")
 
         with open(config_file, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
@@ -516,7 +524,13 @@ class _DatabaseReader:
     """SQLite 数据库读取（内部类）"""
 
     def __init__(self, config: Dict):
-        self.conn = sqlite3.connect(config['path'])
+        # 将相对路径转换为绝对路径（基于项目根目录）
+        db_path = config['path']
+        if not Path(db_path).is_absolute():
+            # 从 vector_searcher.py 向上4级到项目根目录 (book-echoes)
+            root_dir = Path(__file__).parent.parent.parent.parent
+            db_path = root_dir / db_path
+        self.conn = sqlite3.connect(str(db_path))
         self.table = config.get('table', 'literary_tags')
         self.table_columns = self._get_table_columns()
 

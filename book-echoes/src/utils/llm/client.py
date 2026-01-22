@@ -254,19 +254,8 @@ class UnifiedLLMClient:
         }
 
         if is_langfuse_enabled:
-            # 设置 name
-            if langfuse_cfg.get("name"):
-                req_kwargs["name"] = langfuse_cfg["name"]
-
-            # 设置 tags
-            if langfuse_cfg.get("tags"):
-                req_kwargs["tags"] = langfuse_cfg["tags"]
-
-            # 设置 metadata
-            if langfuse_cfg.get("metadata"):
-                req_kwargs["metadata"] = langfuse_cfg["metadata"]
-
-            # 获取并设置 langfuse_prompt 对象
+            # 注意：tags/metadata/name 通过 _propagate_context 传递，不传给 API 调用
+            # 只设置 langfuse_prompt 对象（这是 Langfuse SDK 支持的参数）
             prompt_cfg = task_config.get("prompt")
             if prompt_cfg:
                 langfuse_prompt = self.prompt_loader.get_langfuse_prompt_object(prompt_cfg)

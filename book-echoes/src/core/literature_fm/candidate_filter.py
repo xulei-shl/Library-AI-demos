@@ -108,7 +108,7 @@ class CandidateFilter:
             self._write_results_to_excel(excel_path, sheet_results)
 
             # 统计通过筛选数量
-            passed_count = sum(1 for book in filtered_candidates if book.get('is_pass', False))
+            passed_count = sum(1 for book in filtered_candidates if book.get('初评结果') == '通过')
 
             return {
                 'success': True,
@@ -248,11 +248,12 @@ class CandidateFilter:
             # 解析响应
             results = self._parse_llm_response(response)
 
-            # 将结果合并回原数据
+            # 将结果合并回原数据（使用中文字段名）
             for book, result in zip(group, results):
-                book['is_pass'] = result.get('is_pass', False)
-                book['score'] = result.get('score', 0)
-                book['reason'] = result.get('reason', '')
+                is_pass = result.get('is_pass', False)
+                book['初评结果'] = '通过' if is_pass else '未通过'
+                book['初评分数'] = result.get('score', 0)
+                book['初评理由'] = result.get('reason', '')
 
             logger.info(f"  ✓ 第 {group_idx} 组筛选完成")
             return group
@@ -261,9 +262,9 @@ class CandidateFilter:
             logger.error(f"  ✗ 第 {group_idx} 组筛选失败: {e}", exc_info=True)
             # 失败时标记为未通过
             for book in group:
-                book['is_pass'] = False
-                book['score'] = 0
-                book['reason'] = f"筛选失败: {str(e)}"
+                book['初评结果'] = '未通过'
+                book['初评分数'] = 0
+                book['初评理由'] = f"筛选失败: {str(e)}"
             return group
 
     def _build_user_prompt(self, theme: dict, books: List[Dict]) -> str:

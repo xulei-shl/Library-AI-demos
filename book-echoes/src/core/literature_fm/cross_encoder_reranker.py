@@ -21,7 +21,7 @@ class CrossEncoderReranker:
     API重排序器
 
     通过API调用重排序模型对query-doc对进行精细打分
-    使用 Qwen/Qwen3-Reranker-8B 模型
+    使用 BAAI/bge-reranker-v2-m3 模型
     """
 
     def __init__(self, config: Dict):

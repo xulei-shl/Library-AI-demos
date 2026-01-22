@@ -1033,7 +1033,7 @@ vector_db:
 # Embedding 模型配置（与主题卡模块一致）
 embedding:
   provider: "SiliconFlow"
-  model: "Qwen/Qwen3-Embedding-8B"
+  model: "BAAI/bge-m3"
   api_key: "env:SiliconFlow_API_KEY"
   base_url: "https://api.siliconflow.cn/v1"
   dimensions: 4096
@@ -1046,7 +1046,7 @@ embedding:
 reranker:
   enabled: true
   provider: "siliconflow"
-  model: "Qwen/Qwen3-Reranker-8B"
+  model: "BAAI/bge-reranker-v2-m3"
   api_key: "env:SiliconFlow_API_KEY"
   base_url: "https://api.siliconflow.cn/v1"
   top_n: 20

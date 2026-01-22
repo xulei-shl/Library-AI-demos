@@ -15,12 +15,12 @@ vector_db:
   collection_name: "literature_fm_contexts"
   distance_metric: "cosine"  # cosine / l2 / ip
 
-# Embedding 模型配置
+# Embedding 模型配置,當前數據庫是4096維
 embedding:
-  provider: "SiliconFlow"
+  provider: "ONEAPI"
   model: "Qwen/Qwen3-Embedding-8B"
-  api_key: "env:SiliconFlow_API_KEY"
-  base_url: "https://api.siliconflow.cn/v1"
+  api_key: "env:ONEAPI_API_KEY"
+  base_url: "http://47.103.50.106:3000/v1"
   dimensions: 4096
   batch_size: 50
   max_retries: 3
@@ -46,7 +46,7 @@ rrf:
 # 重排序配置（API 模式）
 reranker:
   enabled: false     # 默认关闭
-  model: "Qwen/Qwen3-Reranker-8B"
+  model: "BAAI/bge-reranker-v2-m3"
   api_key: "env:SiliconFlow_API_KEY"
   base_url: "https://api.siliconflow.cn/v1"
   top_k: 50          # 对前50个结果重排序
