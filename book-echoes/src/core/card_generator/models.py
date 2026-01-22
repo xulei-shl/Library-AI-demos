@@ -11,19 +11,20 @@ from typing import Optional
 class BookCardData:
     """图书卡片数据模型"""
 
-    # 必填字段
+    # 必填字段（无默认值）
     barcode: str                      # 书目条码
     call_number: str                  # 索书号
     douban_rating: float              # 豆瓣评分
     final_review_reason: str          # 初评理由（用于推荐语，智能截取）
     cover_image_url: str              # 豆瓣封面图片链接
-
-    # 可选字段（有替代方案）
     title: str                        # 书名（豆瓣书名或原书名）
+
+    # 可选字段（有默认值）
+    subtitle: Optional[str] = None    # 豆瓣副标题
     author: Optional[str] = None      # 豆瓣作者
     publisher: Optional[str] = None   # 豆瓣出版社
     pub_year: Optional[str] = None    # 豆瓣出版年
-    subtitle: Optional[str] = None    # 豆瓣副标题
+    douban_url: Optional[str] = None  # 豆瓣图书页面链接（用于提取真实图片URL）
 
     # 实例变量：截取长度（默认为50）
     max_length: int = 50

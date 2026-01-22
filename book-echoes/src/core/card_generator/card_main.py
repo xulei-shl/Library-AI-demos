@@ -499,8 +499,8 @@ class CardGeneratorModule:
             # 检查封面是否已存在
             files_status = self.check_existing_files(output_paths)
             if not files_status['cover_exists']:
-                # 需要下载
-                download_tasks.append((book_data.cover_image_url, output_paths.cover_image))
+                # 需要下载 (url, output_path, douban_url)
+                download_tasks.append((book_data.cover_image_url, output_paths.cover_image, book_data.douban_url))
                 barcode_to_task[len(download_tasks) - 1] = barcode
             else:
                 # 封面已存在,记录为成功
@@ -600,7 +600,8 @@ class CardGeneratorModule:
                 if not files_status['cover_exists']:
                     success, cover_path = self.image_downloader.download_cover_image(
                         book_data.cover_image_url,
-                        output_paths.cover_image
+                        output_paths.cover_image,
+                        book_data.douban_url
                     )
 
                     if not success:
@@ -773,6 +774,7 @@ class CardGeneratorModule:
             author = str(row['豆瓣作者']).strip() if pd.notna(row.get('豆瓣作者')) else None
             publisher = str(row['豆瓣出版社']).strip() if pd.notna(row.get('豆瓣出版社')) else None
             pub_year = str(row['豆瓣出版年']).strip() if pd.notna(row.get('豆瓣出版年')) else None
+            douban_url = str(row['豆瓣链接']).strip() if pd.notna(row.get('豆瓣链接')) else None
 
             # 获取推荐语和对应的截取长度
             rec_text, rec_length = self._get_recommendation_text(row)
@@ -784,6 +786,7 @@ class CardGeneratorModule:
                 douban_rating=float(row['豆瓣评分']),
                 final_review_reason=rec_text,
                 cover_image_url=str(row['豆瓣封面图片链接']).strip(),
+                douban_url=douban_url,
                 title=title,
                 subtitle=subtitle,
                 author=author,
