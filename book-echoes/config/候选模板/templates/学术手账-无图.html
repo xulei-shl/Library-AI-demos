@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Echoes - 学术手账</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+
+        .library-card {
+            position: relative;
+            width: 600px;
+            height: 800px;
+            /* 背景图 */
+            background-image: url(https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/backup.png);
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            background-color: #fff;
+        }
+
+        /* 1. 标题区域 */
+        .title-group {
+            position: absolute;
+            top: 12%;
+            left: 8%;
+            z-index: 10;
+            transform: rotate(-2deg);
+        }
+
+        .main-title {
+            font-family: "Songti SC", "Noto Serif SC", "SimSun", serif;
+            font-size: 4.5rem;
+            font-weight: 900;
+            line-height: 1.2;
+            color: #000;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
+            letter-spacing: -2px;
+            /* 多行截断 - 最多2行 */
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 350px;
+        }
+
+        .sub-title {
+            display: inline-block;
+            background: #000;
+            color: #fff;
+            padding: 4px 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            transform: skewX(-10deg);
+            /* 可选元素：无内容时隐藏 */
+            &[style*="display: none"], &:empty {
+                display: none;
+            }
+        }
+
+        /* 2. 评分贴纸 (Blob Shape) */
+        .rating-blob {
+            position: absolute;
+            top: 10%;
+            right: 5%;
+            width: 130px;
+            height: 110px;
+            z-index: 8;
+
+            border-radius: 45% 55% 70% 30% / 60% 40% 60% 40%;
+            background-color: #ccff00;
+            mix-blend-mode: multiply;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: rotate(15deg);
+
+            color: #000;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        .rating-score {
+            font-family: "Impact", "Arial Black", sans-serif;
+            font-size: 2.8rem;
+            line-height: 1;
+            transform: rotate(-5deg);
+        }
+
+        .rating-text {
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: -5px;
+        }
+
+        /* 3. 评语区域 (磨砂玻璃卡片) */
+        .review-card {
+            position: absolute;
+            bottom: 50px;
+            left: 40px;
+            right: 40px;
+            z-index: 20;
+
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-left: 4px solid #002fa7;
+
+            padding: 25px;
+            padding-bottom: 20px; /* 减少底部内边距，避免截取时有多余空白 */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .review-content {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #222;
+            text-align: justify;
+            margin-bottom: 15px;
+            font-weight: 500;
+            /* 多行截断 - 最多4行 */
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #555;
+            border-top: 1px dashed #999;
+            padding-top: 10px;
+            font-family: monospace;
+        }
+
+        .meta-author,
+        .meta-publisher {
+            /* 单行截断 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 48%;
+        }
+
+        /* 4. 索书号 (侧边胶带风格) */
+        .call-number-wrapper {
+            position: absolute;
+            /* 这里的 left 和 top 决定了黑色条条的【中心点】在哪里 */
+            left: 45px; 
+            top: 50%;
+            
+            /* 关键：容器本身不设宽高，作为一个“锚点”存在 */
+            width: 0;
+            height: 0;
+            z-index: 15;
+            
+            /* 允许内容溢出显示（因为子元素是绝对定位的） */
+            overflow: visible; 
+        }
+
+        .call-number {
+            /* --- 核心布局设置 --- */
+            
+            /* 1. 设定固定尺寸：这里的 width 实际上是旋转后的“视觉高度” */
+            width: 160px;  /* 你希望它在垂直方向有多长，就设多少 */
+            height: 36px;  /* 黑色条条的粗细 */
+            line-height: 36px; /* 让文字垂直居中 */
+
+            /* 2. 绝对定位 + 变换中心 */
+            position: absolute;
+            /* 先把自己移到中心(-50%, -50%)，再旋转(-90deg) */
+            transform: translate(-50%, -50%) rotate(-90deg);
+            
+            /* --- 文本截断设置 --- */
+            white-space: nowrap;      /* 不换行 */
+            overflow: hidden;         /* 超出隐藏 */
+            text-overflow: ellipsis;  /* 超出显示省略号 (...) */
+            text-align: center;       /* 文字在黑色条条里居中 */
+
+            /* --- 视觉装饰 --- */
+            background: #000;
+            color: #fff;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            /* 阴影也要跟着旋转逻辑调整，或者保持原样 */
+            box-shadow: 4px 4px 0px rgba(204, 255, 0, 1);
+        }
+
+        /*
+           ================================================================
+           【修改点】推荐语高亮样式：无需额外变量，利用伪元素自动生成荧光笔高光
+           参考蓝天白墙方案，仅使用 {{RECOMMENDATION}} 变量
+           ================================================================
+        */
+        .review-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .review-content::after {
+            content: '';
+            position: absolute;
+            /* 第一行下方 */
+            bottom: 0.35em;
+            left: 0;
+            width: 85%;
+            height: 0.6em;
+            background: linear-gradient(to top, rgba(204, 255, 0, 0.5) 40%, transparent 40%);
+            transform: skewX(-15deg);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="library-card">
+
+        <!-- 1. 标题组 -->
+        <div class="title-group">
+            <div class="main-title">{{TITLE}}</div>
+            <div class="sub-title">{{SUBTITLE}}</div>
+        </div>
+
+        <!-- 2. 评分 (酸性绿涂鸦) -->
+        <div class="rating-blob">
+            <span class="rating-score">{{DOUBAN_RATING}}</span>
+            <span class="rating-text">豆瓣评分</span>
+        </div>
+
+        <!-- 3. 索书号 -->
+        <div class="call-number-wrapper">
+            <div class="call-number">{{CALL_NUMBER}}</div>
+        </div>
+
+        <!-- 4. 评语及信息 (磨砂玻璃底) -->
+        <div class="review-card">
+            <div class="review-content">{{RECOMMENDATION}}</div>
+            <div class="meta-info">
+                <span class="meta-author">{{AUTHOR}}</span>
+                <span class="meta-publisher">{{PUBLISHER}} / {{PUB_YEAR}}</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

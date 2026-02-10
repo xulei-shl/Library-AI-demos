@@ -265,7 +265,7 @@ def webserver():
     browser_config = get_browser_config()
     
     browser = p.chromium.launch(
-        headless=True,
+        headless=False,
         slow_mo=random.randint(800, 1200),  # 随机慢动作时间
         devtools=False
     )

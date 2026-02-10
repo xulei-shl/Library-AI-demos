@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Echoes - Chinese Collage</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+
+        .book-cover-container {
+            position: relative;
+            width: 600px;
+            height: 800px;
+            /* 背景图 */
+            background-image: url(https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/backup.png);
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            background-color: #fff;
+        }
+
+        /* 
+           1. 标题区域 
+           字体：使用粗宋体，更有力量感且符合背景气质。
+           颜色：纯黑，保证对比度。
+           位置：避开背景杂乱线条，利用左上角空间。
+        */
+        .title-group {
+            position: absolute;
+            top: 12%;
+            left: 8%;
+            z-index: 10;
+            /* 稍微旋转，增加拼贴感 */
+            transform: rotate(-2deg);
+        }
+
+        .main-title {
+            font-family: "Songti SC", "Noto Serif SC", "SimSun", serif;
+            font-size: 5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            color: #000;
+            /* 文字阴影，确保在任何背景下都与背景分离 */
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+        }
+
+        .sub-title {
+            display: inline-block;
+            background: #000;
+            color: #fff;
+            padding: 4px 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            transform: skewX(-10deg); /* 倾斜的标签感 */
+        }
+
+        /* 
+           2. 评分贴纸 (Blob Shape)
+           位置：右上角
+           风格：酸性绿半透明，正片叠底，模拟马克笔涂鸦
+        */
+        .rating-blob {
+            position: absolute;
+            top: 10%;
+            right: 5%;
+            width: 130px;
+            height: 110px;
+            z-index: 8;
+            
+            /* 不规则形状 */
+            border-radius: 45% 55% 70% 30% / 60% 40% 60% 40%;
+            background-color: #ccff00; /* 酸性绿 */
+            mix-blend-mode: multiply; /* 正片叠底，透出背景纹理 */
+            
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: rotate(15deg);
+            
+            /* 内部文字不继承混合模式，保持清晰 */
+            /* 但由于父元素multiply，子元素也会受影响，
+               所以这里用伪元素或者调整策略。
+               简单起见，我们允许黑色字叠底，因为黑色叠底还是黑色。
+            */
+            color: #000;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        .rating-score {
+            font-family: "Impact", "Arial Black", sans-serif; /* 数字用粗体 */
+            font-size: 2.8rem;
+            line-height: 1;
+            transform: rotate(-5deg);
+        }
+
+        .rating-text {
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: -5px;
+        }
+
+        /* 
+           3. 评语区域 (磨砂玻璃卡片)
+           位置：底部
+           解决可读性：使用半透明白色背景模糊背景杂乱线条
+        */
+        .review-card {
+            position: absolute;
+            bottom: 50px;
+            left: 40px;
+            right: 40px;
+            z-index: 20;
+            
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px); /* 磨砂玻璃效果 */
+            border: 1px solid rgba(0,0,0,0.1);
+            border-left: 4px solid #002fa7; /* 左侧蓝色装饰线呼应背景 */
+            
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .review-content {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #222;
+            text-align: justify;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        /* 强调文字 */
+        .highlight {
+            background: linear-gradient(to top, rgba(204, 255, 0, 0.6) 40%, transparent 40%);
+            padding: 0 2px;
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #555;
+            border-top: 1px dashed #999;
+            padding-top: 10px;
+            font-family: monospace; /* 等宽字体增加技术感 */
+        }
+
+        /* 
+           4. 索书号 (侧边胶带风格)
+        */
+        .call-number {
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            background: #000;
+            color: #fff;
+            padding: 8px 20px;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 15;
+            box-shadow: 4px 4px 0px rgba(204, 255, 0, 1); /* 绿色硬阴影 */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="book-cover-container">
+        
+        <!-- 1. 标题组 -->
+        <div class="title-group">
+            <div class="main-title">设计<br>心理学</div>
+            <div class="sub-title">日常万物的设计之道</div>
+        </div>
+
+        <!-- 2. 评分 (酸性绿涂鸦) -->
+        <div class="rating-blob">
+            <span class="rating-score">9.4</span>
+            <span class="rating-text">豆瓣评分</span>
+        </div>
+
+        <!-- 3. 索书号 -->
+        <div class="call-number">TS171.4 .N67</div>
+
+        <!-- 4. 评语及信息 (磨砂玻璃底) -->
+        <div class="review-card">
+            <div class="review-content">
+                <span class="highlight">“好设计是看不见的。”</span> 诺曼博士用幽默的笔触揭示了生活中那些让我们抓狂的糟糕设计。这不仅是一本设计书，更是一本关于如何观察世界的指南。
+            </div>
+            <div class="meta-info">
+                <span>[美] 唐纳德·诺曼</span>
+                <span>中信出版社 / 2023</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

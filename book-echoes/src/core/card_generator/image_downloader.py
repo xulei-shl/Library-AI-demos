@@ -1,16 +1,20 @@
 """
 图片下载器模块
 负责下载豆瓣封面图片
-支持并发下载以提升性能
 使用 Playwright 访问豆瓣页面并下载图片
+
+稳定性设计：
+- 顺序下载，不使用并发
+- 单一浏览器实例
+- 非无头模式便于调试
+- 支持 requests 备用方案
 """
 
 import os
 import time
-import threading
 from typing import Dict, Tuple, List, Optional
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from playwright.sync_api import sync_playwright, Browser, Page, TimeoutError as PlaywrightTimeoutError
+import requests
+from playwright.sync_api import sync_playwright, Browser, Page
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -27,7 +31,8 @@ class ImageDownloader:
             config: 配置字典
         """
         self.config = config.get('image_download', {})
-        self.timeout = self.config.get('timeout', 30000)
+        # 配置中的 timeout 单位是秒，需要转换为毫秒
+        self.timeout = self.config.get('timeout', 30) * 1000
         self.max_retries = self.config.get('max_retries', 3)
         self.retry_delay = self.config.get('retry_delay', 2)
         self.user_agent = self.config.get(
@@ -36,50 +41,71 @@ class ImageDownloader:
         )
         self.url_replacements = self.config.get('url_replacements', [])
         self.supported_formats = self.config.get('supported_formats', ['jpg', 'png', 'jpeg'])
-        self.headless = self.config.get('headless', True)
+        # 默认非无头模式，便于调试
+        self.headless = self.config.get('headless', False)
 
-        # 并发下载配置(性能优化)
-        self.max_concurrent_downloads = self.config.get('max_concurrent_downloads', 2)
-        self.download_delay = self.config.get('download_delay', 0.5)
-
-        # Playwright 浏览器实例（线程本地存储）
-        self._thread_local = threading.local()
+        # Playwright 实例
+        self._playwright = None
+        self._browser = None
+        self._stealth_enabled = self.config.get('enable_stealth', True)
 
     def _get_browser(self) -> Optional[Browser]:
         """
-        获取当前线程的浏览器实例（如果不存在则创建）
+        获取浏览器实例（如果不存在则创建）
 
         Returns:
             Optional[Browser]: 浏览器实例
         """
-        if hasattr(self._thread_local, 'browser') and self._thread_local.browser:
-            return self._thread_local.browser
+        if self._browser is not None:
+            return self._browser
 
         try:
-            pw = sync_playwright().start()
-            self._thread_local.playwright = pw
-            self._thread_local.browser = pw.chromium.launch(headless=self.headless)
-            logger.debug(f"线程 {threading.current_thread().name} 的浏览器实例已启动")
-            return self._thread_local.browser
+            self._playwright = sync_playwright().start()
+
+            # 浏览器启动参数 - 增强反爬虫措施
+            browser_args = [
+                '--disable-blink-features=AutomationControlled',
+                '--disable-dev-shm-usage',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor',
+            ]
+
+            self._browser = self._playwright.chromium.launch(
+                headless=self.headless,
+                args=browser_args
+            )
+
+            logger.info(f"浏览器实例已启动（headless={self.headless}, stealth={self._stealth_enabled}）")
+            return self._browser
         except Exception as e:
             logger.error(f"启动浏览器失败：{e}")
             return None
 
     def _close_browser(self) -> None:
-        """关闭当前线程的浏览器实例"""
-        if hasattr(self._thread_local, 'browser') and self._thread_local.browser:
+        """关闭浏览器实例"""
+        if self._browser:
             try:
-                self._thread_local.browser.close()
-                self._thread_local.browser = None
+                self._browser.close()
+                logger.debug("浏览器实例已关闭")
             except Exception as e:
                 logger.warning(f"关闭浏览器时发生错误：{e}")
+            finally:
+                self._browser = None
 
-        if hasattr(self._thread_local, 'playwright') and self._thread_local.playwright:
+        if self._playwright:
             try:
-                self._thread_local.playwright.stop()
-                self._thread_local.playwright = None
+                self._playwright.stop()
+                logger.debug("Playwright 实例已停止")
             except Exception as e:
                 logger.warning(f"关闭Playwright时发生错误：{e}")
+            finally:
+                self._playwright = None
 
     def __del__(self):
         """析构函数，确保浏览器实例被关闭"""
@@ -104,8 +130,30 @@ class ImageDownloader:
 
         page = None
         try:
+            # 创建页面上下文
             page = browser.new_page(user_agent=self.user_agent)
-            page.goto(douban_url, timeout=self.timeout, wait_until='networkidle')
+
+            # 添加初始化脚本，隐藏 webdriver 特征
+            page.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                });
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5]
+                });
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['zh-CN', 'zh', 'en']
+                });
+                window.chrome = {
+                    runtime: {}
+                };
+            """)
+
+            # 访问豆瓣页面
+            page.goto(douban_url, timeout=self.timeout, wait_until='domcontentloaded')
+
+            # 添加短暂延迟，模拟人类操作
+            time.sleep(1)
 
             # 提取 #mainpic a.nbg 的 href 属性
             image_url = page.evaluate("""
@@ -136,7 +184,11 @@ class ImageDownloader:
         self, url: str, output_path: str, douban_url: Optional[str] = None
     ) -> Tuple[bool, str]:
         """
-        使用 Playwright 下载封面图片
+        下载封面图片
+
+        逻辑：
+        1. 如果有豆瓣 URL，用 Playwright 访问页面提取图片链接
+        2. 使用 requests 直接下载图片
 
         Args:
             url: 图片URL
@@ -146,90 +198,37 @@ class ImageDownloader:
         Returns:
             Tuple[bool, str]: (是否成功, 实际保存路径)
         """
-        # 优先使用豆瓣页面提取真实图片URL
+        # 步骤1：如果有豆瓣 URL，用 Playwright 访问页面提取图片链接
         if douban_url:
             extracted_url = self.extract_image_url_from_douban_page(douban_url)
             if extracted_url:
                 url = extracted_url
+                logger.debug(f"从豆瓣页面提取到图片链接：{url}")
             else:
-                logger.warning("从豆瓣页面提取图片失败，使用原URL尝试下载")
+                logger.warning(f"从豆瓣页面提取图片失败：{douban_url}，使用原 URL")
 
+        # 检查 URL 是否有效
         if not url or not url.strip():
             logger.error("图片URL为空")
             return False, ""
 
-        # 处理豆瓣URL
+        # 处理豆瓣URL（小图转大图）
         processed_url = self.process_douban_url(url)
+        logger.debug(f"准备下载图片：{processed_url}")
 
-        logger.debug(f"下载封面图片：{processed_url}")
-
-        # 尝试下载
+        # 步骤2：使用 requests 直接下载图片
         for retry_count in range(self.max_retries):
-            browser = self._get_browser()
-            if not browser:
-                logger.error("浏览器实例不可用")
-                return False, ""
+            success, actual_path = self._download_with_requests(processed_url, output_path)
+            if success:
+                return True, actual_path
 
-            page = None
-            try:
-                page = browser.new_page()
-                # 访问图片URL
-                response = page.goto(processed_url, timeout=self.timeout)
+            logger.warning(
+                f"下载失败，{self.retry_delay * (retry_count + 1)}秒后重试 "
+                f"({retry_count + 1}/{self.max_retries})"
+            )
+            time.sleep(self.retry_delay * (retry_count + 1))
 
-                if not response or response.status != 200:
-                    logger.warning(
-                        f"下载失败，状态码：{response.status if response else 'None'}，"
-                        f"重试 {retry_count + 1}/{self.max_retries}"
-                    )
-                    time.sleep(self.retry_delay * (retry_count + 1))
-                    continue
-
-                # 获取图片二进制数据
-                image_bytes = response.body()
-
-                # 检测图片格式
-                image_format = self.detect_image_format(image_bytes)
-
-                if not image_format:
-                    logger.error("无法识别图片格式")
-                    return False, ""
-
-                # 构建完整路径
-                full_path = f"{output_path}.{image_format}"
-
-                # 确保输出目录存在
-                output_dir = os.path.dirname(full_path)
-                if output_dir and not os.path.exists(output_dir):
-                    os.makedirs(output_dir, exist_ok=True)
-
-                # 保存图片
-                with open(full_path, 'wb') as f:
-                    f.write(image_bytes)
-
-                logger.debug(f"封面图片下载成功：{full_path}")
-                return True, full_path
-
-            except PlaywrightTimeoutError:
-                logger.warning(
-                    f"网络请求超时，{self.retry_delay * (retry_count + 1)}秒后重试 "
-                    f"({retry_count + 1}/{self.max_retries})"
-                )
-                time.sleep(self.retry_delay * (retry_count + 1))
-
-            except Exception as e:
-                logger.warning(
-                    f"下载失败：{e}，重试 {retry_count + 1}/{self.max_retries}"
-                )
-                time.sleep(self.retry_delay * (retry_count + 1))
-
-            finally:
-                if page:
-                    try:
-                        page.close()
-                    except Exception:
-                        pass
-
-        logger.error(f"封面图片下载失败（已重试{self.max_retries}次）：{processed_url}")
+        logger.error(f"图片下载失败（已重试{self.max_retries}次）：{processed_url}")
         return False, ""
 
     def process_douban_url(self, url: str) -> str:
@@ -279,11 +278,65 @@ class ImageDownloader:
         logger.warning("无法通过魔数识别图片格式，使用默认格式jpg")
         return 'jpg'
 
+    def _download_with_requests(self, url: str, output_path: str) -> Tuple[bool, str]:
+        """
+        使用 requests 库直接下载图片（备用方案，绕过反爬虫）
+
+        Args:
+            url: 图片URL
+            output_path: 输出路径（不含扩展名）
+
+        Returns:
+            Tuple[bool, str]: (是否成功, 实际保存路径)
+        """
+        try:
+            headers = {
+                'User-Agent': self.user_agent,
+                'Referer': 'https://book.douban.com/',
+                'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+            }
+
+            response = requests.get(url, headers=headers, timeout=30)
+
+            if response.status_code == 200:
+                image_bytes = response.content
+
+                # 检测图片格式
+                image_format = self.detect_image_format(image_bytes)
+                if not image_format:
+                    logger.error("无法识别图片格式")
+                    return False, ""
+
+                # 构建完整路径
+                full_path = f"{output_path}.{image_format}"
+
+                # 确保输出目录存在
+                output_dir = os.path.dirname(full_path)
+                if output_dir and not os.path.exists(output_dir):
+                    os.makedirs(output_dir, exist_ok=True)
+
+                # 保存图片
+                with open(full_path, 'wb') as f:
+                    f.write(image_bytes)
+
+                logger.info(f"使用 requests 下载成功：{full_path}")
+                return True, full_path
+            else:
+                logger.warning(f"requests 下载失败，状态码：{response.status_code}")
+                return False, ""
+
+        except Exception as e:
+            logger.warning(f"requests 下载异常：{e}")
+            return False, ""
+
     def download_covers_batch(
         self, download_tasks: List[Tuple[str, str, Optional[str]]]
     ) -> List[Tuple[bool, str, str]]:
         """
-        批量并发下载封面图片(性能优化)
+        批量顺序下载封面图片（稳定性优先）
 
         Args:
             download_tasks: 下载任务列表,每个任务为(url, output_path, douban_url)元组
@@ -294,67 +347,117 @@ class ImageDownloader:
         if not download_tasks:
             return []
 
-        logger.info(f"开始批量下载 {len(download_tasks)} 张封面图片(并发数:{self.max_concurrent_downloads})...")
+        logger.info(f"开始顺序下载 {len(download_tasks)} 张封面图片...")
+
+        # 预先启动浏览器（所有任务共用）
+        browser = self._get_browser()
+        if not browser:
+            logger.error("无法启动浏览器实例")
+            return [(False, "", url) for _, _, url in download_tasks]
 
         results = []
-        completed_count = 0
+        success_count = 0
 
-        # 使用线程池并发下载
-        with ThreadPoolExecutor(max_workers=self.max_concurrent_downloads) as executor:
-            # 提交所有下载任务
-            future_to_task = {}
-            for url, output_path, douban_url in download_tasks:
-                future = executor.submit(self._download_single_with_delay, url, output_path, douban_url)
-                future_to_task[future] = (url, output_path)
+        for index, (url, output_path, douban_url) in enumerate(download_tasks, 1):
+            try:
+                success, actual_path = self.download_cover_image(url, output_path, douban_url)
+                results.append((success, actual_path, url))
 
-            # 收集结果
-            for future in as_completed(future_to_task):
-                url, output_path = future_to_task[future]
-                try:
-                    success, actual_path = future.result()
-                    results.append((success, actual_path, url))
-                    completed_count += 1
+                if success:
+                    success_count += 1
+                    logger.info(f"下载成功 ({index}/{len(download_tasks)}): {url}")
+                else:
+                    logger.warning(f"下载失败 ({index}/{len(download_tasks)}): {url}")
 
-                    if success:
-                        logger.debug(f"下载成功 ({completed_count}/{len(download_tasks)}): {url}")
-                    else:
-                        logger.warning(f"下载失败 ({completed_count}/{len(download_tasks)}): {url}")
+            except Exception as e:
+                logger.error(f"下载异常 ({index}/{len(download_tasks)}): {url}, 错误: {e}")
+                results.append((False, "", url))
 
-                except Exception as e:
-                    logger.error(f"下载异常: {url}, 错误: {e}")
-                    results.append((False, "", url))
-                    completed_count += 1
+        # 批量下载完成，关闭浏览器实例
+        self._close_browser()
 
-        # 关闭所有线程的浏览器实例
-        self._cleanup_all_browsers()
-
-        success_count = sum(1 for success, _, _ in results if success)
-        logger.info(f"批量下载完成: 成功 {success_count}/{len(download_tasks)} 张")
-
+        logger.info(f"顺序下载完成: 成功 {success_count}/{len(download_tasks)} 张")
         return results
 
-    def _download_single_with_delay(
-        self, url: str, output_path: str, douban_url: Optional[str] = None
-    ) -> Tuple[bool, str]:
-        """
-        下载单张图片(带延迟,避免反爬)
 
-        Args:
-            url: 图片URL
-            output_path: 输出路径
-            douban_url: 豆瓣图书页面URL
+def main():
+    """
+    独立测试函数 - 便于测试图片下载功能
 
-        Returns:
-            Tuple[bool, str]: (是否成功, 实际保存路径)
-        """
-        # 添加随机延迟,避免触发反爬
-        if self.download_delay > 0:
-            import random
-            delay = self.download_delay + random.uniform(0, 0.3)
-            time.sleep(delay)
+    使用方法:
+        python -m src.core.card_generator.image_downloader
+    """
+    import argparse
+    from pathlib import Path
 
-        return self.download_cover_image(url, output_path, douban_url)
+    parser = argparse.ArgumentParser(description='测试图片下载器')
+    parser.add_argument('--url', type=str, help='图片URL')
+    parser.add_argument('--douban-url', type=str, help='豆瓣图书页面URL（可选）')
+    parser.add_argument('--output', type=str, help='输出路径（不含扩展名）')
 
-    def _cleanup_all_browsers(self) -> None:
-        """清理所有浏览器资源"""
-        self._close_browser()
+    args = parser.parse_args()
+
+    # 如果没有提供参数，使用默认测试数据
+    if not args.url:
+        # 默认测试：下载一本书的封面
+        test_douban_url = "https://book.douban.com/subject/27071823/"
+        test_output = f"test_output/test_cover_{int(time.time())}"
+        print(f"使用测试参数:")
+        print(f"  豆瓣URL: {test_douban_url}")
+        print(f"  输出路径: {test_output}")
+        douban_url = test_douban_url
+        output = test_output
+        url = None
+    else:
+        url = args.url
+        douban_url = args.douban_url
+        output = args.output or f"test_output/test_cover_{int(time.time())}"
+
+    # 创建输出目录
+    output_dir = Path(output).parent
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # 配置
+    config = {
+        'image_download': {
+            'timeout': 30,  # 秒
+            'max_retries': 3,
+            'retry_delay': 2,
+            'headless': False,  # 非无头模式，便于调试
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'url_replacements': [
+                {'old': '/s/', 'new': '/l/'},
+                {'old': '/ssq/', 'new': '/ll/'}
+            ],
+            'supported_formats': ['jpg', 'png', 'jpeg']
+        }
+    }
+
+    # 创建下载器
+    downloader = ImageDownloader(config)
+
+    try:
+        # 下载图片
+        print(f"\n开始下载封面图片...")
+        success, actual_path = downloader.download_cover_image(url, output, douban_url)
+
+        if success:
+            print(f"\n✓ 下载成功!")
+            print(f"  保存路径: {actual_path}")
+            return 0
+        else:
+            print(f"\n✗ 下载失败!")
+            return 1
+
+    except Exception as e:
+        print(f"\n✗ 发生错误: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+    finally:
+        # 清理资源
+        downloader._close_browser()
+
+
+if __name__ == '__main__':
+    exit(main())

@@ -510,7 +510,7 @@ rating_filter:
   # 模块3/3-B 的动态阈值过滤开关
   # true: 启用动态阈值过滤（适合借阅数据，数据量大）
   # false: 跳过动态过滤（适合新书数据，后续使用命令10单独过滤）
-  dynamic_filter_enabled: false
+  dynamic_filter_enabled: true
 
   # 新书专用过滤策略配置
   new_sleeping:
@@ -587,7 +587,7 @@ rating_filter:
 # =============================================================================
 card_generator:
   # HTML模板文件路径
-  template_path: "config/temples/LIBRARY-catalog.html"
+  template_path: "config/temples/2026黑色.html"
 
   # 字段转换器配置
   # 功能: 为不同模板提供灵活的字段处理规则
@@ -659,14 +659,15 @@ card_generator:
     # 重试延迟(秒)
     retry_delay: 2
     # User-Agent
-    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     # 豆瓣图片URL替换规则
     url_replacements:
       - old: "subject/s/public"
         new: "subject/l/public"
-    # 并发下载配置(性能优化)
-    max_concurrent_downloads: 2  # 最大并发下载数,建议2-3,避免触发反爬
-    download_delay: 0.5  # 下载间隔(秒),避免请求过快
+    # 浏览器设置
+    headless: false  # 非无头模式便于调试，生产环境可设为 true
+    # 反爬虫措施
+    enable_stealth: true  # 启用反爬虫检测规避
 
   # 二维码生成配置
   qrcode:
@@ -693,12 +694,12 @@ card_generator:
   html_to_image:
     # 浏览器设置
     headless: true
-    # 视窗宽度
+    # 视窗宽度（默认值，会根据HTML元素实际尺寸动态调整）
     viewport_width: 1200
-    # 视窗高度（增加到1400以确保点阵模板底部不被截断）
+    # 视窗高度（默认值，会根据HTML元素实际尺寸动态调整）
     viewport_height: 1400
-    # 设备缩放因子
-    device_scale_factor: 2
+    # 设备缩放因子（1=截图尺寸与HTML定义一致，2=高清截图2倍尺寸）
+    device_scale_factor: 1
     # 图片格式
     image_format: "png"
     # 图片质量(仅用于jpg)

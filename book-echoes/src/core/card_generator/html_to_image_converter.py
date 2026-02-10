@@ -148,11 +148,20 @@ class HTMLToImageConverter:
                 if not hasattr(self._thread_local, 'browser') or self._thread_local.browser is None:
                     if not self.start_browser():
                         return False, ""
-                
+
+                # 先创建临时页面用于检测元素实际尺寸
+                temp_page = self._thread_local.browser.new_page()
+                actual_size = self._detect_element_size(temp_page, html_path)
+                temp_page.close()
+
+                # 根据检测到的实际尺寸设置viewport
+                viewport_width = actual_size['width'] if actual_size else self.viewport_width
+                viewport_height = actual_size['height'] if actual_size else self.viewport_height
+
                 page = self._thread_local.browser.new_page(
                     viewport={
-                        'width': self.viewport_width,
-                        'height': self.viewport_height
+                        'width': viewport_width,
+                        'height': viewport_height
                     },
                     device_scale_factor=self.device_scale_factor
                 )
@@ -161,13 +170,22 @@ class HTMLToImageConverter:
                 if self.browser is None:
                     if not self.start_browser():
                         return False, ""
-                
+
+                # 先创建临时页面用于检测元素实际尺寸
+                temp_page = self.browser.new_page()
+                actual_size = self._detect_element_size(temp_page, html_path)
+                temp_page.close()
+
+                # 根据检测到的实际尺寸设置viewport
+                viewport_width = actual_size['width'] if actual_size else self.viewport_width
+                viewport_height = actual_size['height'] if actual_size else self.viewport_height
+
                 # 使用线程锁保护页面创建，防止多线程并发调用导致协议错误
                 with self._page_creation_lock:
                     page = self.browser.new_page(
                         viewport={
-                            'width': self.viewport_width,
-                            'height': self.viewport_height
+                            'width': viewport_width,
+                            'height': viewport_height
                         },
                         device_scale_factor=self.device_scale_factor
                     )
@@ -201,6 +219,64 @@ class HTMLToImageConverter:
                     page.close()
                 except Exception as e:
                     logger.warning(f"关闭页面时发生错误：{e}")
+
+    def _detect_element_size(self, page: Page, html_path: str) -> Optional[dict]:
+        """
+        检测HTML中目标元素的实际尺寸
+
+        Args:
+            page: Playwright页面对象
+            html_path: HTML文件路径
+
+        Returns:
+            dict: 包含 width 和 height 的字典，如果检测失败返回 None
+        """
+        try:
+            # 转换为file://协议的URL
+            if os.path.isabs(html_path):
+                file_url = f"file:///{html_path.replace(os.sep, '/')}"
+            else:
+                abs_path = os.path.abspath(html_path)
+                file_url = f"file:///{abs_path.replace(os.sep, '/')}"
+
+            # 加载页面
+            page.goto(file_url, timeout=self.timeout, wait_until='networkidle')
+
+            # 等待页面稳定
+            page.wait_for_load_state('networkidle', timeout=self.timeout)
+
+            # 按优先级尝试多个选择器
+            selectors_to_try = [
+                '.library-card',
+                '.book-card',
+                '.container',
+                'body > div:first-child',
+                '.card',
+                '[class*="max-w"]',
+                'main',
+            ]
+
+            for selector in selectors_to_try:
+                try:
+                    element = page.query_selector(selector)
+                    if element:
+                        box = element.bounding_box()
+                        if box and box['width'] > 0 and box['height'] > 0:
+                            # 向上取整到整数像素
+                            width = int(box['width']) + int(box['x'])
+                            height = int(box['height']) + int(box['y'])
+                            logger.info(f"检测到元素 {selector} 的实际尺寸: {width}×{height}")
+                            return {'width': width, 'height': height}
+                except Exception as e:
+                    logger.debug(f"尝试检测选择器 {selector} 失败: {e}")
+                    continue
+
+            logger.warning("未能检测到元素的实际尺寸，将使用默认配置")
+            return None
+
+        except Exception as e:
+            logger.warning(f"检测元素尺寸时发生错误: {e}")
+            return None
 
     def load_html_page(self, page: Page, html_path: str) -> bool:
         """

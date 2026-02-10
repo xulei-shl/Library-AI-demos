@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Echoes - 双页模式</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            /* 防止页面过小时出现滚动条不好看，增加一点padding */
+            padding: 20px;
+        }
+
+        /* ============================================================
+           1. 新增：全局布局容器 (Wrapper)
+           作用：将原有的卡片和新封面卡片横向排列
+           ============================================================ */
+        .layout-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 0; /* 两个卡片紧贴，像打开的书 */
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+            /* 整体圆角 */
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        /* ============================================================
+           2. 原有样式：.library-card 及其子元素
+           (完全保持你提供的代码，只移除了 box-shadow，因为移到了父容器)
+           ============================================================ */
+        .library-card {
+            position: relative;
+            width: 600px;
+            height: 800px;
+            /* 背景图 */
+            background-image: url(https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/backup.png);
+            background-size: cover;
+            background-position: center;
+            /* box-shadow: 0 20px 40px rgba(0,0,0,0.1);  <-- 移除这个，由父级统一管理阴影 */
+            overflow: hidden;
+            background-color: #fff;
+            flex-shrink: 0; /* 防止被压缩 */
+            z-index: 2;
+        }
+
+        .title-group {
+            position: absolute;
+            top: 12%;
+            left: 8%;
+            z-index: 10;
+            transform: rotate(-2deg);
+        }
+
+        .main-title {
+            font-family: "Songti SC", "Noto Serif SC", "SimSun", serif;
+            font-size: 4.5rem;
+            font-weight: 900;
+            line-height: 1.2;
+            color: #000;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
+            letter-spacing: -2px;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 350px;
+        }
+
+        .sub-title {
+            display: inline-block;
+            background: #000;
+            color: #fff;
+            padding: 4px 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            transform: skewX(-10deg);
+        }
+
+        .rating-blob {
+            position: absolute;
+            top: 10%;
+            right: 5%;
+            width: 130px;
+            height: 110px;
+            z-index: 8;
+            border-radius: 45% 55% 70% 30% / 60% 40% 60% 40%;
+            background-color: #ccff00;
+            mix-blend-mode: multiply;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: rotate(15deg);
+            color: #000;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        .rating-score {
+            font-family: "Impact", "Arial Black", sans-serif;
+            font-size: 2.8rem;
+            line-height: 1;
+            transform: rotate(-5deg);
+        }
+
+        .rating-text {
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: -5px;
+        }
+
+        .review-card {
+            position: absolute;
+            bottom: 50px;
+            left: 40px;
+            right: 40px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-left: 4px solid #002fa7;
+            padding: 25px;
+            padding-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .review-content {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #222;
+            text-align: justify;
+            margin-bottom: 15px;
+            font-weight: 500;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+            z-index: 1;
+        }
+
+        .review-content::after {
+            content: '';
+            position: absolute;
+            bottom: 0.35em;
+            left: 0;
+            width: 85%;
+            height: 0.6em;
+            background: linear-gradient(to top, rgba(204, 255, 0, 0.5) 40%, transparent 40%);
+            transform: skewX(-15deg);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #555;
+            border-top: 1px dashed #999;
+            padding-top: 10px;
+            font-family: monospace;
+        }
+
+        .meta-author,
+        .meta-publisher {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 48%;
+        }
+
+        .call-number-wrapper {
+            position: absolute;
+            left: 45px; 
+            top: 50%;
+            width: 0;
+            height: 0;
+            z-index: 15;
+            overflow: visible; 
+        }
+
+        .call-number {
+            width: 160px;
+            height: 36px;
+            line-height: 36px;
+            position: absolute;
+            transform: translate(-50%, -50%) rotate(-90deg);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+            background: #000;
+            color: #fff;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 4px 4px 0px rgba(204, 255, 0, 1);
+        }
+
+        /* ============================================================
+           3. 新增：右侧封面容器 (.visual-card)
+           风格：参考附件图片 (蓝线、酸性绿、涂鸦、留白)
+           ============================================================ */
+        .visual-card {
+            position: relative;
+            width: 600px; /* 与左侧等宽 */
+            height: 800px;
+            background-color: #fff; /* 纯白背景 */
+            overflow: hidden;
+            flex-shrink: 0;
+            /* 装饰性左边框，模拟书脊 */
+            border-left: 1px solid #eee;
+        }
+
+        /* 3.1 装饰：酸性绿光晕 (Acid Glow) */
+        .deco-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(204,255,0,0.6) 0%, rgba(255,255,255,0) 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            filter: blur(40px);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 3.2 装饰：蓝色涂鸦 SVG (Scribbles) */
+        .scribble-svg {
+            position: absolute;
+            fill: none;
+            stroke: #002fa7; /* 附件中的克莱因蓝 */
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* 花朵 */
+        .scribble-flower {
+            top: 10%;
+            right: 15%;
+            width: 120px;
+            height: 120px;
+            transform: rotate(10deg);
+        }
+        
+        /* 星星 */
+        .scribble-star {
+            bottom: 15%;
+            left: 10%;
+            width: 80px;
+            height: 80px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* 乱线 */
+        .scribble-lines {
+            bottom: 5%;
+            right: -10%;
+            width: 250px;
+            height: 150px;
+            opacity: 0.7;
+        }
+
+        /* 3.3 装饰：文字 "book echoes" */
+        .deco-text {
+            position: absolute;
+            top: 25%;
+            right: 10%;
+            font-family: "Times New Roman", serif;
+            font-style: italic;
+            font-size: 3rem;
+            color: #002fa7;
+            z-index: 3;
+            font-weight: bold;
+            letter-spacing: -1px;
+        }
+
+        /* 3.4 核心：封面图片容器 */
+        .cover-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-3deg); /* 轻微旋转 */
+            width: 300px;
+            height: 450px;
+            z-index: 5;
+            background: #fff;
+            /* 模仿附件中的蓝色粗糙边框 */
+            border: 2px solid #002fa7;
+            padding: 8px; /* 图片与边框的间距 */
+            box-shadow: 10px 10px 0px rgba(0, 47, 167, 0.15); /* 硬阴影 */
+        }
+
+        .cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: grayscale(20%) contrast(1.1); /* 稍微复古一点 */
+            border: 1px solid #eee;
+        }
+
+        /* 3.5 装饰：封面上的涂鸦遮挡 */
+        .cover-scribble-overlay {
+            position: absolute;
+            top: -30px;
+            left: -30px;
+            width: 100px;
+            height: 100px;
+            z-index: 6;
+            stroke: #002fa7;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 布局容器：包含左侧旧卡片 + 右侧新封面 -->
+    <div class="layout-wrapper">
+
+        <!-- ================= 左侧：原有卡片 (完全不动) ================= -->
+        <div class="library-card">
+            <!-- 1. 标题组 -->
+            <div class="title-group">
+                <div class="main-title">{{TITLE}}</div>
+                <div class="sub-title">{{SUBTITLE}}</div>
+            </div>
+
+            <!-- 2. 评分 -->
+            <div class="rating-blob">
+                <span class="rating-score">{{DOUBAN_RATING}}</span>
+                <span class="rating-text">豆瓣评分</span>
+            </div>
+
+            <!-- 3. 索书号 -->
+            <div class="call-number-wrapper">
+                <div class="call-number">{{CALL_NUMBER}}</div>
+            </div>
+
+            <!-- 4. 评语及信息 -->
+            <div class="review-card">
+                <div class="review-content">{{RECOMMENDATION}}</div>
+                <div class="meta-info">
+                    <span class="meta-author">{{AUTHOR}}</span>
+                    <span class="meta-publisher">{{PUBLISHER}} / {{PUB_YEAR}}</span>
+                </div>
+            </div>
+        </div>
+        <!-- ================= 左侧结束 ================= -->
+
+
+        <!-- ================= 右侧：新增封面容器 (附件风格) ================= -->
+        <div class="visual-card">
+            
+            <!-- 背景光晕 -->
+            <div class="deco-glow"></div>
+
+            <!-- 装饰文字 -->
+            <div class="deco-text">book echoes</div>
+
+            <!-- 装饰SVG：花朵 -->
+            <svg class="scribble-svg scribble-flower" viewBox="0 0 100 100">
+                <path d="M50 50 L50 20 M50 50 L80 50 M50 50 L50 80 M50 50 L20 50 M50 50 L30 30 M50 50 L70 30 M50 50 L70 70 M50 50 L30 70" />
+                <circle cx="50" cy="50" r="8" />
+                <path d="M50 20 Q65 5 80 20 T80 50 T50 80 T20 50 T20 20 T50 20" stroke-dasharray="2,2"/>
+            </svg>
+
+            <!-- 装饰SVG：星星 -->
+            <svg class="scribble-svg scribble-star" viewBox="0 0 100 100">
+                <polygon points="50,5 63,35 95,35 70,55 80,90 50,70 20,90 30,55 5,35 37,35" fill="none" />
+                <line x1="50" y1="5" x2="50" y2="70" />
+                <line x1="5" y1="35" x2="95" y2="35" />
+            </svg>
+
+            <!-- 装饰SVG：底部乱线 -->
+            <svg class="scribble-svg scribble-lines" viewBox="0 0 200 100">
+                <path d="M10,50 Q50,10 90,50 T180,50 M20,60 Q60,90 100,40 T190,20" />
+            </svg>
+
+            <!-- 封面主体 -->
+            <div class="cover-container">
+                <!-- 封面上的涂鸦装饰 -->
+                <svg class="cover-scribble-overlay" viewBox="0 0 100 100">
+                    <path d="M10,10 Q50,50 90,10 M10,30 Q50,70 90,30" />
+                </svg>
+                
+                <img src="pic/cover.jpg" alt="Book Cover" class="cover-image">
+            </div>
+
+        </div>
+        <!-- ================= 右侧结束 ================= -->
+
+    </div>
+
+</body>
+</html>
