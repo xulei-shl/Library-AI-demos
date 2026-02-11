@@ -247,7 +247,6 @@ class HTMLToImageConverter:
 
             # 按优先级尝试多个选择器
             selectors_to_try = [
-                '.layout-wrapper',      # 双页布局的最外层容器
                 '.library-card',
                 '.book-card',
                 '.container',
@@ -413,7 +412,6 @@ class HTMLToImageConverter:
             if self.clip_element:
                 # 按优先级尝试多个选择器
                 selectors_to_try = [
-                    '.layout-wrapper',    # 双页布局的最外层容器
                     '.library-card',      # 当前模板使用的类名
                     '.book-card',         # 备用类名
                     'body > div:first-child',  # 第一个div元素
@@ -463,7 +461,6 @@ class HTMLToImageConverter:
         try:
             # 按优先级尝试多个选择器
             selectors_to_try = [
-                '.layout-wrapper',    # 双页布局的最外层容器
                 '.library-card',      # 当前模板使用的类名
                 '.book-card',         # 备用类名
                 'body > div:first-child',  # 第一个div元素

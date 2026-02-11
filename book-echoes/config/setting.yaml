@@ -587,7 +587,7 @@ rating_filter:
 # =============================================================================
 card_generator:
   # HTML模板文件路径
-  template_path: "config/temples/2026黑色.html"
+  template_path: "config/temples/学术手账.html"
 
   # 字段转换器配置
   # 功能: 为不同模板提供灵活的字段处理规则
@@ -602,12 +602,12 @@ card_generator:
     
     # 示例2: AUTHOR字段 - 只显示第一作者 + "等"
     # 取消下面的注释即可启用此配置
-    # AUTHOR:
-    #   type: "first_author"        # 转换器类型: first_author(提取第一作者)
-    #   source_field: "豆瓣作者"     # 源字段名
-    #   separator: "/"              # 作者分隔符
-    #   suffix: " 等"               # 多作者时的后缀
-    #   default: ""                 # 默认值
+    AUTHOR:
+      type: "first_author"        # 转换器类型: first_author(提取第一作者)
+      source_field: "豆瓣作者"     # 源字段名
+      separator: "/"              # 作者分隔符
+      suffix: " 等"               # 多作者时的后缀
+      default: ""                 # 默认值
     
     # 示例3: TITLE字段 - 使用完整标题(主标题 + 副标题,默认行为)
     # 如果不配置,则使用默认逻辑(显示主标题和副标题)
@@ -620,10 +620,10 @@ card_generator:
     
     # 示例4: TITLE字段 - 只显示主标题(不含副标题)
     # 取消下面的注释即可启用此配置
-    # TITLE:
-    #   type: "main_title_only"     # 转换器类型: main_title_only(仅主标题)
-    #   source_field: "豆瓣书名"     # 源字段名
-    #   default: ""                 # 默认值
+    TITLE:
+      type: "main_title_only"     # 转换器类型: main_title_only(仅主标题)
+      source_field: "豆瓣书名"     # 源字段名
+      default: ""                 # 默认值
     
     # 其他字段也可以配置转换器:
     # PUBLISHER, PUB_YEAR, CALL_NUMBER, DOUBAN_RATING, RECOMMENDATION

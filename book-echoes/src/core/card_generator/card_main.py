@@ -7,7 +7,6 @@ import os
 import sys
 import time
 import argparse
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, List, Tuple, Optional
 import pandas as pd
@@ -264,7 +263,7 @@ class CardGeneratorModule:
         """
         # 创建线程安全的HTML转图片转换器
         html_to_image_converter = HTMLToImageConverter(self.config, thread_safe=True)
-        
+
         try:
             logger.info("[任务1] 开始生成图书卡片...")
             task_start = time.time()
@@ -351,46 +350,46 @@ class CardGeneratorModule:
     def _generate_library_cards_task(self, filtered_df: pd.DataFrame) -> int:
         """
         任务3: 图书馆借书卡生成任务(在独立线程中执行)
-        
+
         Args:
             filtered_df: 筛选后的DataFrame
-        
+
         Returns:
             int: 成功生成的借书卡数量
         """
         # 创建线程安全的HTML转图片转换器
         html_to_image_converter = HTMLToImageConverter(self.config, thread_safe=True)
-        
+
         try:
             logger.info("[任务3] 开始生成图书馆借书卡...")
             task_start = time.time()
-            
+
             # 启动浏览器实例
             logger.info("[任务3] 启动浏览器实例...")
             if not html_to_image_converter.start_browser():
                 logger.error("[任务3] 浏览器启动失败,无法继续处理")
                 return 0
-            
+
             success_count = 0
-            
+
             for index, row in filtered_df.iterrows():
                 barcode = str(row.get('书目条码', 'Unknown')).strip()
-                
+
                 try:
                     # 提取图书数据
                     author = str(row.get('豆瓣作者', '')).strip() if pd.notna(row.get('豆瓣作者')) else ''
                     title = str(row.get('豆瓣书名', '')).strip() if pd.notna(row.get('豆瓣书名')) else str(row.get('书名', '')).strip()
                     call_no = str(row.get('索书号', '')).strip()
                     year = str(row.get('豆瓣出版年', '')).strip() if pd.notna(row.get('豆瓣出版年')) else ''
-                    
+
                     # 提取副标题
                     subtitle = None
                     if pd.notna(row.get('豆瓣副标题')) and str(row.get('豆瓣副标题')).strip():
                         subtitle = str(row['豆瓣副标题']).strip()
-                    
+
                     # 生成随机借阅记录
                     borrower_records = self.library_card_html_generator.generate_random_borrower_records()
-                    
+
                     # 创建借书卡数据对象
                     library_card_data = LibraryCardData(
                         barcode=barcode,
@@ -401,13 +400,13 @@ class CardGeneratorModule:
                         borrower_records=borrower_records,
                         subtitle=subtitle
                     )
-                    
+
                     # 验证数据
                     if not library_card_data.validate():
                         logger.warning(f"[任务3] 借书卡数据验证失败，书目条码：{barcode}")
                         self.stats['library_card_failed_count'] += 1
                         continue
-                    
+
                     # 获取输出路径
                     output_paths = self.directory_manager.create_book_directory(barcode)
                     if not output_paths:
@@ -422,43 +421,43 @@ class CardGeneratorModule:
                             logger.warning(f"[任务3] Logo文件复制失败，书目条码：{barcode}")
                             self.stats['library_card_failed_count'] += 1
                             continue
-                    
+
                     # 生成HTML（会自动添加-S后缀）
                     html_success, html_path = self.library_card_html_generator.generate_html(
                         library_card_data,
                         output_paths.html_file
                     )
-                    
+
                     if not html_success:
                         logger.warning(f"[任务3] HTML生成失败，书目条码：{barcode}")
                         self.stats['library_card_failed_count'] += 1
                         continue
-                    
+
                     # 转换为图片（需要添加-S后缀到输出路径）
                     image_output_path = output_paths.image_file.replace('.png', '-S.png')
                     image_success, image_path = html_to_image_converter.convert_html_to_image(
                         html_path,
                         image_output_path
                     )
-                    
+
                     if not image_success:
                         logger.warning(f"[任务3] 图片生成失败，书目条码：{barcode}")
                         self.stats['library_card_failed_count'] += 1
                         continue
-                    
+
                     success_count += 1
                     self.stats['library_card_success_count'] += 1
                     logger.debug(f"[任务3] 成功生成借书卡，书目条码：{barcode}")
-                
+
                 except Exception as e:
                     logger.error(f"[任务3] 处理借书卡时发生异常，书目条码：{barcode}，错误：{e}")
                     self.stats['library_card_failed_count'] += 1
                     continue
-            
+
             task_time = time.time() - task_start
             logger.info(f"[任务3] 图书馆借书卡生成完成，成功 {success_count} 张，耗时: {task_time:.2f}秒")
             return success_count
-        
+
         except Exception as e:
             logger.error(f"[任务3] 图书馆借书卡生成任务异常: {e}", exc_info=True)
             return 0
@@ -934,54 +933,54 @@ class CardGeneratorModule:
     def _retry_failed_records(self, filtered_df: pd.DataFrame) -> None:
         """
         对失败的记录进行重试
-        
+
         Args:
             filtered_df: 筛选后的DataFrame
         """
         # 创建线程安全的HTML转图片转换器
         html_to_image_converter = HTMLToImageConverter(self.config, thread_safe=True)
-        
+
         try:
             # 启动浏览器实例
             if not html_to_image_converter.start_browser():
                 logger.error("[重试] 浏览器启动失败，无法进行重试")
                 self.stats['retry_failed_records'] = self.stats['failed_records'].copy()
                 return
-            
+
             # 获取失败记录的条码列表
             failed_barcodes = {record['barcode'] for record in self.stats['failed_records']}
-            
+
             # 筛选出失败的记录
             failed_df = filtered_df[filtered_df['书目条码'].astype(str).str.strip().isin(failed_barcodes)]
-            
+
             logger.info(f"[重试] 准备重试 {len(failed_df)} 条失败记录，最大重试次数：{self.max_retry_attempts}")
-            
+
             # 对每条失败记录进行重试
             for attempt in range(1, self.max_retry_attempts + 1):
                 if not failed_barcodes:
                     break
-                    
+
                 logger.info(f"[重试] 第 {attempt}/{self.max_retry_attempts} 次重试，剩余 {len(failed_barcodes)} 条记录")
-                
+
                 # 当前轮次成功的条码
                 current_success = set()
-                
+
                 for index, row in failed_df.iterrows():
                     barcode = str(row.get('书目条码', 'Unknown')).strip()
-                    
+
                     # 跳过已经成功的记录
                     if barcode not in failed_barcodes:
                         continue
-                    
+
                     logger.info(f"[重试] 第 {attempt} 次重试，书目条码：{barcode}")
-                    
+
                     # 等待一段时间再重试
                     if self.retry_delay > 0:
                         time.sleep(self.retry_delay)
-                    
+
                     # 重新处理
                     success = self.process_single_book(row, html_to_image_converter, skip_cover_download=False)
-                    
+
                     if success:
                         current_success.add(barcode)
                         self.stats['retry_success_count'] += 1
@@ -998,37 +997,36 @@ class CardGeneratorModule:
                         self.stats['failed_records'] = other_records + latest_record
                         self.stats['failed_count'] = len(self.stats['failed_records'])
                         logger.warning(f"[重试] 第 {attempt} 次重试失败，书目条码：{barcode}")
-                
+
                 # 从失败列表中移除成功的记录
                 failed_barcodes -= current_success
-                
+
                 if current_success:
                     logger.info(f"[重试] 第 {attempt} 次重试成功 {len(current_success)} 条记录")
-            
+
             # 更新最终失败记录列表
             self.stats['retry_failed_records'] = [
                 record for record in self.stats['failed_records']
                 if record['barcode'] in failed_barcodes
             ]
-            
+
             # 从原失败记录中移除重试成功的
             self.stats['failed_records'] = self.stats['retry_failed_records'].copy()
-            
+
             if self.stats['retry_success_count'] > 0:
                 logger.info(f"[重试] 重试完成，成功恢复 {self.stats['retry_success_count']} 条记录")
-            
+
             if self.stats['retry_failed_records']:
                 logger.warning(f"[重试] 重试完成，仍有 {len(self.stats['retry_failed_records'])} 条记录失败")
-        
+
         except Exception as e:
             logger.error(f"[重试] 重试过程发生异常：{e}", exc_info=True)
             self.stats['retry_failed_records'] = self.stats['failed_records'].copy()
-        
+
         finally:
             # 关闭浏览器实例
             logger.info("[重试] 关闭浏览器实例...")
             html_to_image_converter.stop_browser()
-    
     def _generate_error_report(self, output_path: str) -> None:
         """
         生成详细的错误报告
