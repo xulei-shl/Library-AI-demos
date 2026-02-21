@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书信息卡片</title>
+    <style>
+/* =========================================
+   全局重置与字体设置
+========================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", STHeiti, "Microsoft Yahei", Tahoma, Simsun, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================================
+   页面布局与背景
+========================================= */
+.page-wrapper {
+    width: 100vw;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background-image: url('https://xulei-pic-1258542021.cos.ap-shanghai.myqcloud.com/mdpic/%E8%83%8C%E6%99%AF%E5%9B%BE.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* =========================================
+   卡片主体容器设计
+========================================= */
+.library-card {
+    width: 100%;
+    max-width: 800px;
+    background: rgba(12, 22, 40, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 6px;
+    padding: 48px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0,0,0,0.3) inset;
+    display: flex;
+    align-items: center;
+    gap: 48px;
+}
+
+/* =========================================
+   左侧：封面区域设计
+========================================= */
+.book-cover-wrap {
+    flex: 0 0 220px;
+    position: relative;
+}
+
+.book-cover {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 4px;
+    box-shadow: -5px 10px 25px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2);
+    background-color: #1a2533;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+}
+
+/* =========================================
+   右侧：文字信息区域
+========================================= */
+.book-info-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* 关键：允许收缩 */
+}
+
+/* =========================================
+   1. 题名
+========================================= */
+.book-title {
+    font-family: "Songti SC", "STSong", "SimSun", serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: #d4af37;
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+    line-height: 1.3;
+    /* 单行截断 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =========================================
+   信息元数据组
+========================================= */
+.book-meta-group {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 32px;
+}
+
+.meta-label {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 75px;
+    font-size: 13px;
+    color: #8392a5;
+    letter-spacing: 1px;
+}
+
+.meta-value {
+    font-size: 15px;
+    color: #e2e8f0;
+    font-weight: 300;
+    /* 单行截断 */
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 独立信息字段 */
+.book-author,
+.book-publisher,
+.book-publish-date,
+.book-call-number,
+.book-rating {
+    display: flex;
+    align-items: center;
+    min-width: 0; /* 关键：允许收缩 */
+}
+
+/* =========================================
+   索书号专属样式
+========================================= */
+.book-call-number .call-number-code {
+    display: inline-block;
+    max-width: 100%;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 13.5px;
+    color: #cbd5e1;
+    letter-spacing: 1.5px;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* 长文本截断 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =========================================
+   豆瓣评分
+========================================= */
+.book-rating .rating-score {
+    font-family: "Georgia", serif;
+    font-size: 24px;
+    font-weight: bold;
+    color: #d4af37;
+}
+
+/* =========================================
+   装饰分割线
+========================================= */
+.card-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, rgba(212, 175, 55, 0.6), rgba(212, 175, 55, 0.05));
+    margin: 0 0 28px 0;
+}
+
+/* =========================================
+   推荐语
+========================================= */
+.book-recommendation {
+    position: relative;
+    padding-left: 16px;
+}
+
+.book-recommendation::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    background-color: #d4af37;
+    border-radius: 2px;
+}
+
+.recommendation-text {
+    font-family: "Kaiti SC", "STKaiti", "Songti SC", serif;
+    font-size: 14.5px;
+    line-height: 1.8;
+    color: #a0aec0;
+    text-align: justify;
+    letter-spacing: 0.5px;
+    /* 多行截断 */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+}
+
+/* =========================================
+   响应式设计 (适配手机和平板小屏幕)
+========================================= */
+@media (max-width: 768px) {
+    .library-card {
+        flex-direction: column;
+        align-items: center;
+        padding: 36px 24px;
+        gap: 32px;
+    }
+
+    .book-cover-wrap {
+        flex: auto;
+        width: 50%;
+        min-width: 160px;
+    }
+
+    .book-title {
+        text-align: center;
+        font-size: 28px;
+    }
+
+    .card-divider {
+        background: linear-gradient(to right, rgba(212, 175, 55, 0.05), rgba(212, 175, 55, 0.6), rgba(212, 175, 55, 0.05));
+    }
+}
+    </style>
+</head>
+<body>
+
+    <!-- 页面背景容器 -->
+    <div class="page-wrapper">
+
+        <!-- 图书信息卡片主体 -->
+        <div class="library-card">
+
+            <!-- 左侧：图书封面区域 -->
+            <div class="book-cover-wrap">
+                <img src="pic/cover.jpg" alt="{{TITLE}} 封面" class="book-cover">
+            </div>
+
+            <!-- 右侧：图书信息区域 -->
+            <div class="book-info-wrap">
+
+                <!-- 1. 题名 -->
+                <h1 class="book-title">{{TITLE}}</h1>
+
+                <!-- 信息元数据容器 -->
+                <div class="book-meta-group">
+                    <!-- 2. 作者 -->
+                    <div class="book-author">
+                        <span class="meta-label">作者</span>
+                        <span class="meta-value">{{AUTHOR}}</span>
+                    </div>
+
+                    <!-- 3. 出版社 -->
+                    <div class="book-publisher">
+                        <span class="meta-label">出版社</span>
+                        <span class="meta-value">{{PUBLISHER}}</span>
+                    </div>
+
+                    <!-- 4. 出版时间 -->
+                    <div class="book-publish-date">
+                        <span class="meta-label">出版时间</span>
+                        <span class="meta-value">{{PUB_YEAR}}</span>
+                    </div>
+
+                    <!-- 5. 索书号 -->
+                    <div class="book-call-number">
+                        <span class="meta-label">索书号</span>
+                        <span class="call-number-code">{{CALL_NUMBER}}</span>
+                    </div>
+
+                    <!-- 6. 豆瓣评分 -->
+                    <div class="book-rating">
+                        <span class="meta-label">豆瓣评分</span>
+                        <span class="meta-value rating-score">{{DOUBAN_RATING}}</span>
+                    </div>
+                </div>
+
+                <!-- 装饰分割线 -->
+                <div class="card-divider"></div>
+
+                <!-- 7. 推荐语 -->
+                <div class="book-recommendation">
+                    <p class="recommendation-text">{{RECOMMENDATION}}</p>
+                </div>
+
+            </div> <!-- end of book-info-wrap -->
+
+        </div> <!-- end of library-card -->
+
+    </div>
+
+</body>
+</html>
