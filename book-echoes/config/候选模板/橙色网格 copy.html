@@ -102,21 +102,18 @@
         height: calc(16 * var(--u));
     }
 
-    /* 1. DROID READY STATE */
+    /* 1. 图片填充区 (原文字区) */
     .box-droid {
         width: calc(14 * var(--u));
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding-left: calc(2 * var(--u));
-        gap: calc(1 * var(--u));
+        position: relative;
+        overflow: hidden; /* 确保图片不会溢出边框 */
     }
-    .txt-title {
-        font-family: var(--font-mono);
-        font-size: 46px;
-        font-weight: 700;
-        letter-spacing: 4px;
-        line-height: 0.85; /* 紧凑的行高，增加几何感 */
+    
+    .img-cover {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* 保证图片满铺且不变形 */
+        display: block;
     }
 
     /* 2. 中间列 (Logo + 点阵 + Factory) */
@@ -304,11 +301,9 @@
         <!-- 上半部分 -->
         <div class="row-top">
             
-            <!-- DROID 标题区 -->
+            <!-- 图片填充区 -->
             <div class="box-droid panel-border">
-                <div class="txt-title">DROID</div>
-                <div class="txt-title">READY</div>
-                <div class="txt-title">STATE</div>
+                <img src="pic/cover.jpg" alt="Cover Image" class="img-cover">
             </div>
             
             <!-- 中间小列 -->

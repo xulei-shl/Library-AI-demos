@@ -104,16 +104,21 @@
 
     /* 1. 图片填充区 (原文字区) */
     .box-droid {
-        width: calc(14 * var(--u));
+        width: calc(12 * var(--u));  /* 从14调整为12，使比例更接近封面原图2:3 */
         position: relative;
         overflow: hidden; /* 确保图片不会溢出边框 */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--bg-orange); /* 防止透明边 */
     }
     
     .img-cover {
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* 保证图片满铺且不变形 */
+        width: 90%;  /* 留出呼吸边距 */
+        height: 90%;
+        object-fit: contain; /* 改为完整显示，避免裁切 */
         display: block;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); /* 增加层次感 */
     }
 
     /* 2. 中间列 (Logo + 点阵 + Factory) */
@@ -130,10 +135,11 @@
         align-items: center;
     }
     .img-logo {
-        width: calc(2.5 * var(--u));
-        height: calc(2.5 * var(--u));
+        width: calc(3.5 * var(--u));  /* 从2.5增加到3.5，增大Logo显示 */
+        height: calc(3.5 * var(--u));
         object-fit: contain;
-        mix-blend-mode: multiply; /* 完美融合背景 */
+        mix-blend-mode: multiply;
+        opacity: 0.9; /* 略微降低透明度增加质感 */
     }
 
     .box-dots {
@@ -163,9 +169,12 @@
     .txt-factory {
         color: var(--bg-orange);
         font-family: var(--font-mono);
-        font-size: 16px;
-        line-height: 1.1;
+        font-size: 13px;  /* 从16px缩小到13px */
+        line-height: 1.4;  /* 从1.1增加到1.4，增加行间距 */
+        letter-spacing: 1px;  /* 增加字间距 */
         text-align: center;
+        transform: scaleX(0.92);  /* 轻微水平压缩，减少过宽感 */
+        display: inline-block;
     }
 
     /* 3. 24/7 区域 */
@@ -174,6 +183,7 @@
         display: flex;
         flex-direction: column;
         position: relative;
+        /* 因cover区域宽度减少，此区域会自动占据更多空间，保持整体平衡 */
     }
     .hazard-bar {
         height: calc(1.5 * var(--u));
