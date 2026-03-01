@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Droid Ready State - Premium UI</title>
+<style>
+    /* 引入更具几何感的等宽字体 */
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+    /* =========================================
+       核心设计系统 (Design System)
+       ========================================= */
+    :root {
+        --u: 24px;                  /* 基础网格单元 (Base Unit) - 一切尺寸的基准 */
+        --border-w: 3px;            /* 统一粗边框宽度 */
+        
+        --bg-orange: #f25b22;       /* 经过校准的工业橙色 */
+        --ink-black: #111111;       /* 极深灰/纯黑，用于线条和文字 */
+        --grid-color: rgba(17, 17, 17, 0.2); /* 网格线颜色 */
+        
+        --font-mono: 'Space Mono', monospace;
+        --font-sans: 'Arial Black', Impact, sans-serif;
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: var(--bg-orange);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: var(--ink-black);
+        
+        /* 核心：生成贯穿全屏的绝对精准网格 */
+        background-image: 
+            linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+        background-size: var(--u) var(--u);
+        background-position: center center;
+    }
+
+    /* =========================================
+       主布局容器 (Layout Container)
+       ========================================= */
+    .dashboard-wrapper {
+        display: flex;
+        /* 总宽度 52 个网格，总高度 28 个网格 */
+        width: calc(52 * var(--u));  
+        height: calc(28 * var(--u));
+        border-top: var(--border-w) solid var(--ink-black);
+        border-left: var(--border-w) solid var(--ink-black);
+        background-color: transparent; /* 确保底层网格透出 */
+        position: relative;
+        /* 微调位置，确保外边框刚好压在背景网格线上 */
+        margin-top: -1px; margin-left: -1px; 
+    }
+
+    /* 公共边框样式：避免相邻边框变粗 (Margin collapse for borders) */
+    .panel-border {
+        border-right: var(--border-w) solid var(--ink-black);
+        border-bottom: var(--border-w) solid var(--ink-black);
+    }
+
+    /* =========================================
+       左侧边栏 (Sidebar)
+       ========================================= */
+    .col-sidebar {
+        width: calc(3 * var(--u));
+        display: flex;
+        justify-content: center;
+        padding-top: calc(2 * var(--u)); /* 严格基于网格的内边距 */
+    }
+
+    .txt-sidebar {
+        font-family: var(--font-mono);
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 5px;
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        white-space: nowrap;
+    }
+
+    /* =========================================
+       右侧主内容区 (Main Content)
+       ========================================= */
+    .col-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* --- 上半区 (Top Half) --- */
+    .row-top {
+        display: flex;
+        height: calc(16 * var(--u));
+    }
+
+    /* 1. DROID READY STATE */
+    .box-droid {
+        width: calc(14 * var(--u));
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-left: calc(2 * var(--u));
+        gap: calc(1 * var(--u));
+    }
+    .txt-title {
+        font-family: var(--font-mono);
+        font-size: 46px;
+        font-weight: 700;
+        letter-spacing: 4px;
+        line-height: 0.85; /* 紧凑的行高，增加几何感 */
+    }
+
+    /* 2. 中间列 (Logo + 点阵 + Factory) */
+    .box-mid-col {
+        width: calc(6 * var(--u));
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .box-logo {
+        height: calc(5 * var(--u));
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .img-logo {
+        width: calc(2.5 * var(--u));
+        height: calc(2.5 * var(--u));
+        object-fit: contain;
+        mix-blend-mode: multiply; /* 完美融合背景 */
+    }
+
+    .box-dots {
+        height: calc(5 * var(--u));
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: center;
+        border-right: var(--border-w) solid var(--ink-black);
+    }
+    .dot-small {
+        width: 8px; height: 8px;
+        background-color: var(--ink-black);
+        border-radius: 50%;
+    }
+
+    .box-factory {
+        flex: 1;
+        background-color: var(--ink-black);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        /* 覆盖右侧边框，因为背景已经是黑色的了 */
+        margin-right: calc(var(--border-w) * -1);
+        border-right: var(--border-w) solid var(--ink-black);
+    }
+    .txt-factory {
+        color: var(--bg-orange);
+        font-family: var(--font-mono);
+        font-size: 16px;
+        line-height: 1.1;
+        text-align: center;
+    }
+
+    /* 3. 24/7 区域 */
+    .box-247 {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .hazard-bar {
+        height: calc(1.5 * var(--u));
+        margin-top: calc(1.5 * var(--u));
+        border-top: var(--border-w) solid var(--ink-black);
+        border-bottom: var(--border-w) solid var(--ink-black);
+        background: repeating-linear-gradient(
+            -60deg,
+            var(--ink-black),
+            var(--ink-black) 12px,
+            transparent 12px,
+            transparent 24px
+        );
+    }
+    .content-247 {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .txt-247 {
+        font-family: var(--font-sans);
+        font-size: 190px; /* 极具张力的超大字体 */
+        font-weight: 900;
+        letter-spacing: -8px; /* 缩小字间距，增加压迫感 */
+        line-height: 1;
+        transform: translateY(10px); /* 视觉居中微调 */
+    }
+
+    /* --- 下半区 (Bottom Half) --- */
+    .row-bottom {
+        display: flex;
+        flex: 1;
+    }
+
+    /* 1. DRS 图形区 */
+    .box-drs {
+        width: calc(20 * var(--u));
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* 精确计算的 DRS 点阵图形 */
+    .drs-art {
+        display: flex;
+        gap: calc(1.5 * var(--u));
+    }
+    .art-letter { position: relative; width: 100px; height: 140px; }
+    .art-pill { position: absolute; height: 24px; background-color: var(--ink-black); border-radius: 12px; }
+    .art-dot { position: absolute; width: 24px; height: 24px; background-color: var(--ink-black); border-radius: 50%; }
+
+    /* D */
+    .d-p1 { top: 0; left: 0; width: 80px; }
+    .d-p2 { bottom: 0; left: 0; width: 80px; }
+    .d-d1 { top: 35px; left: 0; } .d-d2 { top: 70px; left: 0; } .d-d3 { top: 105px; left: 0; }
+    .d-d4 { top: 35px; right: 0; } .d-d5 { top: 70px; right: 0; } .d-d6 { top: 105px; right: 0; }
+    /* R */
+    .r-p1 { top: 0; left: 0; width: 80px; }
+    .r-p2 { top: 70px; left: 0; width: 70px; }
+    .r-d1 { top: 35px; left: 0; } .r-d2 { top: 105px; left: 0; } .r-d3 { bottom: 0; left: 0; }
+    .r-d4 { top: 35px; right: 0; } .r-d5 { top: 105px; right: 15px; } .r-d6 { bottom: 0; right: 0; }
+    /* S */
+    .s-p1 { top: 0; right: 0; width: 80px; }
+    .s-p2 { top: 70px; left: 10px; width: 80px; }
+    .s-p3 { bottom: 0; left: 0; width: 80px; }
+    .s-d1 { top: 35px; left: 0; } .s-d2 { top: 105px; right: 0; }
+
+    /* 2. 状态信息栏 */
+    .box-status-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .status-row {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding-left: calc(2 * var(--u));
+        position: relative;
+    }
+    .txt-status {
+        font-family: var(--font-mono);
+        font-size: 20px;
+        letter-spacing: 2px;
+        font-weight: 700;
+    }
+
+    /* =========================================
+       装饰性定位方块 (Alignment Markers)
+       ========================================= */
+    .marker {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        background-color: var(--ink-black);
+        /* 确保方块中心对齐到边框交界处 */
+        transform: translate(-50%, -50%);
+    }
+    /* 24/7 区域的四个角 */
+    .m-247-tl { top: 0; left: 0; }
+    .m-247-tr { top: 0; left: 100%; }
+    .m-247-bl { top: 100%; left: 0; }
+    .m-247-br { top: 100%; left: 100%; }
+    /* 状态栏区域的角 */
+    .m-st1-tl { top: 0; left: 0; }
+    .m-st1-tr { top: 0; left: 100%; }
+    .m-st2-bl { top: 100%; left: 0; }
+    .m-st2-br { top: 100%; left: 100%; }
+
+</style>
+</head>
+<body>
+
+<div class="dashboard-wrapper">
+    
+    <!-- 左侧边栏 -->
+    <div class="col-sidebar panel-border">
+        <span class="txt-sidebar">ALL AGENTS READY</span>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="col-main">
+        
+        <!-- 上半部分 -->
+        <div class="row-top">
+            
+            <!-- DROID 标题区 -->
+            <div class="box-droid panel-border">
+                <div class="txt-title">DROID</div>
+                <div class="txt-title">READY</div>
+                <div class="txt-title">STATE</div>
+            </div>
+            
+            <!-- 中间小列 -->
+            <div class="box-mid-col">
+                <div class="box-logo panel-border">
+                    <img src="pic/logo_shl.png" alt="Logo" class="img-logo">
+                </div>
+                <div class="box-dots">
+                    <div class="dot-small"></div>
+                    <div class="dot-small"></div>
+                    <div class="dot-small"></div>
+                    <div class="dot-small"></div>
+                </div>
+                <div class="box-factory panel-border">
+                    <span class="txt-factory">FA<br>CT<br>OR<br>Y/</span>
+                </div>
+            </div>
+            
+            <!-- 24/7 区域 -->
+            <div class="box-247 panel-border">
+                <!-- 定位角块 -->
+                <div class="marker m-247-tl"></div>
+                <div class="marker m-247-tr"></div>
+                <div class="marker m-247-bl"></div>
+                <div class="marker m-247-br"></div>
+                
+                <div class="hazard-bar"></div>
+                <div class="content-247">
+                    <span class="txt-247">24/7</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 下半部分 -->
+        <div class="row-bottom">
+            
+            <!-- DRS 图形区 -->
+            <div class="box-drs panel-border">
+                <div class="drs-art">
+                    <div class="art-letter">
+                        <div class="art-pill d-p1"></div><div class="art-pill d-p2"></div>
+                        <div class="art-dot d-d1"></div><div class="art-dot d-d2"></div><div class="art-dot d-d3"></div>
+                        <div class="art-dot d-d4"></div><div class="art-dot d-d5"></div><div class="art-dot d-d6"></div>
+                    </div>
+                    <div class="art-letter">
+                        <div class="art-pill r-p1"></div><div class="art-pill r-p2"></div>
+                        <div class="art-dot r-d1"></div><div class="art-dot r-d2"></div><div class="art-dot r-d3"></div>
+                        <div class="art-dot r-d4"></div><div class="art-dot r-d5"></div><div class="art-dot r-d6"></div>
+                    </div>
+                    <div class="art-letter">
+                        <div class="art-pill s-p1"></div><div class="art-pill s-p2"></div><div class="art-pill s-p3"></div>
+                        <div class="art-dot s-d1"></div><div class="art-dot s-d2"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 状态信息区 -->
+            <div class="box-status-col">
+                <div class="status-row panel-border">
+                    <div class="marker m-st1-tl"></div>
+                    <div class="marker m-st1-tr"></div>
+                    <span class="txt-status">LONG RUNNING AGENTS - 2341429</span>
+                </div>
+                <div class="status-row panel-border">
+                    <div class="marker m-st2-bl"></div>
+                    <div class="marker m-st2-br"></div>
+                    <span class="txt-status">STATUS: ACTIVE - DEPLOYED >>></span>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
