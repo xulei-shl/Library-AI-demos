@@ -36,6 +36,8 @@ class HTMLToImageConverter:
         self.border_radius = self.config.get('border_radius', 8)
         self.timeout = self.config.get('timeout', 60000)
         self.wait_time = self.config.get('wait_time', 2000)
+        # 浏览器启动超时时间(毫秒)
+        self.browser_startup_timeout = self.config.get('browser_startup_timeout', 180000)
         
         # 线程安全模式
         self.thread_safe = thread_safe
@@ -65,7 +67,10 @@ class HTMLToImageConverter:
             
             try:
                 self._thread_local.playwright = sync_playwright().start()
-                self._thread_local.browser = self._thread_local.playwright.chromium.launch(headless=self.headless)
+                self._thread_local.browser = self._thread_local.playwright.chromium.launch(
+                    headless=self.headless,
+                    timeout=self.browser_startup_timeout
+                )
                 logger.info(f"线程 {threading.current_thread().name} 的浏览器实例已启动")
                 return True
             except Exception as e:
@@ -79,7 +84,10 @@ class HTMLToImageConverter:
             
             try:
                 self.playwright = sync_playwright().start()
-                self.browser = self.playwright.chromium.launch(headless=self.headless)
+                self.browser = self.playwright.chromium.launch(
+                    headless=self.headless,
+                    timeout=self.browser_startup_timeout
+                )
                 logger.info("浏览器实例已启动(复用模式)")
                 return True
             except Exception as e:
