@@ -43,13 +43,13 @@ api_providers:
       name: "oneapi-gemini"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
-      model: "gemini-2.5-pro"
+      model: "gemini-3-flash-preview"
       timeout_seconds: 120               
     secondary:
-      name: "oneapi-qwen3"
-      api_key: env:ONEAPI_API_KEY
-      base_url: "http://47.103.50.106:3000/v1"
-      model: "qwen3-max"
+      name: "oneapi-deepseek"
+      api_key: env:BEIJI_API_KEY
+      base_url: "https://bapi.outaucer.me/v1"
+      model: "deepseek-v4-lite"
       timeout_seconds: 120  
 
   text-small:
@@ -63,7 +63,7 @@ api_providers:
       name: "oneapi-gemini-flash"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
-      model: "gemini-2.5-flash"
+      model: "gemini-3-flash-preview"
       timeout_seconds: 120
 
 tasks:

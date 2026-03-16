@@ -258,13 +258,14 @@ class UnifiedLLMClient:
             if langfuse_cfg.get("name"):
                 req_kwargs["name"] = langfuse_cfg["name"]
 
-            # 设置 tags
+            # 设置 metadata（包含 langfuse_tags）
+            # 根据 Langfuse 官方文档，tags 应通过 metadata 中的 langfuse_tags 传递
+            # 而不是直接作为请求参数（OneAPI 代理不支持）
+            metadata = dict(langfuse_cfg.get("metadata", {}))
             if langfuse_cfg.get("tags"):
-                req_kwargs["tags"] = langfuse_cfg["tags"]
-
-            # 设置 metadata
-            if langfuse_cfg.get("metadata"):
-                req_kwargs["metadata"] = langfuse_cfg["metadata"]
+                metadata["langfuse_tags"] = langfuse_cfg["tags"]
+            if metadata:
+                req_kwargs["metadata"] = metadata
 
             # 获取并设置 langfuse_prompt 对象
             prompt_cfg = task_config.get("prompt")
@@ -347,10 +348,15 @@ class UnifiedLLMClient:
             return nullcontext()
 
         propagate_kwargs: Dict[str, Any] = {}
+        # 根据 Langfuse 官方文档，tags 应通过 langfuse_tags 传递
         if "tags" in langfuse_cfg:
             propagate_kwargs["tags"] = langfuse_cfg.get("tags")
         if "metadata" in langfuse_cfg:
-            propagate_kwargs["metadata"] = langfuse_cfg.get("metadata")
+            metadata = dict(langfuse_cfg.get("metadata", {}))
+            # 如果有 tags，也合并到 metadata 中
+            if "tags" in langfuse_cfg:
+                metadata["langfuse_tags"] = langfuse_cfg.get("tags")
+            propagate_kwargs["metadata"] = metadata
 
         if not propagate_kwargs:
             return nullcontext()
