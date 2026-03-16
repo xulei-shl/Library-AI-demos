@@ -348,15 +348,17 @@ class UnifiedLLMClient:
             return nullcontext()
 
         propagate_kwargs: Dict[str, Any] = {}
-        # 根据 Langfuse 官方文档，tags 应通过 langfuse_tags 传递
+        # 根据 Langfuse 官方文档，tags 应通过 propagate_attributes 的 tags 参数传递
+        # 而不是放在 metadata 中的 langfuse_tags（这会导致验证错误）
         if "tags" in langfuse_cfg:
             propagate_kwargs["tags"] = langfuse_cfg.get("tags")
+        # metadata 中只保留其他自定义元数据，不要包含 langfuse_tags
         if "metadata" in langfuse_cfg:
             metadata = dict(langfuse_cfg.get("metadata", {}))
-            # 如果有 tags，也合并到 metadata 中
-            if "tags" in langfuse_cfg:
-                metadata["langfuse_tags"] = langfuse_cfg.get("tags")
-            propagate_kwargs["metadata"] = metadata
+            # 移除可能存在的 langfuse_tags，避免重复和验证错误
+            metadata.pop("langfuse_tags", None)
+            if metadata:
+                propagate_kwargs["metadata"] = metadata
 
         if not propagate_kwargs:
             return nullcontext()

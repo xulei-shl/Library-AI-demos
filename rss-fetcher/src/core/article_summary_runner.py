@@ -67,9 +67,21 @@ class ArticleSummaryRunner:
         """筛选需要总结的文章"""
         pending = []
         for article in articles:
-            if not self._is_true(article.get("filter_pass")):
+            # 检查 filter_pass 状态 - 使用严格检查
+            filter_pass = article.get("filter_pass")
+            # 只有明确为 True（布尔类型）时才通过，其他情况（False, None, 0, 0.0, "", NaN等）都跳过
+            filter_pass_is_true = filter_pass is True or (isinstance(filter_pass, (int, float)) and filter_pass == 1)
+            
+            if not filter_pass_is_true:
+                logger.debug(f"跳过文章（filter_pass不为True）: {article.get('title', 'N/A')[:50]}... (值: {filter_pass})")
                 continue
-
+            
+            # 防御性检查：确保 full_text 不为空（正文提取失败的文章不应进入总结阶段）
+            full_text = article.get("full_text", "")
+            if not full_text or str(full_text).strip() == '':
+                logger.info(f"跳过文章（full_text为空）: {article.get('title', 'N/A')[:50]}...")
+                continue
+            
             status = str(article.get("llm_summary_status", "") or "").strip()
             summary_text = str(article.get("llm_summary", "") or "").strip()
             llm_status = str(article.get("llm_status", "") or "").strip()
@@ -80,7 +92,7 @@ class ArticleSummaryRunner:
             logger.debug(f"  filter_pass: {article.get('filter_pass')}")
             logger.debug(f"  filter_status: '{filter_status}'")
             logger.debug(f"  llm_summary_status: '{status}'")
-            logger.debug(f"  llm_summary存在: {bool(summary_text)}")
+            logger.debug(f"  full_text长度: {len(str(full_text)) if full_text else 0}")
 
             if status == "成功" and summary_text:
                 continue
@@ -99,6 +111,17 @@ class ArticleSummaryRunner:
 
         for article in articles:
             title = article.get("title", "无标题")
+            
+            # 防御性检查：确保 full_text 不为空
+            full_text = article.get("full_text", "")
+            if not full_text or str(full_text).strip() == '':
+                logger.info(f"跳过总结（full_text为空）: {title}")
+                article["llm_summary_status"] = "跳过"
+                article["llm_summary"] = ""
+                article["llm_summary_error"] = "full_text为空，正文提取失败"
+                self.storage.save_analyze_results([article], filepath, skip_processed=False)
+                continue
+            
             logger.info(f"总结文章: {title}")
             result = self.summary_agent.summarize(article)
             self._apply_result(article, result)

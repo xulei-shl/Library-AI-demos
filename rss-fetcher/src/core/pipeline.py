@@ -650,15 +650,25 @@ class SubjectBibliographyPipeline:
                 title = article.get("title", "无标题")
                 logger.info(f"正在过滤 ({i+1}/{to_filter}): {title}")
                 
-                # 获取文章内容,优先使用 full_text,然后是 content
+                # 获取文章内容,优先使用 full_text
                 full_text = article.get("full_text")
                 content = article.get("content")
                 
-                # 检查是否有可用的内容进行过滤
-                if not full_text and not content:
+                # 检查 full_text 是否为空（正文提取失败）
+                # 即使 content 有值，只要 full_text 为空就跳过，因为后续阶段依赖 full_text
+                if not full_text or str(full_text).strip() == '':
+                    logger.info(f"文章 '{title}' full_text 为空（正文提取失败），跳过过滤")
+                    processed_article = article.copy()
+                    processed_article["filter_status"] = "跳过"
+                    processed_article["filter_pass"] = False
+                    processed_article["filter_reason"] = "full_text为空，正文提取失败"
+                    processed_article["llm_skip_reason"] = "full_text为空，正文提取失败"
+                elif not content and not full_text:
                     logger.info(f"文章 '{title}' 缺少 full_text 和 content 字段,跳过过滤")
                     processed_article = article.copy()
                     processed_article["filter_status"] = "跳过"
+                    processed_article["filter_pass"] = False
+                    processed_article["filter_reason"] = "缺少 full_text 和 content 字段"
                     processed_article["llm_skip_reason"] = "缺少 full_text 和 content 字段"
                 else:
                     # 优先使用 full_text,如果没有则使用 content
