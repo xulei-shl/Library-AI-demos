@@ -354,13 +354,13 @@
         <header class="header">
             <div class="project-info">
                 <div class="project-title">Project: Book Echoes</div>
-                <div class="project-year">ARCHIVE NO. 2023</div>
+                <div class="project-year">ARCHIVE NO. 2026</div>
             </div>
             
             <div class="rating-wrapper">
                 <div class="rating-label">RATING INDEX</div>
                 <!-- 丝网印刷效果数字 -->
-                <div class="rating-number">7.6</div>
+                <div class="rating-number">{{DOUBAN_RATING}}</div>
             </div>
         </header>
 
@@ -375,26 +375,26 @@
                 
                 <div class="call-number-box">
                     <span class="cn-label">CALL NUMBER</span>
-                    <div class="cn-code">G131.3<br>4971</div>
+                    <div class="cn-code">{{CALL_NUMBER}}</div>
                 </div>
             </aside>
 
             <!-- 右栏 -->
             <main class="col-info">
                 <div class="title-section">
-                    <h1 class="book-title">[日] 日本 : 文化核心日本</h1>
+                    <h1 class="book-title">{{TITLE}}</h1>
                 </div>
                 
                 <div class="meta-section">
                     <div class="meta-grid">
                         <div class="meta-key">AUTHOR</div>
-                        <div class="meta-val">[日] 松冈正刚</div>
+                        <div class="meta-val">{{AUTHOR}}</div>
                         
                         <div class="meta-key">PUBLISHER</div>
-                        <div class="meta-val">岳麓书社</div>
+                        <div class="meta-val">{{PUBLISHER}}</div>
                         
                         <div class="meta-key">YEAR</div>
-                        <div class="meta-val">2023</div>
+                        <div class="meta-val">{{PUB_YEAR}}</div>
                     </div>
                 </div>
             </main>
@@ -405,7 +405,7 @@
             <div class="review-box">
                 <div class="review-header">Editor's Recommendation</div>
                 <p class="review-text">
-                    一位编辑泰斗对日本文化基因的冷静解剖。松冈正刚以其惊人的阅读量和独特的“编辑工学”视角，重新梳理了日本文化的底层代码。字字珠玑，直击“缩小”意识的核心，是理解东方美学的必读之作。
+                    {{RECOMMENDATION}}
                 </p>
             </div>
             
