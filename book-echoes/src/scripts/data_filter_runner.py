@@ -233,13 +233,17 @@ class DataFilterRunner:
     
     def _write_dataframe(self, df: pd.DataFrame, path: Path, large_threshold: int) -> None:
         """智能写入 DataFrame - 大文件自动使用 CSV"""
+        import re
         row_count = len(df)
         if row_count > large_threshold:
             csv_path = path.with_suffix('.csv')
             self.logger.info(f"数据量 {row_count} 行，使用 CSV 格式写入以提升性能")
             df.to_csv(csv_path, index=False, encoding='utf-8-sig')
         else:
-            df.to_excel(path, index=False, engine='openpyxl')
+            # openpyxl 不允许某些控制字符，清洗后写入
+            CLEAN_RE = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f]')
+            clean_df = df.map(lambda v: CLEAN_RE.sub('', v) if isinstance(v, str) else v)
+            clean_df.to_excel(path, index=False, engine='openpyxl')
     
     def _merge_results(self, results: List[FilterResult]) -> pd.DataFrame:
         """合并所有符合条件的数据 - 优化内存"""
