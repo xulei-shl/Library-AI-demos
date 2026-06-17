@@ -217,12 +217,13 @@ class DataFilterRunner:
         
         LARGE_THRESHOLD = 500_000
         
-        # 保存符合条件的数据
-        if not result.passed_data.empty:
-            passed_filename = self.config.output.filename_template['passed'].format(timestamp=timestamp)
-            passed_path = output_dir / passed_filename
-            self._write_dataframe(result.passed_data, passed_path, LARGE_THRESHOLD)
-            self.logger.info(f"保存符合条件数据: {passed_path}")
+        # 如果启用合并，跳过保存单个文件的符合条件数据（最终会保存合并结果）
+        if not self.config.output.merge_passed_data:
+            if not result.passed_data.empty:
+                passed_filename = self.config.output.filename_template['passed'].format(timestamp=timestamp)
+                passed_path = output_dir / passed_filename
+                self._write_dataframe(result.passed_data, passed_path, LARGE_THRESHOLD)
+                self.logger.info(f"保存符合条件数据: {passed_path}")
         
         # 保存被过滤的数据
         if not result.filtered_data.empty:
