@@ -200,10 +200,12 @@ class CallNumberMatcher:
         """
         应用索书号规则过滤，返回需要排除的掩码
 
-        过滤逻辑（按优先级）：
+        过滤逻辑（与主流程 CallNumberFilter 保持一致）：
         1. 高优先级排除（DROP!）：无条件排除，不受 KEEP 保护
         2. 保留规则（KEEP）：匹配则保留
         3. 普通排除（DROP）：仅当未命中 KEEP 时才排除
+
+        排除条件：匹配 DROP! 或（未匹配 KEEP 且匹配 DROP）
 
         Args:
             call_no_series: 索书号列
@@ -224,11 +226,10 @@ class CallNumberMatcher:
         # 3. 构建普通排除掩码
         normal_exclude_mask = self._build_mask(call_nos, self.rules.exclude, "排除")
 
-        # 组合逻辑：
-        # - 高优先级排除（DROP!）：直接排除
-        # - 保留规则（KEEP）：未匹配则排除
-        # - 普通排除（DROP）：直接排除
-        return high_priority_mask | (~include_mask) | normal_exclude_mask
+        # 组合逻辑（与主流程 CallNumberFilter 保持一致）：
+        # - 高优先级排除（DROP!）：直接排除（不受 KEEP 保护）
+        # - 普通排除（DROP）：仅当未命中保留规则时才排除
+        return high_priority_mask | ((~include_mask) & normal_exclude_mask)
 
     def _build_mask(
         self, series: pd.Series, patterns: List[str], rule_type: str
