@@ -129,7 +129,7 @@ class DataFilterEngine:
             )
     
     def _read_excel(self, excel_path: str) -> Optional[pd.DataFrame]:
-        """读取 Excel 文件 - 使用 pyarrow 引擎加速"""
+        """读取 Excel 文件 - 优先使用 fast 引擎，fallback 到 openpyxl"""
         try:
             file_path = Path(excel_path)
             if not file_path.exists():
@@ -139,13 +139,19 @@ class DataFilterEngine:
             file_size_mb = file_path.stat().st_size / (1024 * 1024)
             self.logger.info(f"文件大小: {file_size_mb:.1f} MB")
 
-            try:
-                df = pd.read_excel(excel_path, engine="pyarrow")
-                self.logger.info("使用 pyarrow 引擎读取")
-            except ImportError:
-                self.logger.info("pyarrow 引擎不可用，使用默认引擎")
-                df = pd.read_excel(excel_path)
+            # 尝试可用的快速引擎
+            for engine in ("calamine", "pyarrow"):
+                try:
+                    df = pd.read_excel(excel_path, engine=engine)
+                    self.logger.info(f"使用 {engine} 引擎读取")
+                    self.logger.info(f"内存占用: {df.memory_usage(deep=True).sum() / (1024*1024):.1f} MB")
+                    return df
+                except (ImportError, ValueError):
+                    continue
 
+            # fallback 到默认引擎 (openpyxl)
+            self.logger.info("使用默认引擎 (openpyxl) 读取")
+            df = pd.read_excel(excel_path)
             self.logger.info(f"内存占用: {df.memory_usage(deep=True).sum() / (1024*1024):.1f} MB")
             return df
         except Exception as e:
