@@ -233,14 +233,21 @@ class CallNumberMatcher:
     def _build_mask(
         self, series: pd.Series, patterns: List[str], rule_type: str
     ) -> pd.Series:
-        """构建匹配掩码"""
-        mask = pd.Series(False, index=series.index)
-        for pattern in patterns:
-            try:
-                mask |= series.str.match(pattern, na=False)
-            except re.error:
-                logger.warning(f"无效的{rule_type}正则: {pattern}")
-        return mask
+        """构建匹配掩码 - 合并正则为单次调用"""
+        if not patterns:
+            return pd.Series(False, index=series.index)
+        combined = "|".join(patterns)
+        try:
+            return series.str.match(combined, na=False)
+        except re.error:
+            logger.warning(f"无效的{rule_type}正则组合，回退逐条匹配: {combined[:100]}")
+            mask = pd.Series(False, index=series.index)
+            for pattern in patterns:
+                try:
+                    mask |= series.str.match(pattern, na=False)
+                except re.error:
+                    logger.warning(f"无效的{rule_type}正则: {pattern}")
+            return mask
 
     @property
     def has_rules(self) -> bool:
@@ -275,13 +282,18 @@ class TitleKeywordsMatcher:
         Returns:
             需要排除的布尔掩码（True 表示需要排除）
         """
-        mask = pd.Series(False, index=title_series.index)
+        if not self.keywords:
+            return pd.Series(False, index=title_series.index)
         titles = title_series.fillna("").astype(str)
-
-        for keyword in self.keywords:
-            mask |= titles.str.contains(keyword, case=case_sensitive, na=False)
-
-        return mask
+        combined = "|".join(re.escape(kw) for kw in self.keywords)
+        try:
+            return titles.str.contains(combined, case=case_sensitive, na=False)
+        except re.error:
+            logger.warning(f"无效的关键词组合正则，回退逐条匹配")
+            mask = pd.Series(False, index=titles.index)
+            for keyword in self.keywords:
+                mask |= titles.str.contains(keyword, case=case_sensitive, na=False)
+            return mask
 
     @property
     def has_keywords(self) -> bool:

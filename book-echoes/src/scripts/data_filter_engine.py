@@ -92,15 +92,14 @@ class DataFilterEngine:
             # 应用过滤规则
             filter_mask, filter_reasons = self._apply_filters(df)
             
-            # 添加过滤原因列
-            filtered_df = self._add_filter_reason_column(df, filter_reasons)
-            
-            # 分离数据
-            passed_df = df[~filter_mask].copy()  # 符合条件的数据
-            filtered_df = filtered_df[filter_mask].copy()  # 被过滤的数据
-            
             # 统计过滤原因
             reason_counts = self._count_filter_reasons(filter_reasons[filter_mask])
+            
+            # 分离数据 - 先切片再添加原因列，减少一次全量拷贝
+            passed_df = df.loc[~filter_mask].copy()
+            filtered_df = df.loc[filter_mask].copy()
+            if self.config.output.add_filter_reason:
+                filtered_df[self.config.output.filter_reason_column] = filter_reasons[filter_mask].values
             
             result = FilterResult(
                 source_file=excel_path,
@@ -130,15 +129,24 @@ class DataFilterEngine:
             )
     
     def _read_excel(self, excel_path: str) -> Optional[pd.DataFrame]:
-        """读取 Excel 文件"""
+        """读取 Excel 文件 - 使用 pyarrow 引擎加速"""
         try:
             file_path = Path(excel_path)
             if not file_path.exists():
                 self.logger.warning(f"文件不存在: {excel_path}")
                 return None
-            
-            # 使用 pandas 读取 Excel
-            df = pd.read_excel(excel_path)
+
+            file_size_mb = file_path.stat().st_size / (1024 * 1024)
+            self.logger.info(f"文件大小: {file_size_mb:.1f} MB")
+
+            try:
+                df = pd.read_excel(excel_path, engine="pyarrow")
+                self.logger.info("使用 pyarrow 引擎读取")
+            except ImportError:
+                self.logger.info("pyarrow 引擎不可用，使用默认引擎")
+                df = pd.read_excel(excel_path)
+
+            self.logger.info(f"内存占用: {df.memory_usage(deep=True).sum() / (1024*1024):.1f} MB")
             return df
         except Exception as e:
             self.logger.error(f"读取 Excel 文件失败: {excel_path}, 错误: {e}")
@@ -241,18 +249,15 @@ class DataFilterEngine:
         return null_mask, null_reasons
     
     def _merge_reasons(self, base_reasons: pd.Series, new_reasons: pd.Series, mask: Optional[pd.Series] = None) -> pd.Series:
-        """合并过滤原因"""
+        """合并过滤原因 - 向量化实现"""
         if mask is None:
             mask = pd.Series(True, index=base_reasons.index)
-        
+
         merged = base_reasons.copy()
-        for idx in merged.index:
-            if mask[idx]:
-                if merged[idx] and new_reasons[idx]:
-                    merged[idx] = f"{merged[idx]}; {new_reasons[idx]}"
-                elif new_reasons[idx]:
-                    merged[idx] = new_reasons[idx]
-        
+        both = mask & (merged != "") & (new_reasons != "")
+        only_new = mask & (merged == "") & (new_reasons != "")
+        merged.loc[both] = merged.loc[both] + "; " + new_reasons.loc[both]
+        merged.loc[only_new] = new_reasons.loc[only_new]
         return merged
     
     def _add_filter_reason_column(self, df: pd.DataFrame, reasons: pd.Series) -> pd.DataFrame:
@@ -263,20 +268,10 @@ class DataFilterEngine:
         return result_df
     
     def _count_filter_reasons(self, reasons: pd.Series) -> Dict[str, int]:
-        """统计过滤原因"""
-        reason_counts = {}
-        
-        for reason in reasons:
-            if not reason:
-                continue
-                
-            # 分割多个原因
-            for part in reason.split(";"):
-                part = part.strip()
-                if part:
-                    if part in reason_counts:
-                        reason_counts[part] += 1
-                    else:
-                        reason_counts[part] = 1
-        
-        return reason_counts
+        """统计过滤原因 - 向量化实现"""
+        non_empty = reasons[reasons != ""]
+        if non_empty.empty:
+            return {}
+        parts = non_empty.str.split(";").explode().str.strip()
+        parts = parts[parts != ""]
+        return parts.value_counts().to_dict()

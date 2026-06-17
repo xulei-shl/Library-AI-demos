@@ -215,32 +215,45 @@ class DataFilterRunner:
         output_dir = Path(self.config.output.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         
+        LARGE_THRESHOLD = 500_000
+        
         # 保存符合条件的数据
         if not result.passed_data.empty:
             passed_filename = self.config.output.filename_template['passed'].format(timestamp=timestamp)
             passed_path = output_dir / passed_filename
-            result.passed_data.to_excel(passed_path, index=False)
+            self._write_dataframe(result.passed_data, passed_path, LARGE_THRESHOLD)
             self.logger.info(f"保存符合条件数据: {passed_path}")
         
         # 保存被过滤的数据
         if not result.filtered_data.empty:
             filtered_filename = self.config.output.filename_template['filtered'].format(timestamp=timestamp)
             filtered_path = output_dir / filtered_filename
-            result.filtered_data.to_excel(filtered_path, index=False)
+            self._write_dataframe(result.filtered_data, filtered_path, LARGE_THRESHOLD)
             self.logger.info(f"保存被过滤数据: {filtered_path}")
     
+    def _write_dataframe(self, df: pd.DataFrame, path: Path, large_threshold: int) -> None:
+        """智能写入 DataFrame - 大文件自动使用 CSV"""
+        row_count = len(df)
+        if row_count > large_threshold:
+            csv_path = path.with_suffix('.csv')
+            self.logger.info(f"数据量 {row_count} 行，使用 CSV 格式写入以提升性能")
+            df.to_csv(csv_path, index=False, encoding='utf-8-sig')
+        else:
+            df.to_excel(path, index=False, engine='openpyxl')
+    
     def _merge_results(self, results: List[FilterResult]) -> pd.DataFrame:
-        """合并所有符合条件的数据"""
+        """合并所有符合条件的数据 - 优化内存"""
         if not results:
             return pd.DataFrame()
         
         passed_dataframes = []
         for result in results:
             if not result.passed_data.empty:
-                df = result.passed_data.copy()
+                df = result.passed_data
                 
                 # 添加来源文件列
                 if self.config.output.add_source_file_column:
+                    df = df.copy()
                     df[self.config.output.source_file_column] = Path(result.source_file).name
                 
                 passed_dataframes.append(df)
@@ -277,11 +290,13 @@ class DataFilterRunner:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_dir = Path(self.config.output.output_dir)
         
+        LARGE_THRESHOLD = 500_000
+        
         # 保存合并结果
         if merged_df is not None and not merged_df.empty:
             merged_filename = self.config.output.filename_template['merged'].format(timestamp=timestamp)
             merged_path = output_dir / merged_filename
-            merged_df.to_excel(merged_path, index=False)
+            self._write_dataframe(merged_df, merged_path, LARGE_THRESHOLD)
             self.logger.info(f"保存合并结果: {merged_path}")
     
     def _print_statistics(self) -> None:
