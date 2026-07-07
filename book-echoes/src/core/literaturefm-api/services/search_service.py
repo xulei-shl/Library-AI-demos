@@ -6,9 +6,9 @@ import sys
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-# 添加项目根目录到路径 (从 literaturefm-api/services/search_service.py 到项目根)
-# search_service.py -> services -> literaturefm-api -> literature_fm -> core -> src -> book-echoes
-root_dir = Path(__file__).absolute().parent.parent.parent.parent.parent.parent
+# 添加项目根目录到路径
+# search_service.py -> services -> literaturefm-api -> core -> src -> book-echoes
+root_dir = Path(__file__).absolute().parent.parent.parent.parent.parent
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 

@@ -30,6 +30,13 @@ class PrologueGenerator:
         self.excel_fields = config.get('excel_fields', {})
         self.approval_value = config.get('approval_value', '通过')
         self.approval_column = config.get('approval_column', '人工评选')
+        self.book_fields_mapping = self.excel_fields.get('book_fields', {})
+        if not self.book_fields_mapping:
+            raise ValueError(
+                "配置中缺少 excel_fields.book_fields 字段映射。\n"
+                "请检查 config/literature_fm.yaml 中 prologue_generator.excel_fields 的 YAML 锚点(alias)是否正确引用。\n"
+                "常见原因: common_excel_fields 缺少 &common_excel_fields 锚点定义。"
+            )
 
     def generate_from_excel(self, excel_path: str) -> dict:
         """
@@ -143,7 +150,6 @@ class PrologueGenerator:
             candidate_sheets = [s for s in all_sheets if s not in self.excluded_sheets]
 
             approved_books = []
-            book_fields = self.excel_fields.get('book_fields', [])
 
             for sheet_name in candidate_sheets:
                 df = pd.read_excel(excel_path, sheet_name=sheet_name)
@@ -158,8 +164,11 @@ class PrologueGenerator:
 
                 for _, row in approved_df.iterrows():
                     book_data = {}
-                    for field in book_fields:
-                        book_data[field] = row.get(field, '')
+                    for internal_field, excel_column in self.book_fields_mapping.items():
+                        val = row.get(excel_column, '')
+                        if pd.isna(val):
+                            val = ''
+                        book_data[internal_field] = val
                     approved_books.append(book_data)
 
             return approved_books
@@ -181,12 +190,11 @@ class PrologueGenerator:
 """
 
         # 图书列表（JSON格式）
-        book_fields = self.excel_fields.get('book_fields', [])
         books_json = []
         for idx, book in enumerate(books, 1):
             book_data = {"序号": idx}
-            for field in book_fields:
-                book_data[field] = book.get(field, '')
+            for internal_field, excel_column in self.book_fields_mapping.items():
+                book_data[internal_field] = book.get(internal_field, '')
             books_json.append(book_data)
 
         books_part = "\n# Reference Books（参考书目）\n" + json.dumps(

@@ -23,28 +23,28 @@ api_providers:
       name: "oneapi-gemini"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
-      model: "gemini-3-flash-preview"
-      timeout_seconds: 120  
+      model: "gemini-3.5-flash"
+      timeout_seconds: 120 
     secondary:
       name: "oneapi-qwen3"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
-      model: "qwen3-max"
-      timeout_seconds: 120     
+      model: "qwen3.7-max"
+      timeout_seconds: 120      
 
   text-qwen-gpt:
     primary:
       name: "oneapi-qwen3"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
-      model: "qwen3-max"
+      model: "qwen3.7-max"
       timeout_seconds: 120  
     secondary:
-      name: "oneapi-4.1"
+      name: "oneapi-gemini"
       api_key: env:ONEAPI_API_KEY
       base_url: "http://47.103.50.106:3000/v1"
-      model: "gpt-4.1"
-      timeout_seconds: 120     
+      model: "gemini-3.5-flash"
+      timeout_seconds: 120   
 
   text-small:
     primary:

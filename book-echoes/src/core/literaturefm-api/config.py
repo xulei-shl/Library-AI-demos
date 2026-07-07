@@ -15,9 +15,8 @@ def load_config() -> Dict[str, Any]:
         配置字典
     """
     # 配置文件路径：项目根目录/config/literature_fm_vector.yaml
-    # 从 literaturefm-api/config.py 到项目根需要向上5级：
-    # config.py -> literaturefm-api -> literature_fm -> core -> src -> book-echoes
-    root_dir = Path(__file__).parent.parent.parent.parent.parent
+    # config.py -> literaturefm-api -> core -> src -> book-echoes
+    root_dir = Path(__file__).parent.parent.parent.parent
     config_path = root_dir / "config" / "literature_fm_vector.yaml"
 
     if not config_path.exists():

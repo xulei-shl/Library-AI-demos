@@ -13,9 +13,9 @@ import sys
 from pathlib import Path
 
 # 添加项目根目录到路径
-# 从 literaturefm-api/main.py 到项目根需要向上5级：
-# main.py -> literaturefm-api -> literature_fm -> core -> src -> book-echoes
-root_dir = Path(__file__).absolute().parent.parent.parent.parent.parent
+# F:\Github\Library-AI-demos\book-echoes\src\core\literaturefm-api\main.py
+# 向上4级到 book-echoes 项目根
+root_dir = Path(__file__).absolute().parent.parent.parent.parent
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 

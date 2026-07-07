@@ -144,6 +144,24 @@ theme_generation:
     # 文件名模板
     filename_template: "themes_{timestamp}_{direction}.json"
 
+# ⚠️ 公共 Excel 字段映射（供多个模块通过 YAML 锚点复用）
+# 注意: 如果修改此名称，必须同步更新下方所有 *common_excel_fields 引用
+common_excel_fields: &common_excel_fields
+  # 主题汇总 sheet 的字段映射
+  theme_summary:
+    theme_name: "主题名称"
+    slogan: "副标题"
+    description: "情境描述"
+    target_vibe: "预期氛围"
+  # 候选图书/参考图书 sheet 的字段映射（键为内部字段名，值为 Excel 列名）
+  book_fields:
+    douban_title: "豆瓣书名"
+    douban_subtitle: "豆瓣副标题"
+    douban_author: "豆瓣作者"
+    douban_summary: "豆瓣内容简介"
+    douban_author_intro: "豆瓣作者简介"
+    douban_catalog: "豆瓣目录"
+
 # 候选图书 LLM 筛选配置（Phase 3.5）
 candidate_filter:
   # 是否启用候选筛选功能
@@ -163,22 +181,8 @@ candidate_filter:
     # 随机种子（留空则随机）
     random_seed: null
 
-  # Excel 字段映射
-  excel_fields:
-    # 主题汇总 sheet 的字段映射
-    theme_summary:
-      theme_name: "主题名称"
-      slogan: "副标题"
-      description: "情境描述"
-      target_vibe: "预期氛围"
-    # 候选图书 sheet 的字段列表（提取这些字段给 LLM）
-    book_fields:
-      - "douban_title"
-      - "douban_subtitle"
-      - "douban_author"
-      - "douban_summary"
-      - "douban_author_intro"
-      - "douban_catalog"
+  # Excel 字段映射（引用公共配置）
+  excel_fields: *common_excel_fields
 
   # LLM 调用配置
   llm:
@@ -201,22 +205,8 @@ prologue_generator:
   approval_column: "人工评选"  # 评选列名
   approval_value: "通过"        # 通过的值
 
-  # Excel 字段映射
-  excel_fields:
-    # 主题汇总 sheet 的字段映射
-    theme_summary:
-      theme_name: "主题名称"
-      slogan: "副标题"
-      description: "情境描述"
-      target_vibe: "预期氛围"
-    # 参考图书 sheet 的字段列表（提取这些字段给 LLM）
-    book_fields:
-      - "douban_title"
-      - "douban_subtitle"
-      - "douban_author"
-      - "douban_summary"
-      - "douban_author_intro"
-      - "douban_catalog"
+  # Excel 字段映射（引用公共配置）
+  excel_fields: *common_excel_fields
 
   # LLM 调用配置
   llm:

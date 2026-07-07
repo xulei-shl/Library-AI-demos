@@ -31,6 +31,13 @@ class CandidateFilter:
         self.group_config = config.get('grouping', {})
         self.group_size = self.group_config.get('group_size', 6)
         self.excel_fields = config.get('excel_fields', {})
+        self.book_fields_mapping = self.excel_fields.get('book_fields', {})
+        if not self.book_fields_mapping:
+            raise ValueError(
+                "配置中缺少 excel_fields.book_fields 字段映射。\n"
+                "请检查 config/literature_fm.yaml 中 candidate_filter.excel_fields 的 YAML 锚点(alias)是否正确引用。\n"
+                "常见原因: common_excel_fields 缺少 &common_excel_fields 锚点定义。"
+            )
 
     def filter_from_excel(self, excel_path: str) -> dict:
         """
@@ -80,8 +87,11 @@ class CandidateFilter:
                         'sheet_name': sheet_name,
                         'index': row.name  # 记录原始行索引
                     }
-                    for field in self.excel_fields.get('book_fields', []):
-                        book_data[field] = row.get(field, '')
+                    for internal_field, excel_column in self.book_fields_mapping.items():
+                        val = row.get(excel_column, '')
+                        if pd.isna(val):
+                            val = ''
+                        book_data[internal_field] = val
                     all_candidates.append(book_data)
 
             total_count = len(all_candidates)
@@ -280,12 +290,11 @@ class CandidateFilter:
 """
 
         # 图书列表（JSON格式）
-        book_fields = self.excel_fields.get('book_fields', [])
         books_json = []
         for idx, book in enumerate(books, 1):
             book_data = {"序号": idx}
-            for field in book_fields:
-                book_data[field] = book.get(field, '')
+            for internal_field, excel_column in self.book_fields_mapping.items():
+                book_data[internal_field] = book.get(internal_field, '')
             books_json.append(book_data)
 
         books_part = "\n# Candidate Books（候选图书）\n" + json.dumps(
