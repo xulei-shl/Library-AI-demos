@@ -99,6 +99,8 @@ llm_tagging:
   batch_processing:
     # 每批处理数量
     batch_size: 10
+    # 并行 LLM 调用数（1=串行；>1 时每批内并发调用 LLM）
+    concurrency: 3
     # 批次间延迟（秒）
     delay_between_batches: 2
     # 是否显示进度条

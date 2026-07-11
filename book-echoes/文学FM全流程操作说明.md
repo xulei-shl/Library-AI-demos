@@ -1,5 +1,44 @@
 # 文学FM全流程操作说明
 
+## 〇、数据入库（前置必做）
+
+> ⚠️ 重要：本模块全流程的源数据（书目元数据）存放在 SQLite 的 `books` 表中，
+> **所有后续步骤（打标、向量化、检索、导出）都从数据库读取，而不直接读 Excel**。
+> 因此在运行"一、数据过滤"和"三、Phase 2 打标"之前，必须先把书目元数据导入 `books` 表。
+
+### 0.1 入库工具
+
+使用 `src/tools/excel_import.py`，把原始书目 Excel 写入 `books` 表（`runtime/database/books_history.db`，`INSERT OR REPLACE`，靠主键去重）：
+
+```bash
+# 导入原始书目 Excel（默认写入 runtime/database/books_history.db）
+python src/tools/excel_import.py data/your_books.xlsx
+
+# 指定数据库路径 / 工作表 / 预览（不实际写入）
+python src/tools/excel_import.py data/your_books.xlsx --db-path runtime/database/books_history.db --sheet sheet1
+python src/tools/excel_import.py data/your_books.xlsx --dry-run
+```
+
+- 字段映射来自 `config/setting.yaml` 的 `fields_mapping.excel_to_database`（Excel 列名 → 数据库字段名）。
+- 若需版本管理，可用等价工具 `src/tools/excel_import_with_version.py`。
+- 打印统计：`books 表: N 条记录`，需确认 `books` 表已有数据后再继续。
+
+### 0.2 典型前置链路
+
+```
+原始书目 Excel
+   │ (可选) src/scripts/data_filter.py   —— 仅做过滤，输出"筛选后 Excel"
+   ▼
+筛选后 Excel  ──►  src/tools/excel_import.py  ──►  books 表（数据库）
+                                                  │
+                          之后所有步骤都从 books 表读取，不再碰 Excel
+```
+
+> 说明：`data_filter.py` 只产出过滤后的 Excel 文件，本身**不写数据库**；
+> 过滤后的 Excel 仍需经 `excel_import.py` 入库，才能被打标链路消费。
+
+---
+
 ## 一、数据过滤
 
 ### 1.1 配置说明
@@ -112,6 +151,11 @@ python src/core/literature_fm/cli.py vectorize
 ### 3.1 功能概述
 
 对数据库中满足条件的已过滤文学书目进行 LLM 情境标签打标。
+
+> 数据来源：从 `books` 表读取待打标书目（`orchestrator._get_books_to_tag`，
+> 支持按索书号前缀、最低评分、必填字段过滤，并**自动排除已成功打标**的 `book_id`，可断点续跑）。
+> 逐本调用 LLM 打标后，**每本成功/失败立即写入 `literary_tags` 表**（SQLite，`INSERT OR REPLACE`），
+> 并非写入 Excel；Excel 书单是后续导出步骤统一生成的。
 
 ### 3.2 运行方式
 

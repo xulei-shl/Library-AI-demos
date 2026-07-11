@@ -5,6 +5,7 @@ LLM打标器
 
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Optional
 from pathlib import Path
 import yaml
@@ -48,57 +49,68 @@ class LLMTagger:
     def tag_books(self, books: List[Dict]) -> Dict[str, int]:
         """
         批量打标
-        
+
         Args:
             books: 书目列表，每个元素包含 id, title, author, douban_summary 等
-            
+
         Returns:
             Dict[str, int]: 统计信息 {'success': 10, 'failed': 2}
         """
         if not books:
             logger.warning("待打标书目列表为空")
             return {'success': 0, 'failed': 0}
-        
+
         batch_config = self.config.get('batch_processing', {})
         batch_size = batch_config.get('batch_size', 10)
+        concurrency = batch_config.get('concurrency', 1)
         delay = batch_config.get('delay_between_batches', 2)
         show_progress = batch_config.get('show_progress', True)
-        
+
         stats = {'success': 0, 'failed': 0}
         total_batches = (len(books) - 1) // batch_size + 1
-        
-        logger.info(f"开始批量打标，共 {len(books)} 本书，分 {total_batches} 批处理")
-        
+
+        logger.info(f"开始批量打标，共 {len(books)} 本书，分 {total_batches} 批处理（并发数={concurrency}）")
+
         for i in range(0, len(books), batch_size):
             batch = books[i:i+batch_size]
             batch_num = i // batch_size + 1
-            
+
             if show_progress:
                 logger.info(f"{'='*60}")
-                logger.info(f"处理批次 {batch_num}/{total_batches} (共 {len(batch)} 本)")
+                logger.info(f"处理批次 {batch_num}/{total_batches} (共 {len(batch)} 本, 并发 {concurrency})")
                 logger.info(f"{'='*60}")
-            
-            for idx, book in enumerate(batch, 1):
-                if show_progress:
-                    title = book.get('douban_title') or book.get('book_title', 'Unknown')
-                    logger.info(f"[{batch_num}-{idx}/{len(batch)}] 正在处理: {title}")
-                
-                success = self._tag_single_book(book)
-                
-                if success:
-                    stats['success'] += 1
-                else:
-                    stats['failed'] += 1
-            
+
+            batch_stats = {'success': 0, 'failed': 0}
+
+            with ThreadPoolExecutor(max_workers=concurrency) as executor:
+                future_to_book = {executor.submit(self._tag_single_book, book): book for book in batch}
+                for future in as_completed(future_to_book):
+                    book = future_to_book[future]
+                    try:
+                        success = future.result()
+                        if success:
+                            batch_stats['success'] += 1
+                        else:
+                            batch_stats['failed'] += 1
+                    except Exception as e:
+                        logger.error(f"  线程异常: {e}")
+                        batch_stats['failed'] += 1
+
+            stats['success'] += batch_stats['success']
+            stats['failed'] += batch_stats['failed']
+
+            if show_progress:
+                logger.info(f"  批次完成: 成功 {batch_stats['success']} / 失败 {batch_stats['failed']}")
+
             # 批次间延迟
             if i + batch_size < len(books):
-                logger.info(f"批次完成，等待 {delay} 秒后继续...")
+                logger.info(f"等待 {delay} 秒后继续...")
                 time.sleep(delay)
-        
+
         logger.info(f"\n{'='*60}")
         logger.info(f"批量打标完成！成功: {stats['success']}, 失败: {stats['failed']}")
         logger.info(f"{'='*60}\n")
-        
+
         return stats
     
     def _tag_single_book(self, book: Dict) -> bool:
@@ -336,53 +348,56 @@ class LLMTagger:
     def fallback_retry(self) -> Dict[str, int]:
         """
         兜底重试（对失败记录重新打标）
-        
+
         Returns:
             Dict[str, int]: 重试统计 {'success': 5, 'failed': 1}
         """
         retry_config = self.config.get('retry_strategy', {})
-        
+
         if not retry_config.get('fallback_retry_enabled', False):
             logger.info("兜底重试未启用，跳过")
             return {'success': 0, 'failed': 0}
-        
+
         max_retries = retry_config.get('fallback_max_retries', 2)
-        delay = retry_config.get('fallback_delay', 5)
-        
+        batch_config = self.config.get('batch_processing', {})
+        concurrency = batch_config.get('concurrency', 1)
+
         # 获取失败记录
         failed_records = self.tag_manager.get_failed_records(max_retry_count=max_retries)
-        
+
         if not failed_records:
             logger.info("没有需要兜底重试的记录")
             return {'success': 0, 'failed': 0}
-        
+
         logger.info(f"\n{'='*60}")
-        logger.info(f"开始兜底重试，共 {len(failed_records)} 条记录")
+        logger.info(f"开始兜底重试，共 {len(failed_records)} 条记录（并发数={concurrency}）")
         logger.info(f"{'='*60}\n")
-        
+
         stats = {'success': 0, 'failed': 0}
-        
-        for idx, record in enumerate(failed_records, 1):
-            logger.info(f"[{idx}/{len(failed_records)}] 重试: {record.get('title', 'Unknown')}")
-            
-            time.sleep(delay)
-            
-            # 重新打标
-            success = self._tag_single_book(record)
-            
-            if success:
-                stats['success'] += 1
-            else:
-                # 更新重试计数
-                self.tag_manager.update_status(
-                    book_id=record['id'],
-                    llm_status='failed',
-                    increment_retry=True
-                )
-                stats['failed'] += 1
-        
+
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
+            future_to_record = {executor.submit(self._tag_single_book, record): record for record in failed_records}
+            for future in as_completed(future_to_record):
+                record = future_to_record[future]
+                try:
+                    success = future.result()
+                    if success:
+                        stats['success'] += 1
+                        logger.info(f"  ✓ 重试成功: {record.get('title', 'Unknown')}")
+                    else:
+                        self.tag_manager.update_status(
+                            book_id=record['id'],
+                            llm_status='failed',
+                            increment_retry=True
+                        )
+                        stats['failed'] += 1
+                        logger.warning(f"  ✗ 重试失败: {record.get('title', 'Unknown')}")
+                except Exception as e:
+                    logger.error(f"  重试异常: {e}")
+                    stats['failed'] += 1
+
         logger.info(f"\n{'='*60}")
         logger.info(f"兜底重试完成！成功: {stats['success']}, 失败: {stats['failed']}")
         logger.info(f"{'='*60}\n")
-        
+
         return stats
