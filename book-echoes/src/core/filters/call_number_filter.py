@@ -55,7 +55,11 @@ class CallNumberFilter(BaseFilter):
         # 组合逻辑：
         # - 高优先级排除：直接排除（不受 KEEP 保护）
         # - 普通排除：仅当未命中保留规则时才排除
-        to_exclude_mask = high_priority_mask | ((~include_mask) & exclude_mask)
+        # - 仅含 KEEP 规则时启用白名单模式：未命中 KEEP 的全部排除
+        if rules.include and not (rules.exclude or rules.high_priority_exclude):
+            to_exclude_mask = high_priority_mask | (~include_mask)
+        else:
+            to_exclude_mask = high_priority_mask | ((~include_mask) & exclude_mask)
         excluded_count = to_exclude_mask.sum()
         result_data = result_data[~to_exclude_mask]
 

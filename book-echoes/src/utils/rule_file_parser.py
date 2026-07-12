@@ -205,7 +205,10 @@ class CallNumberMatcher:
         2. 保留规则（KEEP）：匹配则保留
         3. 普通排除（DROP）：仅当未命中 KEEP 时才排除
 
-        排除条件：匹配 DROP! 或（未匹配 KEEP 且匹配 DROP）
+        排除条件：
+        - 匹配 DROP!（高优先级排除）
+        - 仅含 KEEP 规则时（白名单模式）：未命中任何 KEEP
+        - 同时存在 KEEP 与 DROP 时：未命中 KEEP 且匹配 DROP
 
         Args:
             call_no_series: 索书号列
@@ -229,6 +232,9 @@ class CallNumberMatcher:
         # 组合逻辑（与主流程 CallNumberFilter 保持一致）：
         # - 高优先级排除（DROP!）：直接排除（不受 KEEP 保护）
         # - 普通排除（DROP）：仅当未命中保留规则时才排除
+        # - 仅含 KEEP 规则时启用白名单模式：未命中 KEEP 的全部排除
+        if self.rules.include and not (self.rules.exclude or self.rules.high_priority_exclude):
+            return high_priority_mask | (~include_mask)
         return high_priority_mask | ((~include_mask) & normal_exclude_mask)
 
     def _build_mask(

@@ -66,6 +66,8 @@ python src/tools/excel_import.py data/your_books.xlsx --dry-run
 
 ### 1.2 运行命令
 
+> 输入的原始 excel 在 config/literature_fm.yaml 中的 input.excel_files 配置项中指定的目录下。
+
 ```bash
 # 使用默认配置
 python src/scripts/data_filter.py
