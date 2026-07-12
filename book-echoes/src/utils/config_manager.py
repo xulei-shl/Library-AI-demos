@@ -48,6 +48,11 @@ class ConfigManager:
             config_file: YAML配置文件路径
             env_file: .env文件路径
         """
+        # 相对路径锚定到项目根目录，避免从子目录运行时找不到配置文件
+        if not os.path.isabs(config_file):
+            config_file = str(project_root / config_file)
+        if not os.path.isabs(env_file):
+            env_file = str(project_root / env_file)
         self.config_file = config_file
         self.env_file = env_file
         self.config = {}

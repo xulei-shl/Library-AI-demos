@@ -25,14 +25,15 @@ from src.core.douban.pipelines.douban_isbn_api_pipeline import (
     DoubanIsbnApiPipeline,
     DoubanIsbnApiPipelineOptions,
 )
+from src.core.douban.progress_manager import ProgressManager
 
 logger = get_logger(__name__)
 
 
 def validate_excel_file(file_path: str) -> bool:
-    """验证 Excel 文件."""
+    """验证输入文件（支持 CSV/XLSX）. """
     if not file_path:
-        print("错误: 请提供 Excel 文件路径")
+        print("错误: 请提供文件路径")
         return False
 
     if not os.path.exists(file_path):
@@ -41,13 +42,16 @@ def validate_excel_file(file_path: str) -> bool:
 
     try:
         import pandas as pd
-        df = pd.read_excel(file_path)
+        if file_path.lower().endswith('.csv'):
+            df = pd.read_csv(file_path, nrows=1)
+        else:
+            df = pd.read_excel(file_path, nrows=1)
         if len(df) == 0:
-            print("错误: Excel 文件为空")
+            print("错误: 文件为空")
             return False
         return True
     except Exception as e:
-        print(f"错误: 无法读取 Excel 文件 - {e}")
+        print(f"错误: 无法读取文件 - {e}")
         return False
 
 
@@ -81,11 +85,25 @@ def run_command(args):
         db_path=args.db_path,
         # 保存配置
         save_interval=args.save_interval,
-        # 报告配置
-        generate_report=not args.disable_report,
-        # 评分过滤配置：优先使用配置文件中的设置
-        enable_rating_filter=dynamic_filter_enabled and not args.disable_rating_filter,
+    # 报告配置
+    generate_report=not args.disable_report,
+    # 评分过滤配置：优先使用配置文件中的设置
+    enable_rating_filter=dynamic_filter_enabled and not args.disable_rating_filter,
+)
+
+    # 断点续跑相关：默认自动续跑，--no-resume 可强制全新运行
+    _resume_pm = ProgressManager(
+        excel_file=args.excel_file,
+        status_column="处理状态",
+        save_interval=args.save_interval,
     )
+    if args.no_resume and _resume_pm.partial_exists():
+        _resume_pm.cleanup_partial_if_exists()
+        print(f"已强制清除断点文件，将全新运行")
+    elif _resume_pm.partial_exists():
+        print(f"检测到断点文件，将从断点继续: {_resume_pm.partial_path}")
+    else:
+        print("未检测到断点文件，全新运行")
 
     # 从配置文件加载随机延迟和批次冷却配置
     random_delay = isbn_api_config.get("random_delay", {})
@@ -168,7 +186,7 @@ def show_help():
   --max-concurrent N      最大并发数 (默认: 2)
   --qps N                 每秒请求数 (默认: 0.5)
   --timeout N             请求超时秒数 (默认: 15)
-  --save-interval N       保存间隔条数 (默认: 10)
+  --save-interval N       保存间隔条数 (默认: 100)
 
 数据库选项:
   --disable-database      禁用数据库功能
@@ -178,6 +196,7 @@ def show_help():
 其他选项:
   --disable-report        禁用报告生成
   --disable-rating-filter 禁用评分过滤
+  --no-resume             忽略已有断点文件，强制全新运行（默认自动续跑）
 
 📝 示例:
   # 基本用法
@@ -247,8 +266,8 @@ def main():
     parser.add_argument(
         '--save-interval',
         type=int,
-        default=10,
-        help='保存间隔条数 (默认: 10)',
+        default=100,
+        help='保存间隔条数 (默认: 100)',
     )
 
     # 数据库配置
@@ -277,6 +296,11 @@ def main():
         '--disable-rating-filter',
         action='store_true',
         help='禁用评分过滤',
+    )
+    parser.add_argument(
+        '--no-resume',
+        action='store_true',
+        help='忽略已有断点文件，强制全新运行（默认会自动从断点继续）',
     )
 
     args = parser.parse_args()

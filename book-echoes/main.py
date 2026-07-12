@@ -27,8 +27,11 @@ logger = get_logger(__name__)
 
 
 def get_outputs_dir():
-    """获取运行输出目录"""
-    outputs_dir = Path(get_config('paths.outputs_dir', 'runtime/outputs'))
+    """获取运行输出目录（锚定到项目根目录，避免 CWD 相关路径漂移）"""
+    raw = get_config('paths.outputs_dir', 'runtime/outputs')
+    outputs_dir = Path(raw)
+    if not outputs_dir.is_absolute():
+        outputs_dir = Path(__file__).resolve().parent / outputs_dir
     return outputs_dir
 
 def find_latest_screening_result_excel():
@@ -414,18 +417,20 @@ def run_module1():
 def find_latest_partial_excel():
     """
     查找最新的豆瓣模块中断文件：
-    格式：数据筛选结果_YYYYMMDD_HHMMSS_partial.xlsx
+    支持格式：
+    - CSV: 数据筛选结果_YYYYMMDD_HHMMSS_partial.csv
+    - XLSX(旧版兼容): 数据筛选结果_YYYYMMDD_HHMMSS_partial.xlsx
     """
     outputs_dir = get_outputs_dir()
     if not outputs_dir.exists():
         return None
-        
+
     candidates = sorted(
-        outputs_dir.glob("*_partial.xlsx"),
+        list(outputs_dir.glob("*_partial.csv")) + list(outputs_dir.glob("*_partial.xlsx")),
         key=lambda p: p.stat().st_mtime,
         reverse=True
     )
-    
+
     if candidates:
         return candidates[0]
     return None

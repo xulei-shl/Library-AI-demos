@@ -45,7 +45,7 @@ class ApiCaller:
         batch_cooldown_max: float = 60.0,
         retry_max_times: int = 3,
         retry_backoff: Optional[List[float]] = None,
-        save_interval: int = 15,
+        save_interval: int = 100,
     ):
         """初始化 API 调用器.
 
@@ -60,7 +60,7 @@ class ApiCaller:
             batch_cooldown_max: 批次冷却最大时间
             retry_max_times: 最大重试次数
             retry_backoff: 重试退避时间列表
-            save_interval: 保存间隔
+            save_interval: 保存间隔（条数，默认 100）
         """
         self.max_concurrent = max_concurrent
         self.qps = qps

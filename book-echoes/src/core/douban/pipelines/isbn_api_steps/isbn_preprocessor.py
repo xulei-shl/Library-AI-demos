@@ -9,17 +9,15 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import replace as dataclass_replace
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
 from src.utils.logger import get_logger
+from src.core.douban.progress_manager import ProgressManager
 from src.core.douban.api.isbn_client import normalize_isbn
 
 from .constants import ProcessStatus
-
-if TYPE_CHECKING:
-    from src.core.douban.progress_manager import ProgressManager
 
 logger = get_logger(__name__)
 
@@ -204,15 +202,15 @@ class IsbnPreprocessor:
                 enable_database=False,  # 补充阶段不使用数据库
             )
 
-            # 获取 partial 文件路径
-            partial_path = str(progress.partial_path)
+            # FOLIO 处理器需要 XLSX，临时导出
+            folio_xlsx = progress.export_xlsx_for_folio(df)
 
             logger.info(f"[ISBN补充] 开始调用FOLIO处理器,处理 {len(indices_to_process)} 条记录")
 
             # 异步调用处理器
             _, stats = asyncio.run(
                 processor.process_excel_file(
-                    excel_file_path=partial_path,
+                    excel_file_path=folio_xlsx,
                     barcode_column=self.barcode_column,
                     output_column=self.isbn_column,
                     retry_failed=True,
@@ -223,7 +221,10 @@ class IsbnPreprocessor:
             logger.info("[ISBN补充] FOLIO处理完成,开始更新状态")
 
             # 重新加载 DataFrame（因为处理器会修改 Excel 文件）
-            df_updated = pd.read_excel(partial_path)
+            df_updated = pd.read_excel(folio_xlsx)
+
+            # 清理 FOLIO 临时 XLSX
+            ProgressManager.cleanup_folio_xlsx(folio_xlsx)
 
             # 更新状态
             success_count = 0

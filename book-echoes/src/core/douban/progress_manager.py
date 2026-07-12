@@ -13,11 +13,21 @@ import pandas as pd
 
 from src.utils.logger import get_logger
 
+# 输出目录锚定到项目根目录，避免从不同工作目录运行时
+# partial 文件落在不同路径导致断点续跑失效。
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
 logger = get_logger(__name__)
 
 
 class ProgressManager:
-    """统一管理 Excel 持久化、状态列与数据库刷写."""
+    """统一管理 Excel 持久化、状态列与数据库刷写.
+
+    性能说明：
+    - save_partial 使用 CSV 格式（轻量、写盘快），而非 XLSX。
+    - 调用方无需关注格式差异，load_dataframe / finalize_output 自动处理。
+    - FOLIO 处理器仍需 XLSX，通过 export_xlsx_for_folio() 临时导出。
+    """
 
     STATUS_PENDING = "待处理"
     STATUS_DB_DONE = "已写库"
@@ -35,7 +45,7 @@ class ProgressManager:
         self,
         excel_file: str,
         status_column: str = "处理状态",
-        save_interval: int = 15,
+        save_interval: int = 100,
         source_column: str = "豆瓣数据来源",
     ) -> None:
         self.original_path = Path(excel_file)
@@ -55,17 +65,16 @@ class ProgressManager:
         self._db_config: Dict = {}
 
     def _resolve_partial_path(self) -> Path:
-        output_dir = Path("runtime/outputs")
+        output_dir = PROJECT_ROOT / "runtime" / "outputs"
         output_dir.mkdir(parents=True, exist_ok=True)
-        suffix = self.original_path.suffix or ".xlsx"
         stem = self.original_path.stem
 
         # 如果输入文件本身就是 partial 文件，则直接使用它作为 partial 路径
         # 避免生成 _partial_partial.xlsx
         if stem.endswith("_partial"):
-            return output_dir / f"{stem}{suffix}"
+            return output_dir / f"{stem}.csv"
 
-        return output_dir / f"{stem}_partial{suffix}"
+        return output_dir / f"{stem}_partial.csv"
 
     def _resolve_db_meta_path(self) -> Path:
         return self._resolve_partial_path().with_suffix(".dbmeta.json")
@@ -73,7 +82,10 @@ class ProgressManager:
     def load_dataframe(self) -> pd.DataFrame:
         source_path = self.partial_path if self.partial_path.exists() else self.original_path
         logger.info("加载数据源: %s", source_path)
-        df = pd.read_excel(source_path)
+        if source_path.suffix.lower() in ('.csv',):
+            df = pd.read_csv(source_path, dtype_backend='numpy_nullable', low_memory=False)
+        else:
+            df = pd.read_excel(source_path)
         if self.status_column not in df.columns:
             df[self.status_column] = self.STATUS_PENDING
         else:
@@ -157,9 +169,24 @@ class ProgressManager:
         now = time.time()
         if not force and (now - self._last_save_at) < self.save_interval:
             return
-        df.to_excel(self.partial_path, index=False)
+        df.to_csv(self.partial_path, index=False)
         self._last_save_at = now
         logger.info("[进度持久化] 已写入 %s (%s)", self.partial_path, reason)
+
+    def export_xlsx_for_folio(self, df: pd.DataFrame) -> str:
+        """导出 XLSX 供 FOLIO 处理器消费，返回文件路径."""
+        xlsx_path = self.partial_path.with_suffix('.folio.xlsx')
+        df.to_excel(xlsx_path, index=False)
+        logger.info("已导出 FOLIO 临时 XLSX: %s", xlsx_path)
+        return str(xlsx_path)
+
+    @staticmethod
+    def cleanup_folio_xlsx(xlsx_path: str) -> None:
+        """清理 FOLIO 处理器留下的临时 XLSX 文件."""
+        p = Path(xlsx_path)
+        if p.exists():
+            p.unlink()
+            logger.debug("已清理 FOLIO 临时 XLSX: %s", p)
 
     def configure_database(
         self,

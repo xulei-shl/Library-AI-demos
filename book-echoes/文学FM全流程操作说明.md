@@ -99,6 +99,19 @@ python src/scripts/data_filter.py --config config/literature_fm.yaml --log-level
 
 ---
 
+## 豆瓣API
+
+@src\core\douban\douban_isbn_main.py
+
+```
+cd src\core\douban
+
+python douban_isbn_main.py run --excel-file "F:/Github/Library-AI-demos/book-echoes/data/huisu/文学过滤/数据筛选结果_20260712_161010.xlsx" 
+
+````
+
+---
+
 ## 二、统一入口
 
 `src/core/literature_fm/cli.py` 为文学FM模块的统一 CLI 入口，支持交互式菜单和子命令两种方式。

@@ -62,8 +62,8 @@ class DoubanIsbnApiPipelineOptions:
     disable_database: bool = False
     force_update: bool = False
     db_path: Optional[str] = None
-    # 保存配置
-    save_interval: int = 15
+    # 保存配置（条数间隔，CSV 写盘快，可保留较低值快速 checkpoint）
+    save_interval: int = 100
     # 报告配置
     generate_report: bool = True
     # 评分过滤配置
@@ -332,13 +332,15 @@ class DoubanIsbnApiPipeline:
             # 构建数据库配置
             db_config = self._build_db_config(options, douban_config)
 
-            # 保存当前进度到文件，供 FOLIO 处理器使用
+            # 保存当前进度到 partial (CSV)
             progress.save_partial(df, force=True, reason="before_folio_fetch")
-            partial_path = str(progress.partial_path)
+
+            # FOLIO 处理器需要 XLSX 格式，临时导出
+            folio_xlsx = progress.export_xlsx_for_folio(df)
 
             # 调用 FOLIO ISBN 异步处理器
             output_file, stats = process_isbn_async(
-                excel_file_path=partial_path,
+                excel_file_path=folio_xlsx,
                 max_concurrent=processing_config.max_concurrent if processing_config else 3,
                 save_interval=options.save_interval,
                 barcode_column=options.barcode_column,
@@ -349,7 +351,7 @@ class DoubanIsbnApiPipeline:
                 processing_config=processing_config,
             )
 
-            # 重新加载 DataFrame（FOLIO 处理器会修改 Excel 文件）
+            # 重新加载 DataFrame（FOLIO 处理器会修改 XLSX 文件）
             df_updated = pd.read_excel(output_file)
 
             # 同步数据到原 df
@@ -361,6 +363,9 @@ class DoubanIsbnApiPipeline:
             for col in df_updated.columns:
                 if col not in df.columns:
                     df[col] = df_updated[col]
+
+            # 清理 FOLIO 临时 XLSX
+            ProgressManager.cleanup_folio_xlsx(folio_xlsx)
 
             logger.info("=" * 60)
             logger.info("FOLIO ISBN 爬取完成:")
