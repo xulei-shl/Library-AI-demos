@@ -20,6 +20,9 @@ python src/tools/excel_import.py data/your_books.xlsx --dry-run
 ```
 
 - 字段映射来自 `config/setting.yaml` 的 `fields_mapping.excel_to_database`（Excel 列名 → 数据库字段名）。
+- 代码内建了冗余列名别名兜底机制（`excel_import.py` 中的 `_COLUMN_ALIASES`），
+  当配置中的主列名在 Excel 中不存在时，会尝试用别名匹配（如 `"条码号"` 自动映射到 `barcode`，
+  兼容 `"书目条码"` 的缺失场景），无需频繁修改 `setting.yaml`。
 - 若需版本管理，可用等价工具 `src/tools/excel_import_with_version.py`。
 - 打印统计：`books 表: N 条记录`，需确认 `books` 表已有数据后再继续。
 

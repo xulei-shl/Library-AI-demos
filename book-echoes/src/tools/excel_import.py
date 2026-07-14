@@ -24,6 +24,17 @@ import re
 class ExcelImporter:
     """Excel数据导入器"""
 
+    # ============================================================
+    # 冗余列名映射（代码级别名兜底）
+    # 用途：当 config/setting.yaml 中配置的映射列名与 Excel 实际列名
+    #       不一致时，通过这些别名自动匹配，避免频繁修改配置文件。
+    # 格式：{ "Excel备选列名": "数据库字段名" }
+    # 注意：仅当配置映射中对应数据库字段尚未匹配到有效 Excel 列时生效
+    # ============================================================
+    _COLUMN_ALIASES = {
+        "条码号": "barcode",       # 兼容 "书目条码" 的别名
+    }
+
     def __init__(self, db_path: str = None, config_path: str = "config/setting.yaml"):
         """
         初始化导入器
@@ -54,10 +65,32 @@ class ExcelImporter:
 
         if excel_to_db_mapping:
             print("[信息] 使用统一字段映射配置 (fields_mapping)")
+            self._apply_fallback_aliases(excel_to_db_mapping)
             return excel_to_db_mapping
         else:
             print("[错误] 未找到统一字段映射配置")
             return {}
+
+    def _apply_fallback_aliases(self, mapping):
+        """
+        为各表映射补充冗余列名（别名兜底），兼容不同 Excel 的列名差异。
+
+        当配置映射中某个数据库字段的对应 Excel 列名在文件中不存在时，
+        会尝试用 _COLUMN_ALIASES 中的备选列名匹配一次。
+        这样不同来源的 Excel（如 "条码号" vs "书目条码"）都能自动适配，
+        无需修改 `config/setting.yaml`。
+
+        Args:
+            mapping: excel_to_database 映射字典（会被就地补充）
+        """
+        for table_name, table_mapping in mapping.items():
+            if not isinstance(table_mapping, dict):
+                continue
+            for alias_col, db_field in self._COLUMN_ALIASES.items():
+                # 别名列名尚未在该表映射中作为 key 出现过时才补充
+                # （即使是同一个 db_field 已存在也从另一个列名映射过来，也能添加）
+                if alias_col not in table_mapping:
+                    table_mapping[alias_col] = db_field
 
     def load_config(self):
         """加载配置文件"""
